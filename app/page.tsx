@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, type MouseEvent } from "react";
 
 const experiences = [
@@ -165,12 +166,21 @@ export default function Home() {
             </div>
 
             {/* Action */}
-            <a
-              href="#discover"
-              className="rounded-full bg-[#063c30] px-5 py-3 text-sm font-bold text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-[#0a513f]"
-            >
-              ابدأ التجربة
-            </a>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="hidden rounded-full border border-white/35 bg-white/15 px-4 py-3 text-sm font-bold text-white backdrop-blur-md transition duration-300 hover:bg-white/25 sm:inline-flex"
+              >
+                تسجيل الدخول
+              </Link>
+
+              <Link
+                href="/auth"
+                className="rounded-full bg-[#063c30] px-5 py-3 text-sm font-bold text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-[#0a513f]"
+              >
+                ابدأ التجربة
+              </Link>
+            </div>
           </nav>
         </header>
 
@@ -205,12 +215,12 @@ export default function Home() {
 
             {/* Hero buttons */}
             <div className="mt-9 flex flex-wrap gap-4">
-              <a
-                href="#discover"
+              <Link
+                href="/auth"
                 className="rounded-full bg-[#063c30] px-8 py-4 font-bold text-white shadow-[0_15px_35px_rgba(6,60,48,0.25)] transition duration-300 hover:-translate-y-1 hover:bg-[#0a513f]"
               >
-                اكتشف التجارب القريبة
-              </a>
+                ابدأ الآن
+              </Link>
 
               <a
                 href="#how"
@@ -331,12 +341,12 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <a
-                      href="#discover"
+                    <Link
+                      href="/discover"
                       className="mt-6 block w-full rounded-2xl border border-white/25 bg-[#0D3B34]/75 py-4 text-center font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#e5b83f]/60 hover:bg-[#0D3B34]/90 hover:shadow-[0_10px_30px_rgba(13,59,52,0.28)]"
                     >
                       اكتشف الآن
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -451,9 +461,12 @@ export default function Home() {
 
           {/* Discover more */}
           <div className="mt-12 flex justify-center">
-            <button className="rounded-full border border-[#0D3B34]/15 bg-white px-8 py-4 font-bold text-[#0D3B34] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D4AF37]/50 hover:shadow-md">
+            <Link
+              href="/discover"
+              className="rounded-full border border-[#0D3B34]/15 bg-white px-8 py-4 font-bold text-[#0D3B34] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D4AF37]/50 hover:shadow-md"
+            >
               استكشف المزيد من التجارب
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -801,12 +814,12 @@ export default function Home() {
             Arees Loop تساعدك على اكتشاف التجربة المناسبة في اللحظة المناسبة.
           </p>
 
-          <a
-            href="#discover"
+          <Link
+            href="/auth"
             className="mt-8 inline-flex rounded-full bg-[#0D3B34] px-9 py-4 font-bold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-[#145347] hover:shadow-[0_12px_30px_rgba(13,59,52,0.20)]"
           >
             ابدأ الاستكشاف
-          </a>
+          </Link>
         </div>
       </section>
 
