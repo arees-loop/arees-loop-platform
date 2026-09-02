@@ -13,9 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Arees Loop | اكتشف التجربة",
+  metadataBase: new URL("https://www.areesloop.com"),
+
+  title: "Arees Loop | منصة تجربة الزائر الذكية",
+
   description:
-    "Arees Loop منصة ذكية لاكتشاف وحجز التجارب والوجهات والمكافآت.",
+    "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
 
   robots: {
     index: false,
@@ -24,6 +27,38 @@ export const metadata: Metadata = {
       index: false,
       follow: false,
     },
+  },
+
+  openGraph: {
+    type: "website",
+    locale: "ar_SA",
+    url: "https://www.areesloop.com",
+    siteName: "Arees Loop",
+
+    title: "Arees Loop | منصة تجربة الزائر الذكية",
+
+    description:
+      "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
+
+    images: [
+      {
+        url: "/Image/social/arees-loop-social-preview.png",
+        width: 1200,
+        height: 630,
+        alt: "Arees Loop | منصة تجربة الزائر الذكية",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+
+    title: "Arees Loop | منصة تجربة الزائر الذكية",
+
+    description:
+      "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
+
+    images: ["/Image/social/arees-loop-social-preview.png"],
   },
 };
 
@@ -54,21 +89,17 @@ export default function RootLayout({
               backdrop-blur-xl
             "
           >
-            {/* Status dot */}
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#d8b33f] opacity-40" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#d8b33f]" />
             </span>
 
-            {/* Label */}
             <span className="whitespace-nowrap text-[12px] font-semibold tracking-wide text-white md:text-[13px]">
               إصدار تجريبي
             </span>
 
-            {/* Divider */}
             <span className="h-3 w-px bg-white/20" />
 
-            {/* Brand */}
             <span className="whitespace-nowrap text-[9px] font-semibold tracking-[0.16em] text-[#e2bd45] md:text-[10px]">
               AREES LOOP
             </span>
