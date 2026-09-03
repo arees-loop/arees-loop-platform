@@ -10,7 +10,7 @@ import "./globals.css";
   بعد ربط الدومين نغير هذا السطر فقط إلى:
   https://www.areesloop.com
 */
-const SITE_URL = "https://arees-loop-platform.vercel.app";
+const SITE_URL = "https://www.areesloop.com";
 
 const SOCIAL_IMAGE =
   `${SITE_URL}/Image/social/arees-loop-social-preview-v2.png`;
