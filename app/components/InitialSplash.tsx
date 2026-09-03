@@ -29,11 +29,11 @@ export default function InitialSplash() {
         dir="rtl"
         className={`fixed inset-0 z-[100000] overflow-hidden bg-[#F3E7D1] transition-all duration-500 ${
           closing
-            ? "pointer-events-none scale-[1.015] opacity-0"
+            ? "pointer-events-none scale-[1.012] opacity-0"
             : "opacity-100"
         }`}
       >
-        {/* BACKGROUND IMAGE */}
+        {/* LOADING BACKGROUND */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -42,105 +42,102 @@ export default function InitialSplash() {
           }}
         />
 
-        {/* SOFT OVERLAY */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0D3B34]/10" />
+        {/* SOFT CINEMATIC OVERLAY */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-[#0D3B34]/8" />
 
-        {/* GOLD ATMOSPHERIC GLOW */}
-        <div className="pointer-events-none absolute left-1/2 top-[27%] h-[220px] w-[500px] -translate-x-1/2 rounded-full bg-[#D4AF37]/10 blur-[90px]" />
+        {/* 
+          GOLD SHINE OVER THE REAL LOGO
+          لا يرسم شعار ثاني - مجرد شعاع يمر فوق الشعار الموجود في الصورة
+        */}
+        <div className="pointer-events-none absolute left-1/2 top-[25.5%] z-20 h-[24%] w-[43%] -translate-x-1/2 overflow-hidden rounded-[45%]">
+          <div className="arees-logo-shine absolute -inset-y-[40%] left-[-30%] w-[16%] rotate-[18deg] bg-gradient-to-r from-transparent via-[#FFF4B5]/85 to-transparent blur-[5px]" />
 
-        {/* INFINITY SHINE */}
-        <div className="pointer-events-none absolute left-1/2 top-[22%] z-20 w-[300px] -translate-x-1/2 sm:w-[390px] md:w-[470px]">
-          <svg
-            viewBox="0 0 500 240"
-            fill="none"
-            className="h-auto w-full overflow-visible"
-          >
-            <defs>
-              <linearGradient
-                id="splashGold"
-                x1="60"
-                y1="120"
-                x2="440"
-                y2="120"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stopColor="#8F6D12" stopOpacity="0" />
-                <stop offset="0.32" stopColor="#D4AF37" />
-                <stop offset="0.5" stopColor="#FFF3AF" />
-                <stop offset="0.67" stopColor="#D4AF37" />
-                <stop offset="1" stopColor="#8F6D12" stopOpacity="0" />
-              </linearGradient>
+          <div className="arees-logo-glow absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,224,117,0.12),transparent_58%)]" />
+        </div>
 
-              <filter id="splashGlow">
-                <feGaussianBlur stdDeviation="4" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-
-            {/* FAINT INFINITY TRACK */}
-            <path
-              d="M65 120C65 63 116 48 158 72C193 92 218 126 250 150C282 174 307 198 342 198C397 198 435 165 435 120C435 75 397 42 342 42C307 42 282 66 250 90C218 114 193 148 158 168C116 192 65 177 65 120Z"
-              stroke="rgba(212,175,55,0.14)"
-              strokeWidth="5"
-            />
-
-            {/* MOVING GOLD SHINE */}
-            <path
-              d="M65 120C65 63 116 48 158 72C193 92 218 126 250 150C282 174 307 198 342 198C397 198 435 165 435 120C435 75 397 42 342 42C307 42 282 66 250 90C218 114 193 148 158 168C116 192 65 177 65 120Z"
-              pathLength="620"
-              stroke="url(#splashGold)"
-              strokeWidth="7"
-              strokeLinecap="round"
-              strokeDasharray="85 535"
-              filter="url(#splashGlow)"
-              className="arees-infinity-shine"
-            />
-          </svg>
+        {/* SMALL CENTER SPARK */}
+        <div className="pointer-events-none absolute left-1/2 top-[37%] z-20 -translate-x-1/2">
+          <div className="arees-center-spark h-3 w-3 rounded-full bg-[#FFF0A4] shadow-[0_0_12px_4px_rgba(212,175,55,0.55)]" />
         </div>
 
         {/* PROGRESS BAR */}
-        <div className="absolute bottom-[10%] left-1/2 z-30 w-[68%] max-w-[520px] -translate-x-1/2">
-          <div className="relative h-[8px] overflow-hidden rounded-full border border-[#D4AF37]/60 bg-[#0D3B34]/30 backdrop-blur-sm">
-            <div className="arees-progress absolute inset-y-0 left-0 overflow-hidden rounded-full bg-gradient-to-r from-[#8F6D12] via-[#D4AF37] to-[#F5DC86]">
-              <div className="arees-shimmer absolute inset-y-[-8px] w-[80px] bg-gradient-to-r from-transparent via-white/95 to-transparent blur-[3px]" />
+        <div className="absolute bottom-[9%] left-1/2 z-30 w-[68%] max-w-[520px] -translate-x-1/2">
+          <div className="relative h-[8px] overflow-hidden rounded-full border border-[#D4AF37]/55 bg-[#0D3B34]/28 backdrop-blur-sm">
+            <div className="arees-progress absolute inset-y-0 left-0 overflow-hidden rounded-full bg-gradient-to-r from-[#80600F] via-[#D4AF37] to-[#F7DE83]">
+              <div className="arees-progress-shine absolute inset-y-[-8px] w-[76px] bg-gradient-to-r from-transparent via-white/95 to-transparent blur-[3px]" />
             </div>
           </div>
 
           <div className="mt-4 flex items-center justify-center gap-2">
-            <span className="h-px w-10 bg-gradient-to-r from-transparent to-[#B99124]" />
+            <span className="h-px w-10 bg-gradient-to-r from-transparent to-[#B99124]/80" />
 
-            <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.95)]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_14px_rgba(212,175,55,0.9)]" />
 
-            <span className="h-px w-10 bg-gradient-to-l from-transparent to-[#B99124]" />
+            <span className="h-px w-10 bg-gradient-to-l from-transparent to-[#B99124]/80" />
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes infinityShine {
-          from {
-            stroke-dashoffset: 620;
+        @keyframes logoShine {
+          0% {
+            transform: translateX(0) rotate(18deg);
+            opacity: 0;
           }
 
-          to {
-            stroke-dashoffset: 0;
+          10% {
+            opacity: 0.25;
+          }
+
+          45% {
+            opacity: 1;
+          }
+
+          80% {
+            opacity: 0.45;
+          }
+
+          100% {
+            transform: translateX(820%) rotate(18deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes logoGlow {
+          0%,
+          100% {
+            opacity: 0.25;
+          }
+
+          50% {
+            opacity: 0.72;
+          }
+        }
+
+        @keyframes centerSpark {
+          0%,
+          100% {
+            opacity: 0.25;
+            transform: scale(0.6);
+          }
+
+          50% {
+            opacity: 1;
+            transform: scale(1.25);
           }
         }
 
         @keyframes progressFill {
           0% {
-            width: 3%;
+            width: 2%;
           }
 
-          35% {
-            width: 35%;
+          28% {
+            width: 30%;
           }
 
-          70% {
-            width: 72%;
+          62% {
+            width: 67%;
           }
 
           100% {
@@ -148,26 +145,34 @@ export default function InitialSplash() {
           }
         }
 
-        @keyframes shimmerMove {
+        @keyframes progressShine {
           from {
-            transform: translateX(-120%);
+            transform: translateX(-140%);
           }
 
           to {
-            transform: translateX(700%);
+            transform: translateX(720%);
           }
         }
 
-        .arees-infinity-shine {
-          animation: infinityShine 1.7s linear infinite;
+        .arees-logo-shine {
+          animation: logoShine 1.65s ease-in-out infinite;
+        }
+
+        .arees-logo-glow {
+          animation: logoGlow 1.8s ease-in-out infinite;
+        }
+
+        .arees-center-spark {
+          animation: centerSpark 1.15s ease-in-out infinite;
         }
 
         .arees-progress {
           animation: progressFill 2.7s ease-out forwards;
         }
 
-        .arees-shimmer {
-          animation: shimmerMove 1.05s linear infinite;
+        .arees-progress-shine {
+          animation: progressShine 1s linear infinite;
         }
       `}</style>
     </>
