@@ -218,4 +218,43 @@ body {
   100% {
     stroke-dashoffset: 0;
   }
+}/* ========================================
+   AREES LOOP TYPOGRAPHY SYSTEM
+======================================== */
+
+html,
+body {
+  font-family: var(--font-ibm-plex-arabic), Arial, sans-serif;
+}
+
+button,
+input,
+textarea,
+select,
+a,
+p,
+span,
+label,
+li {
+  font-family: var(--font-ibm-plex-arabic), Arial, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.arees-heading {
+  font-family: var(--font-el-messiri), serif;
+  font-weight: 700;
+}
+
+.arees-display {
+  font-family: var(--font-el-messiri), serif;
+  font-weight: 700;
+}
+
+.arees-body {
+  font-family: var(--font-ibm-plex-arabic), Arial, sans-serif;
 }

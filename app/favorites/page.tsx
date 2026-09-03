@@ -66,7 +66,7 @@ export default function FavoritesPage() {
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
-      style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+      style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
     >
       {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -152,7 +152,7 @@ export default function FavoritesPage() {
               className="mt-2 text-[30px] font-semibold text-[#0D3B34] md:text-[38px]"
               style={{
                 fontFamily:
-                  "'Khebrat Musamim', sans-serif",
+                  "var(--font-el-messiri), sans-serif",
               }}
             >
               المفضلة
@@ -209,7 +209,7 @@ export default function FavoritesPage() {
                 className="mt-1.5 text-[24px] font-semibold"
                 style={{
                   fontFamily:
-                    "'Khebrat Musamim', sans-serif",
+                    "var(--font-el-messiri), sans-serif",
                 }}
               >
                 محفوظاتك
@@ -382,7 +382,7 @@ function FavoriteCard({
           className="mt-2 text-lg font-semibold text-[#0D3B34]"
           style={{
             fontFamily:
-              "'Khebrat Musamim', sans-serif",
+              "var(--font-el-messiri), sans-serif",
           }}
         >
           {item.title}
@@ -421,7 +421,7 @@ function EmptyState() {
         className="mt-5 text-xl font-semibold text-[#0D3B34]"
         style={{
           fontFamily:
-            "'Khebrat Musamim', sans-serif",
+            "var(--font-el-messiri), sans-serif",
         }}
       >
         قائمة المفضلة فارغة

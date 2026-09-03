@@ -105,7 +105,7 @@ export default function ExperienceDetailsPage() {
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
-      style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+      style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
     >
       {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -233,7 +233,7 @@ export default function ExperienceDetailsPage() {
 
               <h1
                 className="mt-3 max-w-3xl text-3xl font-semibold md:text-4xl"
-                style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+                style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
               >
                 {experience.title}
               </h1>
@@ -248,7 +248,7 @@ export default function ExperienceDetailsPage() {
 
             <h2
               className="mt-2 text-2xl font-semibold text-[#0D3B34]"
-              style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+              style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
             >
               احجز تجربتك
             </h2>
@@ -343,7 +343,7 @@ export default function ExperienceDetailsPage() {
 
             <h2
               className="mt-2 text-[24px] font-semibold text-[#0D3B34]"
-              style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+              style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
             >
               عن التجربة
             </h2>
@@ -375,7 +375,7 @@ export default function ExperienceDetailsPage() {
 
             <h2
               className="mt-2 text-xl font-semibold text-[#0D3B34]"
-              style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+              style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
             >
               معلومات الزيارة
             </h2>
@@ -429,7 +429,7 @@ export default function ExperienceDetailsPage() {
 
                 <h2
                   className="mt-2 text-xl font-semibold"
-                  style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+                  style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
                 >
                   زيارتك المؤهلة تتحول إلى مكافأة
                 </h2>

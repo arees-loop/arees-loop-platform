@@ -81,7 +81,7 @@ export default function PaymentPage() {
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
       style={{
-        fontFamily: "'DIN Next Arabic', sans-serif",
+        "var(--font-ibm-plex-arabic), sans-serif",
       }}
     >
       {/* BACKGROUND */}
@@ -159,7 +159,7 @@ export default function PaymentPage() {
           <h1
             className="mt-2 text-[34px] font-semibold leading-tight text-[#0D3B34] md:text-[42px]"
             style={{
-              fontFamily: "'Khebrat Musamim', sans-serif",
+              fontFamily: "var(--font-el-messiri), sans-serif",
             }}
           >
             إتمام الدفع
@@ -202,7 +202,7 @@ export default function PaymentPage() {
                   <h2
                     className="mt-4 text-[26px] font-semibold text-[#0D3B34] md:text-[29px]"
                     style={{
-                      fontFamily: "'Khebrat Musamim', sans-serif",
+                      fontFamily: "var(--font-el-messiri), sans-serif",
                     }}
                   >
                     {experience.title}
@@ -242,7 +242,7 @@ export default function PaymentPage() {
               <h2
                 className="mt-2 text-[26px] font-semibold text-[#0D3B34]"
                 style={{
-                  fontFamily: "'Khebrat Musamim', sans-serif",
+                  fontFamily: "var(--font-el-messiri), sans-serif",
                 }}
               >
                 اختر طريقة الدفع
@@ -290,7 +290,7 @@ export default function PaymentPage() {
               <h2
                 className="mt-2 text-[26px] font-semibold text-[#0D3B34]"
                 style={{
-                  fontFamily: "'Khebrat Musamim', sans-serif",
+                  fontFamily: "var(--font-el-messiri), sans-serif",
                 }}
               >
                 حماية عملية الدفع
@@ -354,7 +354,7 @@ export default function PaymentPage() {
               <h2
                 className="mt-2 text-[27px] font-semibold text-[#0D3B34]"
                 style={{
-                  fontFamily: "'Khebrat Musamim', sans-serif",
+                  fontFamily: "var(--font-el-messiri), sans-serif",
                 }}
               >
                 ملخص الدفع

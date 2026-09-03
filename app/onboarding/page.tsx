@@ -196,7 +196,7 @@ export default function OnboardingPage() {
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
-      style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+      style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
     >
       {/* PREMIUM AMBIENT BACKGROUND */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -270,7 +270,7 @@ export default function OnboardingPage() {
 
             <h1
               className="max-w-md text-[34px] font-semibold leading-[1.35]"
-              style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+              style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
             >
               تجربة تبدأ منك
               <br />
@@ -316,7 +316,7 @@ export default function OnboardingPage() {
 
                 <h2
                   className="mt-1 text-lg font-semibold"
-                  style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+                  style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
                 >
                   مرحبًا بك في Arees Loop
                 </h2>
@@ -906,7 +906,7 @@ export default function OnboardingPage() {
 
                 <h2
                   className="mt-3 text-3xl font-semibold"
-                  style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+                  style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
                 >
                   حسابك جاهز للرحلة
                 </h2>
@@ -1004,7 +1004,7 @@ function SectionHeading({
 
       <h2
         className="mt-2 text-2xl font-semibold md:text-[28px]"
-        style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+        style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
       >
         {title}
       </h2>

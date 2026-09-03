@@ -100,7 +100,7 @@ export default function MissionsPage() {
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
       style={{
-        fontFamily: "'DIN Next Arabic', sans-serif",
+        "var(--font-ibm-plex-arabic), sans-serif",
       }}
     >
       {/* BACKGROUND */}
@@ -194,7 +194,7 @@ export default function MissionsPage() {
               className="mt-2 text-[30px] font-semibold text-[#0D3B34] md:text-[38px]"
               style={{
                 fontFamily:
-                  "'Khebrat Musamim', sans-serif",
+                  "var(--font-el-messiri), sans-serif",
               }}
             >
               مهام Loop
@@ -240,7 +240,7 @@ export default function MissionsPage() {
                   className="mt-5 text-2xl font-semibold md:text-3xl"
                   style={{
                     fontFamily:
-                      "'Khebrat Musamim', sans-serif",
+                      "var(--font-el-messiri), sans-serif",
                   }}
                 >
                   اكتشف 3 معالم قريبة
@@ -404,7 +404,7 @@ export default function MissionsPage() {
                 className="mt-2 text-[24px] font-semibold text-[#0D3B34]"
                 style={{
                   fontFamily:
-                    "'Khebrat Musamim', sans-serif",
+                    "var(--font-el-messiri), sans-serif",
                 }}
               >
                 كيف تكتمل المهمة؟
@@ -609,7 +609,7 @@ function MissionCard({
         className="mt-5 text-lg font-semibold text-[#0D3B34]"
         style={{
           fontFamily:
-            "'Khebrat Musamim', sans-serif",
+            "var(--font-el-messiri), sans-serif",
         }}
       >
         {mission.title}

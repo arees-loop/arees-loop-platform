@@ -138,7 +138,7 @@ export default function NotificationsPage() {
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
       style={{
-        fontFamily: "'DIN Next Arabic', sans-serif",
+        "var(--font-ibm-plex-arabic), sans-serif",
       }}
     >
       {/* BACKGROUND */}
@@ -238,7 +238,7 @@ export default function NotificationsPage() {
               className="mt-2 text-[30px] font-semibold text-[#0D3B34] md:text-[38px]"
               style={{
                 fontFamily:
-                  "'Khebrat Musamim', sans-serif",
+                  "var(--font-el-messiri), sans-serif",
               }}
             >
               الإشعارات
@@ -334,7 +334,7 @@ export default function NotificationsPage() {
                   className="mt-5 text-lg font-semibold text-[#0D3B34]"
                   style={{
                     fontFamily:
-                      "'Khebrat Musamim', sans-serif",
+                      "var(--font-el-messiri), sans-serif",
                   }}
                 >
                   لا توجد إشعارات هنا
@@ -360,7 +360,7 @@ export default function NotificationsPage() {
                 className="mt-2 text-xl font-semibold"
                 style={{
                   fontFamily:
-                    "'Khebrat Musamim', sans-serif",
+                    "var(--font-el-messiri), sans-serif",
                 }}
               >
                 أنت تتحكم فيما يصلك

@@ -84,7 +84,7 @@ export default function ReviewBookingPage() {
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
       style={{
-        fontFamily: "'DIN Next Arabic', sans-serif",
+        "var(--font-ibm-plex-arabic), sans-serif",
       }}
     >
       {/* BACKGROUND */}
@@ -162,7 +162,7 @@ export default function ReviewBookingPage() {
           <h1
             className="mt-2 text-[34px] font-semibold leading-tight text-[#0D3B34] md:text-[42px]"
             style={{
-              fontFamily: "'Khebrat Musamim', sans-serif",
+              fontFamily: "var(--font-el-messiri), sans-serif",
             }}
           >
             راجع حجزك
@@ -204,7 +204,7 @@ export default function ReviewBookingPage() {
                   <h2
                     className="mt-4 text-[26px] font-semibold text-[#0D3B34] md:text-[30px]"
                     style={{
-                      fontFamily: "'Khebrat Musamim', sans-serif",
+                      fontFamily: "var(--font-el-messiri), sans-serif",
                     }}
                   >
                     {experience.title}
@@ -236,7 +236,7 @@ export default function ReviewBookingPage() {
                   <h2
                     className="mt-2 text-[25px] font-semibold text-[#0D3B34]"
                     style={{
-                      fontFamily: "'Khebrat Musamim', sans-serif",
+                      fontFamily: "var(--font-el-messiri), sans-serif",
                     }}
                   >
                     تفاصيل الزيارة
@@ -289,7 +289,7 @@ export default function ReviewBookingPage() {
               <h2
                 className="mt-2 text-[25px] font-semibold text-[#0D3B34]"
                 style={{
-                  fontFamily: "'Khebrat Musamim', sans-serif",
+                  fontFamily: "var(--font-el-messiri), sans-serif",
                 }}
               >
                 قبل المتابعة
@@ -354,7 +354,7 @@ export default function ReviewBookingPage() {
               <h2
                 className="mt-2 text-[27px] font-semibold text-[#0D3B34]"
                 style={{
-                  fontFamily: "'Khebrat Musamim', sans-serif",
+                  fontFamily: "var(--font-el-messiri), sans-serif",
                 }}
               >
                 إجمالي الحجز

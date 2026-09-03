@@ -111,7 +111,7 @@ export default function BookingPage() {
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
       style={{
-        fontFamily: "'DIN Next Arabic', sans-serif",
+        "var(--font-ibm-plex-arabic), sans-serif",
       }}
     >
       {/* BACKGROUND */}
@@ -189,7 +189,7 @@ export default function BookingPage() {
           <h1
             className="mt-2 text-[34px] font-semibold leading-tight text-[#0D3B34] md:text-[42px]"
             style={{
-              fontFamily: "'Khebrat Musamim', sans-serif",
+              fontFamily: "var(--font-el-messiri), sans-serif",
             }}
           >
             أكمل حجز تجربتك
@@ -232,7 +232,7 @@ export default function BookingPage() {
                   <h2
                     className="mt-4 text-[25px] font-semibold text-[#0D3B34] md:text-[28px]"
                     style={{
-                      fontFamily: "'Khebrat Musamim', sans-serif",
+                      fontFamily: "var(--font-el-messiri), sans-serif",
                     }}
                   >
                     {experience.title}
@@ -391,7 +391,7 @@ export default function BookingPage() {
               <h2
                 className="mt-2 text-[26px] font-semibold text-[#0D3B34]"
                 style={{
-                  fontFamily: "'Khebrat Musamim', sans-serif",
+                  fontFamily: "var(--font-el-messiri), sans-serif",
                 }}
               >
                 ملخص الحجز
@@ -546,7 +546,7 @@ function BookingSection({
           <h2
             className="text-[23px] font-semibold text-[#0D3B34]"
             style={{
-              fontFamily: "'Khebrat Musamim', sans-serif",
+              fontFamily: "var(--font-el-messiri), sans-serif",
             }}
           >
             {title}

@@ -105,7 +105,7 @@ export default function ExperienceDetailsPage() {
       <main
         dir="rtl"
         className="flex min-h-screen items-center justify-center bg-[#F7F5EF] px-5 text-[#0D3B34]"
-        style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+        style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
       >
         <div className="max-w-md text-center">
           <p className="text-[10px] font-bold tracking-[0.2em] text-[#B99124]">
@@ -114,7 +114,7 @@ export default function ExperienceDetailsPage() {
 
           <h1
             className="mt-3 text-3xl font-semibold"
-            style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+            style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
           >
             التجربة غير موجودة
           </h1>
@@ -140,7 +140,7 @@ export default function ExperienceDetailsPage() {
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
-      style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+      style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
     >
       {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -277,7 +277,7 @@ export default function ExperienceDetailsPage() {
               <h1
                 className="mt-3 max-w-3xl text-3xl font-semibold md:text-4xl"
                 style={{
-                  fontFamily: "'Khebrat Musamim', sans-serif",
+                  fontFamily: "var(--font-el-messiri), sans-serif",
                 }}
               >
                 {experience.title}
@@ -294,7 +294,7 @@ export default function ExperienceDetailsPage() {
             <h2
               className="mt-2 text-2xl font-semibold text-[#0D3B34]"
               style={{
-                fontFamily: "'Khebrat Musamim', sans-serif",
+                fontFamily: "var(--font-el-messiri), sans-serif",
               }}
             >
               احجز تجربتك
@@ -401,7 +401,7 @@ export default function ExperienceDetailsPage() {
             <h2
               className="mt-2 text-[24px] font-semibold text-[#0D3B34]"
               style={{
-                fontFamily: "'Khebrat Musamim', sans-serif",
+                fontFamily: "var(--font-el-messiri), sans-serif",
               }}
             >
               عن التجربة
@@ -436,7 +436,7 @@ export default function ExperienceDetailsPage() {
             <h2
               className="mt-2 text-xl font-semibold text-[#0D3B34]"
               style={{
-                fontFamily: "'Khebrat Musamim', sans-serif",
+                fontFamily: "var(--font-el-messiri), sans-serif",
               }}
             >
               معلومات الزيارة
@@ -493,7 +493,7 @@ export default function ExperienceDetailsPage() {
                   className="mt-2 text-xl font-semibold"
                   style={{
                     fontFamily:
-                      "'Khebrat Musamim', sans-serif",
+                      "var(--font-el-messiri), sans-serif",
                   }}
                 >
                   زيارتك المؤهلة تتحول إلى مكافأة

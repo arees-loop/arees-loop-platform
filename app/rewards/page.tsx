@@ -63,7 +63,7 @@ export default function RewardsPage() {
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
-      style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+      style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
     >
       {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -142,7 +142,7 @@ export default function RewardsPage() {
 
           <h1
             className="mt-2 text-[30px] font-semibold text-[#0D3B34] md:text-[38px]"
-            style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+            style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
           >
             مكافآت Loop
           </h1>
@@ -171,7 +171,7 @@ export default function RewardsPage() {
 
                   <h2
                     className="mt-2 text-2xl font-semibold"
-                    style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+                    style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
                   >
                     رصيدك الحالي
                   </h2>
@@ -225,7 +225,7 @@ export default function RewardsPage() {
 
             <h2
               className="mt-2 text-xl font-semibold"
-              style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+              style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
             >
               مستوى Explorer
             </h2>
@@ -283,7 +283,7 @@ export default function RewardsPage() {
 
                 <h2
                   className="mt-4 text-xl font-semibold"
-                  style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+                  style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
                 >
                   اكسب 150 نقطة إضافية اليوم
                 </h2>
@@ -435,7 +435,7 @@ function SectionTitle({
 
       <h2
         className="mt-1.5 text-[24px] font-semibold text-[#0D3B34]"
-        style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+        style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
       >
         {title}
       </h2>

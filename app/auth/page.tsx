@@ -57,7 +57,7 @@ export default function AuthPage() {
               <div className="mt-5">
                 <h1
                   className="text-[34px] font-semibold leading-[1.25] xl:text-[36px]"
-                  style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+                  style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
                 >
                   مرحبًا بك في أريس لوب
                 </h1>
@@ -67,7 +67,7 @@ export default function AuthPage() {
 
                   <p
                     className="text-[13px] text-[#0D3B34]/65"
-                    style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+                    style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
                   >
                     اختر الطريقة المناسبة لك للبدء
                   </p>
@@ -127,7 +127,7 @@ export default function AuthPage() {
 
                 <span
                   className="text-[11px] font-semibold text-[#0D3B34]/55"
-                  style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+                  style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
                 >
                   أو
                 </span>
@@ -146,7 +146,7 @@ export default function AuthPage() {
               {/* Footer */}
               <div
                 className="mt-5 flex items-center justify-between px-1 text-[10px] text-[#0D3B34]/55"
-                style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+                style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
               >
                 <span>© Arees Loop</span>
 
@@ -185,14 +185,14 @@ export default function AuthPage() {
           <div className="mt-5 text-center">
             <h1
               className="text-[28px] font-semibold"
-              style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+              style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
             >
               مرحبًا بك في أريس لوب
             </h1>
 
             <p
               className="mt-2 text-xs text-[#0D3B34]/60"
-              style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+              style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
             >
               اختر الطريقة المناسبة لك للبدء
             </p>
@@ -292,14 +292,14 @@ function ActionCard({
       <div className="min-w-0 flex-1 text-right">
         <p
           className="text-[18px] font-semibold leading-none"
-          style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+          style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
         >
           {title}
         </p>
 
         <p
           className="mt-[7px] text-[10px] text-[#0D3B34]/60"
-          style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+          style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
         >
           {subtitle}
         </p>
@@ -325,14 +325,14 @@ function TrustItem({
 
       <p
         className="text-[10px] font-semibold text-[#0D3B34]"
-        style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+        style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
       >
         {title}
       </p>
 
       <p
         className="mt-[2px] text-[8px] text-[#0D3B34]/50"
-        style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+        style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
       >
         {text}
       </p>
@@ -367,14 +367,14 @@ function MobileAction({
       <div className="flex-1 text-right">
         <p
           className="text-[17px] font-semibold"
-          style={{ fontFamily: "'Khebrat Musamim', sans-serif" }}
+          style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
         >
           {title}
         </p>
 
         <p
           className="mt-1 text-[9px] opacity-60"
-          style={{ fontFamily: "'DIN Next Arabic', sans-serif" }}
+          style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
         >
           {subtitle}
         </p>
