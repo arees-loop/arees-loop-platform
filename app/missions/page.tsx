@@ -100,7 +100,7 @@ export default function MissionsPage() {
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
       style={{
-        "var(--font-ibm-plex-arabic), sans-serif",
+        fontFamily: "var(--font-ibm-plex-arabic), sans-serif",
       }}
     >
       {/* BACKGROUND */}
