@@ -3,27 +3,86 @@ import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://www.areesloop.com"),
+/*
+  مؤقتًا نستخدم رابط Vercel العام لأن الدومين areesloop.com
+  لم يتم ربطه بالمشروع بعد.
 
-  title: "Arees Loop | منصة تجربة الزائر الذكية",
+  بعد ربط الدومين نغير هذا السطر فقط إلى:
+  https://www.areesloop.com
+*/
+const SITE_URL = "https://arees-loop-platform.vercel.app";
+
+const SOCIAL_IMAGE =
+  `${SITE_URL}/Image/social/arees-loop-social-preview-v2.png`;
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+
+  title: {
+    default: "Arees Loop | منصة تجربة الزائر الذكية",
+    template: "%s | Arees Loop",
+  },
 
   description:
     "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
 
+  applicationName: "Arees Loop",
+
+  authors: [
+    {
+      name: "Arees Loop",
+    },
+  ],
+
+  creator: "Arees Loop",
+
+  publisher: "Arees Loop",
+
+  /*
+    الأيقونات الجديدة الموجودة داخل app:
+    app/icon.png
+    app/apple-icon.png
+  */
+  icons: {
+    icon: [
+      {
+        url: "/icon.png",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
+
+    apple: [
+      {
+        url: "/apple-icon.png",
+        type: "image/png",
+        sizes: "180x180",
+      },
+    ],
+  },
+
+  /*
+    أثناء النسخة التجريبية نخلي الموقع غير مفهرس.
+    لاحقًا عند الإطلاق الرسمي نحولها إلى true.
+  */
   robots: {
     index: false,
     follow: false,
+
     googleBot: {
       index: false,
       follow: false,
+      noimageindex: false,
     },
   },
 
   openGraph: {
     type: "website",
+
     locale: "ar_SA",
-    url: "https://www.areesloop.com",
+
+    url: SITE_URL,
+
     siteName: "Arees Loop",
 
     title: "Arees Loop | منصة تجربة الزائر الذكية",
@@ -33,9 +92,14 @@ export const metadata: Metadata = {
 
     images: [
       {
-        url: "/Image/social/arees-loop-social-preview.png",
+        url: SOCIAL_IMAGE,
+
         width: 1200,
+
         height: 630,
+
+        type: "image/png",
+
         alt: "Arees Loop | منصة تجربة الزائر الذكية",
       },
     ],
@@ -49,7 +113,12 @@ export const metadata: Metadata = {
     description:
       "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
 
-    images: ["/Image/social/arees-loop-social-preview.png"],
+    images: [SOCIAL_IMAGE],
+  },
+
+  other: {
+    "theme-color": "#0D3B34",
+    "msapplication-TileColor": "#0D3B34",
   },
 };
 
@@ -74,6 +143,7 @@ export default function RootLayout({
           <div className="flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#073F37]/90 px-4 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D4AF37] opacity-40" />
+
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
             </span>
 
