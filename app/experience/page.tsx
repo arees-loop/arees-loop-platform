@@ -105,7 +105,7 @@ export default function ExperienceDetailsPage() {
       <main
         dir="rtl"
         className="flex min-h-screen items-center justify-center bg-[#F7F5EF] px-5 text-[#0D3B34]"
-        style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+        style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
       >
         <div className="max-w-md text-center">
           <p className="text-[10px] font-bold tracking-[0.2em] text-[#B99124]">
@@ -140,7 +140,7 @@ export default function ExperienceDetailsPage() {
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
-      style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+      style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
     >
       {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">

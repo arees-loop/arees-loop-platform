@@ -67,7 +67,7 @@ export default function AuthPage() {
 
                   <p
                     className="text-[13px] text-[#0D3B34]/65"
-                    style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+                    style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
                   >
                     اختر الطريقة المناسبة لك للبدء
                   </p>
@@ -127,7 +127,7 @@ export default function AuthPage() {
 
                 <span
                   className="text-[11px] font-semibold text-[#0D3B34]/55"
-                  style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+                  style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
                 >
                   أو
                 </span>
@@ -146,7 +146,7 @@ export default function AuthPage() {
               {/* Footer */}
               <div
                 className="mt-5 flex items-center justify-between px-1 text-[10px] text-[#0D3B34]/55"
-                style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+                style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
               >
                 <span>© Arees Loop</span>
 
@@ -192,7 +192,7 @@ export default function AuthPage() {
 
             <p
               className="mt-2 text-xs text-[#0D3B34]/60"
-              style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+              style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
             >
               اختر الطريقة المناسبة لك للبدء
             </p>
@@ -299,7 +299,7 @@ function ActionCard({
 
         <p
           className="mt-[7px] text-[10px] text-[#0D3B34]/60"
-          style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+          style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
         >
           {subtitle}
         </p>
@@ -325,14 +325,14 @@ function TrustItem({
 
       <p
         className="text-[10px] font-semibold text-[#0D3B34]"
-        style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+        style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
       >
         {title}
       </p>
 
       <p
         className="mt-[2px] text-[8px] text-[#0D3B34]/50"
-        style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+        style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
       >
         {text}
       </p>
@@ -374,7 +374,7 @@ function MobileAction({
 
         <p
           className="mt-1 text-[9px] opacity-60"
-          style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
+          style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
         >
           {subtitle}
         </p>

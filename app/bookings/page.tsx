@@ -105,8 +105,7 @@ export default function ExperienceDetailsPage() {
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
-      style={{ "var(--font-ibm-plex-arabic), sans-serif" }}
-    >
+style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}    >
       {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_10%,rgba(212,175,55,0.10),transparent_25%),radial-gradient(circle_at_8%_82%,rgba(13,59,52,0.08),transparent_30%),linear-gradient(135deg,#FAF8F2_0%,#F4F1E8_52%,#F8F6F0_100%)]" />
