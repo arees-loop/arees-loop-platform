@@ -66,8 +66,11 @@ export default function AuthPage() {
                   <span className="h-px w-7 bg-[#D4AF37]" />
 
                   <p
-                    className="text-[13px] text-[#0D3B34]/65"
-                    style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
+                    className="text-[13px] text-[#0D3B34]/70"
+                    style={{
+                      fontFamily:
+                        "var(--font-ibm-plex-arabic), sans-serif",
+                    }}
                   >
                     اختر الطريقة المناسبة لك للبدء
                   </p>
@@ -76,8 +79,8 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              {/* Trust */}
-              <div className="mt-7 grid w-full grid-cols-3 gap-3">
+              {/* TRUST ITEMS */}
+              <div className="mt-6 flex w-full items-center justify-center gap-3">
                 <TrustItem
                   icon={<ShieldIcon />}
                   title="آمن وموثوق"
@@ -127,7 +130,10 @@ export default function AuthPage() {
 
                 <span
                   className="text-[11px] font-semibold text-[#0D3B34]/55"
-                  style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
+                  style={{
+                    fontFamily:
+                      "var(--font-ibm-plex-arabic), sans-serif",
+                  }}
                 >
                   أو
                 </span>
@@ -146,7 +152,10 @@ export default function AuthPage() {
               {/* Footer */}
               <div
                 className="mt-5 flex items-center justify-between px-1 text-[10px] text-[#0D3B34]/55"
-                style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
+                style={{
+                  fontFamily:
+                    "var(--font-ibm-plex-arabic), sans-serif",
+                }}
               >
                 <span>© Arees Loop</span>
 
@@ -192,10 +201,34 @@ export default function AuthPage() {
 
             <p
               className="mt-2 text-xs text-[#0D3B34]/60"
-              style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
+              style={{
+                fontFamily:
+                  "var(--font-ibm-plex-arabic), sans-serif",
+              }}
             >
               اختر الطريقة المناسبة لك للبدء
             </p>
+          </div>
+
+          {/* MOBILE TRUST */}
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <TrustItem
+              icon={<ShieldIcon />}
+              title="آمن وموثوق"
+              text="حماية بياناتك"
+            />
+
+            <TrustItem
+              icon={<SparkIcon />}
+              title="تجارب مختارة"
+              text="توصيات أفضل"
+            />
+
+            <TrustItem
+              icon={<HeadsetIcon />}
+              title="دعم مستمر"
+              text="نحن هنا لمساعدتك"
+            />
           </div>
 
           <div className="mt-6">
@@ -225,24 +258,6 @@ export default function AuthPage() {
               icon={<GuestIcon />}
               title="المتابعة كزائر"
               subtitle="تصفح المنصة بدون تسجيل دخول"
-            />
-          </div>
-
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            <TrustItem
-              icon={<ShieldIcon />}
-              title="آمن وموثوق"
-              text="حماية بياناتك"
-            />
-            <TrustItem
-              icon={<SparkIcon />}
-              title="تجارب مختارة"
-              text="توصيات أفضل"
-            />
-            <TrustItem
-              icon={<HeadsetIcon />}
-              title="دعم مستمر"
-              text="نحن هنا لمساعدتك"
             />
           </div>
         </div>
@@ -299,7 +314,10 @@ function ActionCard({
 
         <p
           className="mt-[7px] text-[10px] text-[#0D3B34]/60"
-          style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
+          style={{
+            fontFamily:
+              "var(--font-ibm-plex-arabic), sans-serif",
+          }}
         >
           {subtitle}
         </p>
@@ -310,6 +328,7 @@ function ActionCard({
   );
 }
 
+/* TRUST — COMPACT HORIZONTAL CARD */
 function TrustItem({
   icon,
   title,
@@ -320,22 +339,64 @@ function TrustItem({
   text: string;
 }) {
   return (
-    <div className="flex h-[78px] flex-col items-center justify-center rounded-[17px] border border-white/45 bg-white/[0.11] text-center backdrop-blur-[8px]">
-      <div className="mb-1 text-[#B88916]">{icon}</div>
-
-      <p
-        className="text-[10px] font-semibold text-[#0D3B34]"
-        style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
+    <div
+      className="
+        flex
+        h-[64px]
+        flex-1
+        items-center
+        justify-center
+        gap-3
+        rounded-[16px]
+        border
+        border-white/50
+        bg-white/[0.20]
+        px-3
+        shadow-[0_8px_24px_rgba(0,0,0,0.035)]
+        backdrop-blur-[9px]
+      "
+    >
+      {/* ICON RIGHT */}
+      <div
+        className="
+          flex
+          h-[38px]
+          w-[38px]
+          shrink-0
+          items-center
+          justify-center
+          rounded-[11px]
+          border
+          border-white/60
+          bg-white/[0.22]
+          text-[#C39112]
+        "
       >
-        {title}
-      </p>
+        {icon}
+      </div>
 
-      <p
-        className="mt-[2px] text-[8px] text-[#0D3B34]/50"
-        style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
-      >
-        {text}
-      </p>
+      {/* TEXT LEFT */}
+      <div className="min-w-0 text-right">
+        <p
+          className="whitespace-nowrap text-[11px] font-bold text-[#0D3B34]"
+          style={{
+            fontFamily:
+              "var(--font-ibm-plex-arabic), sans-serif",
+          }}
+        >
+          {title}
+        </p>
+
+        <p
+          className="mt-[3px] whitespace-nowrap text-[9px] font-medium text-[#0D3B34]/65"
+          style={{
+            fontFamily:
+              "var(--font-ibm-plex-arabic), sans-serif",
+          }}
+        >
+          {text}
+        </p>
+      </div>
     </div>
   );
 }
@@ -362,7 +423,9 @@ function MobileAction({
           : "border-white/55 bg-white/[0.16] backdrop-blur-[10px]"
       }`}
     >
-      <div className="flex h-8 w-8 items-center justify-center">{icon}</div>
+      <div className="flex h-8 w-8 items-center justify-center">
+        {icon}
+      </div>
 
       <div className="flex-1 text-right">
         <p
@@ -374,7 +437,10 @@ function MobileAction({
 
         <p
           className="mt-1 text-[9px] opacity-60"
-          style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
+          style={{
+            fontFamily:
+              "var(--font-ibm-plex-arabic), sans-serif",
+          }}
         >
           {subtitle}
         </p>
@@ -467,12 +533,12 @@ function ArrowIcon() {
 function ShieldIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="19"
+      height="19"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
@@ -485,12 +551,12 @@ function ShieldIcon() {
 function SparkIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="19"
+      height="19"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
@@ -502,12 +568,12 @@ function SparkIcon() {
 function HeadsetIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="19"
+      height="19"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
