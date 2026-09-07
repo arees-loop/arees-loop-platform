@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 type ServiceStatus =
   | "DRAFT"
@@ -18,6 +24,10 @@ type Service = {
   license: string;
   city: string;
   locationName: string;
+  formattedAddress: string;
+  placeId: string;
+  latitude: number | null;
+  longitude: number | null;
   basePrice: number;
   vatRate: number;
   finalPrice: number;
@@ -25,6 +35,15 @@ type Service = {
   bookings: number;
   status: ServiceStatus;
   imageCount: number;
+};
+
+type LocationValue = {
+  city: string;
+  locationName: string;
+  formattedAddress: string;
+  placeId: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 const statusConfig: Record<
@@ -58,7 +77,11 @@ const initialServices: Service[] = [
     subCategory: "متحف",
     license: "ترخيص وزارة السياحة - 73104550",
     city: "المدينة المنورة",
-    locationName: "المنطقة المركزية",
+    locationName: "متحف وبستان الصافية",
+    formattedAddress: "المدينة المنورة، المملكة العربية السعودية",
+    placeId: "",
+    latitude: 24.4672,
+    longitude: 39.6111,
     basePrice: 60.87,
     vatRate: 15,
     finalPrice: 70,
@@ -76,6 +99,10 @@ const initialServices: Service[] = [
     license: "ترخيص تنظيم الرحلات - TR-209844",
     city: "المدينة المنورة",
     locationName: "نقطة تجمع معتمدة",
+    formattedAddress: "المدينة المنورة، المملكة العربية السعودية",
+    placeId: "",
+    latitude: 24.4686,
+    longitude: 39.6133,
     basePrice: 121.74,
     vatRate: 15,
     finalPrice: 140,
@@ -93,6 +120,10 @@ const initialServices: Service[] = [
     license: "ترخيص النشاط - ACT-55821",
     city: "المدينة المنورة",
     locationName: "قباء",
+    formattedAddress: "قباء، المدينة المنورة، المملكة العربية السعودية",
+    placeId: "",
+    latitude: 24.4397,
+    longitude: 39.6172,
     basePrice: 82.61,
     vatRate: 15,
     finalPrice: 95,
@@ -205,6 +236,10 @@ export default function PartnerServicesPage() {
     license: "",
     city: "",
     locationName: "",
+    formattedAddress: "",
+    placeId: "",
+    latitude: null as number | null,
+    longitude: null as number | null,
     basePrice: "",
     vatRate: "15",
     capacity: "",
@@ -261,6 +296,10 @@ export default function PartnerServicesPage() {
       license: "",
       city: "",
       locationName: "",
+      formattedAddress: "",
+      placeId: "",
+      latitude: null,
+      longitude: null,
       basePrice: "",
       vatRate: "15",
       capacity: "",
@@ -282,6 +321,10 @@ export default function PartnerServicesPage() {
       license: form.license || "غير مرتبط",
       city: form.city || "غير محدد",
       locationName: form.locationName || "غير محدد",
+      formattedAddress: form.formattedAddress || "",
+      placeId: form.placeId || "",
+      latitude: form.latitude,
+      longitude: form.longitude,
       basePrice: Number(form.basePrice) || 0,
       vatRate: Number(form.vatRate) || 0,
       finalPrice: calculatedFinalPrice,
@@ -306,6 +349,10 @@ export default function PartnerServicesPage() {
       license: form.license || "غير مرتبط",
       city: form.city || "غير محدد",
       locationName: form.locationName || "غير محدد",
+      formattedAddress: form.formattedAddress || "",
+      placeId: form.placeId || "",
+      latitude: form.latitude,
+      longitude: form.longitude,
       basePrice: Number(form.basePrice) || 0,
       vatRate: Number(form.vatRate) || 0,
       finalPrice: calculatedFinalPrice,
@@ -318,6 +365,18 @@ export default function PartnerServicesPage() {
     setServices((current) => [newService, ...current]);
     resetForm();
     setShowForm(false);
+  };
+
+  const updateLocation = (location: LocationValue) => {
+    setForm((current) => ({
+      ...current,
+      city: location.city,
+      locationName: location.locationName,
+      formattedAddress: location.formattedAddress,
+      placeId: location.placeId,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    }));
   };
 
   return (
@@ -592,6 +651,27 @@ export default function PartnerServicesPage() {
 
                       <div className="mt-4 rounded-2xl bg-[#F7F6F1] p-4">
                         <p className="text-[10px] text-[#0D3B34]/40">
+                          الموقع
+                        </p>
+
+                        <p className="mt-1 text-xs font-semibold text-[#0D3B34]/70">
+                          {service.locationName}
+                        </p>
+
+                        {service.latitude !== null &&
+                          service.longitude !== null && (
+                            <p
+                              className="mt-1 text-[10px] text-[#0D3B34]/40"
+                              dir="ltr"
+                            >
+                              {service.latitude.toFixed(5)},{" "}
+                              {service.longitude.toFixed(5)}
+                            </p>
+                          )}
+                      </div>
+
+                      <div className="mt-3 rounded-2xl bg-[#F7F6F1] p-4">
+                        <p className="text-[10px] text-[#0D3B34]/40">
                           الترخيص المرتبط
                         </p>
 
@@ -805,37 +885,20 @@ export default function PartnerServicesPage() {
 
               {/* LOCATION */}
               <FormSection
-                eyebrow="LOCATION"
-                title="الموقع والتنفيذ"
+                eyebrow="LOCATION ENGINE"
+                title="الموقع ونقطة التنفيذ"
               >
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="المدينة">
-                    <input
-                      value={form.city}
-                      onChange={(e) =>
-                        setForm((current) => ({
-                          ...current,
-                          city: e.target.value,
-                        }))
-                      }
-                      placeholder="المدينة المنورة"
-                      className={inputClass}
-                    />
-                  </Field>
-
-                  <Field label="اسم الموقع / نقطة التجمع">
-                    <input
-                      value={form.locationName}
-                      onChange={(e) =>
-                        setForm((current) => ({
-                          ...current,
-                          locationName: e.target.value,
-                        }))
-                      }
-                      className={inputClass}
-                    />
-                  </Field>
-                </div>
+                <ServiceLocationPicker
+                  value={{
+                    city: form.city,
+                    locationName: form.locationName,
+                    formattedAddress: form.formattedAddress,
+                    placeId: form.placeId,
+                    latitude: form.latitude,
+                    longitude: form.longitude,
+                  }}
+                  onChange={updateLocation}
+                />
 
                 <Field label="تعليمات الوصول بعد الحجز">
                   <textarea
@@ -848,13 +911,15 @@ export default function PartnerServicesPage() {
                     }
                     rows={3}
                     className={`${inputClass} h-auto py-4`}
-                    placeholder="المعلومات التشغيلية التي تظهر للعميل بعد الحجز..."
+                    placeholder="مثال: الدخول من البوابة الشمالية والتوجه إلى نقطة الاستقبال..."
                   />
                 </Field>
 
                 <div className="rounded-[18px] bg-[#EEF3F0] p-4 text-xs leading-6 text-[#0D3B34]/65">
                   بيانات التواصل المباشر للمورد لا تظهر في صفحة الخدمة.
-                  العميل يحصل فقط على معلومات التنفيذ اللازمة للحجز.
+                  العميل يحصل فقط على معلومات التنفيذ اللازمة للحجز،
+                  بينما تستخدم المنصة الإحداثيات للاكتشاف القريب
+                  والاتجاهات والتحقق من الزيارة لاحقًا.
                 </div>
               </FormSection>
 
@@ -1031,6 +1096,17 @@ export default function PartnerServicesPage() {
                   إلى «تحت المراجعة» حتى تعتمدها إدارة Arees Loop.
                 </p>
 
+                {form.latitude === null || form.longitude === null ? (
+                  <div className="mt-4 rounded-[16px] border border-[#E6C24D]/25 bg-[#E6C24D]/10 px-4 py-3 text-xs text-[#F4D96C]">
+                    لم يتم تحديد موقع الخدمة بعد. يمكنك حفظها كمسودة،
+                    لكن يفضل تحديد الموقع قبل إرسالها للمراجعة.
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-[16px] border border-[#67B789]/20 bg-[#67B789]/10 px-4 py-3 text-xs text-[#A9E4BF]">
+                    ✓ تم ربط الخدمة بموقع جغرافي صالح.
+                  </div>
+                )}
+
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
@@ -1065,6 +1141,624 @@ export default function PartnerServicesPage() {
     </main>
   );
 }
+
+
+function ServiceLocationPicker({
+  value,
+  onChange,
+}: {
+  value: LocationValue;
+  onChange: (value: LocationValue) => void;
+}) {
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const autocompleteContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const geocoderRef = useRef<any>(null);
+
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+
+  const [status, setStatus] = useState(
+    "جاري تشغيل محرك الموقع..."
+  );
+
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  const extractCity = (components: any[] = []) => {
+    const priorities = [
+      "locality",
+      "administrative_area_level_2",
+      "administrative_area_level_1",
+    ];
+
+    for (const type of priorities) {
+      const component = components.find((item: any) =>
+        item.types?.includes(type)
+      );
+
+      if (component) {
+        return (
+          component.long_name ||
+          component.longText ||
+          component.short_name ||
+          component.shortText ||
+          ""
+        );
+      }
+    }
+
+    return "";
+  };
+
+  const reverseGeocode = async (
+    lat: number,
+    lng: number,
+    source: "MAP" | "GPS" | "DRAG"
+  ) => {
+    const current = valueRef.current;
+
+    onChangeRef.current({
+      ...current,
+      latitude: lat,
+      longitude: lng,
+    });
+
+    if (!geocoderRef.current) {
+      setStatus("تم تحديد الإحداثيات، وتعذر قراءة العنوان");
+      return;
+    }
+
+    try {
+      setStatus("جاري قراءة العنوان من Google...");
+
+      const response = await geocoderRef.current.geocode({
+        location: { lat, lng },
+        language: "ar",
+        region: "SA",
+      });
+
+      const result = response.results?.[0];
+
+      if (!result) {
+        setStatus("تم تحديد الإحداثيات، ولم يُعثر على عنوان مطابق");
+        return;
+      }
+
+      const city =
+        extractCity(result.address_components || []) ||
+        current.city ||
+        "غير محدد";
+
+      const locationName =
+        result.address_components?.[0]?.long_name ||
+        current.locationName ||
+        (source === "GPS"
+          ? "موقعي الحالي"
+          : "موقع محدد من الخريطة");
+
+      onChangeRef.current({
+        city,
+        locationName,
+        formattedAddress: result.formatted_address || "",
+        placeId: result.place_id || "",
+        latitude: lat,
+        longitude: lng,
+      });
+
+      setStatus(
+        source === "GPS"
+          ? "تم تحديد موقعك وقراءة العنوان بنجاح"
+          : "تم تحديد الموقع وقراءة العنوان بنجاح"
+      );
+    } catch (error) {
+      console.error("Reverse geocoding error:", error);
+
+      onChangeRef.current({
+        ...current,
+        latitude: lat,
+        longitude: lng,
+      });
+
+      setStatus("تم تحديد الإحداثيات، وتعذر جلب العنوان");
+    }
+  };
+
+  useEffect(() => {
+    const apiKey =
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    if (!apiKey) {
+      setStatus(
+        "مفتاح Google Maps غير موجود في .env.local"
+      );
+      return;
+    }
+
+    let destroyed = false;
+
+    async function initMap() {
+      if (
+        destroyed ||
+        !mapRef.current ||
+        !autocompleteContainerRef.current ||
+        !window.google?.maps
+      ) {
+        return;
+      }
+
+      try {
+        await window.google.maps.importLibrary("maps");
+
+        const placesLibrary =
+          await window.google.maps.importLibrary("places");
+
+        const { PlaceAutocompleteElement } = placesLibrary;
+
+        geocoderRef.current = new window.google.maps.Geocoder();
+
+        const current = valueRef.current;
+
+        const defaultLocation = {
+          lat: current.latitude ?? 24.4672,
+          lng: current.longitude ?? 39.6111,
+        };
+
+        const map = new window.google.maps.Map(
+          mapRef.current,
+          {
+            center: defaultLocation,
+            zoom:
+              current.latitude !== null &&
+              current.longitude !== null
+                ? 16
+                : 13,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            gestureHandling: "greedy",
+          }
+        );
+
+        mapInstanceRef.current = map;
+
+        const marker = new window.google.maps.Marker({
+          map,
+          position: defaultLocation,
+          draggable: true,
+          title: "موقع الخدمة",
+        });
+
+        markerRef.current = marker;
+
+        const autocomplete =
+          new PlaceAutocompleteElement();
+
+        autocomplete.placeholder =
+          "ابحث باسم المكان أو نقطة التجمع...";
+
+        try {
+          autocomplete.includedRegionCodes = ["sa"];
+        } catch {}
+
+        autocompleteContainerRef.current.innerHTML = "";
+        autocompleteContainerRef.current.appendChild(
+          autocomplete
+        );
+
+        autocomplete.addEventListener(
+          "gmp-select",
+          async (event: any) => {
+            try {
+              setStatus("جاري تحميل بيانات المكان...");
+
+              const prediction = event.placePrediction;
+
+              if (!prediction) {
+                setStatus("تعذر قراءة نتيجة البحث");
+                return;
+              }
+
+              const place = prediction.toPlace();
+
+              await place.fetchFields({
+                fields: [
+                  "id",
+                  "displayName",
+                  "formattedAddress",
+                  "location",
+                  "viewport",
+                  "addressComponents",
+                ],
+              });
+
+              if (!place.location) {
+                setStatus(
+                  "المكان المختار لا يحتوي على موقع جغرافي"
+                );
+                return;
+              }
+
+              const lat = place.location.lat();
+              const lng = place.location.lng();
+
+              if (place.viewport) {
+                map.fitBounds(place.viewport);
+              } else {
+                map.panTo({ lat, lng });
+                map.setZoom(17);
+              }
+
+              marker.setPosition({ lat, lng });
+
+              const city =
+                extractCity(place.addressComponents || []) ||
+                "غير محدد";
+
+              onChangeRef.current({
+                city,
+                locationName:
+                  place.displayName || "موقع الخدمة",
+                formattedAddress:
+                  place.formattedAddress || "",
+                placeId: place.id || "",
+                latitude: lat,
+                longitude: lng,
+              });
+
+              setStatus(
+                "تم ربط الموقع بالخدمة بنجاح"
+              );
+            } catch (error) {
+              console.error(
+                "Places selection error:",
+                error
+              );
+
+              setStatus(
+                "حدث خطأ أثناء جلب بيانات المكان"
+              );
+            }
+          }
+        );
+
+        map.addListener("click", async (event: any) => {
+          if (!event.latLng) return;
+
+          const lat = event.latLng.lat();
+          const lng = event.latLng.lng();
+
+          marker.setPosition({ lat, lng });
+
+          await reverseGeocode(lat, lng, "MAP");
+        });
+
+        marker.addListener(
+          "dragend",
+          async (event: any) => {
+            if (!event.latLng) return;
+
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+
+            await reverseGeocode(lat, lng, "DRAG");
+          }
+        );
+
+        setReady(true);
+        setStatus(
+          "Google Maps و Places و Geocoding متصلة بنجاح"
+        );
+      } catch (error) {
+        console.error(
+          "Location engine initialization error:",
+          error
+        );
+
+        setStatus(
+          "تعذر تشغيل محرك الموقع"
+        );
+      }
+    }
+
+    if (window.google?.maps) {
+      initMap();
+
+      return () => {
+        destroyed = true;
+      };
+    }
+
+    const existingScript = document.querySelector(
+      'script[data-arees-google-maps="true"]'
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", initMap);
+
+      return () => {
+        destroyed = true;
+
+        existingScript.removeEventListener(
+          "load",
+          initMap
+        );
+      };
+    }
+
+    const script = document.createElement("script");
+
+    script.src =
+      `https://maps.googleapis.com/maps/api/js` +
+      `?key=${apiKey}` +
+      `&v=weekly` +
+      `&language=ar` +
+      `&region=SA`;
+
+    script.async = true;
+    script.defer = true;
+
+    script.dataset.areesGoogleMaps = "true";
+
+    script.onload = initMap;
+
+    script.onerror = () => {
+      setStatus("تعذر تحميل Google Maps");
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      destroyed = true;
+      script.onload = null;
+    };
+  }, []);
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setStatus("المتصفح لا يدعم تحديد الموقع");
+      return;
+    }
+
+    setStatus("جاري تحديد موقعك...");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.panTo({ lat, lng });
+          mapInstanceRef.current.setZoom(17);
+        }
+
+        if (markerRef.current) {
+          markerRef.current.setPosition({ lat, lng });
+        }
+
+        await reverseGeocode(lat, lng, "GPS");
+      },
+
+      () => {
+        setStatus(
+          "تعذر تحديد موقعك. تأكد من السماح للمتصفح بالوصول إلى الموقع."
+        );
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
+  const clearLocation = () => {
+    onChangeRef.current({
+      city: "",
+      locationName: "",
+      formattedAddress: "",
+      placeId: "",
+      latitude: null,
+      longitude: null,
+    });
+
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setCenter({
+        lat: 24.4672,
+        lng: 39.6111,
+      });
+
+      mapInstanceRef.current.setZoom(13);
+    }
+
+    if (markerRef.current) {
+      markerRef.current.setPosition({
+        lat: 24.4672,
+        lng: 39.6111,
+      });
+    }
+
+    setStatus("تم مسح الموقع المختار");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="mb-2 text-xs font-semibold text-[#0D3B34]/65">
+          البحث عن موقع الخدمة
+        </p>
+
+        <div
+          ref={autocompleteContainerRef}
+          className="arees-service-autocomplete min-h-[58px] w-full"
+        />
+
+        <p className="mt-2 text-[10px] leading-5 text-[#0D3B34]/45">
+          ابحث باسم المتحف، الفندق، المطعم، الوجهة أو نقطة التجمع.
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-[24px] border border-[#0D3B34]/10 bg-[#ECE9DF] p-2">
+        <div
+          ref={mapRef}
+          className="h-[360px] w-full rounded-[18px]"
+        />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={useMyLocation}
+          className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white"
+        >
+          استخدام موقعي الحالي
+        </button>
+
+        <button
+          type="button"
+          onClick={clearLocation}
+          className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold text-[#0D3B34]/65"
+        >
+          مسح الموقع
+        </button>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <LocationInfo
+          label="اسم المكان"
+          value={
+            value.locationName ||
+            "لم يتم الاختيار"
+          }
+        />
+
+        <LocationInfo
+          label="المدينة"
+          value={value.city || "—"}
+        />
+
+        <LocationInfo
+          label="Latitude"
+          value={
+            value.latitude !== null
+              ? value.latitude.toFixed(6)
+              : "—"
+          }
+          ltr
+        />
+
+        <LocationInfo
+          label="Longitude"
+          value={
+            value.longitude !== null
+              ? value.longitude.toFixed(6)
+              : "—"
+          }
+          ltr
+        />
+      </div>
+
+      <div className="rounded-[18px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-4">
+        <p className="text-[10px] text-[#0D3B34]/40">
+          العنوان
+        </p>
+
+        <p className="mt-2 text-xs font-bold leading-6 text-[#0D3B34]/70">
+          {value.formattedAddress || "—"}
+        </p>
+      </div>
+
+      <div className="rounded-[18px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-4">
+        <p className="text-[10px] text-[#0D3B34]/40">
+          Google Place ID
+        </p>
+
+        <p
+          className="mt-2 break-all text-[10px] font-bold text-[#0D3B34]/60"
+          dir="ltr"
+        >
+          {value.placeId || "—"}
+        </p>
+      </div>
+
+      <div
+        className={`flex items-center justify-between gap-4 rounded-[18px] px-4 py-3 ${
+          ready
+            ? "bg-[#EAF5EE]"
+            : "bg-[#FFF9E8]"
+        }`}
+      >
+        <div>
+          <p className="text-[9px] font-bold tracking-[0.12em] text-[#0D3B34]/40">
+            LOCATION ENGINE STATUS
+          </p>
+
+          <p
+            className={`mt-1 text-xs font-bold ${
+              ready
+                ? "text-[#267247]"
+                : "text-[#8B6812]"
+            }`}
+          >
+            {status}
+          </p>
+        </div>
+
+        <div className="h-3 w-3 shrink-0 rounded-full bg-[#D4AF37]" />
+      </div>
+
+      <style jsx global>{`
+        .arees-service-autocomplete {
+          position: relative;
+          z-index: 250;
+        }
+
+        .arees-service-autocomplete
+          gmp-place-autocomplete {
+          width: 100%;
+          min-height: 58px;
+          direction: rtl;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function LocationInfo({
+  label,
+  value,
+  ltr = false,
+}: {
+  label: string;
+  value: string;
+  ltr?: boolean;
+}) {
+  return (
+    <div className="rounded-[18px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-4">
+      <p className="text-[10px] text-[#0D3B34]/40">
+        {label}
+      </p>
+
+      <p
+        dir={ltr ? "ltr" : "rtl"}
+        className="mt-2 break-all text-xs font-bold text-[#0D3B34]/70"
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
 
 const inputClass =
   "h-14 w-full rounded-2xl border border-[#0D3B34]/10 bg-[#FAF9F5] px-4 text-sm text-[#0D3B34] outline-none transition placeholder:text-[#0D3B34]/30 focus:border-[#D4AF37]/60 focus:bg-white";
