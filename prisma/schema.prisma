@@ -6,3 +6,385 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum UserRole {
+  CUSTOMER
+  PARTNER_OWNER
+  PARTNER_ADMIN
+  PARTNER_STAFF
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+  DISABLED
+}
+
+enum PartnerStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  PRE_APPROVED
+  WAITING_AGREEMENT
+  AGREEMENT_ACCEPTED
+  APPROVED
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum LicenseStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+  SUSPENDED
+  REJECTED
+}
+
+enum ServiceStatus {
+  DRAFT
+  UNDER_REVIEW
+  PUBLISHED
+  SUSPENDED
+  REJECTED
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum SettlementStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum AgreementStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  TERMINATED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  username     String?    @unique
+  phone        String?    @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  role         UserRole   @default(CUSTOMER)
+  status       UserStatus @default(PENDING_VERIFICATION)
+
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partnerMemberships PartnerMember[]
+  bookings           Booking[]
+  auditLogs          AuditLog[]      @relation("AuditUser")
+}
+
+model Partner {
+  id String @id @default(cuid())
+
+  legalNameAr String
+  legalNameEn String?
+  tradeNameAr String?
+  tradeNameEn String?
+
+  unifiedNumber      String? @unique
+  commercialRegister String? @unique
+  vatNumber          String?
+
+  logoUrl    String?
+  websiteUrl String?
+
+  financeContactName  String?
+  financeContactEmail String?
+  financeContactPhone String?
+
+  mainContactName     String?
+  mainContactEmail    String?
+  mainContactPhone    String?
+  mainContactJobTitle String?
+
+  iban            String?
+  bankName        String?
+  swiftCode       String?
+  beneficiaryName String?
+
+  commissionRate Decimal? @db.Decimal(5, 2)
+  transferFee    Decimal  @default(1.00) @db.Decimal(10, 2)
+
+  status PartnerStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members     PartnerMember[]
+  licenses    License[]
+  services    Service[]
+  bookings    Booking[]
+  invoices    Invoice[]
+  settlements Settlement[]
+  agreements  Agreement[]
+}
+
+model PartnerMember {
+  id String @id @default(cuid())
+
+  partnerId String
+  userId    String
+
+  jobTitle    String?
+  permissions Json?
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, userId])
+}
+
+model License {
+  id String @id @default(cuid())
+
+  partnerId String
+
+  type          String
+  issuer        String
+  licenseNumber String
+  issueDate     DateTime?
+  expiryDate    DateTime?
+  documentUrl   String?
+
+  status LicenseStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  services Service[]
+
+  @@unique([partnerId, licenseNumber])
+}
+
+model Service {
+  id String @id @default(cuid())
+
+  partnerId String
+  licenseId String?
+
+  nameAr String
+  nameEn String?
+
+  category    String
+  subCategory String?
+
+  descriptionAr String?
+  descriptionEn String?
+
+  city             String?
+  locationName     String?
+  formattedAddress String?
+  placeId          String?
+
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+
+  basePrice  Decimal @db.Decimal(12, 2)
+  vatRate    Decimal @default(15.00) @db.Decimal(5, 2)
+  finalPrice Decimal @db.Decimal(12, 2)
+
+  capacity            Int?
+  cancellationPolicy  String?
+  meetingInstructions String?
+
+  status ServiceStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  license License? @relation(fields: [licenseId], references: [id], onDelete: SetNull)
+
+  images   ServiceImage[]
+  bookings Booking[]
+}
+
+model ServiceImage {
+  id        String @id @default(cuid())
+  serviceId String
+  url       String
+  sortOrder Int    @default(0)
+
+  createdAt DateTime @default(now())
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id String @id @default(cuid())
+
+  reference String @unique
+
+  userId    String?
+  partnerId String
+  serviceId String
+
+  customerName  String
+  customerEmail String?
+  customerPhone String?
+
+  guests Int @default(1)
+
+  baseAmount  Decimal @db.Decimal(12, 2)
+  vatAmount   Decimal @db.Decimal(12, 2)
+  totalAmount Decimal @db.Decimal(12, 2)
+
+  paymentReference String?
+  paymentMethod    String?
+
+  status BookingStatus @default(PENDING)
+
+  bookingDate DateTime  @default(now())
+  serviceDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  invoice Invoice?
+}
+
+model Invoice {
+  id String @id @default(cuid())
+
+  invoiceNumber String @unique
+  bookingId     String @unique
+  partnerId     String
+
+  subtotal    Decimal @db.Decimal(12, 2)
+  vatAmount   Decimal @db.Decimal(12, 2)
+  totalAmount Decimal @db.Decimal(12, 2)
+
+  qrData String?
+  pdfUrl String?
+
+  issuedAt DateTime?
+  paidAt   DateTime?
+
+  status InvoiceStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+}
+
+model Settlement {
+  id String @id @default(cuid())
+
+  settlementNumber String @unique
+  partnerId        String
+
+  periodStart DateTime
+  periodEnd   DateTime
+
+  grossSales         Decimal @db.Decimal(12, 2)
+  platformCommission Decimal @db.Decimal(12, 2)
+  paymentFees        Decimal @db.Decimal(12, 2)
+  transferFees       Decimal @db.Decimal(12, 2)
+  refunds            Decimal @default(0) @db.Decimal(12, 2)
+  adjustments        Decimal @default(0) @db.Decimal(12, 2)
+  netAmount          Decimal @db.Decimal(12, 2)
+
+  scheduledAt DateTime?
+  completedAt DateTime?
+
+  status SettlementStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+}
+
+model Agreement {
+  id String @id @default(cuid())
+
+  partnerId String
+
+  version        String
+  commissionRate Decimal? @db.Decimal(5, 2)
+
+  termsSnapshot     Json
+  acceptedByName    String?
+  acceptedByEmail   String?
+  acceptedIp        String?
+  acceptedUserAgent String?
+
+  sentAt     DateTime?
+  acceptedAt DateTime?
+
+  status AgreementStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  userId String?
+
+  action     String
+  entityType String
+  entityId   String?
+
+  beforeData Json?
+  afterData  Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  user User? @relation("AuditUser", fields: [userId], references: [id], onDelete: SetNull)
+}
