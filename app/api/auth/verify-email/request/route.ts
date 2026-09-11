@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  AUTH_RATE_LIMITS,
+  checkRateLimit,
+  createIdentityRateLimitKey,
+  createIpRateLimitKey,
+  getRateLimitHeaders,
+} from "@/lib/rate-limit";
+
 import { createVerificationToken } from "@/lib/verification-token";
 
 function databaseNotConfigured() {
@@ -25,12 +33,50 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function rateLimitExceeded(
+  retryAfterSeconds: number,
+  headers: Record<string, string>,
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "RATE_LIMIT_EXCEEDED",
+      message:
+        "Too many verification requests. Please try again later.",
+      retryAfterSeconds,
+    },
+    {
+      status: 429,
+      headers,
+    },
+  );
+}
+
 export async function POST(request: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return databaseNotConfigured();
   }
 
   try {
+    /*
+     * First protection layer:
+     * Limit requests by IP address.
+     */
+    const ipRateLimit = checkRateLimit({
+      key: createIpRateLimitKey(
+        "auth:verify-email:request:ip",
+        request,
+      ),
+      ...AUTH_RATE_LIMITS.verificationRequestByIp,
+    });
+
+    if (!ipRateLimit.allowed) {
+      return rateLimitExceeded(
+        ipRateLimit.retryAfterSeconds,
+        getRateLimitHeaders(ipRateLimit),
+      );
+    }
+
     const body = await request.json();
 
     const email = normalizeEmail(body.email);
@@ -42,7 +88,10 @@ export async function POST(request: NextRequest) {
           error: "EMAIL_REQUIRED",
           message: "Email is required.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -53,7 +102,29 @@ export async function POST(request: NextRequest) {
           error: "INVALID_EMAIL",
           message: "Please provide a valid email address.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
+      );
+    }
+
+    /*
+     * Second protection layer:
+     * Limit requests by email identity.
+     */
+    const identityRateLimit = checkRateLimit({
+      key: createIdentityRateLimitKey(
+        "auth:verify-email:request:identity",
+        email,
+      ),
+      ...AUTH_RATE_LIMITS.verificationRequestByIdentity,
+    });
+
+    if (!identityRateLimit.allowed) {
+      return rateLimitExceeded(
+        identityRateLimit.retryAfterSeconds,
+        getRateLimitHeaders(identityRateLimit),
       );
     }
 
@@ -71,23 +142,39 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    /*
+     * Do not reveal whether the account exists.
+     */
     if (!user) {
-      return NextResponse.json({
-        success: true,
-        message:
-          "If an eligible account exists, a verification code will be sent.",
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          message:
+            "If an eligible account exists, a verification code will be sent.",
+        },
+        {
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
+      );
     }
 
+    /*
+     * Do not expose account status.
+     */
     if (
       user.status === "SUSPENDED" ||
       user.status === "DISABLED"
     ) {
-      return NextResponse.json({
-        success: true,
-        message:
-          "If an eligible account exists, a verification code will be sent.",
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          message:
+            "If an eligible account exists, a verification code will be sent.",
+        },
+        {
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
+      );
     }
 
     if (user.emailVerifiedAt) {
@@ -97,7 +184,10 @@ export async function POST(request: NextRequest) {
           error: "EMAIL_ALREADY_VERIFIED",
           message: "Email address is already verified.",
         },
-        { status: 409 },
+        {
+          status: 409,
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
       );
     }
 
@@ -136,14 +226,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      message:
-        "If an eligible account exists, a verification code will be sent.",
-      data: {
-        expiresAt: verification.expiresAt,
+    return NextResponse.json(
+      {
+        success: true,
+        message:
+          "If an eligible account exists, a verification code will be sent.",
+        data: {
+          expiresAt: verification.expiresAt,
+        },
       },
-    });
+      {
+        headers: getRateLimitHeaders(identityRateLimit),
+      },
+    );
   } catch (error) {
     console.error(
       "POST /api/auth/verify-email/request error:",
