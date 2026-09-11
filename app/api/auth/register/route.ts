@@ -1,68 +1,113 @@
 import { hash } from "bcryptjs";
-import { NextRequest, NextResponse } from "next/server";
+import {
+  NextRequest,
+  NextResponse,
+} from "next/server";
 
-const ALLOWED_PUBLIC_ROLES = ["CUSTOMER", "PARTNER_OWNER"] as const;
+import {
+  AUTH_RATE_LIMITS,
+  checkRateLimit,
+  createIpRateLimitKey,
+  getRateLimitHeaders,
+} from "@/lib/rate-limit";
 
-type PublicRole = (typeof ALLOWED_PUBLIC_ROLES)[number];
+const ALLOWED_PUBLIC_ROLES = [
+  "CUSTOMER",
+  "PARTNER_OWNER",
+] as const;
+
+type PublicRole =
+  (typeof ALLOWED_PUBLIC_ROLES)[number];
 
 function databaseNotConfigured() {
   return NextResponse.json(
     {
       success: false,
       error: "DATABASE_NOT_CONFIGURED",
-      message: "Database connection is not configured yet.",
+      message:
+        "Database connection is not configured yet.",
     },
     { status: 503 },
   );
 }
 
-function cleanOptionalString(value: unknown) {
+function cleanOptionalString(
+  value: unknown,
+) {
   if (typeof value !== "string") {
     return null;
   }
 
   const cleaned = value.trim();
 
-  return cleaned.length > 0 ? cleaned : null;
+  return cleaned.length > 0
+    ? cleaned
+    : null;
 }
 
-function normalizeEmail(value: unknown) {
+function normalizeEmail(
+  value: unknown,
+) {
   if (typeof value !== "string") {
     return "";
   }
 
-  return value.trim().toLowerCase();
+  return value
+    .trim()
+    .toLowerCase();
 }
 
-function normalizeUsername(value: unknown) {
+function normalizeUsername(
+  value: unknown,
+) {
   if (typeof value !== "string") {
     return null;
   }
 
-  const cleaned = value.trim().toLowerCase();
+  const cleaned = value
+    .trim()
+    .toLowerCase();
 
-  return cleaned.length > 0 ? cleaned : null;
+  return cleaned.length > 0
+    ? cleaned
+    : null;
 }
 
-function normalizePhone(value: unknown) {
+function normalizePhone(
+  value: unknown,
+) {
   if (typeof value !== "string") {
     return null;
   }
 
-  const cleaned = value.replace(/\s+/g, "").trim();
+  const cleaned = value
+    .replace(/\s+/g, "")
+    .trim();
 
-  return cleaned.length > 0 ? cleaned : null;
+  return cleaned.length > 0
+    ? cleaned
+    : null;
 }
 
-function isValidEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function isValidEmail(
+  email: string,
+) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    email,
+  );
 }
 
-function isValidUsername(username: string) {
-  return /^[a-z0-9._-]{4,30}$/.test(username);
+function isValidUsername(
+  username: string,
+) {
+  return /^[a-z0-9._-]{4,30}$/.test(
+    username,
+  );
 }
 
-function isValidPassword(password: string) {
+function isValidPassword(
+  password: string,
+) {
   return (
     password.length >= 8 &&
     /[A-Za-z]/.test(password) &&
@@ -70,19 +115,75 @@ function isValidPassword(password: string) {
   );
 }
 
-function getPublicRole(value: unknown): PublicRole | null {
+function getPublicRole(
+  value: unknown,
+): PublicRole | null {
   if (typeof value !== "string") {
     return "CUSTOMER";
   }
 
-  if (ALLOWED_PUBLIC_ROLES.includes(value as PublicRole)) {
+  if (
+    ALLOWED_PUBLIC_ROLES.includes(
+      value as PublicRole,
+    )
+  ) {
     return value as PublicRole;
   }
 
   return null;
 }
 
-export async function POST(request: NextRequest) {
+function rateLimitExceeded(
+  retryAfterSeconds: number,
+  headers: Record<string, string>,
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "RATE_LIMIT_EXCEEDED",
+      message:
+        "Too many registration attempts. Please try again later.",
+      data: {
+        retryAfterSeconds,
+      },
+    },
+    {
+      status: 429,
+      headers,
+    },
+  );
+}
+
+export async function POST(
+  request: NextRequest,
+) {
+  /*
+   * Limit public account creation
+   * attempts from the same IP address.
+   */
+  const ipRateLimit =
+    checkRateLimit({
+      key: createIpRateLimitKey(
+        "auth:register:ip",
+        request,
+      ),
+      limit:
+        AUTH_RATE_LIMITS.registerByIp
+          .limit,
+      windowMs:
+        AUTH_RATE_LIMITS.registerByIp
+          .windowMs,
+    });
+
+  if (!ipRateLimit.allowed) {
+    return rateLimitExceeded(
+      ipRateLimit.retryAfterSeconds,
+      getRateLimitHeaders(
+        ipRateLimit,
+      ),
+    );
+  }
+
   if (!process.env.DATABASE_URL) {
     return databaseNotConfigured();
   }
@@ -90,26 +191,44 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const email = normalizeEmail(body.email);
-    const username = normalizeUsername(body.username);
-    const phone = normalizePhone(body.phone);
+    const email =
+      normalizeEmail(body.email);
+
+    const username =
+      normalizeUsername(
+        body.username,
+      );
+
+    const phone =
+      normalizePhone(body.phone);
 
     const password =
-      typeof body.password === "string"
+      typeof body.password ===
+      "string"
         ? body.password
         : "";
 
-    const firstName = cleanOptionalString(body.firstName);
-    const lastName = cleanOptionalString(body.lastName);
+    const firstName =
+      cleanOptionalString(
+        body.firstName,
+      );
 
-    const role = getPublicRole(body.role);
+    const lastName =
+      cleanOptionalString(
+        body.lastName,
+      );
+
+    const role =
+      getPublicRole(body.role);
 
     if (!email) {
       return NextResponse.json(
         {
           success: false,
-          error: "EMAIL_REQUIRED",
-          message: "Email is required.",
+          error:
+            "EMAIL_REQUIRED",
+          message:
+            "Email is required.",
         },
         { status: 400 },
       );
@@ -119,18 +238,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "INVALID_EMAIL",
-          message: "Please provide a valid email address.",
+          error:
+            "INVALID_EMAIL",
+          message:
+            "Please provide a valid email address.",
         },
         { status: 400 },
       );
     }
 
-    if (username !== null && !isValidUsername(username)) {
+    if (
+      username !== null &&
+      !isValidUsername(username)
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "INVALID_USERNAME",
+          error:
+            "INVALID_USERNAME",
           message:
             "Username must be 4 to 30 characters and contain only letters, numbers, dots, underscores, or hyphens.",
         },
@@ -142,18 +267,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "PASSWORD_REQUIRED",
-          message: "Password is required.",
+          error:
+            "PASSWORD_REQUIRED",
+          message:
+            "Password is required.",
         },
         { status: 400 },
       );
     }
 
-    if (!isValidPassword(password)) {
+    if (
+      !isValidPassword(password)
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "WEAK_PASSWORD",
+          error:
+            "WEAK_PASSWORD",
           message:
             "Password must be at least 8 characters and contain letters and numbers.",
         },
@@ -173,11 +303,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (role === "PARTNER_OWNER" && !username) {
+    if (
+      role === "PARTNER_OWNER" &&
+      !username
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "USERNAME_REQUIRED",
+          error:
+            "USERNAME_REQUIRED",
           message:
             "Username is required for partner owner accounts.",
         },
@@ -185,43 +319,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prisma } = await import("@/lib/prisma");
+    const { prisma } =
+      await import("@/lib/prisma");
 
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          {
-            email,
-          },
-          ...(username
-            ? [
-                {
-                  username,
-                },
-              ]
-            : []),
-          ...(phone
-            ? [
-                {
-                  phone,
-                },
-              ]
-            : []),
-        ],
-      },
-      select: {
-        email: true,
-        username: true,
-        phone: true,
-      },
-    });
+    const existingUser =
+      await prisma.user.findFirst({
+        where: {
+          OR: [
+            {
+              email,
+            },
+            ...(username
+              ? [
+                  {
+                    username,
+                  },
+                ]
+              : []),
+            ...(phone
+              ? [
+                  {
+                    phone,
+                  },
+                ]
+              : []),
+          ],
+        },
+        select: {
+          email: true,
+          username: true,
+          phone: true,
+        },
+      });
 
     if (existingUser) {
-      if (existingUser.email === email) {
+      if (
+        existingUser.email ===
+        email
+      ) {
         return NextResponse.json(
           {
             success: false,
-            error: "EMAIL_ALREADY_EXISTS",
+            error:
+              "EMAIL_ALREADY_EXISTS",
             message:
               "An account with this email already exists.",
           },
@@ -229,11 +369,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (username && existingUser.username === username) {
+      if (
+        username &&
+        existingUser.username ===
+          username
+      ) {
         return NextResponse.json(
           {
             success: false,
-            error: "USERNAME_ALREADY_EXISTS",
+            error:
+              "USERNAME_ALREADY_EXISTS",
             message:
               "This username is already in use.",
           },
@@ -241,11 +386,15 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (phone && existingUser.phone === phone) {
+      if (
+        phone &&
+        existingUser.phone === phone
+      ) {
         return NextResponse.json(
           {
             success: false,
-            error: "PHONE_ALREADY_EXISTS",
+            error:
+              "PHONE_ALREADY_EXISTS",
             message:
               "An account with this phone number already exists.",
           },
@@ -256,7 +405,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "ACCOUNT_ALREADY_EXISTS",
+          error:
+            "ACCOUNT_ALREADY_EXISTS",
           message:
             "An account with these details already exists.",
         },
@@ -264,38 +414,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const passwordHash = await hash(password, 12);
+    const passwordHash =
+      await hash(password, 12);
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        phone,
-        passwordHash,
-        firstName,
-        lastName,
-        role,
-        status: "PENDING_VERIFICATION",
-      },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        phone: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        status: true,
-        emailVerifiedAt: true,
-        phoneVerifiedAt: true,
-        createdAt: true,
-      },
-    });
+    const user =
+      await prisma.user.create({
+        data: {
+          email,
+          username,
+          phone,
+          passwordHash,
+          firstName,
+          lastName,
+          role,
+          status:
+            "PENDING_VERIFICATION",
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          phone: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          status: true,
+          emailVerifiedAt: true,
+          phoneVerifiedAt: true,
+          createdAt: true,
+        },
+      });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Account created successfully.",
+        message:
+          "Account created successfully.",
         data: user,
       },
       { status: 201 },
@@ -309,8 +463,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "REGISTRATION_FAILED",
-        message: "Unable to create account.",
+        error:
+          "REGISTRATION_FAILED",
+        message:
+          "Unable to create account.",
       },
       { status: 500 },
     );
