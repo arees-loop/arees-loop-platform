@@ -1,6 +1,14 @@
 import { hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  AUTH_RATE_LIMITS,
+  checkRateLimit,
+  createIdentityRateLimitKey,
+  createIpRateLimitKey,
+  getRateLimitHeaders,
+} from "@/lib/rate-limit";
+
 import { deleteAllUserSessions } from "@/lib/session";
 import { verifyVerificationToken } from "@/lib/verification-token";
 
@@ -43,12 +51,50 @@ function isValidPassword(password: string) {
   );
 }
 
+function rateLimitExceeded(
+  retryAfterSeconds: number,
+  headers: Record<string, string>,
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "RATE_LIMIT_EXCEEDED",
+      message:
+        "Too many password reset attempts. Please try again later.",
+      retryAfterSeconds,
+    },
+    {
+      status: 429,
+      headers,
+    },
+  );
+}
+
 export async function POST(request: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return databaseNotConfigured();
   }
 
   try {
+    /*
+     * First protection layer:
+     * Limit password reset confirmation attempts by IP.
+     */
+    const ipRateLimit = checkRateLimit({
+      key: createIpRateLimitKey(
+        "auth:password-reset:confirm:ip",
+        request,
+      ),
+      ...AUTH_RATE_LIMITS.passwordResetConfirmByIp,
+    });
+
+    if (!ipRateLimit.allowed) {
+      return rateLimitExceeded(
+        ipRateLimit.retryAfterSeconds,
+        getRateLimitHeaders(ipRateLimit),
+      );
+    }
+
     const body = await request.json();
 
     const email = normalizeEmail(body.email);
@@ -66,7 +112,10 @@ export async function POST(request: NextRequest) {
           error: "EMAIL_REQUIRED",
           message: "Email is required.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -77,7 +126,10 @@ export async function POST(request: NextRequest) {
           error: "INVALID_EMAIL",
           message: "Please provide a valid email address.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -88,7 +140,10 @@ export async function POST(request: NextRequest) {
           error: "TOKEN_REQUIRED",
           message: "Password reset token is required.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -99,7 +154,10 @@ export async function POST(request: NextRequest) {
           error: "PASSWORD_REQUIRED",
           message: "New password is required.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -111,7 +169,29 @@ export async function POST(request: NextRequest) {
           message:
             "Password must be at least 8 characters and contain letters and numbers.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
+      );
+    }
+
+    /*
+     * Second protection layer:
+     * Limit password reset confirmation attempts by email.
+     */
+    const identityRateLimit = checkRateLimit({
+      key: createIdentityRateLimitKey(
+        "auth:password-reset:confirm:identity",
+        email,
+      ),
+      ...AUTH_RATE_LIMITS.passwordResetConfirmByIdentity,
+    });
+
+    if (!identityRateLimit.allowed) {
+      return rateLimitExceeded(
+        identityRateLimit.retryAfterSeconds,
+        getRateLimitHeaders(identityRateLimit),
       );
     }
 
@@ -136,7 +216,10 @@ export async function POST(request: NextRequest) {
           message:
             "The password reset request is invalid or expired.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
       );
     }
 
@@ -151,7 +234,10 @@ export async function POST(request: NextRequest) {
           message:
             "The password reset request is invalid or expired.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
       );
     }
 
@@ -174,7 +260,10 @@ export async function POST(request: NextRequest) {
             message:
               "Maximum reset attempts reached. Request a new password reset link.",
           },
-          { status: 429 },
+          {
+            status: 429,
+            headers: getRateLimitHeaders(identityRateLimit),
+          },
         );
       }
 
@@ -186,7 +275,10 @@ export async function POST(request: NextRequest) {
             message:
               "Password reset token has expired. Request a new reset link.",
           },
-          { status: 400 },
+          {
+            status: 400,
+            headers: getRateLimitHeaders(identityRateLimit),
+          },
         );
       }
 
@@ -207,7 +299,10 @@ export async function POST(request: NextRequest) {
               : {}
           ),
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
       );
     }
 
@@ -234,11 +329,16 @@ export async function POST(request: NextRequest) {
      */
     await deleteAllUserSessions(user.id);
 
-    return NextResponse.json({
-      success: true,
-      message:
-        "Password has been reset successfully. Please sign in again.",
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        message:
+          "Password has been reset successfully. Please sign in again.",
+      },
+      {
+        headers: getRateLimitHeaders(identityRateLimit),
+      },
+    );
   } catch (error) {
     console.error(
       "POST /api/auth/password-reset/confirm error:",
