@@ -55,3 +55,5 @@ Thumbs.db
 # Licensed/open-source fonts in public/fonts
 # ARE intentionally committed to Git.
 # Their license files must remain with them.
+# Prisma generated client
+/app/generated/prisma/
