@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  AUTH_RATE_LIMITS,
+  checkRateLimit,
+  createIdentityRateLimitKey,
+  createIpRateLimitKey,
+  getRateLimitHeaders,
+} from "@/lib/rate-limit";
+
 import { createVerificationToken } from "@/lib/verification-token";
 
 function databaseNotConfigured() {
@@ -25,12 +33,38 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function genericSuccessResponse() {
-  return NextResponse.json({
-    success: true,
-    message:
-      "If an eligible account exists, password reset instructions will be sent.",
-  });
+function genericSuccessResponse(
+  headers?: Record<string, string>,
+) {
+  return NextResponse.json(
+    {
+      success: true,
+      message:
+        "If an eligible account exists, password reset instructions will be sent.",
+    },
+    {
+      headers,
+    },
+  );
+}
+
+function rateLimitExceeded(
+  retryAfterSeconds: number,
+  headers: Record<string, string>,
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "RATE_LIMIT_EXCEEDED",
+      message:
+        "Too many password reset requests. Please try again later.",
+      retryAfterSeconds,
+    },
+    {
+      status: 429,
+      headers,
+    },
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -39,6 +73,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    /*
+     * First protection layer:
+     * Limit password reset requests by IP.
+     */
+    const ipRateLimit = checkRateLimit({
+      key: createIpRateLimitKey(
+        "auth:password-reset:request:ip",
+        request,
+      ),
+      ...AUTH_RATE_LIMITS.passwordResetRequestByIp,
+    });
+
+    if (!ipRateLimit.allowed) {
+      return rateLimitExceeded(
+        ipRateLimit.retryAfterSeconds,
+        getRateLimitHeaders(ipRateLimit),
+      );
+    }
+
     const body = await request.json();
 
     const email = normalizeEmail(body.email);
@@ -50,7 +103,10 @@ export async function POST(request: NextRequest) {
           error: "EMAIL_REQUIRED",
           message: "Email is required.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -61,7 +117,29 @@ export async function POST(request: NextRequest) {
           error: "INVALID_EMAIL",
           message: "Please provide a valid email address.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
+      );
+    }
+
+    /*
+     * Second protection layer:
+     * Limit password reset requests by email.
+     */
+    const identityRateLimit = checkRateLimit({
+      key: createIdentityRateLimitKey(
+        "auth:password-reset:request:identity",
+        email,
+      ),
+      ...AUTH_RATE_LIMITS.passwordResetRequestByIdentity,
+    });
+
+    if (!identityRateLimit.allowed) {
+      return rateLimitExceeded(
+        identityRateLimit.retryAfterSeconds,
+        getRateLimitHeaders(identityRateLimit),
       );
     }
 
@@ -88,7 +166,9 @@ export async function POST(request: NextRequest) {
       user.status === "SUSPENDED" ||
       user.status === "DISABLED"
     ) {
-      return genericSuccessResponse();
+      return genericSuccessResponse(
+        getRateLimitHeaders(identityRateLimit),
+      );
     }
 
     const reset =
@@ -130,14 +210,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      message:
-        "If an eligible account exists, password reset instructions will be sent.",
-      data: {
-        expiresAt: reset.expiresAt,
+    return NextResponse.json(
+      {
+        success: true,
+        message:
+          "If an eligible account exists, password reset instructions will be sent.",
+        data: {
+          expiresAt: reset.expiresAt,
+        },
       },
-    });
+      {
+        headers: getRateLimitHeaders(identityRateLimit),
+      },
+    );
   } catch (error) {
     console.error(
       "POST /api/auth/password-reset/request error:",
