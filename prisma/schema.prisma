@@ -107,7 +107,28 @@ model User {
 
   partnerMemberships PartnerMember[]
   bookings           Booking[]
+  sessions           Session[]
   auditLogs          AuditLog[]      @relation("AuditUser")
+}
+
+model Session {
+  id String @id @default(cuid())
+
+  userId String
+
+  tokenHash String @unique
+
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  ipAddress String?
+  userAgent String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Partner {
