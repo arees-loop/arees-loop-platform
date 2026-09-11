@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  AUTH_RATE_LIMITS,
+  checkRateLimit,
+  createIdentityRateLimitKey,
+  createIpRateLimitKey,
+  getRateLimitHeaders,
+} from "@/lib/rate-limit";
+
 import { verifyVerificationToken } from "@/lib/verification-token";
 
 function databaseNotConfigured() {
@@ -37,12 +45,50 @@ function isValidVerificationCode(code: string) {
   return /^\d{6}$/.test(code);
 }
 
+function rateLimitExceeded(
+  retryAfterSeconds: number,
+  headers: Record<string, string>,
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "RATE_LIMIT_EXCEEDED",
+      message:
+        "Too many verification attempts. Please try again later.",
+      retryAfterSeconds,
+    },
+    {
+      status: 429,
+      headers,
+    },
+  );
+}
+
 export async function POST(request: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return databaseNotConfigured();
   }
 
   try {
+    /*
+     * First protection layer:
+     * Limit verification attempts by IP address.
+     */
+    const ipRateLimit = checkRateLimit({
+      key: createIpRateLimitKey(
+        "auth:verify-email:confirm:ip",
+        request,
+      ),
+      ...AUTH_RATE_LIMITS.verificationConfirmByIp,
+    });
+
+    if (!ipRateLimit.allowed) {
+      return rateLimitExceeded(
+        ipRateLimit.retryAfterSeconds,
+        getRateLimitHeaders(ipRateLimit),
+      );
+    }
+
     const body = await request.json();
 
     const email = normalizeEmail(body.email);
@@ -55,7 +101,10 @@ export async function POST(request: NextRequest) {
           error: "EMAIL_REQUIRED",
           message: "Email is required.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -66,7 +115,10 @@ export async function POST(request: NextRequest) {
           error: "INVALID_EMAIL",
           message: "Please provide a valid email address.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -77,7 +129,10 @@ export async function POST(request: NextRequest) {
           error: "CODE_REQUIRED",
           message: "Verification code is required.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
       );
     }
 
@@ -89,7 +144,29 @@ export async function POST(request: NextRequest) {
           message:
             "Verification code must contain exactly 6 digits.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(ipRateLimit),
+        },
+      );
+    }
+
+    /*
+     * Second protection layer:
+     * Limit verification attempts by email identity.
+     */
+    const identityRateLimit = checkRateLimit({
+      key: createIdentityRateLimitKey(
+        "auth:verify-email:confirm:identity",
+        email,
+      ),
+      ...AUTH_RATE_LIMITS.verificationConfirmByIdentity,
+    });
+
+    if (!identityRateLimit.allowed) {
+      return rateLimitExceeded(
+        identityRateLimit.retryAfterSeconds,
+        getRateLimitHeaders(identityRateLimit),
       );
     }
 
@@ -107,6 +184,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    /*
+     * Do not reveal whether the account exists.
+     */
     if (!user) {
       return NextResponse.json(
         {
@@ -115,10 +195,16 @@ export async function POST(request: NextRequest) {
           message:
             "The verification code is invalid or expired.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
       );
     }
 
+    /*
+     * Do not expose suspended or disabled account state.
+     */
     if (
       user.status === "SUSPENDED" ||
       user.status === "DISABLED"
@@ -130,19 +216,27 @@ export async function POST(request: NextRequest) {
           message:
             "The verification code is invalid or expired.",
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
       );
     }
 
     if (user.emailVerifiedAt) {
-      return NextResponse.json({
-        success: true,
-        message: "Email address is already verified.",
-        data: {
-          emailVerified: true,
-          emailVerifiedAt: user.emailVerifiedAt,
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Email address is already verified.",
+          data: {
+            emailVerified: true,
+            emailVerifiedAt: user.emailVerifiedAt,
+          },
         },
-      });
+        {
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
+      );
     }
 
     const verification =
@@ -164,7 +258,10 @@ export async function POST(request: NextRequest) {
             message:
               "Maximum verification attempts reached. Request a new code.",
           },
-          { status: 429 },
+          {
+            status: 429,
+            headers: getRateLimitHeaders(identityRateLimit),
+          },
         );
       }
 
@@ -176,7 +273,10 @@ export async function POST(request: NextRequest) {
             message:
               "Verification code has expired. Request a new code.",
           },
-          { status: 400 },
+          {
+            status: 400,
+            headers: getRateLimitHeaders(identityRateLimit),
+          },
         );
       }
 
@@ -197,7 +297,10 @@ export async function POST(request: NextRequest) {
               : {}
           ),
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: getRateLimitHeaders(identityRateLimit),
+        },
       );
     }
 
@@ -220,13 +323,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Email address verified successfully.",
-      data: {
-        user: updatedUser,
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Email address verified successfully.",
+        data: {
+          user: updatedUser,
+        },
       },
-    });
+      {
+        headers: getRateLimitHeaders(identityRateLimit),
+      },
+    );
   } catch (error) {
     console.error(
       "POST /api/auth/verify-email/confirm error:",
