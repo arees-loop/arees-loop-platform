@@ -1,6 +1,8 @@
 import { compare } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 
+import { createSession } from "@/lib/session";
+
 function databaseNotConfigured() {
   return NextResponse.json(
     {
@@ -28,7 +30,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const identifier = normalizeIdentifier(body.identifier);
+    const identifier =
+      normalizeIdentifier(body.identifier);
 
     const password =
       typeof body.password === "string"
@@ -40,7 +43,8 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "IDENTIFIER_REQUIRED",
-          message: "Email or username is required.",
+          message:
+            "Email or username is required.",
         },
         { status: 400 },
       );
@@ -57,58 +61,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prisma } = await import("@/lib/prisma");
+    const { prisma } =
+      await import("@/lib/prisma");
 
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          {
-            email: identifier,
-          },
-          {
-            username: identifier,
-          },
-        ],
-      },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        phone: true,
-        passwordHash: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        status: true,
-        emailVerifiedAt: true,
-        phoneVerifiedAt: true,
-        lastLoginAt: true,
-        createdAt: true,
-      },
-    });
+    const user =
+      await prisma.user.findFirst({
+        where: {
+          OR: [
+            {
+              email: identifier,
+            },
+            {
+              username: identifier,
+            },
+          ],
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          phone: true,
+          passwordHash: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          status: true,
+          emailVerifiedAt: true,
+          phoneVerifiedAt: true,
+          lastLoginAt: true,
+          createdAt: true,
+        },
+      });
 
     if (!user) {
       return NextResponse.json(
         {
           success: false,
           error: "INVALID_CREDENTIALS",
-          message: "Invalid email, username, or password.",
+          message:
+            "Invalid email, username, or password.",
         },
         { status: 401 },
       );
     }
 
-    const passwordMatches = await compare(
-      password,
-      user.passwordHash,
-    );
+    const passwordMatches =
+      await compare(
+        password,
+        user.passwordHash,
+      );
 
     if (!passwordMatches) {
       return NextResponse.json(
         {
           success: false,
           error: "INVALID_CREDENTIALS",
-          message: "Invalid email, username, or password.",
+          message:
+            "Invalid email, username, or password.",
         },
         { status: 401 },
       );
@@ -119,7 +128,8 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "ACCOUNT_SUSPENDED",
-          message: "This account is suspended.",
+          message:
+            "This account is suspended.",
         },
         { status: 403 },
       );
@@ -130,20 +140,29 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "ACCOUNT_DISABLED",
-          message: "This account is disabled.",
+          message:
+            "This account is disabled.",
         },
         { status: 403 },
       );
     }
+
+    const loginTime = new Date();
 
     await prisma.user.update({
       where: {
         id: user.id,
       },
       data: {
-        lastLoginAt: new Date(),
+        lastLoginAt: loginTime,
       },
     });
+
+    const session =
+      await createSession(
+        user.id,
+        request,
+      );
 
     return NextResponse.json({
       success: true,
@@ -158,8 +177,15 @@ export async function POST(request: NextRequest) {
           lastName: user.lastName,
           role: user.role,
           status: user.status,
-          emailVerifiedAt: user.emailVerifiedAt,
-          phoneVerifiedAt: user.phoneVerifiedAt,
+          emailVerifiedAt:
+            user.emailVerifiedAt,
+          phoneVerifiedAt:
+            user.phoneVerifiedAt,
+          lastLoginAt: loginTime,
+        },
+        session: {
+          expiresAt:
+            session.expiresAt,
         },
       },
     });
@@ -173,7 +199,8 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: "LOGIN_FAILED",
-        message: "Unable to sign in.",
+        message:
+          "Unable to sign in.",
       },
       { status: 500 },
     );
