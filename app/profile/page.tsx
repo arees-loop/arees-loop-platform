@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getTotalLoopPoints } from "@/lib/loop-progress";
 
 type ToggleRowProps = {
   title: string;
@@ -11,10 +12,138 @@ type ToggleRowProps = {
   onChange: () => void;
 };
 
+
+type ProfileData = {
+  name: string;
+  phone: string;
+  email: string;
+  userType: string;
+};
+
+const DEFAULT_PROFILE: ProfileData = {
+  name: "معتز قنديل",
+  phone: "05XXXXXXXX",
+  email: "user@example.com",
+  userType: "مقيم",
+};
+
+const DEFAULT_INTERESTS = [
+  "التاريخ والتراث",
+  "المرشدون السياحيون",
+  "التجارب",
+  "المطاعم والمقاهي",
+];
+
+const ALL_INTERESTS = [
+  "التاريخ والتراث",
+  "المرشدون السياحيون",
+  "التجارب",
+  "المطاعم والمقاهي",
+  "الفعاليات",
+  "التسوق",
+  "العائلة",
+  "المغامرات",
+];
+
+const PROFILE_STORAGE_KEY = "arees_loop_profile_demo";
+const INTERESTS_STORAGE_KEY = "arees_loop_interests_demo";
+
 export default function ProfilePage() {
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [smartRecommendations, setSmartRecommendations] = useState(true);
+  const [loopPoints, setLoopPoints] = useState(0);
+  const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [draftProfile, setDraftProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [interests, setInterests] = useState<string[]>(DEFAULT_INTERESTS);
+  const [draftInterests, setDraftInterests] = useState<string[]>(DEFAULT_INTERESTS);
+  const [activePanel, setActivePanel] = useState<
+    | null
+    | "profile"
+    | "interests"
+    | "location"
+    | "notifications"
+    | "personal-data"
+    | "privacy"
+    | "login-method"
+  >(null);
+
+  useEffect(() => {
+    setLoopPoints(getTotalLoopPoints());
+
+    const storedProfile = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (storedProfile) {
+      try {
+        const parsed = JSON.parse(storedProfile) as ProfileData;
+        setProfile(parsed);
+        setDraftProfile(parsed);
+      } catch {
+        // Keep demo defaults if old local data is invalid.
+      }
+    }
+
+    const storedInterests = window.localStorage.getItem(INTERESTS_STORAGE_KEY);
+    if (storedInterests) {
+      try {
+        const parsed = JSON.parse(storedInterests) as string[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setInterests(parsed);
+          setDraftInterests(parsed);
+        }
+      } catch {
+        // Keep demo defaults if old local data is invalid.
+      }
+    }
+  }, []);
+
+  function openProfileEditor() {
+    setDraftProfile(profile);
+    setActivePanel("profile");
+  }
+
+  function saveProfile() {
+    const clean: ProfileData = {
+      name: draftProfile.name.trim() || profile.name,
+      phone: draftProfile.phone.trim() || profile.phone,
+      email: draftProfile.email.trim() || profile.email,
+      userType: draftProfile.userType.trim() || profile.userType,
+    };
+    setProfile(clean);
+    window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(clean));
+    setActivePanel(null);
+  }
+
+  function openInterestsEditor() {
+    setDraftInterests(interests);
+    setActivePanel("interests");
+  }
+
+  function toggleInterest(value: string) {
+    setDraftInterests((current) =>
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
+    );
+  }
+
+  function saveInterests() {
+    if (draftInterests.length === 0) return;
+    setInterests(draftInterests);
+    window.localStorage.setItem(
+      INTERESTS_STORAGE_KEY,
+      JSON.stringify(draftInterests),
+    );
+    setActivePanel(null);
+  }
+
+  function requestLocationPermission() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      () => setLocationEnabled(true),
+      () => setLocationEnabled(false),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  }
 
   return (
     <main
@@ -139,7 +268,7 @@ export default function ProfilePage() {
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[9px] font-semibold text-white/75">
-                    مقيم
+                    {profile.userType}
                   </span>
 
                   <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-3 py-1.5 text-[9px] font-semibold text-[#E3C357]">
@@ -179,7 +308,7 @@ export default function ProfilePage() {
 
               <MiniSummary
                 label="نقاط Loop"
-                value="1,240"
+                value={loopPoints.toLocaleString("en-US")}
                 href="/rewards"
               />
 
@@ -206,29 +335,30 @@ export default function ProfilePage() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <InfoField
                   label="الاسم"
-                  value="معتز قنديل"
+                  value={profile.name}
                 />
 
                 <InfoField
                   label="رقم الجوال"
-                  value="05XXXXXXXX"
+                  value={profile.phone}
                   ltr
                 />
 
                 <InfoField
                   label="البريد الإلكتروني"
-                  value="user@example.com"
+                  value={profile.email}
                   ltr
                 />
 
                 <InfoField
                   label="صفة المستخدم"
-                  value="مقيم"
+                  value={profile.userType}
                 />
               </div>
 
               <button
                 type="button"
+                onClick={openProfileEditor}
                 className="mt-6 rounded-[13px] border border-[#0D3B34]/10 bg-white/70 px-5 py-2.5 text-[9px] font-semibold text-[#0D3B34]/70 transition hover:border-[#0D3B34]/20 hover:text-[#0D3B34]"
               >
                 تعديل البيانات
@@ -292,14 +422,14 @@ export default function ProfilePage() {
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">
-                <InterestChip>التاريخ والتراث</InterestChip>
-                <InterestChip>المرشدون السياحيون</InterestChip>
-                <InterestChip>التجارب</InterestChip>
-                <InterestChip>المطاعم والمقاهي</InterestChip>
+                {interests.map((interest) => (
+                  <InterestChip key={interest}>{interest}</InterestChip>
+                ))}
               </div>
 
               <button
                 type="button"
+                onClick={openInterestsEditor}
                 className="mt-6 rounded-[13px] border border-[#0D3B34]/10 bg-white/70 px-5 py-2.5 text-[9px] font-semibold text-[#0D3B34]/70 transition hover:border-[#0D3B34]/20 hover:text-[#0D3B34]"
               >
                 تعديل الاهتمامات
@@ -359,24 +489,28 @@ export default function ProfilePage() {
                   title="إدارة أذونات الموقع"
                   description="راجع أو أوقف صلاحية الموقع."
                   icon={<LocationIcon />}
+                  onClick={() => setActivePanel("location")}
                 />
 
                 <ActionRow
                   title="إعدادات الإشعارات"
                   description="اختر أنواع التنبيهات التي تريد استلامها."
                   icon={<BellIconLarge />}
+                  onClick={() => setActivePanel("notifications")}
                 />
 
                 <ActionRow
                   title="بياناتي الشخصية"
                   description="مراجعة البيانات المرتبطة بالحساب."
                   icon={<DatabaseIcon />}
+                  onClick={() => setActivePanel("personal-data")}
                 />
 
                 <ActionRow
                   title="سياسة الخصوصية"
                   description="كيف نستخدم بياناتك ونحميها."
                   icon={<ShieldIcon />}
+                  onClick={() => setActivePanel("privacy")}
                 />
               </div>
             </Card>
@@ -392,6 +526,7 @@ export default function ProfilePage() {
               <div className="mt-5 space-y-3">
                 <button
                   type="button"
+                  onClick={() => setActivePanel("login-method")}
                   className="flex w-full items-center justify-between rounded-[16px] border border-[#0D3B34]/8 bg-white/55 px-4 py-3.5 text-right transition hover:border-[#0D3B34]/18"
                 >
                   <div>
@@ -428,6 +563,211 @@ export default function ProfilePage() {
           </div>
         </section>
       </div>
+
+      {activePanel && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-[#082D27]/45 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setActivePanel(null);
+          }}
+        >
+          <div className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-[26px] border border-white/80 bg-[#F9F7F1] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[9px] font-bold tracking-[0.16em] text-[#B99124]">
+                  ACCOUNT SETTINGS
+                </p>
+                <h3
+                  className="mt-1.5 text-xl font-semibold text-[#0D3B34]"
+                  style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
+                >
+                  {activePanel === "profile" && "تعديل البيانات"}
+                  {activePanel === "interests" && "تعديل الاهتمامات"}
+                  {activePanel === "location" && "إدارة أذونات الموقع"}
+                  {activePanel === "notifications" && "إعدادات الإشعارات"}
+                  {activePanel === "personal-data" && "بياناتي الشخصية"}
+                  {activePanel === "privacy" && "سياسة الخصوصية"}
+                  {activePanel === "login-method" && "تغيير وسيلة تسجيل الدخول"}
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActivePanel(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#0D3B34]/10 bg-white text-lg text-[#0D3B34]/70"
+                aria-label="إغلاق"
+              >
+                ×
+              </button>
+            </div>
+
+            {activePanel === "profile" && (
+              <div className="mt-6 space-y-4">
+                <ProfileInput
+                  label="الاسم"
+                  value={draftProfile.name}
+                  onChange={(value) =>
+                    setDraftProfile((current) => ({ ...current, name: value }))
+                  }
+                />
+                <ProfileInput
+                  label="رقم الجوال"
+                  value={draftProfile.phone}
+                  onChange={(value) =>
+                    setDraftProfile((current) => ({ ...current, phone: value }))
+                  }
+                  ltr
+                />
+                <ProfileInput
+                  label="البريد الإلكتروني"
+                  value={draftProfile.email}
+                  onChange={(value) =>
+                    setDraftProfile((current) => ({ ...current, email: value }))
+                  }
+                  ltr
+                />
+                <ProfileInput
+                  label="صفة المستخدم"
+                  value={draftProfile.userType}
+                  onChange={(value) =>
+                    setDraftProfile((current) => ({
+                      ...current,
+                      userType: value,
+                    }))
+                  }
+                />
+                <DemoNotice text="الحفظ هنا تجريبي على هذا المتصفح إلى حين ربط قاعدة البيانات." />
+                <PrimaryButton onClick={saveProfile}>حفظ التعديلات</PrimaryButton>
+              </div>
+            )}
+
+            {activePanel === "interests" && (
+              <div className="mt-6">
+                <p className="text-[10px] leading-5 text-[#0D3B34]/60">
+                  اختر الاهتمامات التي تريد استخدامها لترتيب التجارب المقترحة لك.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {ALL_INTERESTS.map((interest) => {
+                    const selected = draftInterests.includes(interest);
+                    return (
+                      <button
+                        key={interest}
+                        type="button"
+                        onClick={() => toggleInterest(interest)}
+                        className={`rounded-full border px-4 py-2 text-[9px] font-semibold transition ${
+                          selected
+                            ? "border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#76580F]"
+                            : "border-[#0D3B34]/10 bg-white text-[#0D3B34]/60"
+                        }`}
+                      >
+                        {selected ? "✓ " : ""}
+                        {interest}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-5">
+                  <PrimaryButton
+                    onClick={saveInterests}
+                    disabled={draftInterests.length === 0}
+                  >
+                    حفظ الاهتمامات
+                  </PrimaryButton>
+                </div>
+              </div>
+            )}
+
+            {activePanel === "location" && (
+              <div className="mt-6 space-y-4">
+                <DemoNotice text="صلاحية الموقع النهائية يديرها المتصفح. يمكن لـ AREES Loop طلب الصلاحية، لكن لا يمكنه تغيير إعداد المتصفح بالقوة." />
+                <div className="rounded-[16px] border border-[#0D3B34]/8 bg-white/65 p-4">
+                  <p className="text-[10px] font-semibold text-[#0D3B34]">
+                    الحالة داخل التطبيق
+                  </p>
+                  <p className="mt-1 text-[9px] text-[#0D3B34]/55">
+                    {locationEnabled ? "الموقع مفعّل" : "الموقع غير مفعّل"}
+                  </p>
+                </div>
+                <PrimaryButton onClick={requestLocationPermission}>
+                  طلب صلاحية الموقع
+                </PrimaryButton>
+              </div>
+            )}
+
+            {activePanel === "notifications" && (
+              <div className="mt-6 divide-y divide-[#0D3B34]/[0.07]">
+                <ToggleRow
+                  title="إشعارات الحجوزات"
+                  description="تحديثات الحجز والتذكرة وموعد التجربة."
+                  enabled={notificationsEnabled}
+                  onChange={() => setNotificationsEnabled((value) => !value)}
+                />
+                <ToggleRow
+                  title="التوصيات الذكية"
+                  description="اقتراحات قريبة مرتبطة باهتماماتك."
+                  enabled={smartRecommendations}
+                  onChange={() => setSmartRecommendations((value) => !value)}
+                />
+                <Link
+                  href="/notifications"
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-[13px] border border-[#0D3B34]/10 bg-white px-4 py-3 text-[10px] font-semibold text-[#0D3B34]"
+                >
+                  فتح مركز الإشعارات
+                </Link>
+              </div>
+            )}
+
+            {activePanel === "personal-data" && (
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <InfoField label="الاسم" value={profile.name} />
+                <InfoField label="رقم الجوال" value={profile.phone} ltr />
+                <InfoField label="البريد الإلكتروني" value={profile.email} ltr />
+                <InfoField label="صفة المستخدم" value={profile.userType} />
+                <div className="sm:col-span-2">
+                  <DemoNotice text="هذه شاشة مراجعة للنسخة التجريبية. تنزيل/حذف بيانات الحساب سيُربط بالخلفية وقاعدة البيانات لاحقًا." />
+                </div>
+              </div>
+            )}
+
+            {activePanel === "privacy" && (
+              <div className="mt-6 space-y-3 text-[10px] leading-6 text-[#0D3B34]/70">
+                <p>
+                  هذه واجهة تجريبية لسياسة الخصوصية وليست النسخة القانونية النهائية.
+                </p>
+                <p>
+                  تعتمد AREES Loop على بيانات الحساب والموقع والتفضيلات لتقديم
+                  التجارب القريبة، تنفيذ التحقق الميداني، وإدارة النقاط والمكافآت
+                  عند تفعيل هذه الخدمات.
+                </p>
+                <p>
+                  قبل الإطلاق الإنتاجي ستتم إضافة السياسة القانونية المعتمدة
+                  وبيانات التحكم والمشاركة والاحتفاظ بالبيانات.
+                </p>
+              </div>
+            )}
+
+            {activePanel === "login-method" && (
+              <div className="mt-6 space-y-4">
+                <DemoNotice text="تغيير رقم الجوال أو البريد كوسيلة دخول يحتاج تحققًا آمنًا وربطًا بقاعدة البيانات. لن نغيّر بيانات الدخول فعليًا في نسخة الواجهة التجريبية." />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Link
+                    href="/auth"
+                    className="rounded-[14px] bg-[#0D3B34] px-4 py-3 text-center text-[10px] font-semibold text-white"
+                  >
+                    إدارة تسجيل الدخول
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="rounded-[14px] border border-[#0D3B34]/10 bg-white px-4 py-3 text-center text-[10px] font-semibold text-[#0D3B34]"
+                  >
+                    صفحة تسجيل الدخول
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* MOBILE NAV */}
       <nav className="fixed bottom-3 left-1/2 z-50 flex w-[calc(100%-24px)] max-w-md -translate-x-1/2 items-center justify-around rounded-[20px] border border-white/80 bg-white/90 px-2 py-2 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
@@ -636,14 +976,17 @@ function ActionRow({
   title,
   description,
   icon,
+  onClick,
 }: {
   title: string;
   description: string;
   icon: React.ReactNode;
+  onClick: () => void;
 }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="flex w-full items-center gap-3 rounded-[16px] border border-[#0D3B34]/8 bg-white/55 px-4 py-3.5 text-right transition hover:border-[#0D3B34]/18"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0D3B34]/7 text-[#0D3B34]">
@@ -661,6 +1004,61 @@ function ActionRow({
       </div>
 
       <ArrowIcon />
+    </button>
+  );
+}
+
+function ProfileInput({
+  label,
+  value,
+  onChange,
+  ltr = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  ltr?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[9px] font-semibold text-[#0D3B34]/60">
+        {label}
+      </span>
+      <input
+        dir={ltr ? "ltr" : undefined}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-[14px] border border-[#0D3B34]/10 bg-white px-4 py-3 text-[11px] font-semibold text-[#0D3B34] outline-none transition focus:border-[#D4AF37]/60"
+      />
+    </label>
+  );
+}
+
+function DemoNotice({ text }: { text: string }) {
+  return (
+    <div className="rounded-[15px] border border-[#D4AF37]/20 bg-[#D4AF37]/8 px-4 py-3 text-[9px] leading-5 text-[#0D3B34]/65">
+      {text}
+    </div>
+  );
+}
+
+function PrimaryButton({
+  children,
+  onClick,
+  disabled = false,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full rounded-[14px] bg-[#0D3B34] px-5 py-3 text-[10px] font-semibold text-white transition hover:bg-[#154C42] disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      {children}
     </button>
   );
 }

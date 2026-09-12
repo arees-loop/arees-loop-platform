@@ -36,7 +36,7 @@ const initialFavorites: FavoriteItem[] = [
     location: "المدينة المنورة",
     distance: "850 م",
     rating: "4.8",
-    price: "احجز الآن",
+    price: "السعر حسب التذكرة",
     badge: "موصى به",
   },
   {
@@ -392,17 +392,27 @@ function FavoriteCard({
           {item.location}
         </p>
 
-        <div className="mt-5 flex items-center justify-between border-t border-[#0D3B34]/[0.07] pt-4">
-          <span className="text-[11px] font-semibold text-[#0D3B34]">
-            {item.price}
-          </span>
+        <div className="mt-5 border-t border-[#0D3B34]/[0.07] pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] font-semibold text-[#0D3B34]">
+              {item.price}
+            </span>
+
+            <Link
+              href={`/experience/${item.id}`}
+              className="flex items-center gap-1 text-[10px] font-semibold text-[#0D3B34]/70 transition hover:text-[#0D3B34]"
+            >
+              عرض التفاصيل
+              <ArrowIcon />
+            </Link>
+          </div>
 
           <Link
-            href={`/experience/${item.id}`}
-            className="flex items-center gap-1 text-[10px] font-semibold text-[#0D3B34]/70 transition hover:text-[#0D3B34]"
+            href={`/experience/${item.id}/booking`}
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[14px] bg-[#0D3B34] px-4 py-3 text-[10px] font-semibold text-white transition hover:bg-[#154C42]"
           >
-            عرض التفاصيل
-            <ArrowIcon />
+            <TicketIcon />
+            احجز الآن
           </Link>
         </div>
       </div>
