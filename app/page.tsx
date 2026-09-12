@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -713,9 +714,12 @@ export default function Home() {
               </div>
             </div>
 
-            <button className="mt-9 rounded-full bg-[#0D3B34] px-8 py-4 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#145347] hover:shadow-[0_12px_30px_rgba(13,59,52,0.20)]">
+            <Link
+              href="/partner/onboarding"
+              className="mt-9 inline-flex rounded-full bg-[#0D3B34] px-8 py-4 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#145347] hover:shadow-[0_12px_30px_rgba(13,59,52,0.20)]"
+            >
               انضم كشريك
-            </button>
+            </Link>
           </div>
 
           {/* Partner visual */}

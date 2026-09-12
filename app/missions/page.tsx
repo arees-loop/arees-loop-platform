@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  claimMissionReward,
+  getLoopProgress,
+  getMissionRewardPoints,
+  hasClaimedMissionReward,
+} from "@/lib/loop-progress";
 
 type MissionStatus = "active" | "completed" | "locked";
 
@@ -18,14 +24,14 @@ type Mission = {
   category: string;
 };
 
-const missions: Mission[] = [
+const baseMissions: Mission[] = [
   {
     id: 1,
     title: "اكتشف 3 معالم قريبة",
     description:
       "زر ثلاثة معالم موثقة قريبة منك وسجّل وصولك لإكمال المهمة.",
     reward: 150,
-    progress: 1,
+    progress: 0,
     target: 3,
     status: "active",
     timeLeft: "ينتهي اليوم",
@@ -37,7 +43,7 @@ const missions: Mission[] = [
     description:
       "أكمل زيارتين من التجارب المرتبطة بالسيرة النبوية في المدينة المنورة.",
     reward: 250,
-    progress: 1,
+    progress: 0,
     target: 2,
     status: "active",
     timeLeft: "متبقي 4 أيام",
@@ -49,9 +55,9 @@ const missions: Mission[] = [
     description:
       "أكمل خمس تجارب مؤهلة خلال سبعة أيام واكسب مكافأة إضافية.",
     reward: 500,
-    progress: 5,
+    progress: 0,
     target: 5,
-    status: "completed",
+    status: "active",
     category: "تحدي",
   },
   {
@@ -60,7 +66,7 @@ const missions: Mission[] = [
     description:
       "أكمل ثلاث مهام Loop للوصول إلى هذا التحدي الخاص.",
     reward: 750,
-    progress: 1,
+    progress: 0,
     target: 3,
     status: "locked",
     category: "مستوى",
@@ -71,20 +77,81 @@ export default function MissionsPage() {
   const [activeFilter, setActiveFilter] = useState<
     "all" | MissionStatus
   >("all");
-
   const [startedMissions, setStartedMissions] = useState<number[]>([1, 2]);
+  const [verifiedExperienceIds, setVerifiedExperienceIds] = useState<string[]>([]);
+  const [claimedMissionIds, setClaimedMissionIds] = useState<number[]>([]);
+  const [missionPoints, setMissionPoints] = useState(0);
+
+  function refreshProgress() {
+    const progress = getLoopProgress();
+    setVerifiedExperienceIds(
+      progress.verifiedVisits.map((visit) => visit.experienceId)
+    );
+    setClaimedMissionIds(progress.missionRewardsClaimed);
+    setMissionPoints(getMissionRewardPoints());
+  }
+
+  useEffect(() => {
+    refreshProgress();
+  }, []);
+
+  const missions = useMemo<Mission[]>(() => {
+    const verifiedCount = verifiedExperienceIds.length;
+    const seerahExperienceIds = new Set(["2", "3"]);
+    const seerahVerifiedCount = verifiedExperienceIds.filter((id) =>
+      seerahExperienceIds.has(id)
+    ).length;
+
+    const mission1Progress = Math.min(verifiedCount, 3);
+    const mission2Progress = Math.min(seerahVerifiedCount, 2);
+    const mission3Progress = Math.min(verifiedCount, 5);
+
+    const firstThreeCompleted = [1, 2, 3].filter((missionId) => {
+      if (missionId === 1) return mission1Progress >= 3;
+      if (missionId === 2) return mission2Progress >= 2;
+      return mission3Progress >= 5;
+    }).length;
+
+    return baseMissions.map((mission) => {
+      let progress = mission.progress;
+      let status = mission.status;
+
+      if (mission.id === 1) {
+        progress = mission1Progress;
+        status = progress >= mission.target ? "completed" : "active";
+      } else if (mission.id === 2) {
+        progress = mission2Progress;
+        status = progress >= mission.target ? "completed" : "active";
+      } else if (mission.id === 3) {
+        progress = mission3Progress;
+        status = progress >= mission.target ? "completed" : "active";
+      } else if (mission.id === 4) {
+        progress = Math.min(firstThreeCompleted, mission.target);
+        status = progress >= mission.target ? "completed" : "locked";
+      }
+
+      return { ...mission, progress, status };
+    });
+  }, [verifiedExperienceIds]);
 
   const filteredMissions =
     activeFilter === "all"
       ? missions
-      : missions.filter(
-          (mission) => mission.status === activeFilter
-        );
+      : missions.filter((mission) => mission.status === activeFilter);
 
   function startMission(id: number) {
     if (!startedMissions.includes(id)) {
       setStartedMissions((current) => [...current, id]);
     }
+  }
+
+  function collectMissionReward(id: number) {
+    const mission = missions.find((item) => item.id === id);
+    if (!mission || mission.status !== "completed") return;
+    if (hasClaimedMissionReward(id)) return;
+
+    claimMissionReward(id);
+    refreshProgress();
   }
 
   const activeCount = missions.filter(
@@ -94,6 +161,12 @@ export default function MissionsPage() {
   const completedCount = missions.filter(
     (mission) => mission.status === "completed"
   ).length;
+
+  const heroMission = missions[0];
+  const heroPercentage = Math.min(
+    100,
+    Math.round((heroMission.progress / heroMission.target) * 100)
+  );
 
   return (
     <main
@@ -254,12 +327,15 @@ export default function MissionsPage() {
 
                 <div className="mt-7 max-w-xl">
                   <div className="mb-2 flex items-center justify-between text-[9px] text-white/70">
-                    <span>تمت زيارة 1 من 3</span>
-                    <span>33%</span>
+                    <span>تمت زيارة {heroMission.progress} من {heroMission.target}</span>
+                    <span>{heroPercentage}%</span>
                   </div>
 
                   <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                    <div className="h-full w-1/3 rounded-full bg-[#D4AF37]" />
+                    <div
+                      className="h-full rounded-full bg-[#D4AF37]"
+                      style={{ width: `${heroPercentage}%` }}
+                    />
                   </div>
                 </div>
 
@@ -326,7 +402,7 @@ export default function MissionsPage() {
 
           <SummaryCard
             title="نقاط المهام"
-            value="650"
+            value={missionPoints.toString()}
             description="إجمالي ما كسبته"
             icon={<RewardIcon />}
           />
@@ -387,6 +463,8 @@ export default function MissionsPage() {
                 onStart={() =>
                   startMission(mission.id)
                 }
+                claimed={claimedMissionIds.includes(mission.id)}
+                onClaim={() => collectMissionReward(mission.id)}
               />
             ))}
           </div>
@@ -556,10 +634,14 @@ function MissionCard({
   mission,
   started,
   onStart,
+  claimed,
+  onClaim,
 }: {
   mission: Mission;
   started: boolean;
   onStart: () => void;
+  claimed: boolean;
+  onClaim: () => void;
 }) {
   const percentage = Math.min(
     100,
@@ -654,9 +736,14 @@ function MissionCard({
         </div>
 
         {completed ? (
-          <span className="rounded-[12px] bg-[#D4AF37]/12 px-4 py-2.5 text-[9px] font-semibold text-[#76580F]">
-            مكتملة
-          </span>
+          <button
+            type="button"
+            onClick={onClaim}
+            disabled={claimed}
+            className="rounded-[12px] bg-[#D4AF37]/12 px-4 py-2.5 text-[9px] font-semibold text-[#76580F] disabled:cursor-default disabled:opacity-70"
+          >
+            {claimed ? "تم استلام المكافأة" : "استلم المكافأة"}
+          </button>
         ) : locked ? (
           <span className="rounded-[12px] bg-[#0D3B34]/7 px-4 py-2.5 text-[9px] font-semibold text-[#0D3B34]/55">
             مقفلة

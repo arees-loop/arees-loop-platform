@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { addVerifiedVisit } from "@/lib/loop-progress";
 
 type Experience = {
   id: string;
@@ -18,9 +19,9 @@ type Experience = {
   price: number;
   description: string;
   points: number;
+  highlights: string[];
   lat: number;
   lng: number;
-  highlights: string[];
 };
 
 const experiences: Experience[] = [
@@ -38,14 +39,14 @@ const experiences: Experience[] = [
     description:
       "تجربة ثقافية تجمع بين التاريخ والمكان والطبيعة في قلب المدينة المنورة، مع محتوى بصري وتعريفي يساعدك على استكشاف الموقع بصورة أعمق.",
     points: 150,
-    lat: 24.46376,
-    lng: 39.61099,
     highlights: [
       "تجربة مناسبة للأفراد والعائلات",
       "موقع قريب من المنطقة المركزية",
       "محتوى ثقافي وتاريخي",
       "زيارة مؤهلة لنقاط Loop",
     ],
+    lat: 24.46376,
+    lng: 39.61099,
   },
   {
     id: "2",
@@ -61,14 +62,14 @@ const experiences: Experience[] = [
     description:
       "رحلة معرفية وتفاعلية للتعرف على السيرة النبوية من خلال محتوى متحفي منظم وتجربة حديثة تناسب الزائر الفردي والعائلات.",
     points: 200,
-    lat: 24.4658155,
-    lng: 39.6094075,
     highlights: [
       "تجربة معرفية تفاعلية",
       "قريب من المنطقة المركزية",
       "مناسب للعائلات",
       "مؤهل لكسب نقاط Loop",
     ],
+    lat: 24.4658155,
+    lng: 39.6094075,
   },
   {
     id: "3",
@@ -84,20 +85,26 @@ const experiences: Experience[] = [
     description:
       "جولة قصيرة ومركزة حول مسجد الغمامة والمعالم القريبة منه، تساعد الزائر على فهم السياق التاريخي للمكان بصورة مبسطة وممتعة.",
     points: 180,
-    lat: 24.465808,
-    lng: 39.606955,
     highlights: [
       "جولة قصيرة وسهلة",
       "مناسبة للزوار لأول مرة",
       "قريبة من المسجد النبوي",
       "يمكن ربطها بمرشد سياحي",
     ],
+    lat: 24.465808,
+    lng: 39.606955,
   },
 ];
 
-type VerificationState = "idle" | "checking" | "verified" | "outside" | "error";
+type VerificationState =
+  | "idle"
+  | "checking"
+  | "verified"
+  | "outside"
+  | "error";
 
 const GEOFENCE_RADIUS_METERS = 150;
+const MAX_GPS_ACCURACY_METERS = 100;
 
 function calculateDistanceMeters(
   lat1: number,
@@ -107,13 +114,17 @@ function calculateDistanceMeters(
 ) {
   const earthRadiusMeters = 6371000;
   const toRadians = (value: number) => (value * Math.PI) / 180;
-  const dLat = toRadians(lat2 - lat1);
-  const dLng = toRadians(lng2 - lng1);
+
+  const deltaLat = toRadians(lat2 - lat1);
+  const deltaLng = toRadians(lng2 - lng1);
+
   const a =
-    Math.sin(dLat / 2) ** 2 +
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
     Math.cos(toRadians(lat1)) *
       Math.cos(toRadians(lat2)) *
-      Math.sin(dLng / 2) ** 2;
+      Math.sin(deltaLng / 2) *
+      Math.sin(deltaLng / 2);
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return earthRadiusMeters * c;
@@ -134,74 +145,10 @@ export default function ExperienceDetailsPage() {
   const [verificationState, setVerificationState] =
     useState<VerificationState>("idle");
   const [verificationMessage, setVerificationMessage] = useState(
-    "تحقق من وجودك داخل نطاق التجربة لإكمال المهمة وكسب النقاط."
+    "استخدم موقعك للتحقق من أنك داخل نطاق التجربة."
   );
   const [verifiedDistance, setVerifiedDistance] = useState<number | null>(null);
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
-
-  const verifyVisit = () => {
-    if (!experience || verificationState === "checking") return;
-
-    if (!navigator.geolocation) {
-      setVerificationState("error");
-      setVerificationMessage("المتصفح لا يدعم تحديد الموقع الجغرافي.");
-      return;
-    }
-
-    setVerificationState("checking");
-    setVerificationMessage("جارٍ تحديد موقعك والتحقق من الزيارة...");
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const distance = calculateDistanceMeters(
-          position.coords.latitude,
-          position.coords.longitude,
-          experience.lat,
-          experience.lng
-        );
-
-        setVerifiedDistance(distance);
-        setLocationAccuracy(position.coords.accuracy);
-
-        if (distance <= GEOFENCE_RADIUS_METERS) {
-          setVerificationState("verified");
-          setVerificationMessage(
-            `تم التحقق من زيارتك بنجاح. المهمة مكتملة ومؤهلة لـ +${experience.points} نقطة.`
-          );
-          return;
-        }
-
-        setVerificationState("outside");
-        setVerificationMessage(
-          `أنت على بُعد ${Math.round(distance)} م من موقع التجربة. اقترب إلى نطاق ${GEOFENCE_RADIUS_METERS} م ثم أعد التحقق.`
-        );
-      },
-      (error) => {
-        setVerificationState("error");
-        setVerifiedDistance(null);
-        setLocationAccuracy(null);
-
-        if (error.code === error.PERMISSION_DENIED) {
-          setVerificationMessage(
-            "تعذر التحقق لأن إذن الموقع غير مفعّل. اسمح للموقع بالوصول إلى GPS ثم حاول مرة أخرى."
-          );
-        } else if (error.code === error.TIMEOUT) {
-          setVerificationMessage(
-            "استغرق تحديد الموقع وقتًا أطول من المتوقع. حاول مرة أخرى في مكان مفتوح."
-          );
-        } else {
-          setVerificationMessage(
-            "تعذر تحديد موقعك الآن. تحقق من تشغيل خدمة الموقع ثم حاول مرة أخرى."
-          );
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
-    );
-  };
 
   if (!experience) {
     return (
@@ -234,6 +181,92 @@ export default function ExperienceDetailsPage() {
           </Link>
         </div>
       </main>
+    );
+  }
+
+  const currentExperience = experience;
+
+  function verifyVisit() {
+    if (!navigator.geolocation) {
+      setVerificationState("error");
+      setVerificationMessage(
+        "خدمة تحديد الموقع غير متاحة في هذا المتصفح."
+      );
+      return;
+    }
+
+    setVerificationState("checking");
+    setVerificationMessage("جاري التحقق من موقعك الحالي...");
+    setVerifiedDistance(null);
+    setLocationAccuracy(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+
+        const distance = calculateDistanceMeters(
+          latitude,
+          longitude,
+          currentExperience.lat,
+          currentExperience.lng
+        );
+
+        setVerifiedDistance(distance);
+        setLocationAccuracy(accuracy);
+
+        if (accuracy > MAX_GPS_ACCURACY_METERS) {
+          setVerificationState("error");
+          setVerificationMessage(
+            `دقة موقعك الحالية غير كافية للتحقق (±${Math.round(
+              accuracy
+            )} متر). نحتاج دقة ${MAX_GPS_ACCURACY_METERS} متر أو أفضل. انتقل إلى مكان مفتوح، فعّل الموقع الدقيق في جهازك، ثم أعد المحاولة.`
+          );
+          return;
+        }
+
+        if (distance <= GEOFENCE_RADIUS_METERS) {
+          addVerifiedVisit(currentExperience.id, currentExperience.points);
+
+          setVerificationState("verified");
+          setVerificationMessage(
+            `تم التحقق من زيارتك بنجاح. تم تسجيل الزيارة وإضافة +${currentExperience.points} نقطة مؤهلة ضمن تقدمك.`
+          );
+          return;
+        }
+
+        setVerificationState("outside");
+        setVerificationMessage(
+          `أنت خارج نطاق التحقق حاليًا. تبعد تقريبًا ${Math.round(
+            distance
+          )} متر عن موقع التجربة، ويجب أن تكون داخل نطاق ${GEOFENCE_RADIUS_METERS} متر.`
+        );
+      },
+      (error) => {
+        setVerificationState("error");
+
+        if (error.code === error.PERMISSION_DENIED) {
+          setVerificationMessage(
+            "تم رفض إذن الموقع. فعّل صلاحية الموقع للمتصفح ثم أعد المحاولة."
+          );
+          return;
+        }
+
+        if (error.code === error.TIMEOUT) {
+          setVerificationMessage(
+            "استغرق تحديد الموقع وقتًا أطول من المتوقع. أعد المحاولة في مكان مفتوح أو مع إشارة GPS أفضل."
+          );
+          return;
+        }
+
+        setVerificationMessage(
+          "تعذر تحديد موقعك حاليًا. تأكد من تشغيل خدمة الموقع ثم أعد المحاولة."
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
     );
   }
 
@@ -330,8 +363,8 @@ export default function ExperienceDetailsPage() {
               src={experience.image}
               alt={experience.title}
               fill
-              sizes="(max-width: 1280px) 100vw, 65vw"
               priority
+              sizes="(max-width: 1280px) 100vw, 65vw"
               className="object-cover"
             />
 
@@ -587,124 +620,152 @@ export default function ExperienceDetailsPage() {
           <div className="relative overflow-hidden rounded-[28px] bg-[#0D3B34] p-6 text-white md:p-7">
             <div className="absolute -left-20 top-0 h-64 w-64 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
-            <div className="relative grid gap-6 lg:grid-cols-[1fr_360px] lg:items-center">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-[9px] font-semibold tracking-[0.18em] text-[#D4AF37]">
-                    VERIFIED VISIT
-                  </p>
+            <div className="relative">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[9px] font-semibold tracking-[0.18em] text-[#D4AF37]">
+                      VERIFIED VISIT
+                    </p>
 
-                  <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[8px] font-semibold text-white/70">
-                    GEOFENCE {GEOFENCE_RADIUS_METERS}M
-                  </span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[8px] font-semibold text-white/65">
+                      GEOFENCE {GEOFENCE_RADIUS_METERS}M
+                    </span>
+                  </div>
+
+                  <h2
+                    className="mt-2 text-xl font-semibold"
+                    style={{
+                      fontFamily:
+                        "var(--font-el-messiri), sans-serif",
+                    }}
+                  >
+                    تحقق من وجودك داخل موقع التجربة
+                  </h2>
+
+                  <p className="mt-2 max-w-2xl text-[10px] leading-5 text-white/65">
+                    نستخدم موقع الجهاز للتحقق من قربك من
+                    التجربة. في هذه النسخة التجريبية لا يتم
+                    حفظ إحداثيات موقعك؛ يتم فقط احتساب المسافة
+                    اللازمة للتحقق.
+                  </p>
                 </div>
 
-                <h2
-                  className="mt-2 text-xl font-semibold"
-                  style={{
-                    fontFamily: "var(--font-el-messiri), sans-serif",
-                  }}
-                >
-                  تحقق من زيارتك واكسب مكافأة Loop
-                </h2>
+                <div className="rounded-[18px] border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-5 py-4 text-center">
+                  <p className="text-[8px] font-semibold text-white/55">
+                    مكافأة الزيارة
+                  </p>
 
-                <p className="mt-2 max-w-2xl text-[10px] leading-5 text-white/65">
-                  تستخدم AREES Loop موقع جهازك للتحقق من وجودك داخل نطاق التجربة.
-                  لا يتم حفظ موقعك في هذه النسخة التجريبية.
-                </p>
+                  <p className="mt-1 text-2xl font-semibold text-[#D4AF37]">
+                    +{experience.points}
+                  </p>
 
-                <div
-                  className={`mt-5 rounded-[18px] border px-4 py-4 ${
-                    verificationState === "verified"
-                      ? "border-[#D4AF37]/40 bg-[#D4AF37]/10"
-                      : verificationState === "outside" || verificationState === "error"
-                        ? "border-white/15 bg-white/[0.06]"
-                        : "border-white/10 bg-white/[0.05]"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                        verificationState === "verified"
-                          ? "bg-[#D4AF37] text-[#0D3B34]"
-                          : "bg-white/10 text-[#D4AF37]"
-                      }`}
-                    >
-                      {verificationState === "verified" ? <CheckIcon /> : <LocationIcon />}
-                    </div>
+                  <p className="text-[8px] text-white/50">
+                    نقطة Loop
+                  </p>
+                </div>
+              </div>
 
-                    <div>
-                      <p className="text-[10px] font-semibold text-white">
-                        {verificationState === "verified"
-                          ? "زيارة موثقة • المهمة مكتملة"
-                          : verificationState === "checking"
-                            ? "جارٍ التحقق من موقعك"
-                            : "التحقق بالموقع الجغرافي"}
-                      </p>
+              <div
+                className={`mt-6 rounded-[18px] border p-4 ${
+                  verificationState === "verified"
+                    ? "border-[#D4AF37]/35 bg-[#D4AF37]/10"
+                    : verificationState === "outside" ||
+                        verificationState === "error"
+                      ? "border-white/10 bg-white/[0.055]"
+                      : "border-white/10 bg-white/[0.055]"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                      verificationState === "verified"
+                        ? "bg-[#D4AF37] text-[#0D3B34]"
+                        : "bg-white/10 text-[#D4AF37]"
+                    }`}
+                  >
+                    {verificationState === "verified" ? (
+                      <CheckIcon />
+                    ) : (
+                      <LocationIcon />
+                    )}
+                  </div>
 
-                      <p className="mt-1 text-[9px] leading-5 text-white/65">
-                        {verificationMessage}
-                      </p>
+                  <div className="flex-1">
+                    <p className="text-[10px] font-semibold text-white">
+                      {verificationState === "verified"
+                        ? "تم التحقق من الزيارة"
+                        : verificationState === "checking"
+                          ? "جاري التحقق"
+                          : verificationState === "outside"
+                            ? "أنت خارج النطاق"
+                            : verificationState === "error"
+                              ? "تعذر التحقق"
+                              : "جاهز للتحقق"}
+                    </p>
 
-                      {(verifiedDistance !== null || locationAccuracy !== null) && (
-                        <div className="mt-2 flex flex-wrap gap-2 text-[8px] text-white/55">
-                          {verifiedDistance !== null && (
-                            <span>المسافة من التجربة: {Math.round(verifiedDistance)} م</span>
-                          )}
-                          {locationAccuracy !== null && (
-                            <span>• دقة GPS التقريبية: ±{Math.round(locationAccuracy)} م</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <p className="mt-1 text-[9px] leading-5 text-white/60">
+                      {verificationMessage}
+                    </p>
+
+                    {(verifiedDistance !== null ||
+                      locationAccuracy !== null) && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {verifiedDistance !== null && (
+                          <span className="rounded-full bg-black/10 px-3 py-1.5 text-[8px] text-white/65">
+                            المسافة من التجربة:{" "}
+                            {Math.round(verifiedDistance)} م
+                          </span>
+                        )}
+
+                        {locationAccuracy !== null && (
+                          <span className="rounded-full bg-black/10 px-3 py-1.5 text-[8px] text-white/65">
+                            دقة GPS التقريبية: ±
+                            {Math.round(locationAccuracy)} م
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.06] p-5">
-                <p className="text-[8px] font-semibold tracking-[0.15em] text-white/45">
-                  MISSION REWARD
-                </p>
-
-                <div className="mt-2 flex items-end justify-between gap-3">
-                  <div>
-                    <p className="text-3xl font-semibold text-[#D4AF37]">
-                      +{experience.points}
-                    </p>
-                    <p className="mt-1 text-[9px] text-white/55">نقطة Loop</p>
-                  </div>
-
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#D4AF37]/15 text-[#D4AF37]">
-                    <RewardIcon />
-                  </div>
-                </div>
-
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={verifyVisit}
                   disabled={
-                    verificationState === "checking" || verificationState === "verified"
+                    verificationState === "checking" ||
+                    verificationState === "verified"
                   }
-                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-[14px] bg-[#D4AF37] px-5 py-3 text-[10px] font-bold text-[#0D3B34] transition hover:bg-[#E0BE50] disabled:cursor-not-allowed disabled:opacity-70"
+                  className={`flex items-center justify-center gap-2 rounded-[14px] px-6 py-3 text-[10px] font-bold transition ${
+                    verificationState === "verified"
+                      ? "cursor-default bg-[#D4AF37] text-[#0D3B34]"
+                      : verificationState === "checking"
+                        ? "cursor-wait bg-white/15 text-white/70"
+                        : "bg-[#D4AF37] text-[#0D3B34] hover:bg-[#E0BE50]"
+                  }`}
                 >
                   {verificationState === "checking"
-                    ? "جارٍ التحقق..."
+                    ? "جاري التحقق..."
                     : verificationState === "verified"
-                      ? "تم التحقق من الزيارة"
+                      ? "تم التحقق ✓"
                       : "تحقق من زيارتي"}
                 </button>
 
                 <Link
                   href="/missions"
-                  className="mt-2 flex w-full items-center justify-center rounded-[14px] border border-white/10 px-5 py-3 text-[9px] font-semibold text-white/70 transition hover:bg-white/[0.05]"
+                  className="flex items-center justify-center rounded-[14px] border border-white/10 bg-white/[0.06] px-6 py-3 text-center text-[10px] font-semibold text-white/80 transition hover:bg-white/10"
                 >
                   عرض مهام Loop
                 </Link>
-
-                <p className="mt-3 text-center text-[8px] leading-4 text-white/40">
-                  حفظ النقاط في المحفظة سيتم ربطه بقاعدة البيانات بعد تفعيل Cloud SQL.
-                </p>
               </div>
+
+              <p className="mt-4 text-[8px] leading-4 text-white/40">
+                يتم حفظ الزيارة المؤهلة والنقاط مؤقتًا على هذا
+                الجهاز للنسخة التجريبية، وسيتم نقل الحفظ إلى
+                قاعدة البيانات بعد تفعيل Cloud SQL.
+              </p>
             </div>
           </div>
         </section>
