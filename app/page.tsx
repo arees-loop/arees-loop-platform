@@ -7,6 +7,7 @@ import { useState, type MouseEvent } from "react";
 
 const experiences = [
   {
+    id: 1,
     image: "/Image/hero/experiences/alsafiya-museum.jpg",
     alt: "متحف وبستان الصافية",
     distance: "2.4 KM",
@@ -20,6 +21,7 @@ const experiences = [
     position: "object-center",
   },
   {
+    id: 2,
     image: "/Image/hero/experiences/seerah-museum.jpg",
     alt: "المعرض والمتحف الدولي للسيرة النبوية",
     distance: "3.2 KM",
@@ -33,6 +35,7 @@ const experiences = [
     position: "object-center",
   },
   {
+    id: 3,
     image: "/Image/hero/experiences/al-ghamamah-mosque.jpg",
     alt: "مسجد الغمامة",
     distance: "4.8 KM",
@@ -451,11 +454,14 @@ export default function Home() {
                 </div>
 
                 {/* Button */}
-                <button className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#145347] hover:shadow-[0_10px_25px_rgba(13,59,52,0.20)]">
+                <Link
+                  href={`/experience/${experience.id}`}
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#145347] hover:shadow-[0_10px_25px_rgba(13,59,52,0.20)]"
+                >
                   عرض التجربة
 
                   <span className="text-lg">←</span>
-                </button>
+                </Link>
               </article>
             ))}
           </div>

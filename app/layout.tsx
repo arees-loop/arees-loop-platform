@@ -3,17 +3,10 @@ import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
 import "./globals.css";
 
-/*
-  مؤقتًا نستخدم رابط Vercel العام لأن الدومين areesloop.com
-  لم يتم ربطه بالمشروع بعد.
-
-  بعد ربط الدومين نغير هذا السطر فقط إلى:
-  https://www.areesloop.com
-*/
 const SITE_URL = "https://www.areesloop.com";
 
 const SOCIAL_IMAGE =
-  `${SITE_URL}/Image/social/arees-loop-social-preview-v2.png`;
+  `${SITE_URL}/Image/social/arees-loop-whatsapp-preview.png`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -38,11 +31,6 @@ export const metadata: Metadata = {
 
   publisher: "Arees Loop",
 
-  /*
-    الأيقونات الجديدة الموجودة داخل app:
-    app/icon.png
-    app/apple-icon.png
-  */
   icons: {
     icon: [
       {
@@ -61,10 +49,6 @@ export const metadata: Metadata = {
     ],
   },
 
-  /*
-    أثناء النسخة التجريبية نخلي الموقع غير مفهرس.
-    لاحقًا عند الإطلاق الرسمي نحولها إلى true.
-  */
   robots: {
     index: false,
     follow: false,
@@ -94,9 +78,9 @@ export const metadata: Metadata = {
       {
         url: SOCIAL_IMAGE,
 
-        width: 1200,
+        width: 1734,
 
-        height: 630,
+        height: 907,
 
         type: "image/png",
 
