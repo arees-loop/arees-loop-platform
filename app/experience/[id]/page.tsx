@@ -105,6 +105,7 @@ type VerificationState =
 
 const GEOFENCE_RADIUS_METERS = 150;
 const MAX_GPS_ACCURACY_METERS = 100;
+const DEMO_VERIFICATION_ENABLED = process.env.NODE_ENV !== "production";
 
 function calculateDistanceMeters(
   lat1: number,
@@ -269,6 +270,22 @@ export default function ExperienceDetailsPage() {
       }
     );
   }
+
+  function verifyDemoVisit() {
+    if (!DEMO_VERIFICATION_ENABLED) {
+      return;
+    }
+
+    addVerifiedVisit(currentExperience.id, currentExperience.points);
+
+    setVerifiedDistance(25);
+    setLocationAccuracy(12);
+    setVerificationState("verified");
+    setVerificationMessage(
+      `وضع العرض التجريبي: تم محاكاة وصولك إلى موقع التجربة بنجاح وإضافة +${currentExperience.points} نقطة إلى تقدم Loop على هذا الجهاز.`
+    );
+  }
+
 
   const total = experience.price * guests;
 
@@ -760,6 +777,37 @@ export default function ExperienceDetailsPage() {
                   عرض مهام Loop
                 </Link>
               </div>
+
+              {DEMO_VERIFICATION_ENABLED && (
+                <div className="mt-3 rounded-[16px] border border-dashed border-[#D4AF37]/35 bg-[#D4AF37]/[0.07] p-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[9px] font-semibold text-[#D4AF37]">
+                        وضع العرض المحلي
+                      </p>
+
+                      <p className="mt-1 text-[8px] leading-4 text-white/50">
+                        يظهر في بيئة التطوير فقط لمحاكاة تحقق ناجح دون تغيير حماية GPS في النسخة المنشورة.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={verifyDemoVisit}
+                      disabled={verificationState === "verified"}
+                      className={`shrink-0 rounded-[12px] px-4 py-2.5 text-[9px] font-bold transition ${
+                        verificationState === "verified"
+                          ? "cursor-default bg-white/10 text-white/40"
+                          : "bg-white text-[#0D3B34] hover:bg-[#F7F5EF]"
+                      }`}
+                    >
+                      {verificationState === "verified"
+                        ? "تم تسجيل زيارة تجريبية"
+                        : "محاكاة الوصول للموقع"}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <p className="mt-4 text-[8px] leading-4 text-white/40">
                 يتم حفظ الزيارة المؤهلة والنقاط مؤقتًا على هذا

@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getTotalLoopPoints } from "@/lib/loop-progress";
 
 type Category =
   | "all"
@@ -155,6 +156,30 @@ export default function DiscoverPage() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState("فعّل موقعك لعرض الأقرب إليك");
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [loopPoints, setLoopPoints] = useState(0);
+
+  useEffect(() => {
+    setLoopPoints(getTotalLoopPoints());
+  }, []);
+
+  const rewardLevel =
+    loopPoints >= 5000
+      ? "Insider"
+      : loopPoints >= 2000
+        ? "Traveller"
+        : "Explorer";
+
+  const nextLevelPoints =
+    loopPoints >= 5000
+      ? 5000
+      : loopPoints >= 2000
+        ? 5000
+        : 2000;
+
+  const rewardProgress =
+    loopPoints >= 5000
+      ? 100
+      : Math.min(100, Math.round((loopPoints / nextLevelPoints) * 100));
 
   const filteredExperiences = useMemo(() => {
     const normalizedSearch = search.trim();
@@ -478,7 +503,7 @@ export default function DiscoverPage() {
 
                 <div className="mt-1 flex items-end gap-2">
                   <span className="text-4xl font-semibold">
-                    1,240
+                    {loopPoints.toLocaleString("en-US")}
                   </span>
 
                   <span className="pb-1 text-[10px] text-[#0D3B34]/40">
@@ -490,11 +515,14 @@ export default function DiscoverPage() {
               <div className="mt-6">
                 <div className="mb-2 flex justify-between text-[9px] text-[#0D3B34]/45">
                   <span>المستوى الحالي</span>
-                  <span>Explorer</span>
+                  <span>{rewardLevel}</span>
                 </div>
 
                 <div className="h-1.5 overflow-hidden rounded-full bg-[#0D3B34]/7">
-                  <div className="h-full w-[62%] rounded-full bg-gradient-to-l from-[#D4AF37] to-[#B99124]" />
+                  <div
+                    className="h-full rounded-full bg-gradient-to-l from-[#D4AF37] to-[#B99124] transition-[width] duration-500"
+                    style={{ width: `${rewardProgress}%` }}
+                  />
                 </div>
               </div>
 

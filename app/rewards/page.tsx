@@ -2,63 +2,160 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
-const rewardsHistory = [
-  {
-    id: 1,
-    title: "زيارة متحف وبستان الصافية",
-    date: "05 سبتمبر 2026",
-    points: "+150",
-    type: "earned",
-  },
-  {
-    id: 2,
-    title: "حجز المتحف الدولي للسيرة النبوية",
-    date: "29 أغسطس 2026",
-    points: "+200",
-    type: "earned",
-  },
-  {
-    id: 3,
-    title: "استبدال خصم على تجربة سياحية",
-    date: "23 أغسطس 2026",
-    points: "-100",
-    type: "redeemed",
-  },
-  {
-    id: 4,
-    title: "إكمال مهمة Loop",
-    date: "18 أغسطس 2026",
-    points: "+300",
-    type: "earned",
-  },
-];
+import {
+  getEarnedLoopPoints,
+  getLoopProgress,
+  getRedeemedLoopPoints,
+  getTotalLoopPoints,
+  redeemReward,
+  type LoopProgressState,
+} from "@/lib/loop-progress";
 
 const rewards = [
   {
     id: 1,
     title: "خصم 10 ر.س",
     description: "استخدمه في تجربة مؤهلة داخل Arees Loop",
-    points: "1,000 نقطة",
+    points: 1000,
     category: "خصم",
   },
   {
     id: 2,
     title: "خصم 20 ر.س",
     description: "متاح على الحجوزات المؤهلة",
-    points: "2,000 نقطة",
+    points: 2000,
     category: "خصم",
   },
   {
     id: 3,
     title: "تجربة خاصة",
     description: "وصول إلى تجربة أو فعالية مختارة",
-    points: "3,500 نقطة",
+    points: 3500,
     category: "تجربة",
   },
 ];
 
+const EXPERIENCE_TITLES: Record<string, string> = {
+  "1": "متحف وبستان الصافية",
+  "2": "المتحف الدولي للسيرة النبوية",
+  "3": "مسجد الغمامة",
+};
+
+const MISSION_TITLES: Record<number, string> = {
+  1: "مهمة اكتشاف 3 معالم",
+  2: "مهمة زيارة تجربتين",
+  3: "مهمة إكمال 5 زيارات",
+  4: "مهمة Loop المتقدمة",
+};
+
+const MISSION_POINTS: Record<number, number> = {
+  1: 150,
+  2: 250,
+  3: 500,
+  4: 750,
+};
+
+function formatArabicDate(value: string) {
+  try {
+    return new Intl.DateTimeFormat("ar-SA", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
 export default function RewardsPage() {
+  const [progress, setProgress] = useState<LoopProgressState | null>(null);
+  const [feedback, setFeedback] = useState("");
+
+  const refreshProgress = () => {
+    setProgress(getLoopProgress());
+  };
+
+  useEffect(() => {
+    refreshProgress();
+  }, []);
+
+  const balance = progress ? getTotalLoopPoints() : 0;
+  const earnedPoints = progress ? getEarnedLoopPoints() : 0;
+  const redeemedPoints = progress ? getRedeemedLoopPoints() : 0;
+  const completedMissions = progress?.missionRewardsClaimed.length ?? 0;
+
+  const memberLevel =
+    earnedPoints >= 5000
+      ? "Insider"
+      : earnedPoints >= 2000
+        ? "Traveller"
+        : "Explorer";
+
+  const nextLevelTarget =
+    memberLevel === "Explorer"
+      ? 2000
+      : memberLevel === "Traveller"
+        ? 5000
+        : null;
+
+  const levelProgress = nextLevelTarget
+    ? Math.min(100, Math.round((earnedPoints / nextLevelTarget) * 100))
+    : 100;
+
+  const activityItems = useMemo(() => {
+    if (!progress) return [];
+
+    const visits = progress.verifiedVisits.map((visit) => ({
+      id: `visit-${visit.experienceId}-${visit.verifiedAt}`,
+      title: `زيارة ${EXPERIENCE_TITLES[visit.experienceId] ?? `تجربة ${visit.experienceId}`}`,
+      date: formatArabicDate(visit.verifiedAt),
+      sortDate: visit.verifiedAt,
+      points: `+${visit.points.toLocaleString("en-US")}`,
+      type: "earned" as const,
+    }));
+
+    const missions = progress.missionRewardsClaimed.map((missionId) => ({
+      id: `mission-${missionId}`,
+      title: `إكمال ${MISSION_TITLES[missionId] ?? `مهمة ${missionId}`}`,
+      date: "مكافأة مهمة مستلمة",
+      sortDate: `2000-01-${String(missionId).padStart(2, "0")}`,
+      points: `+${(MISSION_POINTS[missionId] ?? 0).toLocaleString("en-US")}`,
+      type: "earned" as const,
+    }));
+
+    const redemptions = progress.rewardRedemptions.map((redemption) => ({
+      id: `reward-${redemption.rewardId}-${redemption.redeemedAt}`,
+      title: `استبدال ${redemption.rewardTitle}`,
+      date: formatArabicDate(redemption.redeemedAt),
+      sortDate: redemption.redeemedAt,
+      points: `-${redemption.points.toLocaleString("en-US")}`,
+      type: "redeemed" as const,
+    }));
+
+    return [...visits, ...missions, ...redemptions].sort((a, b) =>
+      b.sortDate.localeCompare(a.sortDate)
+    );
+  }, [progress]);
+
+  function handleRedeem(reward: (typeof rewards)[number]) {
+    const result = redeemReward(reward.id, reward.title, reward.points);
+
+    if (!result.success) {
+      setFeedback(
+        result.reason === "ALREADY_REDEEMED"
+          ? "تم استبدال هذه المكافأة مسبقًا."
+          : "رصيدك الحالي لا يكفي لاستبدال هذه المكافأة."
+      );
+      refreshProgress();
+      return;
+    }
+
+    setFeedback(`تم استبدال ${reward.title} بنجاح.`);
+    refreshProgress();
+  }
+
   return (
     <main
       dir="rtl"
@@ -184,34 +281,45 @@ export default function RewardsPage() {
 
               <div className="mt-10 flex items-end gap-3">
                 <span className="text-5xl font-semibold text-[#E2BD4C]">
-                  1,240
+                  {balance.toLocaleString("en-US")}
                 </span>
 
                 <span className="pb-1 text-xs text-white/65">نقطة</span>
               </div>
 
               <p className="mt-2 text-[10px] text-white/55">
-                قيمة استبدال تقديرية: 12.40 ر.س
+                قيمة استبدال تقديرية: {(balance / 100).toFixed(2)} ر.س
               </p>
 
               <div className="mt-8">
                 <div className="mb-2 flex items-center justify-between text-[9px] text-white/60">
-                  <span>Explorer</span>
-                  <span>2,000 نقطة للمستوى التالي</span>
+                  <span>{memberLevel}</span>
+                  <span>
+                    {nextLevelTarget
+                      ? `${nextLevelTarget.toLocaleString("en-US")} نقطة للمستوى التالي`
+                      : "وصلت إلى أعلى مستوى حالي"}
+                  </span>
                 </div>
 
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full w-[62%] rounded-full bg-[#D4AF37]" />
+                  <div
+                    className="h-full rounded-full bg-[#D4AF37]"
+                    style={{ width: `${levelProgress}%` }}
+                  />
                 </div>
               </div>
 
               <div className="mt-7 flex flex-wrap gap-2">
                 <span className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[9px] font-semibold text-white/75">
-                  +350 نقطة هذا الشهر
+                  +{earnedPoints.toLocaleString("en-US")} نقطة مكتسبة
                 </span>
 
                 <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-[9px] font-semibold text-[#E6C25C]">
-                  2 مهمة مكتملة
+                  {completedMissions.toLocaleString("en-US")} مهمة مكتملة
+                </span>
+
+                <span className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[9px] font-semibold text-white/65">
+                  {redeemedPoints.toLocaleString("en-US")} نقطة مستبدلة
                 </span>
               </div>
             </div>
@@ -227,7 +335,7 @@ export default function RewardsPage() {
               className="mt-2 text-xl font-semibold"
               style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
             >
-              مستوى Explorer
+              مستوى {memberLevel}
             </h2>
 
             <p className="mt-2 text-[10px] leading-5 text-[#0D3B34]/60">
@@ -238,18 +346,20 @@ export default function RewardsPage() {
             <div className="mt-6 space-y-3">
               <LevelItem
                 title="Explorer"
-                text="مستواك الحالي"
-                active
+                text={memberLevel === "Explorer" ? "مستواك الحالي" : "تم تجاوزه"}
+                active={memberLevel === "Explorer"}
               />
 
               <LevelItem
                 title="Traveller"
-                text="ابتداءً من 2,000 نقطة"
+                text={memberLevel === "Traveller" ? "مستواك الحالي" : "ابتداءً من 2,000 نقطة"}
+                active={memberLevel === "Traveller"}
               />
 
               <LevelItem
                 title="Insider"
-                text="ابتداءً من 5,000 نقطة"
+                text={memberLevel === "Insider" ? "مستواك الحالي" : "ابتداءً من 5,000 نقطة"}
+                active={memberLevel === "Insider"}
               />
             </div>
           </div>
@@ -265,9 +375,25 @@ export default function RewardsPage() {
 
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {rewards.map((reward) => (
-              <RewardCard key={reward.id} reward={reward} />
+              <RewardCard
+                key={reward.id}
+                reward={reward}
+                availablePoints={balance}
+                alreadyRedeemed={
+                  progress?.rewardRedemptions.some(
+                    (item) => item.rewardId === reward.id
+                  ) ?? false
+                }
+                onRedeem={() => handleRedeem(reward)}
+              />
             ))}
           </div>
+
+          {feedback && (
+            <div className="mt-4 rounded-[16px] border border-[#0D3B34]/10 bg-white/70 px-4 py-3 text-[10px] font-semibold text-[#0D3B34]">
+              {feedback}
+            </div>
+          )}
         </section>
 
         {/* MISSION */}
@@ -312,11 +438,21 @@ export default function RewardsPage() {
           />
 
           <div className="mt-5 overflow-hidden rounded-[26px] border border-white/80 bg-white/65 backdrop-blur-xl">
-            {rewardsHistory.map((item, index) => (
+            {activityItems.length === 0 ? (
+              <div className="px-5 py-8 text-center">
+                <p className="text-[11px] font-semibold text-[#0D3B34]">
+                  لا توجد حركة نقاط حتى الآن
+                </p>
+                <p className="mt-2 text-[9px] text-[#0D3B34]/55">
+                  ابدأ بزيارة تجربة مؤهلة أو أكمل مهمة Loop لتظهر نقاطك هنا.
+                </p>
+              </div>
+            ) : (
+              activityItems.map((item, index) => (
               <div
                 key={item.id}
                 className={`flex items-center justify-between gap-4 px-5 py-4 ${
-                  index !== rewardsHistory.length - 1
+                  index !== activityItems.length - 1
                     ? "border-b border-[#0D3B34]/[0.07]"
                     : ""
                 }`}
@@ -357,7 +493,8 @@ export default function RewardsPage() {
                   {item.points}
                 </span>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
       </div>
@@ -483,15 +620,23 @@ function LevelItem({
 
 function RewardCard({
   reward,
+  availablePoints,
+  alreadyRedeemed,
+  onRedeem,
 }: {
   reward: {
     id: number;
     title: string;
     description: string;
-    points: string;
+    points: number;
     category: string;
   };
+  availablePoints: number;
+  alreadyRedeemed: boolean;
+  onRedeem: () => void;
 }) {
+  const insufficientPoints = availablePoints < reward.points;
+  const disabled = alreadyRedeemed || insufficientPoints;
   return (
     <article className="rounded-[24px] border border-white/80 bg-white/65 p-5 backdrop-blur-xl">
       <div className="flex items-start justify-between">
@@ -514,14 +659,24 @@ function RewardCard({
 
       <div className="mt-5 flex items-center justify-between border-t border-[#0D3B34]/[0.07] pt-4">
         <span className="text-[11px] font-semibold text-[#0D3B34]">
-          {reward.points}
+          {reward.points.toLocaleString("en-US")} نقطة
         </span>
 
         <button
           type="button"
-          className="rounded-[12px] bg-[#0D3B34] px-4 py-2.5 text-[9px] font-semibold text-white"
+          onClick={onRedeem}
+          disabled={disabled}
+          className={`rounded-[12px] px-4 py-2.5 text-[9px] font-semibold transition ${
+            disabled
+              ? "cursor-not-allowed bg-[#0D3B34]/10 text-[#0D3B34]/40"
+              : "bg-[#0D3B34] text-white hover:bg-[#145347]"
+          }`}
         >
-          استبدال
+          {alreadyRedeemed
+            ? "تم الاستبدال"
+            : insufficientPoints
+              ? "نقاط غير كافية"
+              : "استبدال"}
         </button>
       </div>
     </article>
