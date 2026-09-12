@@ -20,9 +20,17 @@ type Experience = {
   image: string;
   location: string;
   distance: string;
+  lat: number;
+  lng: number;
   rating: string;
   price: string;
   badge?: string;
+};
+
+type UserLocation = {
+  lat: number;
+  lng: number;
+  accuracy: number;
 };
 
 const categories: {
@@ -47,6 +55,8 @@ const experiences: Experience[] = [
     image: "/Image/hero/experiences/alsafiya-museum.jpg",
     location: "المدينة المنورة",
     distance: "1.2 كم",
+    lat: 24.46376,
+    lng: 39.61099,
     rating: "4.9",
     price: "ابتداءً من 35 ر.س",
     badge: "قريب منك",
@@ -59,6 +69,8 @@ const experiences: Experience[] = [
     image: "/Image/hero/experiences/seerah-museum.jpg",
     location: "المدينة المنورة",
     distance: "850 م",
+    lat: 24.4658155,
+    lng: 39.6094075,
     rating: "4.8",
     price: "احجز الآن",
     badge: "موصى به",
@@ -71,6 +83,8 @@ const experiences: Experience[] = [
     image: "/Image/hero/experiences/al-ghamamah-mosque.jpg",
     location: "المنطقة المركزية",
     distance: "600 م",
+    lat: 24.465808,
+    lng: 39.606955,
     rating: "4.9",
     price: "من 45 ر.س",
     badge: "الأقرب",
@@ -137,10 +151,15 @@ export default function DiscoverPage() {
 
   const [search, setSearch] = useState("");
   const [saved, setSaved] = useState<number[]>([]);
-  const [locationEnabled, setLocationEnabled] = useState(true);
+  const [locationEnabled, setLocationEnabled] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationStatus, setLocationStatus] = useState("فعّل موقعك لعرض الأقرب إليك");
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
 
   const filteredExperiences = useMemo(() => {
-    return experiences.filter((experience) => {
+    const normalizedSearch = search.trim();
+
+    const filtered = experiences.filter((experience) => {
       const matchesCategory =
         activeCategory === "all" ||
         activeCategory === "guides" ||
@@ -148,13 +167,89 @@ export default function DiscoverPage() {
         experience.category === activeCategory;
 
       const matchesSearch =
-        experience.title.includes(search) ||
-        experience.categoryLabel.includes(search) ||
-        experience.location.includes(search);
+        normalizedSearch.length === 0 ||
+        experience.title.includes(normalizedSearch) ||
+        experience.categoryLabel.includes(normalizedSearch) ||
+        experience.location.includes(normalizedSearch);
 
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, search]);
+
+    if (!userLocation) {
+      return filtered;
+    }
+
+    return [...filtered].sort((a, b) => {
+      const distanceA = calculateDistanceKm(
+        userLocation.lat,
+        userLocation.lng,
+        a.lat,
+        a.lng
+      );
+
+      const distanceB = calculateDistanceKm(
+        userLocation.lat,
+        userLocation.lng,
+        b.lat,
+        b.lng
+      );
+
+      return distanceA - distanceB;
+    });
+  }, [activeCategory, search, userLocation]);
+
+  function requestLocation() {
+    if (locationEnabled) {
+      setLocationEnabled(false);
+      setUserLocation(null);
+      setLocationStatus("تم إيقاف استخدام الموقع");
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocationStatus("المتصفح لا يدعم تحديد الموقع");
+      return;
+    }
+
+    setLocationLoading(true);
+    setLocationStatus("جارٍ تحديد موقعك...");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+
+        setLocationEnabled(true);
+        setLocationLoading(false);
+        setLocationStatus("تم تحديد موقعك بنجاح");
+      },
+      (error) => {
+        setLocationEnabled(false);
+        setUserLocation(null);
+        setLocationLoading(false);
+
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationStatus("اسمح للمتصفح بالوصول إلى موقعك ثم حاول مرة أخرى");
+          return;
+        }
+
+        if (error.code === error.TIMEOUT) {
+          setLocationStatus("استغرق تحديد الموقع وقتًا أطول من المتوقع. حاول مرة أخرى");
+          return;
+        }
+
+        setLocationStatus("تعذر تحديد موقعك الآن");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  }
 
   function toggleSaved(id: number) {
     setSaved((current) =>
@@ -281,16 +376,17 @@ export default function DiscoverPage() {
               <div className="mb-5 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    setLocationEnabled((current) => !current)
-                  }
+                  onClick={requestLocation}
+                  disabled={locationLoading}
                   className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 text-[10px] text-white/75 backdrop-blur-xl"
                 >
                   <LocationSmallIcon />
 
-                  {locationEnabled
-                    ? "موقعك الحالي • المدينة المنورة"
-                    : "تفعيل الموقع"}
+                  {locationLoading
+                    ? "جارٍ تحديد موقعك..."
+                    : locationEnabled
+                      ? "موقعك الحالي • GPS مفعّل"
+                      : "تفعيل الموقع"}
                 </button>
 
                 {locationEnabled && (
@@ -299,6 +395,12 @@ export default function DiscoverPage() {
                   </span>
                 )}
               </div>
+
+              <p className="mb-4 text-[9px] text-white/45">
+                {locationStatus}
+                {userLocation &&
+                  ` • دقة تقريبية ${Math.round(userLocation.accuracy)} م`}
+              </p>
 
               <p className="text-[10px] font-semibold tracking-[0.18em] text-[#D4AF37]">
                 DISCOVER AROUND YOU
@@ -448,7 +550,11 @@ export default function DiscoverPage() {
           <SectionTitle
             eyebrow="NEAR YOU"
             title="تجارب قريبة منك"
-            description="مرتبة حسب موقعك واهتماماتك الحالية."
+            description={
+              userLocation
+                ? "مرتبة فعليًا من الأقرب إلى الأبعد حسب موقعك الحالي."
+                : "فعّل موقعك لترتيب التجارب حسب القرب الفعلي."
+            }
           />
 
           {activeCategory !== "guides" &&
@@ -458,6 +564,18 @@ export default function DiscoverPage() {
                   <ExperienceCard
                     key={experience.id}
                     experience={experience}
+                    distance={
+                      userLocation
+                        ? formatDistance(
+                            calculateDistanceKm(
+                              userLocation.lat,
+                              userLocation.lng,
+                              experience.lat,
+                              experience.lng
+                            )
+                          )
+                        : experience.distance
+                    }
                     saved={saved.includes(experience.id)}
                     onSave={() =>
                       toggleSaved(experience.id)
@@ -602,6 +720,41 @@ export default function DiscoverPage() {
   );
 }
 
+function calculateDistanceKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+) {
+  const earthRadiusKm = 6371;
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+
+  const deltaLat = toRadians(lat2 - lat1);
+  const deltaLng = toRadians(lng2 - lng1);
+
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(deltaLng / 2) ** 2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusKm * c;
+}
+
+function formatDistance(distanceKm: number) {
+  if (distanceKm < 1) {
+    return `${Math.max(1, Math.round(distanceKm * 1000))} م`;
+  }
+
+  if (distanceKm < 10) {
+    return `${distanceKm.toFixed(1)} كم`;
+  }
+
+  return `${Math.round(distanceKm)} كم`;
+}
+
 /* ================= COMPONENTS ================= */
 
 function SectionTitle({
@@ -638,10 +791,12 @@ function SectionTitle({
 
 function ExperienceCard({
   experience,
+  distance,
   saved,
   onSave,
 }: {
   experience: Experience;
+  distance: string;
   saved: boolean;
   onSave: () => void;
 }) {
@@ -652,6 +807,7 @@ function ExperienceCard({
           src={experience.image}
           alt={experience.title}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
           className="object-cover transition duration-700 group-hover:scale-[1.04]"
         />
 
@@ -677,7 +833,7 @@ function ExperienceCard({
 
         <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/30 px-2.5 py-1.5 text-[9px] text-white backdrop-blur-xl">
           <LocationSmallIcon />
-          {experience.distance}
+          {distance}
         </div>
       </div>
 
