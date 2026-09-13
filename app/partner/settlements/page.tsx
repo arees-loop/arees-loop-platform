@@ -98,6 +98,141 @@ const money = (value: number) =>
     maximumFractionDigits: 2,
   }).format(value);
 
+function exportSettlementsCsv(rows: Settlement[], fileLabel = "settlements") {
+  const headers = [
+    "رقم التسوية",
+    "الفترة",
+    "إجمالي المبيعات",
+    "عمولة AREES Loop",
+    "رسوم الدفع",
+    "رسوم التحويل",
+    "الاستردادات",
+    "التعديلات",
+    "صافي التسوية",
+    "تاريخ التسوية",
+    "الحالة",
+  ];
+
+  const escapeCsv = (value: string | number) =>
+    `"${String(value).replace(/"/g, '""')}"`;
+
+  const lines = rows.map((settlement) => [
+    settlement.id,
+    settlement.period,
+    settlement.sales.toFixed(2),
+    settlement.areesCommission.toFixed(2),
+    settlement.paymentFees.toFixed(2),
+    settlement.transferFee.toFixed(2),
+    settlement.refunds.toFixed(2),
+    settlement.adjustments.toFixed(2),
+    settlement.net.toFixed(2),
+    settlement.settlementDate,
+    statusConfig[settlement.status].label,
+  ]);
+
+  const csv =
+    "\uFEFF" +
+    [
+      headers.map(escapeCsv).join(","),
+      ...lines.map((row) => row.map(escapeCsv).join(",")),
+    ].join("\r\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `arees-loop-${fileLabel}-${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function printSettlementStatement(settlement: Settlement) {
+  const totalDeductions =
+    settlement.areesCommission +
+    settlement.paymentFees +
+    settlement.transferFee +
+    settlement.refunds +
+    settlement.adjustments;
+
+  const popup = window.open("", "_blank", "width=900,height=900");
+  if (!popup) {
+    window.alert("تعذر فتح نافذة الطباعة. يرجى السماح بالنوافذ المنبثقة ثم المحاولة مرة أخرى.");
+    return;
+  }
+
+  const row = (label: string, value: string) =>
+    `<div class="row"><span>${label}</span><strong>${value}</strong></div>`;
+
+  popup.document.write(`<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>كشف التسوية ${settlement.id}</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#f7f4ea;color:#0d3b34;font-family:Arial,"Tahoma",sans-serif}
+  .page{max-width:800px;margin:32px auto;background:#fff;padding:42px;border:1px solid #e5e1d7;border-radius:24px}
+  .brand{font-size:12px;font-weight:700;letter-spacing:2px;color:#b99124}
+  h1{margin:8px 0 4px;font-size:30px}
+  .sub{color:#64736f;font-size:13px;margin-bottom:28px}
+  .hero{background:#0d3b34;color:#fff;padding:24px;border-radius:18px;margin-bottom:22px}
+  .hero small{color:#ffffff99}
+  .hero .net{font-size:32px;font-weight:800;color:#f1c94c;margin-top:8px}
+  .row{display:flex;justify-content:space-between;gap:24px;padding:13px 0;border-bottom:1px solid #ece9e1;font-size:14px}
+  .row span{color:#64736f}
+  .total{margin-top:20px;padding:18px;border-radius:16px;background:#eaf5ee;color:#267247}
+  .total strong{font-size:24px}
+  .footer{margin-top:30px;padding-top:18px;border-top:1px solid #ece9e1;font-size:11px;color:#7b8582}
+  @media print{
+    body{background:#fff}
+    .page{margin:0;max-width:none;border:0;border-radius:0;padding:20px}
+  }
+</style>
+</head>
+<body>
+  <main class="page">
+    <div class="brand">AREES LOOP PARTNER</div>
+    <h1>كشف التسوية</h1>
+    <div class="sub">Settlement Statement</div>
+
+    <section class="hero">
+      <small>صافي التسوية</small>
+      <div class="net">${money(settlement.net)} ر.س</div>
+    </section>
+
+    ${row("رقم التسوية", settlement.id)}
+    ${row("الفترة", settlement.period)}
+    ${row("موعد التحويل", settlement.settlementDate)}
+    ${row("الحالة", statusConfig[settlement.status].label)}
+    ${row("إجمالي المبيعات", `${money(settlement.sales)} ر.س`)}
+    ${row("عمولة AREES Loop", `- ${money(settlement.areesCommission)} ر.س`)}
+    ${row("رسوم معالجة الدفع", `- ${money(settlement.paymentFees)} ر.س`)}
+    ${row("رسوم التحويل", `- ${money(settlement.transferFee)} ر.س`)}
+    ${row("الاستردادات", `- ${money(settlement.refunds)} ر.س`)}
+    ${row("التعديلات", `- ${money(settlement.adjustments)} ر.س`)}
+    ${row("إجمالي الاستقطاعات", `- ${money(totalDeductions)} ر.س`)}
+
+    <div class="total">
+      <div>صافي مستحق المورد</div>
+      <strong>${money(settlement.net)} ر.س</strong>
+    </div>
+
+    <div class="footer">
+      تم إنشاء هذا الكشف من AREES Loop. استخدم خيار “Save as PDF / حفظ كملف PDF” من نافذة الطباعة لتنزيل النسخة.
+    </div>
+  </main>
+</body>
+</html>`);
+
+  popup.document.close();
+  popup.focus();
+  window.setTimeout(() => popup.print(), 250);
+}
+
 export default function PartnerSettlementsPage() {
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | SettlementStatus
@@ -283,7 +418,9 @@ export default function PartnerSettlementsPage() {
 
               <button
                 type="button"
-                className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-xs font-bold text-[#0D3B34]/65"
+                onClick={() => exportSettlementsCsv(filteredSettlements)}
+                disabled={filteredSettlements.length === 0}
+                className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-xs font-bold text-[#0D3B34]/65 transition hover:border-[#D4AF37]/40 hover:text-[#0D3B34] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 تصدير كشف CSV
               </button>
@@ -705,14 +842,21 @@ export default function PartnerSettlementsPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
-                  className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3.5 text-xs font-bold text-[#0D3B34]/65"
+                  onClick={() =>
+                    exportSettlementsCsv(
+                      [selectedSettlement],
+                      `settlement-${selectedSettlement.id}`
+                    )
+                  }
+                  className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3.5 text-xs font-bold text-[#0D3B34]/65 transition hover:border-[#D4AF37]/40"
                 >
                   تصدير CSV
                 </button>
 
                 <button
                   type="button"
-                  className="rounded-2xl bg-[#0D3B34] px-5 py-3.5 text-xs font-bold text-white"
+                  onClick={() => printSettlementStatement(selectedSettlement)}
+                  className="rounded-2xl bg-[#0D3B34] px-5 py-3.5 text-xs font-bold text-white transition hover:-translate-y-0.5"
                 >
                   تنزيل كشف PDF
                 </button>

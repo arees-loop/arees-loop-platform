@@ -227,6 +227,7 @@ export default function PartnerServicesPage() {
   >("ALL");
 
   const [showForm, setShowForm] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     nameAr: "",
@@ -311,60 +312,108 @@ export default function PartnerServicesPage() {
     });
   };
 
-  const saveDraft = () => {
-    const newService: Service = {
-      id: Date.now(),
-      nameAr: form.nameAr || "خدمة جديدة",
-      nameEn: form.nameEn || "New Service",
-      category: form.category || "غير محدد",
-      subCategory: form.subCategory || "غير محدد",
-      license: form.license || "غير مرتبط",
-      city: form.city || "غير محدد",
-      locationName: form.locationName || "غير محدد",
-      formattedAddress: form.formattedAddress || "",
-      placeId: form.placeId || "",
-      latitude: form.latitude,
-      longitude: form.longitude,
-      basePrice: Number(form.basePrice) || 0,
-      vatRate: Number(form.vatRate) || 0,
-      finalPrice: calculatedFinalPrice,
-      capacity: Number(form.capacity) || 0,
-      bookings: 0,
-      status: "DRAFT",
-      imageCount: form.images.length,
-    };
 
-    setServices((current) => [newService, ...current]);
+  const openNewServiceForm = () => {
+    setEditingServiceId(null);
     resetForm();
+    setShowForm(true);
+  };
+
+  const openEditServiceForm = (service: Service) => {
+    setEditingServiceId(service.id);
+    setForm({
+      nameAr: service.nameAr,
+      nameEn: service.nameEn,
+      category: service.category,
+      subCategory: service.subCategory,
+      license: service.license,
+      city: service.city,
+      locationName: service.locationName,
+      formattedAddress: service.formattedAddress,
+      placeId: service.placeId,
+      latitude: service.latitude,
+      longitude: service.longitude,
+      basePrice: String(service.basePrice),
+      vatRate: String(service.vatRate),
+      capacity: String(service.capacity),
+      descriptionAr: "",
+      descriptionEn: "",
+      cancellationPolicy: "",
+      meetingInstructions: "",
+      images: [],
+    });
+    setShowForm(true);
+  };
+
+  const closeServiceForm = () => {
     setShowForm(false);
+    setEditingServiceId(null);
+    resetForm();
+  };
+
+  const buildServiceFromForm = (
+    status: ServiceStatus,
+    existing?: Service
+  ): Service => ({
+    id: existing?.id ?? Date.now(),
+    nameAr: form.nameAr || "خدمة جديدة",
+    nameEn: form.nameEn || "New Service",
+    category: form.category || "غير محدد",
+    subCategory: form.subCategory || "غير محدد",
+    license: form.license || "غير مرتبط",
+    city: form.city || "غير محدد",
+    locationName: form.locationName || "غير محدد",
+    formattedAddress: form.formattedAddress || "",
+    placeId: form.placeId || "",
+    latitude: form.latitude,
+    longitude: form.longitude,
+    basePrice: Number(form.basePrice) || 0,
+    vatRate: Number(form.vatRate) || 0,
+    finalPrice: calculatedFinalPrice,
+    capacity: Number(form.capacity) || 0,
+    bookings: existing?.bookings ?? 0,
+    status,
+    imageCount:
+      form.images.length > 0 ? form.images.length : existing?.imageCount ?? 0,
+  });
+
+  const saveDraft = () => {
+    const existing = editingServiceId
+      ? services.find((service) => service.id === editingServiceId)
+      : undefined;
+
+    const savedService = buildServiceFromForm(
+      existing?.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT",
+      existing
+    );
+
+    setServices((current) =>
+      existing
+        ? current.map((service) =>
+            service.id === existing.id ? savedService : service
+          )
+        : [savedService, ...current]
+    );
+
+    closeServiceForm();
   };
 
   const submitForReview = () => {
-    const newService: Service = {
-      id: Date.now(),
-      nameAr: form.nameAr || "خدمة جديدة",
-      nameEn: form.nameEn || "New Service",
-      category: form.category || "غير محدد",
-      subCategory: form.subCategory || "غير محدد",
-      license: form.license || "غير مرتبط",
-      city: form.city || "غير محدد",
-      locationName: form.locationName || "غير محدد",
-      formattedAddress: form.formattedAddress || "",
-      placeId: form.placeId || "",
-      latitude: form.latitude,
-      longitude: form.longitude,
-      basePrice: Number(form.basePrice) || 0,
-      vatRate: Number(form.vatRate) || 0,
-      finalPrice: calculatedFinalPrice,
-      capacity: Number(form.capacity) || 0,
-      bookings: 0,
-      status: "UNDER_REVIEW",
-      imageCount: form.images.length,
-    };
+    const existing = editingServiceId
+      ? services.find((service) => service.id === editingServiceId)
+      : undefined;
 
-    setServices((current) => [newService, ...current]);
-    resetForm();
-    setShowForm(false);
+    const savedService = buildServiceFromForm("UNDER_REVIEW", existing);
+
+    setServices((current) =>
+      existing
+        ? current.map((service) =>
+            service.id === existing.id ? savedService : service
+          )
+        : [savedService, ...current]
+    );
+
+    closeServiceForm();
   };
 
   const updateLocation = (location: LocationValue) => {
@@ -514,7 +563,7 @@ export default function PartnerServicesPage() {
 
               <button
                 type="button"
-                onClick={() => setShowForm(true)}
+                onClick={openNewServiceForm}
                 className="rounded-2xl bg-[#0D3B34] px-6 py-3.5 text-sm font-bold text-white"
               >
                 + إضافة خدمة جديدة
@@ -574,7 +623,7 @@ export default function PartnerServicesPage() {
 
                 <button
                   type="button"
-                  onClick={() => setShowForm(true)}
+                  onClick={openNewServiceForm}
                   className="h-14 rounded-2xl border border-[#D4AF37]/35 bg-[#FFF8E4] px-5 text-xs font-bold text-[#8B6812]"
                 >
                   إضافة خدمة
@@ -683,17 +732,18 @@ export default function PartnerServicesPage() {
                       <div className="mt-5 flex gap-2">
                         <button
                           type="button"
+                          onClick={() => openEditServiceForm(service)}
                           className="flex-1 rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white"
                         >
                           تعديل الخدمة
                         </button>
 
-                        <button
-                          type="button"
+                        <Link
+                          href={`/experience/${service.id}`}
                           className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold text-[#0D3B34]/60"
                         >
                           معاينة
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -722,7 +772,7 @@ export default function PartnerServicesPage() {
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">
-                    NEW SERVICE
+                    {editingServiceId ? "EDIT SERVICE" : "NEW SERVICE"}
                   </p>
 
                   <h2
@@ -731,13 +781,13 @@ export default function PartnerServicesPage() {
                       fontFamily: "var(--font-el-messiri), serif",
                     }}
                   >
-                    إضافة خدمة جديدة
+                    {editingServiceId ? "تعديل الخدمة" : "إضافة خدمة جديدة"}
                   </h2>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={closeServiceForm}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-[#0D3B34]/10 bg-white text-lg"
                 >
                   ×
@@ -1088,12 +1138,13 @@ export default function PartnerServicesPage() {
                 </p>
 
                 <h3 className="mt-2 text-lg font-bold">
-                  حفظ أو إرسال للمراجعة
+                  {editingServiceId ? "حفظ تعديلات الخدمة" : "حفظ أو إرسال للمراجعة"}
                 </h3>
 
                 <p className="mt-2 text-xs leading-6 text-white/50">
-                  الحفظ كمسودة لا ينشر الخدمة. إرسالها للمراجعة يحولها
-                  إلى «تحت المراجعة» حتى تعتمدها إدارة Arees Loop.
+                  {editingServiceId
+                    ? "يمكنك حفظ التعديلات الحالية، أو إعادة إرسال الخدمة للمراجعة إذا كانت التغييرات تحتاج اعتماد إدارة Arees Loop."
+                    : "الحفظ كمسودة لا ينشر الخدمة. إرسالها للمراجعة يحولها إلى «تحت المراجعة» حتى تعتمدها إدارة Arees Loop."}
                 </p>
 
                 {form.latitude === null || form.longitude === null ? (
@@ -1113,7 +1164,7 @@ export default function PartnerServicesPage() {
                     onClick={saveDraft}
                     className="rounded-2xl border border-white/15 bg-white/8 px-5 py-3.5 text-sm font-bold text-white"
                   >
-                    حفظ كمسودة
+                    {editingServiceId ? "حفظ التعديلات" : "حفظ كمسودة"}
                   </button>
 
                   <button

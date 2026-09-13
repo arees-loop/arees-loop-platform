@@ -42,6 +42,7 @@ type Partner = {
   settlementFee: number;
   settlementCycle: string;
   agreementVersion: string;
+  completionRequest?: string;
 };
 
 const initialPartners: Partner[] = [
@@ -185,6 +186,15 @@ export default function AdminPartnersPage() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | PartnerStatus>(
     "ALL"
   );
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionNote, setCompletionNote] = useState("");
+  const [showManualPartnerModal, setShowManualPartnerModal] = useState(false);
+  const [manualPartner, setManualPartner] = useState({
+    legalName: "", tradeName: "", category: "", city: "", crNumber: "",
+    unifiedNumber: "", taxNumber: "", licenseType: "", licenseIssuer: "",
+    licenseNumber: "", licenseExpiry: "", financeContact: "", financePhone: "",
+    financeEmail: "", operationsContact: "", operationsPhone: "", website: "",
+  });
 
   const selectedPartner =
     partners.find((partner) => partner.id === selectedId) ?? partners[0];
@@ -232,8 +242,56 @@ export default function AdminPartnersPage() {
   };
 
   const requestMoreInfo = () => {
-    updateSelected({
-      status: "NEEDS_INFO",
+    setCompletionNote(selectedPartner.completionRequest ?? "");
+    setShowCompletionModal(true);
+  };
+
+  const confirmRequestMoreInfo = () => {
+    const note = completionNote.trim();
+    if (!note) return;
+    updateSelected({ status: "NEEDS_INFO", completionRequest: note });
+    setShowCompletionModal(false);
+    setCompletionNote("");
+  };
+
+  const addManualPartner = () => {
+    if (!manualPartner.legalName.trim() || !manualPartner.tradeName.trim() ||
+        !manualPartner.category.trim() || !manualPartner.city.trim()) return;
+    const nextId = partners.length ? Math.max(...partners.map((p) => p.id)) + 1 : 1;
+    const value = (v: string) => v.trim() || "غير مدخل";
+    const newPartner: Partner = {
+      id: nextId,
+      legalName: value(manualPartner.legalName),
+      tradeName: value(manualPartner.tradeName),
+      category: value(manualPartner.category),
+      city: value(manualPartner.city),
+      crNumber: value(manualPartner.crNumber),
+      unifiedNumber: value(manualPartner.unifiedNumber),
+      taxNumber: value(manualPartner.taxNumber),
+      licenseType: value(manualPartner.licenseType),
+      licenseIssuer: value(manualPartner.licenseIssuer),
+      licenseNumber: value(manualPartner.licenseNumber),
+      licenseExpiry: value(manualPartner.licenseExpiry),
+      iban: "غير مدخل", bankName: "غير مدخل",
+      financeContact: value(manualPartner.financeContact),
+      financePhone: value(manualPartner.financePhone),
+      financeEmail: value(manualPartner.financeEmail),
+      operationsContact: value(manualPartner.operationsContact),
+      operationsPhone: value(manualPartner.operationsPhone),
+      website: value(manualPartner.website),
+      submittedAt: new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short" }).format(new Date()),
+      status: "UNDER_REVIEW", commission: 10,
+      paymentFeeRule: "على المورد حسب التكلفة الفعلية",
+      settlementFee: 1, settlementCycle: "كل 7 أيام", agreementVersion: "v1.0",
+    };
+    setPartners((current) => [newPartner, ...current]);
+    setSelectedId(nextId);
+    setShowManualPartnerModal(false);
+    setManualPartner({
+      legalName: "", tradeName: "", category: "", city: "", crNumber: "",
+      unifiedNumber: "", taxNumber: "", licenseType: "", licenseIssuer: "",
+      licenseNumber: "", licenseExpiry: "", financeContact: "", financePhone: "",
+      financeEmail: "", operationsContact: "", operationsPhone: "", website: "",
     });
   };
 
@@ -329,6 +387,7 @@ export default function AdminPartnersPage() {
 
           <button
             type="button"
+            onClick={() => setShowManualPartnerModal(true)}
             className="rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
           >
             + إضافة شريك يدويًا
@@ -759,6 +818,14 @@ export default function AdminPartnersPage() {
                     {statusConfig[selectedPartner.status].label}
                   </span>
                 </div>
+                {selectedPartner.completionRequest && (
+                  <div className="mt-4 rounded-2xl border border-[#E5BE45]/20 bg-white/[0.06] p-4">
+                    <p className="text-[10px] font-bold text-[#E5BE45]">ملاحظة طلب الاستكمال</p>
+                    <p className="mt-2 whitespace-pre-wrap text-xs leading-6 text-white/75">
+                      {selectedPartner.completionRequest}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* AUDIT */}
@@ -797,7 +864,79 @@ export default function AdminPartnersPage() {
           </section>
         </div>
       </div>
+
+      {showCompletionModal && (
+        <ModalShell title="طلب استكمال من الشريك" subtitle={`الطلب: ${selectedPartner.tradeName}`} onClose={() => setShowCompletionModal(false)}>
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold text-[#0D3B34]/70">ما المطلوب من الشريك؟</span>
+            <textarea value={completionNote} onChange={(e) => setCompletionNote(e.target.value)} rows={6}
+              placeholder="مثال: يرجى إرفاق نسخة محدثة من الترخيص وتصحيح رقم السجل التجاري..."
+              className="w-full resize-none rounded-2xl border border-[#0D3B34]/10 bg-[#FAF9F5] px-4 py-3 text-sm leading-7 outline-none focus:border-[#B99124]/55" />
+          </label>
+          <p className="mt-4 rounded-2xl border border-[#D4AF37]/20 bg-[#FFF9EA] p-4 text-xs leading-6 text-[#0D3B34]/65">
+            الحفظ الحالي Frontend Demo. بعد ربط قاعدة البيانات ستظهر هذه الملاحظة للشريك في حالة طلبه.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={() => setShowCompletionModal(false)} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">إلغاء</button>
+            <button type="button" onClick={confirmRequestMoreInfo} disabled={!completionNote.trim()} className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white disabled:opacity-40">إرسال طلب الاستكمال</button>
+          </div>
+        </ModalShell>
+      )}
+
+      {showManualPartnerModal && (
+        <ModalShell title="إضافة شريك يدويًا" subtitle="إنشاء طلب شريك من لوحة الإدارة — Frontend Demo" onClose={() => setShowManualPartnerModal(false)} wide>
+          <div className="grid gap-4 md:grid-cols-2">
+            {[
+              ["legalName","الاسم القانوني *"],["tradeName","الاسم التجاري *"],["category","النشاط *"],["city","المدينة *"],
+              ["crNumber","السجل التجاري"],["unifiedNumber","الرقم الموحد"],["taxNumber","الرقم الضريبي"],
+              ["licenseType","نوع الترخيص"],["licenseIssuer","جهة إصدار الترخيص"],["licenseNumber","رقم الترخيص"],
+              ["licenseExpiry","تاريخ انتهاء الترخيص"],["financeContact","المسؤول المالي"],["financePhone","جوال المسؤول المالي"],
+              ["financeEmail","بريد المسؤول المالي"],["operationsContact","مسؤول التشغيل"],["operationsPhone","جوال مسؤول التشغيل"],["website","الموقع الإلكتروني"]
+            ].map(([key,label]) => (
+              <AdminInput key={key} label={label} value={manualPartner[key as keyof typeof manualPartner]}
+                onChange={(value) => setManualPartner((current) => ({ ...current, [key]: value }))} />
+            ))}
+          </div>
+          <p className="mt-5 rounded-2xl border border-[#D4AF37]/20 bg-[#FFF9EA] p-4 text-xs leading-6 text-[#0D3B34]/65">
+            الحقول المعلّمة بنجمة مطلوبة. الحفظ الحالي داخل الصفحة فقط إلى حين ربط قاعدة البيانات.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={() => setShowManualPartnerModal(false)} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">إلغاء</button>
+            <button type="button" onClick={addManualPartner}
+              disabled={!manualPartner.legalName.trim() || !manualPartner.tradeName.trim() || !manualPartner.category.trim() || !manualPartner.city.trim()}
+              className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white disabled:opacity-40">إضافة الشريك</button>
+          </div>
+        </ModalShell>
+      )}
     </main>
+  );
+}
+
+function ModalShell({ title, subtitle, onClose, children, wide = false }: {
+  title: string; subtitle: string; onClose: () => void; children: React.ReactNode; wide?: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#082D27]/45 p-4 backdrop-blur-sm"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={`max-h-[88vh] w-full overflow-y-auto rounded-[28px] border border-white/80 bg-[#F8F5EE] p-6 shadow-2xl ${wide ? "max-w-4xl" : "max-w-xl"}`}>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div><p className="text-[10px] font-bold tracking-[0.16em] text-[#B99124]">AREES LOOP ADMIN</p>
+            <h3 className="mt-1 text-xl font-bold">{title}</h3><p className="mt-1 text-xs text-[#0D3B34]/50">{subtitle}</p></div>
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#0D3B34]/10 bg-white text-lg">×</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function AdminInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void; }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-semibold text-[#0D3B34]/65">{label}</span>
+      <input value={value} onChange={(e) => onChange(e.target.value)}
+        className="h-12 w-full rounded-2xl border border-[#0D3B34]/10 bg-white px-4 text-sm outline-none focus:border-[#B99124]/55" />
+    </label>
   );
 }
 

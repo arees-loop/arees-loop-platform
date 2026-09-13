@@ -60,6 +60,70 @@ const money = (value: number) =>
     maximumFractionDigits: 2,
   }).format(value);
 
+function exportPartnerReportCsv(
+  period: PeriodKey,
+  summary: {
+    sales: number;
+    bookings: number;
+    refunds: number;
+    deductions: number;
+    net: number;
+    average: number;
+  }
+) {
+  const escapeCsv = (value: string | number) =>
+    `"${String(value).replace(/"/g, '""')}"`;
+
+  const rows: (string | number)[][] = [
+    ["تقرير أداء الشريك - AREES Loop"],
+    ["الفترة", periodLabels[period]],
+    [],
+    ["الملخص"],
+    ["إجمالي المبيعات", summary.sales.toFixed(2)],
+    ["إجمالي الحجوزات", summary.bookings],
+    ["متوسط قيمة الحجز", summary.average.toFixed(2)],
+    ["الاستردادات", summary.refunds.toFixed(2)],
+    ["العمولات والرسوم", summary.deductions.toFixed(2)],
+    ["صافي المستحق", summary.net.toFixed(2)],
+    [],
+    ["أداء الخدمات"],
+    ["الخدمة", "الحجوزات", "المبيعات", "الاستردادات", "الصافي"],
+    ...servicePerformance.map((row) => [
+      row.label,
+      row.bookings,
+      row.sales.toFixed(2),
+      row.refunds.toFixed(2),
+      row.net.toFixed(2),
+    ]),
+    [],
+    ["اتجاه المبيعات"],
+    ["اليوم", "المبيعات"],
+    ...dailySales.map((item) => [item.day, item.value.toFixed(2)]),
+  ];
+
+  const csv =
+    "\uFEFF" +
+    rows
+      .map((row) => row.map(escapeCsv).join(","))
+      .join("\r\n");
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `arees-loop-partner-report-${period}-${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 export default function PartnerReportsPage() {
   const [period, setPeriod] = useState<PeriodKey>("30D");
 
@@ -217,7 +281,8 @@ export default function PartnerReportsPage() {
 
                 <button
                   type="button"
-                  className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-xs font-bold text-[#0D3B34]/65"
+                  onClick={() => exportPartnerReportCsv(period, summary)}
+                  className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-xs font-bold text-[#0D3B34]/65 transition hover:border-[#D4AF37]/40 hover:text-[#0D3B34]"
                 >
                   تصدير التقرير
                 </button>

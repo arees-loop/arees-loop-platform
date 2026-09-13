@@ -118,6 +118,8 @@ export default function PartnerBusinessPage() {
     fileName: "",
   });
 
+  const [logoSaved, setLogoSaved] = useState(false);
+
   const [business, setBusiness] = useState({
     tradeNameAr: "تجارب المدينة",
     tradeNameEn: "Madinah Experiences",
@@ -246,6 +248,8 @@ export default function PartnerBusinessPage() {
       logoName: file.name,
       logoUrl: previewUrl,
     }));
+
+    setLogoSaved(false);
   };
 
   const removeLogo = () => {
@@ -258,6 +262,12 @@ export default function PartnerBusinessPage() {
       logoName: "",
       logoUrl: "",
     }));
+
+    setLogoSaved(false);
+  };
+
+  const saveLogo = () => {
+    setLogoSaved(true);
   };
 
   return (
@@ -670,8 +680,22 @@ export default function PartnerBusinessPage() {
                   </button>
                 </div>
 
-                <p className="mt-3 text-center text-[10px] text-[#0D3B34]/40">
-                  PNG / JPG / WebP — يفضل خلفية شفافة
+                <button
+                  type="button"
+                  onClick={saveLogo}
+                  className="mt-3 w-full rounded-2xl bg-[#D4AF37] px-5 py-3.5 text-xs font-bold text-[#0D3B34] transition hover:-translate-y-0.5"
+                >
+                  حفظ الشعار
+                </button>
+
+                <p
+                  className={`mt-3 text-center text-[10px] font-semibold ${
+                    logoSaved ? "text-[#267247]" : "text-[#0D3B34]/40"
+                  }`}
+                >
+                  {logoSaved
+                    ? "✓ تم حفظ تغيير الشعار في النسخة التجريبية"
+                    : "PNG / JPG / WebP — يفضل خلفية شفافة"}
                 </p>
               </div>
             </section>

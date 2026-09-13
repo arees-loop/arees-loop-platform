@@ -161,6 +161,7 @@ export default function PartnerTeamPage() {
   const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState<TeamUser | null>(null);
+  const [inviteNotice, setInviteNotice] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -300,6 +301,7 @@ export default function PartnerTeamPage() {
 
   const openUserManagement = (user: TeamUser) => {
     setSelectedUser(user);
+    setInviteNotice("");
 
     setEditForm({
       name: user.name,
@@ -362,6 +364,11 @@ export default function PartnerTeamPage() {
           }
         : null
     );
+  };
+
+  const resendInvitation = () => {
+    if (!selectedUser || selectedUser.status !== "INVITED") return;
+    setInviteNotice(`✓ تمت إعادة إرسال الدعوة التجريبية إلى ${selectedUser.email}`);
   };
 
   const activateInvitedUser = () => {
@@ -1022,6 +1029,7 @@ export default function PartnerTeamPage() {
                     <>
                       <button
                         type="button"
+                        onClick={resendInvitation}
                         className="rounded-2xl border border-[#D4AF37]/30 bg-[#FFF8E4] px-4 py-3 text-xs font-bold text-[#8C6813]"
                       >
                         إعادة إرسال الدعوة
@@ -1053,6 +1061,12 @@ export default function PartnerTeamPage() {
                     </button>
                   )}
                 </div>
+
+                {inviteNotice && (
+                  <p className="mt-3 rounded-2xl bg-[#EAF5EE] px-4 py-3 text-xs font-bold text-[#267247]">
+                    {inviteNotice}
+                  </p>
+                )}
               </div>
 
               <div className="rounded-[22px] border border-[#D4AF37]/20 bg-[#FFF9E8] p-5">

@@ -184,6 +184,93 @@ const money = (value: number) =>
     maximumFractionDigits: 2,
   }).format(value);
 
+function exportInvoicesCsv(rows: Invoice[]) {
+  const headers = [
+    "رقم الفاتورة",
+    "رقم الحجز",
+    "رقم التسوية",
+    "تاريخ الإصدار",
+    "تاريخ تقديم الخدمة",
+    "اسم العميل",
+    "رقم العميل",
+    "الخدمة",
+    "الكمية",
+    "الإجمالي قبل الضريبة",
+    "نسبة الضريبة",
+    "قيمة الضريبة",
+    "الإجمالي",
+    "وسيلة الدفع",
+    "مرجع الدفع",
+    "الحالة",
+  ];
+
+  const escapeCsv = (value: string | number | undefined) => {
+    const normalized = String(value ?? "").replace(/"/g, '""');
+    return `"${normalized}"`;
+  };
+
+  const lines = rows.map((invoice) => [
+    invoice.id,
+    invoice.bookingId,
+    invoice.settlementId ?? "",
+    invoice.issueDate,
+    invoice.supplyDate,
+    invoice.customerName,
+    invoice.customerPhone,
+    invoice.serviceAr,
+    invoice.quantity,
+    invoice.subtotal.toFixed(2),
+    invoice.vatRate,
+    invoice.vatAmount.toFixed(2),
+    invoice.total.toFixed(2),
+    invoice.paymentMethod,
+    invoice.paymentReference,
+    statusConfig[invoice.status].label,
+  ]);
+
+  const csv = "\uFEFF" + [
+    headers.map(escapeCsv).join(","),
+    ...lines.map((row) => row.map(escapeCsv).join(",")),
+  ].join("\r\n");
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `arees-loop-invoices-${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function sendInvoiceViaWhatsApp(invoice: Invoice) {
+  const phone = invoice.customerPhone.replace(/\D/g, "");
+
+  const message = [
+    `مرحبًا ${invoice.customerName}،`,
+    "",
+    "نرفق لك بيانات فاتورتك من AREES Loop:",
+    `رقم الفاتورة: ${invoice.id}`,
+    `رقم الحجز: ${invoice.bookingId}`,
+    `الخدمة: ${invoice.serviceAr}`,
+    `الإجمالي شامل الضريبة: ${money(invoice.total)} ر.س`,
+    `تاريخ إصدار الفاتورة: ${invoice.issueDate}`,
+    "",
+    "شكرًا لاستخدامك AREES Loop.",
+  ].join("\n");
+
+  const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+}
+
 export default function PartnerInvoicesPage() {
   const [search, setSearch] = useState("");
 
@@ -393,7 +480,9 @@ export default function PartnerInvoicesPage() {
 
               <button
                 type="button"
-                className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-xs font-bold text-[#0D3B34]/65"
+                onClick={() => exportInvoicesCsv(filteredInvoices)}
+                disabled={filteredInvoices.length === 0}
+                className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-xs font-bold text-[#0D3B34]/65 transition hover:border-[#D4AF37]/40 hover:text-[#0D3B34] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 تصدير سجل الفواتير
               </button>
@@ -731,9 +820,10 @@ export default function PartnerInvoicesPage() {
 
                 <button
                   type="button"
-                  className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3.5 text-xs font-bold text-[#0D3B34]/65"
+                  onClick={() => sendInvoiceViaWhatsApp(selectedInvoice)}
+                  className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3.5 text-xs font-bold text-[#0D3B34]/65 transition hover:border-[#267247]/30 hover:bg-[#EAF5EE] hover:text-[#267247]"
                 >
-                  إرسال للعميل
+                  إرسال عبر واتساب
                 </button>
               </div>
             </div>

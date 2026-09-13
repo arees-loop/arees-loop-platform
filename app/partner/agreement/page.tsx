@@ -232,12 +232,21 @@ export default function PartnerAgreementPage() {
               />
             </div>
 
-            <Link
-              href="/partner/status"
-              className="mt-8 inline-flex rounded-2xl bg-[#0D3B34] px-6 py-3.5 text-sm font-bold text-white"
-            >
-              متابعة حالة الطلب
-            </Link>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link
+                href="/partner/status"
+                className="inline-flex rounded-2xl bg-[#0D3B34] px-6 py-3.5 text-sm font-bold text-white"
+              >
+                متابعة حالة الطلب
+              </Link>
+
+              <Link
+                href="/partner/dashboard"
+                className="inline-flex rounded-2xl border border-[#0D3B34]/10 bg-white px-6 py-3.5 text-sm font-bold text-[#0D3B34]"
+              >
+                العودة للوحة التحكم
+              </Link>
+            </div>
           </div>
         </div>
       </main>
@@ -271,12 +280,21 @@ export default function PartnerAgreementPage() {
             </p>
           </div>
 
-          <Link
-            href="/partner/status"
-            className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/70"
-          >
-            حالة الطلب
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/partner/dashboard"
+              className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/70"
+            >
+              لوحة التحكم
+            </Link>
+
+            <Link
+              href="/partner/status"
+              className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/70"
+            >
+              حالة الطلب
+            </Link>
+          </div>
         </div>
       </header>
 
