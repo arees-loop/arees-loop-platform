@@ -348,6 +348,13 @@ export default function PartnerDashboardPage() {
 
               <div className="flex items-center gap-3">
                 <Link
+                  href="/admin/dashboard"
+                  className="rounded-full bg-[#0D3B34] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#124A41]"
+                >
+                  لوحة الإدارة والمؤشرات
+                </Link>
+
+                <Link
                   href="/"
                   className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/65"
                 >
