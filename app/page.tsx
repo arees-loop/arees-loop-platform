@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type WheelEvent } from "react";
 
 const experiences = [
   {
@@ -75,114 +75,267 @@ const steps = [
 ];
 
 
+
+const heroScenes = [
+  {
+    id: "saudi",
+    nameAr: "السعودية",
+    nameEn: "Saudi Arabia",
+    eyebrowAr: "بوابة أريس لوب",
+    eyebrowEn: "AREES LOOP GATEWAY",
+    titleAr: "كل اتجاه يحكي قصة",
+    titleEn: "Every direction tells a story",
+    descriptionAr:
+      "ابدأ من الصورة الأكبر، ثم مرّر داخل أريس لوب لتكتشف المدن والتجارب التي تناسب موقعك ووقتك واهتماماتك.",
+    descriptionEn:
+      "Start with the bigger picture, then move through AREES Loop to discover destinations and experiences that match your location, time and interests.",
+    image: "/Image/hero/saudi-panorama-hero.jpg",
+    metaAr: "السعودية حولك",
+    metaEn: "Saudi around you",
+    detailAr: "وجهات · تجارب · مهمات",
+    detailEn: "Destinations · Experiences · Missions",
+  },
+  {
+    id: "medina",
+    nameAr: "المدينة المنورة",
+    nameEn: "Al Madinah",
+    eyebrowAr: "أنت تستكشف الآن",
+    eyebrowEn: "YOU ARE EXPLORING",
+    titleAr: "المدينة أقرب مما تتخيل",
+    titleEn: "Madinah is closer than you think",
+    descriptionAr:
+      "من السيرة والتاريخ إلى المتاحف والتجارب القريبة؛ أريس لوب تربط المكان بما يمكنك فعله الآن.",
+    descriptionEn:
+      "From Seerah and history to museums and nearby experiences, AREES Loop connects the place with what you can do now.",
+    image: "/Image/destinations/medina-hero.webp",
+    metaAr: "تجارب قريبة",
+    metaEn: "Nearby experiences",
+    detailAr: "ثقافة · تاريخ · إيمان",
+    detailEn: "Culture · History · Faith",
+  },
+  {
+    id: "jeddah",
+    nameAr: "جدة",
+    nameEn: "Jeddah",
+    eyebrowAr: "حلقة جديدة",
+    eyebrowEn: "A NEW LOOP",
+    titleAr: "البحر يفتح تجربة مختلفة",
+    titleEn: "The sea opens a different experience",
+    descriptionAr:
+      "كورنيش، فن، مطاعم وتجارب بحرية؛ اكتشف ما يناسب اللحظة بدل البحث الطويل.",
+    descriptionEn:
+      "Waterfront, art, dining and marine experiences—discover what fits the moment instead of searching endlessly.",
+    image: "/Image/destinations/jeddah-hero.webp",
+    metaAr: "على البحر",
+    metaEn: "By the Red Sea",
+    detailAr: "بحر · فن · تجارب",
+    detailEn: "Sea · Art · Experiences",
+  },
+  {
+    id: "makkah",
+    nameAr: "مكة المكرمة",
+    nameEn: "Makkah",
+    eyebrowAr: "داخل أريس لوب",
+    eyebrowEn: "INSIDE AREES LOOP",
+    titleAr: "رحلة تبدأ من المعنى",
+    titleEn: "A journey that starts with meaning",
+    descriptionAr:
+      "أريس لوب تساعدك على اكتشاف التجارب والخدمات المناسبة حول رحلتك في مكة بطريقة أذكى وأقرب.",
+    descriptionEn:
+      "AREES Loop helps you discover relevant experiences and services around your journey in Makkah, intelligently and nearby.",
+    image: "/Image/destinations/makkah-hero.webp",
+    metaAr: "حول رحلتك",
+    metaEn: "Around your journey",
+    detailAr: "روحانية · تاريخ · خدمة",
+    detailEn: "Spirituality · History · Service",
+  },
+];
+
 export default function Home() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [activeScene, setActiveScene] = useState(0);
+  const [heroLanguage, setHeroLanguage] = useState<"ar" | "en">("ar");
+  const wheelLocked = useRef(false);
+
+  const currentScene = heroScenes[activeScene];
+  const isArabic = heroLanguage === "ar";
+  const isLastScene = activeScene === heroScenes.length - 1;
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflowY;
+
+    if (!isLastScene) {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "auto",
+      });
+      document.body.style.overflowY = "hidden";
+    } else {
+      document.body.style.overflowY = "auto";
+    }
+
+    return () => {
+      document.body.style.overflowY = previousOverflow;
+    };
+  }, [isLastScene]);
 
   const handleMouseMove = (e: MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-
     setMouse({ x, y });
+  };
+
+  const handleHowClick = () => {
+    wheelLocked.current = false;
+    setActiveScene(heroScenes.length - 1);
+
+    window.setTimeout(() => {
+      document.body.style.overflowY = "auto";
+      document.getElementById("how")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 40);
+  };
+
+  const handleHeroWheel = (e: WheelEvent<HTMLElement>) => {
+    const forward = e.deltaY > 8;
+    const backward = e.deltaY < -8;
+    const canMoveForward = forward && activeScene < heroScenes.length - 1;
+    const canMoveBackward = backward && activeScene > 0;
+
+    if (!canMoveForward && !canMoveBackward) return;
+
+    e.preventDefault();
+    if (wheelLocked.current) return;
+
+    wheelLocked.current = true;
+
+    setActiveScene((current) =>
+      Math.max(
+        0,
+        Math.min(
+          heroScenes.length - 1,
+          current + (canMoveForward ? 1 : -1),
+        ),
+      ),
+    );
+
+    window.setTimeout(() => {
+      wheelLocked.current = false;
+    }, 820);
   };
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f7f2] text-[#082d24]">
-      {/* =====================================================
-          HERO
-      ====================================================== */}
-
       <section
-        className="relative min-h-screen overflow-hidden"
+        className="relative min-h-screen overflow-hidden bg-[#071713]"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMouse({ x: 0, y: 0 })}
+        onWheel={handleHeroWheel}
       >
-        {/* Hero Background */}
         <div className="absolute inset-0">
-          <Image
-            src="/Image/hero/saudi-panorama-hero.jpg"
-            alt="Arees Loop Saudi Tourism Panorama"
-            fill
-            sizes="100vw"
-            priority
-            className="object-cover transition-transform duration-700 ease-out"
-            style={{
-              transform: `scale(1.08) translate(${mouse.x * -18}px, ${
-                mouse.y * -10
-              }px)`,
-            }}
-          />
-
-          <div className="absolute inset-0 bg-gradient-to-l from-[#062f27]/35 via-[#062f27]/12 to-black/5" />
-        </div>
-
-        {/* Decorative glows */}
-        <div className="absolute -left-24 top-44 h-72 w-72 rounded-full bg-[#c79b2b]/10 blur-3xl" />
-
-        <div className="absolute -right-20 bottom-10 h-96 w-96 rounded-full bg-[#006c52]/10 blur-3xl" />
-
-        {/* =====================================================
-            NAVBAR
-        ====================================================== */}
-
-        <header className="relative z-30 px-5 pt-5 md:px-10">
-          <nav className="mx-auto flex max-w-7xl items-center justify-between rounded-[26px] border border-white/35 bg-white/[0.10] px-5 py-2 shadow-[0_12px_35px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-[4px] backdrop-saturate-150 md:px-8">
-            {/* Logo */}
-           <div className="flex flex-col items-end text-right">
+          {heroScenes.map((scene, index) => (
+            <div
+              key={scene.id}
+              className={`absolute inset-0 transition-[opacity,transform] duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                index === activeScene
+                  ? "scale-100 opacity-100"
+                  : index < activeScene
+                    ? "scale-[1.02] opacity-0"
+                    : "scale-[1.05] opacity-0"
+              }`}
+              aria-hidden={index !== activeScene}
+            >
               <Image
-                src="/Logo/arees-loop-logo.png"
-                alt="Arees Loop"
-                width={240}
-                height={120}
-                priority
-                className="h-auto w-[125px] origin-left scale-[1.35] md:w-[145px]"
+                src={scene.image}
+                alt={
+                  isArabic
+                    ? `أريس لوب - ${scene.nameAr}`
+                    : `AREES Loop - ${scene.nameEn}`
+                }
+                fill
+                sizes="100vw"
+                priority={index <= 1}
+                className="object-cover object-center"
+                style={{
+                  transform:
+                    index === activeScene
+                      ? `scale(1.04) translate3d(${mouse.x * -10}px, ${
+                          mouse.y * -5
+                        }px, 0)`
+                      : "scale(1.06)",
+                  transition:
+                    "transform 1000ms cubic-bezier(0.22,1,0.36,1)",
+                }}
               />
             </div>
+          ))}
 
-            {/* Desktop menu */}
-            <div className="hidden items-center gap-12 text-sm font-semibold text-white md:flex">
-              <a
-                href="#discover"
-                className="transition duration-300 hover:text-[#e5b83f]"
-              >
-                اكتشف
-              </a>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/34 via-black/5 to-[#062f27]/16" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#041713]/44 via-transparent to-black/10" />
+        </div>
 
-              <a
-                href="#how"
-                className="transition duration-300 hover:text-[#e5b83f]"
-              >
-                كيف تعمل؟
-              </a>
+        <header className="relative z-40 px-4 pt-4 md:px-8 md:pt-5">
+          <nav className="mx-auto flex max-w-[1450px] items-center justify-between gap-3 rounded-[30px] border border-white/35 bg-white/[0.055] px-4 py-2.5 shadow-[0_18px_55px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-[10px] backdrop-saturate-150 md:px-6">
+            <Image
+              src="/Logo/arees-loop-logo.png"
+              alt="Arees Loop"
+              width={240}
+              height={120}
+              priority
+              className="h-auto w-[118px] md:w-[145px]"
+            />
 
-              <a
-                href="#rewards"
-                className="transition duration-300 hover:text-[#e5b83f]"
-              >
-                المكافآت
-              </a>
-
-              <a
-                href="#partners"
-                className="transition duration-300 hover:text-[#e5b83f]"
-              >
-                للشركاء
-              </a>
+            <div
+              dir="rtl"
+              className="hidden items-center gap-8 text-[13px] font-bold text-white/95 lg:flex xl:gap-10"
+            >
+              <a href="#discover" className="transition hover:text-[#e6bd4b]">اكتشف</a>
+              <a href="#how" className="transition hover:text-[#e6bd4b]">كيف تعمل؟</a>
+              <a href="#rewards" className="transition hover:text-[#e6bd4b]">المكافآت</a>
+              <a href="#partners" className="transition hover:text-[#e6bd4b]">للشركاء</a>
             </div>
 
-            {/* Action */}
             <div className="flex items-center gap-2">
+              <div className="flex rounded-full border border-white/30 bg-white/[0.05] p-1 text-[11px] font-black text-white backdrop-blur-xl">
+                <button
+                  type="button"
+                  onClick={() => setHeroLanguage("ar")}
+                  className={`rounded-full px-2.5 py-2 transition ${
+                    heroLanguage === "ar"
+                      ? "bg-white text-[#0D3B34]"
+                      : "text-white/75 hover:text-white"
+                  }`}
+                >
+                  AR
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setHeroLanguage("en")}
+                  className={`rounded-full px-2.5 py-2 transition ${
+                    heroLanguage === "en"
+                      ? "bg-white text-[#0D3B34]"
+                      : "text-white/75 hover:text-white"
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
+
               <Link
                 href="/login"
-                className="hidden rounded-full border border-white/35 bg-white/15 px-4 py-3 text-sm font-bold text-white backdrop-blur-md transition duration-300 hover:bg-white/25 sm:inline-flex"
+                className="hidden rounded-full border border-white/30 bg-white/[0.06] px-4 py-3 text-xs font-bold text-white backdrop-blur-xl transition hover:bg-white/15 sm:inline-flex"
               >
                 تسجيل الدخول
               </Link>
 
               <Link
                 href="/auth"
-                className="rounded-full bg-[#063c30] px-5 py-3 text-sm font-bold text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-[#0a513f]"
+                className="rounded-full bg-[#0D3B34]/90 px-4 py-3 text-xs font-black text-white shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[#145347] md:px-5"
               >
                 ابدأ التجربة
               </Link>
@@ -190,181 +343,231 @@ export default function Home() {
           </nav>
         </header>
 
-        {/* =====================================================
-            HERO CONTENT
-        ====================================================== */}
-
         <div
-          dir="rtl"
-          className="relative z-10 mx-auto grid min-h-[calc(100vh-90px)] max-w-7xl items-center gap-12 px-6 py-6 transition-transform duration-700 ease-out lg:grid-cols-2 lg:px-10"
-          style={{
-            transform: `translate(${mouse.x * 8}px, ${mouse.y * 5}px)`,
-          }}
+          dir="ltr"
+          className="relative z-20 mx-auto grid min-h-[calc(100vh-88px)] max-w-[1450px] items-center gap-12 px-5 pb-20 pt-8 md:px-8 lg:grid-cols-[1fr_0.92fr] lg:px-12"
         >
-          {/* Hero Text */}
-          <div>
-            <p className="mb-5 text-sm font-bold tracking-[0.15em] text-white/80">
-              تجربة زائر ذكية
-            </p>
-
-            <h1 className="text-5xl font-black leading-[1.2] tracking-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,0.38)] md:text-7xl">
-              اكتشف ما
-              <span className="block text-[#e5b83f] drop-shadow-[0_3px_10px_rgba(0,0,0,0.32)]">
-                حولك الآن
-              </span>
-            </h1>
-
-            <p className="mt-7 max-w-xl text-lg font-medium leading-9 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)] md:text-xl">
-              أريس لوب يحوّل موقعك ووقتك واهتماماتك إلى تجارب سياحية
-              ذكية، قابلة للحجز والقياس والمكافأة.
-            </p>
-
-            {/* Hero buttons */}
-            <div className="mt-9 flex flex-wrap gap-4">
-              <Link
-                href="/auth"
-                className="rounded-full bg-[#063c30] px-8 py-4 font-bold text-white shadow-[0_15px_35px_rgba(6,60,48,0.25)] transition duration-300 hover:-translate-y-1 hover:bg-[#0a513f]"
-              >
-                ابدأ الآن
-              </Link>
-
-              <a
-                href="#how"
-                className="rounded-full border border-white/40 bg-white/65 px-8 py-4 font-bold text-[#063c30] shadow-sm backdrop-blur-xl transition duration-300 hover:bg-white"
-              >
-                كيف تعمل المنصة؟
-              </a>
+          <div
+            dir={isArabic ? "rtl" : "ltr"}
+            className={isArabic ? "text-right" : "text-left"}
+            style={{
+              transform: `translate3d(${mouse.x * 7}px, ${mouse.y * 4}px, 0)`,
+              transition: "transform 700ms cubic-bezier(0.22,1,0.36,1)",
+            }}
+          >
+            <div className="mb-5 flex items-center gap-3">
+              <span className="h-px w-12 bg-[#e5b83f]" />
+              <p className="text-xs font-black tracking-[0.16em] text-[#f2cf71]">
+                {isArabic ? currentScene.eyebrowAr : currentScene.eyebrowEn}
+              </p>
             </div>
 
-            {/* Benefits */}
-            <div className="mt-10 flex flex-wrap gap-7 text-sm font-semibold text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-              <span>📍 تجارب حسب موقعك</span>
-              <span>✦ توصيات ذكية</span>
-              <span>◆ مكافآت أريس لوب</span>
+            <p className="mb-2 text-sm font-bold text-white/78">
+              {isArabic ? currentScene.nameAr : currentScene.nameEn}
+            </p>
+
+            <h1 className="max-w-3xl text-5xl font-black leading-[1.07] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.34)] md:text-7xl xl:text-[5.3rem]">
+              {isArabic ? currentScene.titleAr : currentScene.titleEn}
+            </h1>
+
+            <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-white/82 drop-shadow-[0_2px_10px_rgba(0,0,0,0.28)] md:text-lg">
+              {isArabic ? currentScene.descriptionAr : currentScene.descriptionEn}
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href="/discover"
+                className="rounded-full bg-[#D4AF37] px-7 py-3.5 text-sm font-black text-[#102e27] shadow-[0_15px_40px_rgba(212,175,55,0.20)] transition hover:-translate-y-1 hover:bg-[#e7c760]"
+              >
+                {isArabic ? "اكتشف الآن" : "Discover now"}
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleHowClick}
+                className="rounded-full border border-white/35 bg-white/[0.05] px-7 py-3.5 text-sm font-black text-white backdrop-blur-xl transition hover:bg-white/12"
+              >
+                {isArabic ? "شاهد كيف تعمل" : "See how it works"}
+              </button>
             </div>
           </div>
 
-          {/* =====================================================
-              HERO GLASS CARD
-          ====================================================== */}
-
+          {/* MINISTRY-STYLE CLEAR 3D GLASS */}
           <div
-            className="relative mx-auto w-full max-w-[520px] transition-transform duration-500 ease-out"
-            style={{
-              transform: `translate(${mouse.x * -6}px, ${mouse.y * -4}px)`,
-            }}
+            className="relative mx-auto w-full max-w-[530px]"
+            style={{ perspective: "1800px" }}
           >
-            <div className="relative overflow-hidden rounded-[38px] border border-white/35 bg-white/[0.025] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-[2px]">
-              {/* Glass reflection */}
+            <div
+              className="relative"
+              style={{
+                transformStyle: "preserve-3d",
+                transform: `rotateY(${mouse.x * -1.8 - 0.8}deg) rotateX(${
+                  mouse.y * 1.2 - 0.25
+                }deg)`,
+                transition: "transform 320ms ease-out",
+              }}
+            >
+              {/* الخلفية الثانية تعطي سماكة قطعة الزجاج بدون تعتيم الصورة */}
               <div
-                className="pointer-events-none absolute inset-0 z-0 opacity-40"
+                className="pointer-events-none absolute inset-0 translate-x-[7px] translate-y-[8px] rounded-[34px] border border-white/16 bg-transparent shadow-[0_20px_42px_rgba(0,0,0,0.20)]"
+                style={{ transform: "translateZ(-18px)" }}
+              />
+
+              {/* الحافة السفلية = سماكة الزجاج */}
+              <div
+                className="pointer-events-none absolute -bottom-[8px] left-[5%] h-[14px] w-[90%] rounded-b-[30px] bg-gradient-to-b from-white/22 via-white/8 to-transparent blur-[0.5px]"
                 style={{
-                  background: `radial-gradient(
-                    circle at ${50 + mouse.x * 35}% ${40 + mouse.y * 30}%,
-                    rgba(255,255,255,0.18) 0%,
-                    rgba(255,255,255,0.06) 18%,
-                    transparent 42%
-                  )`,
+                  transform: "translateZ(-8px) rotateX(72deg)",
+                  transformOrigin: "top",
                 }}
               />
 
-              {/* Moving glass edge */}
+              {/* الحافة الجانبية = سماكة الزجاج */}
               <div
-                className="pointer-events-none absolute inset-0 z-10 rounded-[38px] p-[1px] opacity-60"
+                className="pointer-events-none absolute -right-[7px] top-[6%] h-[88%] w-[12px] rounded-r-[28px] bg-gradient-to-r from-white/22 via-white/7 to-transparent blur-[0.4px]"
                 style={{
-                  background: `linear-gradient(
-                    ${110 + mouse.x * 25}deg,
-                    rgba(255,255,255,0.65),
-                    rgba(255,255,255,0.08) 30%,
-                    rgba(13,59,52,0.18) 65%,
-                    rgba(255,255,255,0.35)
-                  )`,
-                  WebkitMask:
-                    "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                  WebkitMaskComposite: "xor",
-                  maskComposite: "exclude",
+                  transform: "translateZ(-8px) rotateY(-70deg)",
+                  transformOrigin: "left",
                 }}
               />
 
-              <div className="relative z-20 rounded-[30px] border border-white/20 bg-transparent p-[1px]">
-                <div className="relative overflow-hidden rounded-[29px] bg-[#063c30]/[0.06] p-7 text-white">
-                  <div className="flex items-start justify-between">
+              {/* قطعة الزجاج الرئيسية */}
+              <div
+                className="relative overflow-hidden rounded-[34px] border border-white/42 bg-white/[0.018] shadow-[0_26px_55px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.88),inset_1px_0_0_rgba(255,255,255,0.14),inset_0_-1px_0_rgba(255,255,255,0.08)] backdrop-blur-[1.5px] backdrop-saturate-110"
+                style={{ transform: "translateZ(18px)" }}
+              >
+                {/* انعكاس رفيع على الحد العلوي */}
+                <div className="pointer-events-none absolute left-[8%] top-[1px] h-px w-[64%] bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+
+                {/* لمعة خفيفة جداً - بدون لون ذهبي */}
+                <div className="pointer-events-none absolute -left-[8%] -top-[18%] h-[48%] w-[54%] rounded-full bg-white/[0.055] blur-3xl" />
+
+                {/* حد داخلي خفيف يدي إحساس السمك */}
+                <div className="pointer-events-none absolute inset-[8px] rounded-[28px] border border-white/10" />
+
+                <div
+                  dir={isArabic ? "rtl" : "ltr"}
+                  className={`relative z-10 p-8 text-white ${
+                    isArabic ? "text-right" : "text-left"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/90">
-                        اكتشاف ذكي
+                      <p className="text-[10px] font-black tracking-[0.22em] text-white/70">
+                        AREES DISCOVERY
                       </p>
 
-                      <h2 className="mt-3 text-3xl font-black">
-                        تجربة قريبة منك
+                      <h2 className="mt-2 text-3xl font-black drop-shadow-[0_2px_7px_rgba(0,0,0,0.24)]">
+                        {isArabic ? currentScene.nameAr : currentScene.nameEn}
                       </h2>
                     </div>
 
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/38 bg-white/[0.022] shadow-[inset_0_1px_0_rgba(255,255,255,0.48)] backdrop-blur-[1px]">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-6 w-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                        <circle cx="12" cy="10" r="2.3" />
+                      </svg>
+                    </div>
                   </div>
 
-                  {/* Recommendation */}
-                  <div className="mt-8 rounded-[26px] border border-white/15 bg-white/10 p-5 backdrop-blur-xl">
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-full bg-[#e4bd54] px-3 py-1 text-xs font-black text-[#17372d]">
-                        3.2 كم
+                  {/* المحتوى الداخلي شفاف جداً - الخلفية وراءه واضحة */}
+                  <div className="mt-7 rounded-[26px] border border-white/24 bg-white/[0.010] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.20)] backdrop-blur-[0.8px]">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="rounded-full border border-white/26 bg-white/[0.014] px-3 py-1.5 text-[11px] font-black text-white/90">
+                        {isArabic ? currentScene.metaAr : currentScene.metaEn}
                       </span>
 
-                      <span className="text-sm text-white/70">
-                        مقترح بالذكاء الاصطناعي
+                      <span className="text-xs font-bold text-white/76">
+                        {String(activeScene + 1).padStart(2, "0")} /{" "}
+                        {String(heroScenes.length).padStart(2, "0")}
                       </span>
                     </div>
 
-                    <h3 className="mt-5 text-2xl font-bold">
-                      تجربة سعودية مميزة
-                    </h3>
-
-                    <p className="mt-3 leading-7 text-white/70">
-                      تجربة مختارة بناءً على موقعك الحالي واهتماماتك والوقت
-                      المتاح لديك.
+                    <p className="mt-7 text-2xl font-black">
+                      {isArabic ? currentScene.detailAr : currentScene.detailEn}
                     </p>
 
-                    {/* Stats */}
-                    <div className="mt-6 grid grid-cols-3 gap-3">
-                      <div className="rounded-2xl bg-black/15 p-3 text-center">
-                        <p className="text-xs text-white/55">المدة</p>
-                        <p className="mt-1 font-bold">45 دقيقة</p>
-                      </div>
+                    <p className="mt-3 text-sm leading-7 text-white/82">
+                      {isArabic
+                        ? "أماكن وتجارب أقرب إلى لحظتك الحالية، مع حجز ومكافآت داخل أريس لوب."
+                        : "Places and experiences closer to your current moment, with booking and rewards inside AREES Loop."}
+                    </p>
 
-                      <div className="rounded-2xl bg-black/15 p-3 text-center">
-                        <p className="text-xs text-white/55">المكافأة</p>
+                    <div className="mt-7 grid grid-cols-3 gap-2.5 text-center">
+                      <Link
+                        href="/discover"
+                        className="rounded-2xl border border-white/40 bg-white/[0.055] px-2 py-3 text-xs font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-[1px] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D4AF37]/90 hover:bg-[#D4AF37] hover:text-[#0D3B34] hover:shadow-[0_0_24px_rgba(212,175,55,0.38),inset_0_1px_0_rgba(255,255,255,0.38)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/80"
+                      >
+                        {isArabic ? "اكتشف" : "Discover"}
+                      </Link>
 
-                        <p className="mt-1 font-bold text-[#e6c262]">
-                          +750
-                        </p>
-                      </div>
+                      <Link
+                        href="/bookings"
+                        className="rounded-2xl border border-white/40 bg-white/[0.055] px-2 py-3 text-xs font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-[1px] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D4AF37]/90 hover:bg-[#D4AF37] hover:text-[#0D3B34] hover:shadow-[0_0_24px_rgba(212,175,55,0.38),inset_0_1px_0_rgba(255,255,255,0.38)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/80"
+                      >
+                        {isArabic ? "احجز" : "Book"}
+                      </Link>
 
-                      <div className="rounded-2xl bg-black/15 p-3 text-center">
-                        <p className="text-xs text-white/55">الحالة</p>
-
-                        <p className="mt-1 font-bold">متاح الآن</p>
-                      </div>
+                      <Link
+                        href="/rewards"
+                        className="rounded-2xl border border-white/40 bg-white/[0.055] px-2 py-3 text-xs font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-[1px] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D4AF37]/90 hover:bg-[#D4AF37] hover:text-[#0D3B34] hover:shadow-[0_0_24px_rgba(212,175,55,0.38),inset_0_1px_0_rgba(255,255,255,0.38)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/80"
+                      >
+                        {isArabic ? "اكسب" : "Earn"}
+                      </Link>
                     </div>
-
-                    <Link
-                      href="/discover"
-                      className="mt-6 block w-full rounded-2xl border border-white/25 bg-[#0D3B34]/75 py-4 text-center font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#e5b83f]/60 hover:bg-[#0D3B34]/90 hover:shadow-[0_10px_30px_rgba(13,59,52,0.28)]"
-                    >
-                      اكتشف الآن
-                    </Link>
                   </div>
+
+                  <Link
+                    href="/discover"
+                    className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/22 bg-[#07372f]/76 px-5 py-4 font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur-[2px] transition hover:bg-[#0b493e]/86"
+                  >
+                    <span>{isArabic ? "ادخل التجربة" : "Enter experience"}</span>
+                    <span className="text-[#e6c45f]">←</span>
+                  </Link>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Floating Reward */}
-            <div className="absolute -bottom-6 -left-5 hidden rounded-3xl border border-white/35 bg-[#0D3B34]/10 p-4 shadow-[0_12px_35px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.40)] backdrop-blur-[3px] backdrop-saturate-150 md:block">
-              <p className="text-xs font-bold tracking-[0.14em] text-white/85">
-                مكافأة أريس لوب
-              </p>
+        <div className="absolute right-4 top-1/2 z-30 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex xl:right-7">
+          {heroScenes.map((scene, index) => (
+            <button
+              key={scene.id}
+              type="button"
+              onClick={() => setActiveScene(index)}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border text-[11px] font-black backdrop-blur-xl transition ${
+                activeScene === index
+                  ? "border-[#e6c45f]/80 bg-[#D4AF37] text-[#0D3B34] shadow-[0_0_24px_rgba(212,175,55,0.36)]"
+                  : "border-white/30 bg-white/[0.035] text-white/75 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {String(index + 1).padStart(2, "0")}
+            </button>
+          ))}
+        </div>
 
-              <p className="mt-1 text-xl font-black text-[#e5b83f] drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
-                +750 نقطة
-              </p>
-            </div>
+        <div className="absolute inset-x-0 bottom-5 z-30 flex justify-center">
+          <div className="flex items-center gap-3 rounded-full border border-white/22 bg-white/[0.02] px-5 py-2.5 text-[11px] font-bold text-white/78 backdrop-blur-xl">
+            <span>
+              {isArabic
+                ? isLastScene
+                  ? "واصل للأسفل"
+                  : "مرر لاستكشاف الوجهة التالية"
+                : isLastScene
+                  ? "Continue down"
+                  : "Scroll to discover the next destination"}
+            </span>
+            <span className="text-base text-white">⌄</span>
           </div>
         </div>
       </section>
