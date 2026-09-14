@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getTotalLoopPoints } from "@/lib/loop-progress";
 
@@ -32,6 +33,25 @@ type UserLocation = {
   lat: number;
   lng: number;
   accuracy: number;
+};
+
+const supportedDestinations = [
+  { nameAr: "المدينة المنورة", lat: 24.4672, lng: 39.6024 },
+  { nameAr: "مكة المكرمة", lat: 21.4225, lng: 39.8262 },
+  { nameAr: "جدة", lat: 21.5433, lng: 39.1728 },
+  { nameAr: "العلا", lat: 26.6085, lng: 37.9232 },
+] as const;
+
+const destinationMissions: Record<
+  string,
+  { title: string; description: string; points: number }
+> = {
+  "المدينة المنورة": {
+    title: "اكتشف 3 معالم قريبة واكسب 150 نقطة",
+    description:
+      "زر ثلاثة مواقع مختارة في المدينة المنورة، وسجّل زيارتك عند الوصول لتحصل على مكافأتك.",
+    points: 150,
+  },
 };
 
 const categories: {
@@ -147,6 +167,8 @@ const events = [
 ];
 
 export default function DiscoverPage() {
+  const searchParams = useSearchParams();
+
   const [activeCategory, setActiveCategory] =
     useState<Category>("all");
 
@@ -156,11 +178,58 @@ export default function DiscoverPage() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState("فعّل موقعك لعرض الأقرب إليك");
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [selectedDestination, setSelectedDestination] = useState<string>("");
   const [loopPoints, setLoopPoints] = useState(0);
 
   useEffect(() => {
     setLoopPoints(getTotalLoopPoints());
+
+    const savedDestination = window.localStorage.getItem(
+      "arees-loop-next-destination"
+    );
+
+    if (
+      savedDestination &&
+      supportedDestinations.some(
+        (destination) => destination.nameAr === savedDestination
+      )
+    ) {
+      setSelectedDestination(savedDestination);
+    }
   }, []);
+
+  useEffect(() => {
+    const latParam = searchParams.get("lat");
+    const lngParam = searchParams.get("lng");
+    const source = searchParams.get("source");
+
+    if (!latParam || !lngParam || source !== "location") {
+      return;
+    }
+
+    const lat = Number(latParam);
+    const lng = Number(lngParam);
+
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180
+    ) {
+      return;
+    }
+
+    setUserLocation({
+      lat,
+      lng,
+      accuracy: 0,
+    });
+    setLocationEnabled(true);
+    setLocationLoading(false);
+    setLocationStatus("تم استخدام موقعك المحدد في الصفحة الرئيسية");
+  }, [searchParams]);
 
   const rewardLevel =
     loopPoints >= 5000
@@ -181,6 +250,38 @@ export default function DiscoverPage() {
       ? 100
       : Math.min(100, Math.round((loopPoints / nextLevelPoints) * 100));
 
+  const currentDestination = useMemo(() => {
+    if (!userLocation) return null;
+
+    return supportedDestinations
+      .map((destination) => ({
+        ...destination,
+        distanceKm: calculateDistanceKm(
+          userLocation.lat,
+          userLocation.lng,
+          destination.lat,
+          destination.lng
+        ),
+      }))
+      .sort((a, b) => a.distanceKm - b.distanceKm)[0];
+  }, [userLocation]);
+
+  const destinationIsNearby =
+    currentDestination !== null && currentDestination.distanceKm <= 80;
+
+  const activeDestinationName =
+    selectedDestination ||
+    (destinationIsNearby && currentDestination
+      ? currentDestination.nameAr
+      : "");
+
+  const hasLocalDemoContent =
+    !activeDestinationName || activeDestinationName === "المدينة المنورة";
+
+  const activeMission = activeDestinationName
+    ? destinationMissions[activeDestinationName] ?? null
+    : null;
+
   const filteredExperiences = useMemo(() => {
     const normalizedSearch = search.trim();
 
@@ -197,7 +298,13 @@ export default function DiscoverPage() {
         experience.categoryLabel.includes(normalizedSearch) ||
         experience.location.includes(normalizedSearch);
 
-      return matchesCategory && matchesSearch;
+      const matchesDestination =
+        !activeDestinationName ||
+        experience.location.includes(activeDestinationName) ||
+        (activeDestinationName === "المدينة المنورة" &&
+          experience.location.includes("المنطقة المركزية"));
+
+      return matchesCategory && matchesSearch && matchesDestination;
     });
 
     if (!userLocation) {
@@ -221,7 +328,8 @@ export default function DiscoverPage() {
 
       return distanceA - distanceB;
     });
-  }, [activeCategory, search, userLocation]);
+  }, [activeCategory, search, userLocation, activeDestinationName]);
+
 
   function requestLocation() {
     if (locationEnabled) {
@@ -422,8 +530,13 @@ export default function DiscoverPage() {
               </div>
 
               <p className="mb-4 text-[9px] text-white/45">
-                {locationStatus}
+                {selectedDestination
+                  ? `وجهتك القادمة: ${selectedDestination}`
+                  : destinationIsNearby && currentDestination
+                    ? `موقعك الحالي: ${currentDestination.nameAr}`
+                    : locationStatus}
                 {userLocation &&
+                  userLocation.accuracy > 0 &&
                   ` • دقة تقريبية ${Math.round(userLocation.accuracy)} م`}
               </p>
 
@@ -437,17 +550,121 @@ export default function DiscoverPage() {
                   fontFamily: "var(--font-el-messiri), sans-serif",
                 }}
               >
-                حولك الآن تجارب
-                <br />
-                تستحق الاكتشاف.
+                {activeDestinationName ? (
+                  <>
+                    اكتشف {activeDestinationName}
+                    <br />
+                    من حولك.
+                  </>
+                ) : (
+                  <>
+                    حولك الآن تجارب
+                    <br />
+                    تستحق الاكتشاف.
+                  </>
+                )}
               </h1>
 
-              <p className="mt-4 max-w-xl text-xs leading-7 text-white/55">
+              <p className="mt-4 max-w-2xl text-[15px] font-medium leading-8 text-white/75 md:text-base">
                 نرتب لك الوجهات والتجارب والمرشدين حسب موقعك
                 واهتماماتك والوقت المناسب لك.
               </p>
 
-              <div className="mt-7 flex max-w-2xl items-center rounded-[18px] border border-white/10 bg-white/[0.08] p-1.5 backdrop-blur-xl">
+              <div className="mt-6 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm font-bold text-white/80 md:text-[15px]">
+                    خطط لوجهتك القادمة:
+                  </span>
+
+                  <select
+                    value={selectedDestination}
+                    onChange={(e) => {
+                      const destination = e.target.value;
+                      setSelectedDestination(destination);
+
+                      if (destination) {
+                        window.localStorage.setItem(
+                          "arees-loop-next-destination",
+                          destination
+                        );
+                      } else {
+                        window.localStorage.removeItem(
+                          "arees-loop-next-destination"
+                        );
+                      }
+                    }}
+                    className="min-h-11 rounded-full border border-white/20 bg-white/[0.11] px-5 py-2.5 text-sm font-bold text-white outline-none backdrop-blur-xl"
+                  >
+                    <option value="">موقعي الحالي</option>
+                    {supportedDestinations.map((destination) => (
+                      <option
+                        key={destination.nameAr}
+                        value={destination.nameAr}
+                        className="text-[#0D3B34]"
+                      >
+                        {destination.nameAr}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedDestination && (
+                  <p className="mt-3 text-sm font-semibold leading-6 text-[#E3C357]">
+                    تعرض لك الصفحة الآن محتوى {selectedDestination} كوجهتك القادمة.
+                  </p>
+                )}
+
+                {/* DESTINATION-AWARE MISSION */}
+                <div className="mt-5">
+                  {activeMission ? (
+                    <div className="rounded-[22px] border border-[#D4AF37]/30 bg-white/[0.08] p-5 backdrop-blur-xl md:p-6">
+                      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-[#D4AF37]/15 px-3 py-1.5 text-[10px] font-bold text-[#E3C357]">
+                              LOOP MISSION
+                            </span>
+                            <span className="text-[11px] font-medium text-white/55">
+                              مهمة {activeDestinationName}
+                            </span>
+                          </div>
+
+                          <h2
+                            className="mt-3 text-xl font-semibold text-white md:text-2xl"
+                            style={{
+                              fontFamily: "var(--font-el-messiri), sans-serif",
+                            }}
+                          >
+                            {activeMission.title}
+                          </h2>
+
+                          <p className="mt-2 max-w-xl text-sm leading-6 text-white/65">
+                            {activeMission.description}
+                          </p>
+                        </div>
+
+                        <Link
+                          href={`/missions?destination=${encodeURIComponent(activeDestinationName)}`}
+                          className="shrink-0 rounded-[16px] bg-[#D4AF37] px-7 py-3.5 text-center text-sm font-bold text-[#0D3B34] transition hover:bg-[#E0BE50]"
+                        >
+                          ابدأ المهمة
+                        </Link>
+                      </div>
+                    </div>
+                  ) : activeDestinationName ? (
+                    <div className="rounded-[22px] border border-[#D4AF37]/20 bg-white/[0.07] p-5 backdrop-blur-xl">
+                      <p className="text-[10px] font-bold tracking-[0.14em] text-[#E3C357]">
+                        LOOP MISSIONS
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white/80">
+                        مهام {activeDestinationName} قريبًا — لا توجد مهمة منشورة لهذه الوجهة حاليًا.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-6 flex max-w-2xl items-center rounded-[18px] border border-white/10 bg-white/[0.08] p-1.5 backdrop-blur-xl">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center text-white/60">
                   <SearchIcon />
                 </div>
@@ -616,15 +833,64 @@ export default function DiscoverPage() {
           {filteredExperiences.length === 0 &&
             activeCategory !== "guides" &&
             activeCategory !== "events" && (
-              <div className="mt-5 rounded-[24px] border border-[#0D3B34]/8 bg-white/50 p-8 text-center text-xs text-[#0D3B34]/45">
-                ما لقينا نتائج مطابقة الآن. جرّب تصنيف مختلف.
+              <div className="mt-5 rounded-[26px] border border-[#0D3B34]/8 bg-white/60 p-7 text-center backdrop-blur-xl md:p-9">
+                {selectedDestination ? (
+                  <>
+                    <p className="text-[10px] font-bold tracking-[0.14em] text-[#B99124]">
+                      NEXT DESTINATION
+                    </p>
+
+                    <h3
+                      className="mt-2 text-xl font-semibold text-[#0D3B34]"
+                      style={{
+                        fontFamily: "var(--font-el-messiri), sans-serif",
+                      }}
+                    >
+                      نجهّز لك محتوى {selectedDestination}
+                    </h3>
+
+                    <p className="mx-auto mt-2 max-w-xl text-[11px] leading-6 text-[#0D3B34]/45">
+                      لا توجد تجارب منشورة لهذه الوجهة ضمن بيانات النسخة الحالية بعد.
+                      سيبقى اختيارك محفوظًا، وستظهر لك التجارب هنا فور إضافتها.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDestination("");
+                        window.localStorage.removeItem(
+                          "arees-loop-next-destination"
+                        );
+                      }}
+                      className="mt-5 rounded-full bg-[#0D3B34] px-5 py-2.5 text-[10px] font-semibold text-white transition hover:bg-[#145347]"
+                    >
+                      العودة إلى موقعي الحالي
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h3
+                      className="text-lg font-semibold text-[#0D3B34]"
+                      style={{
+                        fontFamily: "var(--font-el-messiri), sans-serif",
+                      }}
+                    >
+                      لا توجد نتائج مطابقة الآن
+                    </h3>
+
+                    <p className="mt-2 text-[11px] text-[#0D3B34]/45">
+                      جرّب تصنيفًا آخر أو غيّر عبارة البحث.
+                    </p>
+                  </>
+                )}
               </div>
             )}
         </section>
 
         {/* GUIDES */}
-        {(activeCategory === "all" ||
-          activeCategory === "guides") && (
+        {hasLocalDemoContent &&
+          (activeCategory === "all" ||
+            activeCategory === "guides") && (
           <section className="mt-12">
             <div className="flex items-end justify-between gap-5">
               <SectionTitle
@@ -653,8 +919,9 @@ export default function DiscoverPage() {
         )}
 
         {/* EVENTS */}
-        {(activeCategory === "all" ||
-          activeCategory === "events") && (
+        {hasLocalDemoContent &&
+          (activeCategory === "all" ||
+            activeCategory === "events") && (
           <section className="mt-12">
             <SectionTitle
               eyebrow="WHAT'S HAPPENING"
@@ -673,48 +940,33 @@ export default function DiscoverPage() {
           </section>
         )}
 
-        {/* MISSION */}
-        <section className="mt-12">
-          <div className="relative overflow-hidden rounded-[30px] border border-[#D4AF37]/20 bg-gradient-to-l from-[#0A332C] via-[#0D3B34] to-[#123F37] p-6 text-white md:p-8">
-            <div className="absolute -bottom-24 left-[10%] h-72 w-72 rounded-full bg-[#D4AF37]/10 blur-3xl" />
+        {!hasLocalDemoContent &&
+          activeDestinationName &&
+          (activeCategory === "guides" || activeCategory === "events") && (
+            <section className="mt-8">
+              <div className="rounded-[26px] border border-[#0D3B34]/8 bg-white/60 p-7 text-center backdrop-blur-xl md:p-9">
+                <p className="text-[10px] font-bold tracking-[0.14em] text-[#B99124]">
+                  DESTINATION CONTENT
+                </p>
 
-            <div className="relative grid items-center gap-8 lg:grid-cols-[1fr_auto]">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[#D4AF37]/12 px-3 py-1.5 text-[9px] font-semibold text-[#D4AF37]">
-                    LOOP MISSION
-                  </span>
-
-                  <span className="text-[9px] text-white/40">
-                    مهمة اليوم
-                  </span>
-                </div>
-
-                <h2
-                  className="mt-4 text-2xl font-semibold"
+                <h3
+                  className="mt-2 text-xl font-semibold text-[#0D3B34]"
                   style={{
-                    fontFamily:
-                      "var(--font-el-messiri), sans-serif",
+                    fontFamily: "var(--font-el-messiri), sans-serif",
                   }}
                 >
-                  اكتشف 3 معالم قريبة واكسب 150 نقطة
-                </h2>
+                  نجهّز هذا القسم لـ {activeDestinationName}
+                </h3>
 
-                <p className="mt-3 max-w-2xl text-xs leading-6 text-white/50">
-                  زر ثلاثة مواقع مختارة اليوم، وسجّل زيارتك
-                  عند الوصول لتحصل على مكافأتك.
+                <p className="mx-auto mt-2 max-w-xl text-[11px] leading-6 text-[#0D3B34]/45">
+                  لا توجد بيانات منشورة لهذا القسم في وجهتك المختارة ضمن النسخة الحالية بعد.
+                  سيظهر المحتوى تلقائيًا فور إضافته.
                 </p>
               </div>
+            </section>
+          )}
 
-              <Link
-                href="/missions"
-                className="rounded-[16px] bg-[#D4AF37] px-7 py-3.5 text-center text-xs font-bold text-[#0D3B34]"
-              >
-                ابدأ المهمة
-              </Link>
-            </div>
-          </div>
-        </section>
+
       </div>
 
       {/* MOBILE NAV */}

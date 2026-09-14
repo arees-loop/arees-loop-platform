@@ -90,6 +90,7 @@ const heroScenes = [
     descriptionEn:
       "Start with the bigger picture, then move through AREES Loop to discover destinations and experiences that match your location, time and interests.",
     image: "/Image/hero/saudi-panorama-hero.jpg",
+    coords: null,
     metaAr: "السعودية حولك",
     metaEn: "Saudi around you",
     detailAr: "وجهات · تجارب · مهمات",
@@ -108,6 +109,7 @@ const heroScenes = [
     descriptionEn:
       "From Seerah and history to museums and nearby experiences, AREES Loop connects the place with what you can do now.",
     image: "/Image/destinations/medina-hero.webp",
+    coords: { lat: 24.4672, lng: 39.6111 },
     metaAr: "تجارب قريبة",
     metaEn: "Nearby experiences",
     detailAr: "ثقافة · تاريخ · إيمان",
@@ -126,6 +128,7 @@ const heroScenes = [
     descriptionEn:
       "Waterfront, art, dining and marine experiences—discover what fits the moment instead of searching endlessly.",
     image: "/Image/destinations/jeddah-hero.webp",
+    coords: { lat: 21.5433, lng: 39.1728 },
     metaAr: "على البحر",
     metaEn: "By the Red Sea",
     detailAr: "بحر · فن · تجارب",
@@ -144,22 +147,118 @@ const heroScenes = [
     descriptionEn:
       "AREES Loop helps you discover relevant experiences and services around your journey in Makkah, intelligently and nearby.",
     image: "/Image/destinations/makkah-hero.webp",
+    coords: { lat: 21.4225, lng: 39.8262 },
     metaAr: "حول رحلتك",
     metaEn: "Around your journey",
     detailAr: "روحانية · تاريخ · خدمة",
     detailEn: "Spirituality · History · Service",
   },
+
+  {
+    eyebrowAr: "العلا",
+    eyebrowEn: "ALULA",
+    titleAr: "حكايات محفورة في الصخر",
+    titleEn: "Stories carved in stone",
+    descriptionAr:
+      "اكتشف العلا من موقعك، ثم دع أريس لوب يقودك إلى التجارب والمهام القريبة.",
+    descriptionEn:
+      "Discover AlUla from where you are, then let AREES Loop lead you to nearby experiences and missions.",
+    image: "/Image/destinations/alula-hero.webp",
+    coords: { lat: 26.6084, lng: 37.9232 },
+  },
 ];
+
+
+const toRadians = (value: number) => (value * Math.PI) / 180;
+
+const distanceKm = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+) => {
+  const earthRadiusKm = 6371;
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLng / 2) ** 2;
+
+  return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
+};
 
 export default function Home() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [activeScene, setActiveScene] = useState(0);
+  const [locationReady, setLocationReady] = useState(false);
+  const [showLocationNotice, setShowLocationNotice] = useState(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [heroLanguage, setHeroLanguage] = useState<"ar" | "en">("ar");
   const wheelLocked = useRef(false);
 
   const currentScene = heroScenes[activeScene];
   const isArabic = heroLanguage === "ar";
   const isLastScene = activeScene === heroScenes.length - 1;
+  const nearbyDiscoverHref = userCoords
+    ? `/discover?lat=${userCoords.lat.toFixed(6)}&lng=${userCoords.lng.toFixed(6)}&source=location`
+    : "/discover";
+
+  useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      setLocationReady(true);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setUserCoords({
+          lat: coords.latitude,
+          lng: coords.longitude,
+        });
+
+        let nearestIndex = 0;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+
+        heroScenes.forEach((scene, index) => {
+          if (!scene.coords) return;
+
+          const distance = distanceKm(
+            coords.latitude,
+            coords.longitude,
+            scene.coords.lat,
+            scene.coords.lng,
+          );
+
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestIndex = index;
+          }
+        });
+
+        if (nearestDistance <= 80) {
+          setActiveScene(nearestIndex);
+          window.setTimeout(() => setShowLocationNotice(true), 650);
+        } else {
+          setActiveScene(0);
+        }
+
+        setLocationReady(true);
+      },
+      () => {
+        setActiveScene(0);
+        setLocationReady(true);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60 * 1000,
+      },
+    );
+  }, []);
+
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflowY;
@@ -278,15 +377,15 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#041713]/44 via-transparent to-black/10" />
         </div>
 
-        <header className="relative z-40 px-4 pt-4 md:px-8 md:pt-5">
-          <nav className="mx-auto flex max-w-[1450px] items-center justify-between gap-3 rounded-[30px] border border-white/35 bg-white/[0.055] px-4 py-2.5 shadow-[0_18px_55px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-[10px] backdrop-saturate-150 md:px-6">
+        <header className="relative z-40 px-4 pt-1 md:px-8 md:pt-1">
+          <nav className="mx-auto flex h-[92px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border border-white/35 bg-white/[0.055] px-4 py-0 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-[10px] backdrop-saturate-150 md:h-[96px] md:px-6">
             <Image
               src="/Logo/arees-loop-logo.png"
               alt="Arees Loop"
               width={240}
               height={120}
               priority
-              className="h-auto w-[118px] md:w-[145px]"
+              className="h-auto w-[142px] md:w-[166px]"
             />
 
             <div
@@ -328,20 +427,90 @@ export default function Home() {
 
               <Link
                 href="/login"
-                className="hidden rounded-full border border-white/30 bg-white/[0.06] px-4 py-3 text-xs font-bold text-white backdrop-blur-xl transition hover:bg-white/15 sm:inline-flex"
+                className="hidden rounded-full border border-white/30 bg-white/[0.06] px-4 py-2.5 text-xs font-bold text-white backdrop-blur-xl transition hover:bg-white/15 sm:inline-flex"
               >
                 تسجيل الدخول
               </Link>
 
               <Link
                 href="/auth"
-                className="rounded-full bg-[#0D3B34]/90 px-4 py-3 text-xs font-black text-white shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[#145347] md:px-5"
+                className="rounded-full bg-[#0D3B34]/90 px-4 py-2.5 text-xs font-black text-white shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[#145347] md:px-5"
               >
                 ابدأ التجربة
               </Link>
             </div>
           </nav>
         </header>
+
+        {showLocationNotice && activeScene > 0 && (
+          <div
+            dir={isArabic ? "rtl" : "ltr"}
+            className="absolute left-1/2 top-[112px] z-[70] w-[calc(100%-32px)] max-w-[520px] -translate-x-1/2 px-2 md:top-[116px]"
+          >
+            <div className="relative overflow-hidden rounded-[24px] border border-white/45 bg-[#0B342D]/62 px-5 py-4 text-white shadow-[0_18px_55px_rgba(0,0,0,0.26),inset_0_1px_0_rgba(255,255,255,0.28)] backdrop-blur-[14px] backdrop-saturate-150">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.10] via-transparent to-white/[0.025]" />
+
+              <button
+                type="button"
+                onClick={() => setShowLocationNotice(false)}
+                aria-label={isArabic ? "إغلاق الإشعار" : "Close notification"}
+                className="absolute left-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-white/[0.06] text-sm text-white/75 transition hover:bg-white/15 hover:text-white"
+              >
+                ×
+              </button>
+
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="flex h-11 w-11 shrink-0 animate-bounce items-center justify-center rounded-2xl border border-[#D4AF37]/55 bg-[#D4AF37]/14 text-[#F0D37D] shadow-[inset_0_1px_0_rgba(255,255,255,0.20)]">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                    <circle cx="12" cy="10" r="2.4" />
+                  </svg>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-black tracking-[0.12em] text-[#F0D37D]">
+                    {isArabic ? "تم تحديد موقعك" : "LOCATION DETECTED"}
+                  </p>
+
+                  <p className="mt-1 text-base font-black md:text-lg">
+                    {isArabic
+                      ? `أنت الآن في ${currentScene.nameAr}`
+                      : `You are now in ${currentScene.nameEn}`}
+                  </p>
+
+                  <p className="mt-1 text-xs leading-6 text-white/78 md:text-sm">
+                    {isArabic
+                      ? "استكشف تجارب ومهام قريبة من موقعك، مصممة لتناسب لحظتك الحالية."
+                      : "Explore nearby experiences and missions selected around your current location."}
+                  </p>
+                </div>
+
+                <Link
+                  href={nearbyDiscoverHref}
+                  className="hidden shrink-0 rounded-full bg-[#D4AF37] px-5 py-3 text-xs font-black text-[#10342C] shadow-[0_10px_28px_rgba(212,175,55,0.24)] transition hover:-translate-y-0.5 hover:bg-[#E6C45F] sm:inline-flex"
+                >
+                  {isArabic ? "اكتشف ما حولك" : "Explore nearby"}
+                </Link>
+              </div>
+
+              <Link
+                href={nearbyDiscoverHref}
+                className="relative z-10 mt-3 flex w-full items-center justify-center rounded-full bg-[#D4AF37] px-5 py-3 text-xs font-black text-[#10342C] sm:hidden"
+              >
+                {isArabic ? "اكتشف ما حولك" : "Explore nearby"}
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div
           dir="ltr"
@@ -431,19 +600,75 @@ export default function Home() {
                 }}
               />
 
-              {/* قطعة الزجاج الرئيسية */}
+              {/* قطعة الزجاج الرئيسية — شفافة بالكامل مثل عدسة موضوعة فوق المشهد */}
               <div
-                className="relative overflow-hidden rounded-[34px] border border-white/42 bg-white/[0.018] shadow-[0_26px_55px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.88),inset_1px_0_0_rgba(255,255,255,0.14),inset_0_-1px_0_rgba(255,255,255,0.08)] backdrop-blur-[1.5px] backdrop-saturate-110"
-                style={{ transform: "translateZ(18px)" }}
+                className="relative overflow-hidden rounded-[36px] border border-white/55 bg-white/[0.012] shadow-[0_30px_80px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.95),inset_1px_0_0_rgba(255,255,255,0.30),inset_-1px_0_0_rgba(255,255,255,0.16),inset_0_-1px_0_rgba(255,255,255,0.12)]"
+                style={{
+                  transform: "translateZ(24px)",
+                  backdropFilter:
+                    "saturate(1.12) contrast(1.035) brightness(1.035)",
+                  WebkitBackdropFilter:
+                    "saturate(1.12) contrast(1.035) brightness(1.035)",
+                }}
               >
-                {/* انعكاس رفيع على الحد العلوي */}
-                <div className="pointer-events-none absolute left-[8%] top-[1px] h-px w-[64%] bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+                {/* سطح زجاجي شفاف: لا توجد أي صورة داخلية — الخلفية نفسها تستمر خلال اللوح */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 rounded-[35px]"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.025) 24%, rgba(255,255,255,0.00) 55%, rgba(255,255,255,0.045) 76%, rgba(255,255,255,0.10) 100%)",
+                  }}
+                />
 
-                {/* لمعة خفيفة جداً - بدون لون ذهبي */}
-                <div className="pointer-events-none absolute -left-[8%] -top-[18%] h-[48%] w-[54%] rounded-full bg-white/[0.055] blur-3xl" />
+                {/* الحافة العلوية السميكة */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-[3%] top-[2px] h-[8px] w-[94%] rounded-full opacity-90 blur-[0.35px]"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.20), rgba(255,255,255,0))",
+                  }}
+                />
 
-                {/* حد داخلي خفيف يدي إحساس السمك */}
-                <div className="pointer-events-none absolute inset-[8px] rounded-[28px] border border-white/10" />
+                {/* حافة يسار مضيئة — تعطي إحساس الانكسار */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-[2px] top-[5%] h-[90%] w-[9px] rounded-full opacity-70 blur-[0.8px]"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(255,255,255,0.85), rgba(255,255,255,0.18), rgba(255,255,255,0))",
+                  }}
+                />
+
+                {/* حافة يمين زجاجية أغمق قليلاً لإظهار السمك */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-[2px] top-[6%] h-[88%] w-[10px] rounded-full opacity-55 blur-[0.9px]"
+                  style={{
+                    background:
+                      "linear-gradient(270deg, rgba(255,255,255,0.65), rgba(255,255,255,0.10), rgba(0,0,0,0.03), rgba(255,255,255,0))",
+                  }}
+                />
+
+                {/* الحافة السفلية — مثل عدسة سميكة موضوعة فوق الشاشة */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-[2px] left-[4%] h-[10px] w-[92%] rounded-full opacity-75 blur-[0.65px]"
+                  style={{
+                    background:
+                      "linear-gradient(0deg, rgba(255,255,255,0.70), rgba(255,255,255,0.12), rgba(255,255,255,0))",
+                  }}
+                />
+
+                {/* انعكاس قطري خفيف على سطح الزجاج */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -left-[18%] -top-[34%] h-[56%] w-[82%] rotate-[9deg] rounded-full bg-white/[0.055] blur-3xl"
+                />
+
+                {/* خط داخلي رفيع يثبت الإحساس بأن القطعة بارزة */}
+                <div className="pointer-events-none absolute inset-[7px] rounded-[29px] border border-white/13" />
 
                 <div
                   dir={isArabic ? "rtl" : "ltr"}
@@ -705,17 +930,10 @@ export default function Home() {
 
       <section
         id="how"
-        className="relative overflow-hidden bg-[#F4E7D0] px-6 py-24 md:px-10"
+        className="relative overflow-hidden  px-6 py-24 md:px-10 bg-white"
       >
         {/* الزجاجة الواحدة كخلفية كاملة للقسم */}
         <div className="absolute inset-0">
-          <Image
-            src="/Image/hero/arees-loop-glass-background.png"
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover object-center"
-          />
           <div className="absolute inset-0 bg-[#FFF8EC]/[0.05]" />
         </div>
 

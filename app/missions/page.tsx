@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   claimMissionReward,
   getLoopProgress,
@@ -22,6 +23,7 @@ type Mission = {
   status: MissionStatus;
   timeLeft?: string;
   category: string;
+  destination: string;
 };
 
 const baseMissions: Mission[] = [
@@ -36,6 +38,7 @@ const baseMissions: Mission[] = [
     status: "active",
     timeLeft: "ينتهي اليوم",
     category: "استكشاف",
+    destination: "المدينة المنورة",
   },
   {
     id: 2,
@@ -48,6 +51,7 @@ const baseMissions: Mission[] = [
     status: "active",
     timeLeft: "متبقي 4 أيام",
     category: "ثقافة",
+    destination: "المدينة المنورة",
   },
   {
     id: 3,
@@ -59,6 +63,7 @@ const baseMissions: Mission[] = [
     target: 5,
     status: "active",
     category: "تحدي",
+    destination: "المدينة المنورة",
   },
   {
     id: 4,
@@ -70,10 +75,15 @@ const baseMissions: Mission[] = [
     target: 3,
     status: "locked",
     category: "مستوى",
+    destination: "المدينة المنورة",
   },
 ];
 
 export default function MissionsPage() {
+  const searchParams = useSearchParams();
+  const selectedDestination =
+    searchParams.get("destination")?.trim() || "المدينة المنورة";
+
   const [activeFilter, setActiveFilter] = useState<
     "all" | MissionStatus
   >("all");
@@ -92,7 +102,16 @@ export default function MissionsPage() {
   }
 
   useEffect(() => {
-    refreshProgress();
+    const timeoutId = window.setTimeout(() => {
+      const progress = getLoopProgress();
+      setVerifiedExperienceIds(
+        progress.verifiedVisits.map((visit) => visit.experienceId)
+      );
+      setClaimedMissionIds(progress.missionRewardsClaimed);
+      setMissionPoints(getMissionRewardPoints());
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   const missions = useMemo<Mission[]>(() => {
@@ -112,7 +131,9 @@ export default function MissionsPage() {
       return mission3Progress >= 5;
     }).length;
 
-    return baseMissions.map((mission) => {
+    return baseMissions
+      .filter((mission) => mission.destination === selectedDestination)
+      .map((mission) => {
       let progress = mission.progress;
       let status = mission.status;
 
@@ -132,7 +153,7 @@ export default function MissionsPage() {
 
       return { ...mission, progress, status };
     });
-  }, [verifiedExperienceIds]);
+  }, [verifiedExperienceIds, selectedDestination]);
 
   const filteredMissions =
     activeFilter === "all"
@@ -162,11 +183,13 @@ export default function MissionsPage() {
     (mission) => mission.status === "completed"
   ).length;
 
-  const heroMission = missions[0];
-  const heroPercentage = Math.min(
-    100,
-    Math.round((heroMission.progress / heroMission.target) * 100)
-  );
+  const heroMission = missions[0] ?? null;
+  const heroPercentage = heroMission
+    ? Math.min(
+        100,
+        Math.round((heroMission.progress / heroMission.target) * 100)
+      )
+    : 0;
 
   return (
     <main
@@ -270,7 +293,7 @@ export default function MissionsPage() {
                   "var(--font-el-messiri), sans-serif",
               }}
             >
-              مهام Loop
+              مهام {selectedDestination}
             </h1>
 
             <p className="mt-2 max-w-xl text-xs leading-6 text-[#0D3B34]/65">
@@ -290,6 +313,7 @@ export default function MissionsPage() {
 
         {/* HERO MISSION */}
         <section className="mt-7">
+          {heroMission ? (
           <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#092F29] via-[#0D3B34] to-[#174E44] p-7 text-white md:p-9">
             <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full border border-white/[0.05]" />
 
@@ -316,13 +340,11 @@ export default function MissionsPage() {
                       "var(--font-el-messiri), sans-serif",
                   }}
                 >
-                  اكتشف 3 معالم قريبة
+                  {heroMission.title}
                 </h2>
 
                 <p className="mt-3 max-w-2xl text-[11px] leading-6 text-white/70">
-                  زر ثلاثة معالم موثقة قريبة منك
-                  وسجّل وصولك لإكمال المهمة والحصول
-                  على المكافأة.
+                  {heroMission.description}
                 </p>
 
                 <div className="mt-7 max-w-xl">
@@ -342,7 +364,7 @@ export default function MissionsPage() {
                 <div className="mt-7 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={() => startMission(1)}
+                    onClick={() => startMission(heroMission.id)}
                     className="rounded-[14px] bg-[#D4AF37] px-6 py-3 text-[10px] font-bold text-[#0D3B34] transition hover:bg-[#E0BE50]"
                   >
                     متابعة المهمة
@@ -350,7 +372,7 @@ export default function MissionsPage() {
 
                   <span className="flex items-center gap-2 rounded-[14px] border border-white/10 bg-white/[0.06] px-4 py-3 text-[9px] text-white/75">
                     <ClockIcon />
-                    تنتهي اليوم
+                    {heroMission.timeLeft ?? "مهمة متاحة"}
                   </span>
                 </div>
               </div>
@@ -367,7 +389,7 @@ export default function MissionsPage() {
 
                 <div className="mt-2 flex items-end gap-2">
                   <span className="text-4xl font-semibold text-[#E1BD4E]">
-                    150
+                    {heroMission.reward}
                   </span>
 
                   <span className="pb-1 text-[10px] text-white/65">
@@ -382,6 +404,29 @@ export default function MissionsPage() {
               </div>
             </div>
           </div>
+          ) : (
+            <div className="rounded-[30px] border border-[#D4AF37]/20 bg-white/65 p-8 text-center backdrop-blur-xl md:p-10">
+              <p className="text-[9px] font-bold tracking-[0.18em] text-[#B99124]">
+                LOOP MISSIONS
+              </p>
+              <h2
+                className="mt-3 text-2xl font-semibold text-[#0D3B34]"
+                style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
+              >
+                لا توجد مهام منشورة لهذه الوجهة بعد
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-[11px] leading-6 text-[#0D3B34]/60">
+                الوجهة المختارة هي {selectedDestination}. لن نعرض لك مهامًا من وجهة أخرى.
+              </p>
+              <Link
+                href="/discover"
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-[15px] bg-[#0D3B34] px-5 py-3 text-[11px] font-semibold text-white transition hover:bg-[#154C42]"
+              >
+                <CompassIcon />
+                اختر وجهة أخرى
+              </Link>
+            </div>
+          )}
         </section>
 
         {/* SUMMARY */}
