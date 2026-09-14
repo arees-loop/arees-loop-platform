@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { getTotalLoopPoints } from "@/lib/loop-progress";
 
 type Category =
@@ -167,6 +167,28 @@ const events = [
 ];
 
 export default function DiscoverPage() {
+  return (
+    <Suspense fallback={<DiscoverPageFallback />}>
+      <DiscoverContent />
+    </Suspense>
+  );
+}
+
+function DiscoverPageFallback() {
+  return (
+    <main
+      dir="rtl"
+      className="min-h-screen bg-[#F7F5EF] px-5 py-10 text-[#0D3B34]"
+    >
+      <div className="mx-auto max-w-7xl">
+        <div className="h-10 w-48 animate-pulse rounded-full bg-[#0D3B34]/10" />
+        <div className="mt-6 h-72 animate-pulse rounded-[32px] bg-[#0D3B34]/10" />
+      </div>
+    </main>
+  );
+}
+
+function DiscoverContent() {
   const searchParams = useSearchParams();
 
   const [activeCategory, setActiveCategory] =

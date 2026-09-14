@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   claimMissionReward,
@@ -80,6 +80,28 @@ const baseMissions: Mission[] = [
 ];
 
 export default function MissionsPage() {
+  return (
+    <Suspense fallback={<MissionsPageFallback />}>
+      <MissionsContent />
+    </Suspense>
+  );
+}
+
+function MissionsPageFallback() {
+  return (
+    <main
+      dir="rtl"
+      className="min-h-screen bg-[#F7F5EF] px-5 py-10 text-[#0D3B34]"
+    >
+      <div className="mx-auto max-w-6xl">
+        <div className="h-8 w-40 animate-pulse rounded-full bg-[#0D3B34]/10" />
+        <div className="mt-6 h-16 animate-pulse rounded-[24px] bg-white shadow-sm" />
+      </div>
+    </main>
+  );
+}
+
+function MissionsContent() {
   const searchParams = useSearchParams();
   const selectedDestination =
     searchParams.get("destination")?.trim() || "المدينة المنورة";

@@ -57,3 +57,4 @@ Thumbs.db
 # Their license files must remain with them.
 # Prisma generated client
 /app/generated/prisma/
+.env*
