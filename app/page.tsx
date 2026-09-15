@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type MouseEvent, type WheelEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 
 const experiences = [
   {
@@ -198,6 +198,8 @@ export default function Home() {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [heroLanguage, setHeroLanguage] = useState<"ar" | "en">("ar");
   const wheelLocked = useRef(false);
+  const touchStartY = useRef<number | null>(null);
+  const touchLocked = useRef(false);
 
   const currentScene = heroScenes[activeScene];
   const isArabic = heroLanguage === "ar";
@@ -327,6 +329,48 @@ export default function Home() {
     }, 820);
   };
 
+  const handleHeroTouchStart = (e: TouchEvent<HTMLElement>) => {
+    touchStartY.current = e.touches[0]?.clientY ?? null;
+  };
+
+  const handleHeroTouchEnd = (e: TouchEvent<HTMLElement>) => {
+    if (touchStartY.current === null || touchLocked.current) {
+      touchStartY.current = null;
+      return;
+    }
+
+    const touchEndY = e.changedTouches[0]?.clientY;
+    if (touchEndY === undefined) {
+      touchStartY.current = null;
+      return;
+    }
+
+    const deltaY = touchStartY.current - touchEndY;
+    touchStartY.current = null;
+
+    const swipeThreshold = 50;
+    const forward = deltaY > swipeThreshold;
+    const backward = deltaY < -swipeThreshold;
+
+    if (!forward && !backward) return;
+
+    if (forward && activeScene < heroScenes.length - 1) {
+      touchLocked.current = true;
+      setActiveScene((current) =>
+        Math.min(heroScenes.length - 1, current + 1),
+      );
+    } else if (backward && activeScene > 0) {
+      touchLocked.current = true;
+      setActiveScene((current) => Math.max(0, current - 1));
+    } else {
+      return;
+    }
+
+    window.setTimeout(() => {
+      touchLocked.current = false;
+    }, 820);
+  };
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f7f2] text-[#082d24]">
       <section
@@ -334,6 +378,8 @@ export default function Home() {
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMouse({ x: 0, y: 0 })}
         onWheel={handleHeroWheel}
+        onTouchStart={handleHeroTouchStart}
+        onTouchEnd={handleHeroTouchEnd}
       >
         <div className="absolute inset-0">
           {heroScenes.map((scene, index) => (

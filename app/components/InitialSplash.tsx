@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+const SPLASH_VISIBLE_MS = 2600;
+const SPLASH_REMOVE_MS = 3200;
+
 export default function InitialSplash() {
   const [visible, setVisible] = useState(true);
   const [closing, setClosing] = useState(false);
@@ -9,11 +12,11 @@ export default function InitialSplash() {
   useEffect(() => {
     const closeTimer = window.setTimeout(() => {
       setClosing(true);
-    }, 2600);
+    }, SPLASH_VISIBLE_MS);
 
     const removeTimer = window.setTimeout(() => {
       setVisible(false);
-    }, 3000);
+    }, SPLASH_REMOVE_MS);
 
     return () => {
       window.clearTimeout(closeTimer);
@@ -27,7 +30,8 @@ export default function InitialSplash() {
     <>
       <div
         dir="rtl"
-        className={`fixed inset-0 z-[100000] overflow-hidden bg-[#F3E7D1] transition-all duration-500 ${
+        aria-hidden="true"
+        className={`arees-initial-splash fixed inset-0 z-[100000] overflow-hidden bg-[#F3E7D1] transition-[opacity,transform] duration-500 ${
           closing
             ? "pointer-events-none scale-[1.012] opacity-0"
             : "opacity-100"
@@ -45,10 +49,7 @@ export default function InitialSplash() {
         {/* SOFT CINEMATIC OVERLAY */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-[#0D3B34]/8" />
 
-        {/* 
-          GOLD SHINE OVER THE REAL LOGO
-          لا يرسم شعار ثاني - مجرد شعاع يمر فوق الشعار الموجود في الصورة
-        */}
+        {/* GOLD SHINE OVER THE REAL LOGO */}
         <div className="pointer-events-none absolute left-1/2 top-[25.5%] z-20 h-[24%] w-[43%] -translate-x-1/2 overflow-hidden rounded-[45%]">
           <div className="arees-logo-shine absolute -inset-y-[40%] left-[-30%] w-[16%] rotate-[18deg] bg-gradient-to-r from-transparent via-[#FFF4B5]/85 to-transparent blur-[5px]" />
 
@@ -70,15 +71,38 @@ export default function InitialSplash() {
 
           <div className="mt-4 flex items-center justify-center gap-2">
             <span className="h-px w-10 bg-gradient-to-r from-transparent to-[#B99124]/80" />
-
             <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_14px_rgba(212,175,55,0.9)]" />
-
             <span className="h-px w-10 bg-gradient-to-l from-transparent to-[#B99124]/80" />
           </div>
         </div>
       </div>
 
       <style jsx>{`
+        /*
+          CSS fallback: even if a mobile browser delays React timers,
+          the splash itself becomes invisible and non-interactive.
+        */
+        @keyframes splashSafetyExit {
+          0%,
+          80% {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+          }
+
+          96% {
+            opacity: 0;
+            visibility: visible;
+            pointer-events: none;
+          }
+
+          100% {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+          }
+        }
+
         @keyframes logoShine {
           0% {
             transform: translateX(0) rotate(18deg);
@@ -155,6 +179,11 @@ export default function InitialSplash() {
           }
         }
 
+        .arees-initial-splash {
+          animation: splashSafetyExit 3.2s ease forwards;
+          will-change: opacity;
+        }
+
         .arees-logo-shine {
           animation: logoShine 1.65s ease-in-out infinite;
         }
@@ -173,6 +202,24 @@ export default function InitialSplash() {
 
         .arees-progress-shine {
           animation: progressShine 1s linear infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .arees-initial-splash {
+            animation-duration: 1.2s;
+          }
+
+          .arees-logo-shine,
+          .arees-logo-glow,
+          .arees-center-spark,
+          .arees-progress-shine {
+            animation: none;
+          }
+
+          .arees-progress {
+            animation: none;
+            width: 100%;
+          }
         }
       `}</style>
     </>
