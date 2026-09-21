@@ -3,6 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 
 const experiences = [
@@ -280,25 +281,7 @@ export default function Home() {
       document.body.style.overflowY = previousOverflow;
     };
   }, [isLastScene]);
-    useEffect(() => {
-    const scriptId = "sbc-verify-seal-script";
-
-    if (document.getElementById(scriptId)) return;
-
-    const script = document.createElement("script");
-    script.id = scriptId;
-    script.src =
-      "https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js";
-    script.async = true;
-
-    document.body.appendChild(script);
-
-    return () => {
-      script.remove();
-    };
-  }, []);
-
-  const handleMouseMove = (e: MouseEvent<HTMLElement>) => {
+    const handleMouseMove = (e: MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -1723,6 +1706,10 @@ export default function Home() {
             data-position="bottom-left"
           />
         </div>
+              <Script
+        src="https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js"
+        strategy="afterInteractive"
+      />
       </footer>
 
     </main>
