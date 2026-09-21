@@ -3,7 +3,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 
 const experiences = [
@@ -1698,18 +1697,15 @@ export default function Home() {
               />
             </div>
           </div>
-        </div>
-                <div className="mt-6 flex justify-center">
-          <div
-            className="sbc-verify-seal"
-            data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QTQ9"
-            data-position="bottom-left"
-          />
-        </div>
-              <Script
+              <div
+        className="sbc-verify-seal"
+        data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QTQ9"
+        data-position="bottom-left"
+      ></div>
+      <script
         src="https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js"
-        strategy="afterInteractive"
-      />
+        async
+      ></script>
       </footer>
 
     </main>
