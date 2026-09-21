@@ -196,6 +196,7 @@ export default function Home() {
   const [activeScene, setActiveScene] = useState(0);
   const [locationReady, setLocationReady] = useState(false);
   const [showLocationNotice, setShowLocationNotice] = useState(false);
+  const [detectedLocationScene, setDetectedLocationScene] = useState<(typeof heroScenes)[number] | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [heroLanguage, setHeroLanguage] = useState<"ar" | "en">("ar");
   const wheelLocked = useRef(false);
@@ -242,6 +243,7 @@ export default function Home() {
         });
 
         if (nearestDistance <= 80) {
+          setDetectedLocationScene(heroScenes[nearestIndex]);
           setActiveScene(nearestIndex);
           window.setTimeout(() => setShowLocationNotice(true), 650);
         } else {
@@ -289,6 +291,7 @@ export default function Home() {
   };
 
   const handleHowClick = () => {
+    setShowLocationNotice(false);
     wheelLocked.current = false;
     setActiveScene(heroScenes.length - 1);
 
@@ -313,6 +316,7 @@ export default function Home() {
     if (wheelLocked.current) return;
 
     wheelLocked.current = true;
+    setShowLocationNotice(false);
 
     setActiveScene((current) =>
       Math.max(
@@ -356,11 +360,13 @@ export default function Home() {
 
     if (forward && activeScene < heroScenes.length - 1) {
       touchLocked.current = true;
+      setShowLocationNotice(false);
       setActiveScene((current) =>
         Math.min(heroScenes.length - 1, current + 1),
       );
     } else if (backward && activeScene > 0) {
       touchLocked.current = true;
+      setShowLocationNotice(false);
       setActiveScene((current) => Math.max(0, current - 1));
     } else {
       return;
@@ -488,7 +494,7 @@ export default function Home() {
           </nav>
         </header>
 
-        {showLocationNotice && activeScene > 0 && (
+        {showLocationNotice && detectedLocationScene && (
           <div
             dir={isArabic ? "rtl" : "ltr"}
             className="absolute left-1/2 top-[112px] z-[70] w-[calc(100%-32px)] max-w-[520px] -translate-x-1/2 px-2 md:top-[116px]"
@@ -529,8 +535,8 @@ export default function Home() {
 
                   <p className="mt-1 text-base font-black md:text-lg">
                     {isArabic
-                      ? `أنت الآن في ${currentScene.nameAr}`
-                      : `You are now in ${currentScene.nameEn}`}
+                      ? `أنت الآن في ${detectedLocationScene.nameAr}`
+                      : `You are now in ${detectedLocationScene.nameEn}`}
                   </p>
 
                   <p className="mt-1 text-xs leading-6 text-white/78 md:text-sm">
@@ -815,7 +821,10 @@ export default function Home() {
             <button
               key={scene.id}
               type="button"
-              onClick={() => setActiveScene(index)}
+              onClick={() => {
+                setShowLocationNotice(false);
+                setActiveScene(index);
+              }}
               className={`flex h-9 w-9 items-center justify-center rounded-full border text-[11px] font-black backdrop-blur-xl transition ${
                 activeScene === index
                   ? "border-[#e6c45f]/80 bg-[#D4AF37] text-[#0D3B34] shadow-[0_0_24px_rgba(212,175,55,0.36)]"
