@@ -280,6 +280,23 @@ export default function Home() {
       document.body.style.overflowY = previousOverflow;
     };
   }, [isLastScene]);
+    useEffect(() => {
+    const scriptId = "sbc-verify-seal-script";
+
+    if (document.getElementById(scriptId)) return;
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src =
+      "https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js";
+    script.async = true;
+
+    document.body.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, []);
 
   const handleMouseMove = (e: MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -1698,6 +1715,13 @@ export default function Home() {
               />
             </div>
           </div>
+        </div>
+                <div className="mt-6 flex justify-center">
+          <div
+            className="sbc-verify-seal"
+            data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QTQ9"
+            data-position="bottom-left"
+          />
         </div>
       </footer>
 
