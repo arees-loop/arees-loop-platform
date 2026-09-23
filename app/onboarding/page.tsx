@@ -75,11 +75,15 @@ const steps = [
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
 
-  const [fullName, setFullName] = useState("");
-  const [contactMethod, setContactMethod] =
-    useState<"phone" | "email">("phone");
-  const [contact, setContact] = useState("");
-  const [otp, setOtp] = useState("");
+ const [fullName, setFullName] = useState("");
+const [email, setEmail] = useState("");
+const [phone, setPhone] = useState("");
+const [password, setPassword] = useState("");
+const [otp, setOtp] = useState("");
+
+const [authLoading, setAuthLoading] = useState(false);
+const [authError, setAuthError] = useState("");
+const [otpSent, setOtpSent] = useState(false);
 
   const [userType, setUserType] = useState<UserType>("");
   const [identityNumber, setIdentityNumber] = useState("");
@@ -135,14 +139,233 @@ export default function OnboardingPage() {
     );
   }
 
-  function continueFromAccount() {
-    if (!fullName.trim() || !contact.trim()) return;
-    setStep(2);
+ async function continueFromAccount() {
+  if (authLoading) return;
+
+  const cleanName = fullName.trim();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanPhone = phone.trim();
+  const cleanPassword = password;
+
+  if (!cleanName) {
+    setAuthError("يرجى كتابة الاسم.");
+    return;
   }
 
-  function continueFromOtp() {
-    if (otp.length !== 6) return;
+  if (!cleanEmail) {
+    setAuthError("يرجى كتابة البريد الإلكتروني.");
+    return;
+  }
+
+  if (
+    cleanPassword.length < 8 ||
+    !/[A-Za-z]/.test(cleanPassword) ||
+    !/[0-9]/.test(cleanPassword)
+  ) {
+    setAuthError(
+      "كلمة المرور يجب أن تكون 8 أحرف على الأقل، وتحتوي على حرف ورقم."
+    );
+    return;
+  }
+
+  setAuthLoading(true);
+  setAuthError("");
+
+  try {
+    const nameParts = cleanName.split(/\s+/);
+    const firstName = nameParts[0] || "";
+    const lastName =
+      nameParts.length > 1 ? nameParts.slice(1).join(" ") : undefined;
+
+    const registerResponse = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: cleanEmail,
+        password: cleanPassword,
+        phone: cleanPhone || undefined,
+        firstName,
+        lastName,
+        role: "CUSTOMER",
+      }),
+    });
+
+    const registerData = await registerResponse.json();
+
+    if (!registerResponse.ok) {
+      const errorCode = registerData?.error;
+
+      const messages: Record<string, string> = {
+        EMAIL_ALREADY_EXISTS:
+          "يوجد حساب مسجل بهذا البريد الإلكتروني.",
+        PHONE_ALREADY_EXISTS:
+          "رقم الجوال مستخدم في حساب آخر.",
+        INVALID_EMAIL:
+          "يرجى إدخال بريد إلكتروني صحيح.",
+        WEAK_PASSWORD:
+          "كلمة المرور يجب أن تكون 8 أحرف على الأقل، وتحتوي على حرف ورقم.",
+        RATE_LIMIT_EXCEEDED:
+          "تمت محاولات كثيرة خلال وقت قصير. يرجى المحاولة بعد قليل.",
+        DATABASE_NOT_CONFIGURED:
+          "الخدمة غير متاحة حاليًا. يرجى المحاولة لاحقًا.",
+      };
+
+      setAuthError(
+        messages[errorCode] ||
+          "تعذر إنشاء الحساب حاليًا. يرجى المحاولة مرة أخرى."
+      );
+      return;
+    }
+
+    const verificationResponse = await fetch(
+      "/api/auth/verify-email/request",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: cleanEmail,
+        }),
+      }
+    );
+
+    const verificationData = await verificationResponse.json();
+
+    if (!verificationResponse.ok) {
+      const errorCode = verificationData?.error;
+
+      if (errorCode === "RATE_LIMIT_EXCEEDED") {
+        setAuthError(
+          "تمت محاولات كثيرة لإرسال رمز التحقق. يرجى المحاولة بعد قليل."
+        );
+      } else {
+        setAuthError(
+          "تم إنشاء الحساب، لكن تعذر إرسال رمز التحقق. يرجى المحاولة مرة أخرى."
+        );
+      }
+
+      return;
+    }
+
+    setOtp("");
+    setOtpSent(true);
+    setStep(2);
+  } catch {
+    setAuthError(
+      "تعذر الاتصال بالخدمة حاليًا. تحقق من الاتصال ثم حاول مرة أخرى."
+    );
+  } finally {
+    setAuthLoading(false);
+  }
+}
+
+async function continueFromOtp() {
+  if (authLoading) return;
+
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanOtp = otp.trim();
+
+  if (!/^\d{6}$/.test(cleanOtp)) {
+    setAuthError("يرجى إدخال رمز التحقق المكوّن من 6 أرقام.");
+    return;
+  }
+
+  setAuthLoading(true);
+  setAuthError("");
+
+  try {
+    const response = await fetch("/api/auth/verify-email/confirm", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: cleanEmail,
+        code: cleanOtp,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorCode = data?.error;
+
+      const messages: Record<string, string> = {
+        INVALID_CODE:
+          "رمز التحقق غير صحيح. تأكد من الرمز وحاول مرة أخرى.",
+        TOKEN_EXPIRED:
+          "انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.",
+        MAX_ATTEMPTS_REACHED:
+          "تم تجاوز عدد محاولات التحقق المسموح بها. اطلب رمزًا جديدًا.",
+        RATE_LIMIT_EXCEEDED:
+          "تمت محاولات كثيرة خلال وقت قصير. يرجى المحاولة بعد قليل.",
+      };
+
+      setAuthError(
+        messages[errorCode] ||
+          "تعذر التحقق من الرمز. تأكد منه وحاول مرة أخرى."
+      );
+      return;
+    }
+
+    setAuthError("");
     setStep(3);
+  } catch {
+    setAuthError(
+      "تعذر الاتصال بالخدمة حاليًا. تحقق من الاتصال ثم حاول مرة أخرى."
+    );
+  } finally {
+    setAuthLoading(false);
+  }
+}
+
+  async function resendEmailOtp() {
+    if (authLoading) return;
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      setAuthError("يرجى إدخال البريد الإلكتروني أولًا.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const response = await fetch("/api/auth/verify-email/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data?.error === "RATE_LIMIT_EXCEEDED") {
+          setAuthError(
+            "تمت محاولات كثيرة لإرسال رمز التحقق. يرجى المحاولة بعد قليل."
+          );
+        } else if (data?.error === "EMAIL_ALREADY_VERIFIED") {
+          setAuthError("تم التحقق من هذا البريد الإلكتروني مسبقًا.");
+        } else {
+          setAuthError("تعذر إرسال رمز التحقق. يرجى المحاولة مرة أخرى.");
+        }
+        return;
+      }
+
+      setOtp("");
+      setOtpSent(true);
+    } catch {
+      setAuthError(
+        "تعذر الاتصال بالخدمة حاليًا. تحقق من الاتصال ثم حاول مرة أخرى."
+      );
+    } finally {
+      setAuthLoading(false);
+    }
   }
 
   function selectUserType(type: UserType) {
@@ -370,122 +593,141 @@ export default function OnboardingPage() {
           </div>
 
           <div className="min-h-[555px] p-5 md:p-9">
-            {/* STEP 1 — ACCOUNT */}
-            {step === 1 && (
-              <div className="mx-auto max-w-xl">
-                <SectionHeading
-                  eyebrow="01 / ACCOUNT"
-                  title="خلينا نبدأ بالتعارف"
-                  description="أنشئ حسابك ببيانات اتصال صحيحة. التحقق الفعلي من الجوال أو البريد سيتم ربطه بمزود المصادقة في مرحلة الـBackend."
-                />
+        {/* STEP 1 — ACCOUNT */}
+{step === 1 && (
+  <div className="mx-auto max-w-xl">
+    <SectionHeading
+      eyebrow="01 / ACCOUNT"
+      title="خلينا نبدأ بالتعارف"
+      description="أنشئ حسابك للبدء في اكتشاف التجارب المناسبة لك. سيتم التحقق من بريدك الإلكتروني لحماية حسابك."
+    />
 
-                <div className="mt-7 space-y-5">
-                  <Field label="الاسم">
-                    <input
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="اكتب اسمك"
-                      autoComplete="name"
-                      className={inputClass}
-                    />
-                  </Field>
+    <div className="mt-7 space-y-5">
+      <Field label="الاسم">
+        <input
+          value={fullName}
+          onChange={(e) => {
+            setFullName(e.target.value);
+            setAuthError("");
+          }}
+          placeholder="اكتب اسمك"
+          autoComplete="name"
+          className={inputClass}
+          disabled={authLoading}
+        />
+      </Field>
 
-                  <Field label="طريقة التحقق">
-                    <div className="grid grid-cols-2 gap-3">
-                      <ChoiceButton
-                        active={contactMethod === "phone"}
-                        onClick={() => {
-                          setContactMethod("phone");
-                          setContact("");
-                        }}
-                        title="رقم الجوال"
-                        subtitle="رمز تحقق OTP"
-                      />
+      <Field label="البريد الإلكتروني">
+        <input
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setAuthError("");
+          }}
+          placeholder="name@example.com"
+          type="email"
+          dir="ltr"
+          autoComplete="email"
+          className={inputClass}
+          disabled={authLoading}
+        />
+      </Field>
 
-                      <ChoiceButton
-                        active={contactMethod === "email"}
-                        onClick={() => {
-                          setContactMethod("email");
-                          setContact("");
-                        }}
-                        title="البريد الإلكتروني"
-                        subtitle="رمز تحقق OTP"
-                      />
-                    </div>
-                  </Field>
+      <Field label="رقم الجوال (اختياري)">
+        <input
+          value={phone}
+          onChange={(e) => {
+            setPhone(e.target.value);
+            setAuthError("");
+          }}
+          placeholder="05XXXXXXXX"
+          type="tel"
+          dir="ltr"
+          autoComplete="tel"
+          className={inputClass}
+          disabled={authLoading}
+        />
+      </Field>
 
-                  <Field
-                    label={
-                      contactMethod === "phone"
-                        ? "رقم الجوال"
-                        : "البريد الإلكتروني"
-                    }
-                  >
-                    <input
-                      value={contact}
-                      onChange={(e) => setContact(e.target.value)}
-                      placeholder={
-                        contactMethod === "phone"
-                          ? "05XXXXXXXX"
-                          : "name@example.com"
-                      }
-                      type={contactMethod === "email" ? "email" : "tel"}
-                      dir="ltr"
-                      autoComplete={
-                        contactMethod === "email" ? "email" : "tel"
-                      }
-                      className={inputClass}
-                    />
-                  </Field>
-                </div>
+      <Field label="كلمة المرور">
+        <input
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setAuthError("");
+          }}
+          placeholder="8 أحرف على الأقل، تتضمن حرفًا ورقمًا"
+          type="password"
+          dir="ltr"
+          autoComplete="new-password"
+          className={inputClass}
+          disabled={authLoading}
+        />
+      </Field>
 
-                <PrimaryButton
-                  disabled={!fullName.trim() || !contact.trim()}
-                  onClick={continueFromAccount}
-                >
-                  متابعة التحقق
-                </PrimaryButton>
+      {authError && (
+        <div
+          className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700"
+          role="alert"
+        >
+          {authError}
+        </div>
+      )}
+    </div>
 
-                <PrivacyNote>
-                  نستخدم بيانات الحساب لتشغيل الخدمة وتأمين الحساب، ولا نطلب
-                  بيانات الهوية في هذه المرحلة.
-                </PrivacyNote>
-              </div>
-            )}
+    <PrimaryButton
+      disabled={
+        authLoading ||
+        !fullName.trim() ||
+        !email.trim() ||
+        password.length < 8
+      }
+      onClick={continueFromAccount}
+    >
+      {authLoading ? "جاري إنشاء الحساب..." : "إنشاء الحساب والمتابعة"}
+    </PrimaryButton>
+
+    <PrivacyNote>
+      نستخدم بيانات الحساب لتشغيل الخدمة وتأمين حسابك. رقم الجوال اختياري
+      حاليًا، وسيتم التحقق من البريد الإلكتروني قبل متابعة إنشاء الملف
+      الشخصي.
+    </PrivacyNote>
+  </div>
+)}
 
             {/* STEP 2 — OTP */}
             {step === 2 && (
               <div className="mx-auto max-w-xl">
                 <SectionHeading
                   eyebrow="02 / VERIFY"
-                  title="تأكيد وسيلة الاتصال"
-                  description={`أدخل رمز التحقق المكوّن من 6 أرقام المرسل إلى ${
-                    contactMethod === "phone"
-                      ? "رقم جوالك"
-                      : "بريدك الإلكتروني"
-                  }.`}
+                  title="تحقق من بريدك الإلكتروني"
+                  description={`أدخل رمز التحقق المكوّن من 6 أرقام الخاص بالبريد ${email.trim().toLowerCase()}.`}
                 />
 
                 <div className="mt-9">
                   <input
                     value={otp}
-                    onChange={(e) =>
-                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
+                    onChange={(e) => {
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                      setAuthError("");
+                    }}
                     inputMode="numeric"
                     maxLength={6}
                     placeholder="• • • • • •"
                     dir="ltr"
                     autoComplete="one-time-code"
-                    className="w-full rounded-[20px] border border-[#0D3B34]/10 bg-white/55 px-6 py-5 text-center text-2xl font-semibold tracking-[0.65em] text-[#0D3B34] outline-none transition focus:border-[#D4AF37]/60 focus:bg-white focus:ring-4 focus:ring-[#D4AF37]/8"
+                    disabled={authLoading}
+                    className="w-full rounded-[20px] border border-[#0D3B34]/10 bg-white/55 px-6 py-5 text-center text-2xl font-semibold tracking-[0.65em] text-[#0D3B34] outline-none transition focus:border-[#D4AF37]/60 focus:bg-white focus:ring-4 focus:ring-[#D4AF37]/8 disabled:opacity-60"
                   />
 
-                  <div className="mt-4 flex items-center justify-between text-xs">
+                  <div className="mt-4 flex items-center justify-between gap-4 text-xs">
                     <button
                       type="button"
-                      className="font-semibold text-[#0D3B34]"
+                      onClick={resendEmailOtp}
+                      disabled={authLoading}
+                      className="font-semibold text-[#0D3B34] disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      إعادة إرسال الرمز
+                      {authLoading ? "جاري الإرسال..." : "إعادة إرسال الرمز"}
                     </button>
 
                     <span className="text-[#0D3B34]/40">
@@ -494,19 +736,36 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <StatusMessage>
-                  هذه واجهة تجريبية حاليًا؛ إدخال 6 أرقام ينقلك للمرحلة التالية.
-                  إرسال OTP الحقيقي سيتم عند ربط خدمة المصادقة.
-                </StatusMessage>
+                {otpSent && (
+                  <StatusMessage>
+                    تم طلب رمز التحقق لبريدك الإلكتروني. في بيئة التطوير المحلية
+                    يظهر الرمز في سجل الخادم إلى أن يتم ربط مزود البريد.
+                  </StatusMessage>
+                )}
+
+                {authError && (
+                  <div
+                    className="mt-4 rounded-[15px] border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700"
+                    role="alert"
+                  >
+                    {authError}
+                  </div>
+                )}
 
                 <PrimaryButton
-                  disabled={otp.length !== 6}
+                  disabled={authLoading || otp.length !== 6}
                   onClick={continueFromOtp}
                 >
-                  تأكيد ومتابعة
+                  {authLoading ? "جاري التحقق..." : "تأكيد ومتابعة"}
                 </PrimaryButton>
 
-                <BackButton onClick={() => setStep(1)} />
+                <BackButton
+                  onClick={() => {
+                    setAuthError("");
+                    setOtp("");
+                    setStep(1);
+                  }}
+                />
               </div>
             )}
 
@@ -912,8 +1171,8 @@ export default function OnboardingPage() {
                 </h2>
 
                 <p className="mt-4 max-w-md text-sm leading-7 text-[#0D3B34]/50">
-                  تم إعداد ملفك الأولي وتفضيلاتك. بعد تشغيل الـBackend ستُحفظ
-                  البيانات بصورة آمنة ويُنشأ حساب المستخدم الفعلي.
+                  تم إنشاء حسابك والتحقق من بريدك الإلكتروني، وأصبحت تفضيلاتك
+                  الأولية جاهزة لبدء تجربة Arees Loop.
                 </p>
 
                 <div className="mt-7 grid w-full gap-3 sm:grid-cols-3">

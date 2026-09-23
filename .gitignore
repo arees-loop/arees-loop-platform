@@ -58,3 +58,5 @@ Thumbs.db
 # Prisma generated client
 /app/generated/prisma/
 .env*
+
+onboarding-page.backup.txt

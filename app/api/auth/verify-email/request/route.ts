@@ -78,7 +78,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-
     const email = normalizeEmail(body.email);
 
     if (!email) {
@@ -206,23 +205,12 @@ export async function POST(request: NextRequest) {
      *
      * Do not return verification.token to the client.
      *
-     * Example future flow:
-     *
-     * await sendVerificationEmail({
-     *   to: user.email,
-     *   code: verification.token,
-     * });
+     * In local development only, print the code
+     * directly in the server console for testing.
      */
-
     if (process.env.NODE_ENV !== "production") {
       console.log(
-        "Email verification code generated:",
-        {
-          userId: user.id,
-          email: user.email,
-          code: verification.token,
-          expiresAt: verification.expiresAt,
-        },
+        `[AREES LOOP DEV OTP] email=${user.email} code=${verification.token} expiresAt=${verification.expiresAt.toISOString()}`,
       );
     }
 

@@ -223,7 +223,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    /*
+     * If the email was already verified, make sure an account
+     * still waiting only for email verification becomes active.
+     */
     if (user.emailVerifiedAt) {
+      if (user.status === "PENDING_VERIFICATION") {
+        const activatedUser = await prisma.user.update({
+          where: {
+            id: user.id,
+          },
+          data: {
+            status: "ACTIVE",
+          },
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            status: true,
+            emailVerifiedAt: true,
+            phoneVerifiedAt: true,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Email address is already verified.",
+            data: {
+              user: activatedUser,
+            },
+          },
+          {
+            headers: getRateLimitHeaders(identityRateLimit),
+          },
+        );
+      }
+
       return NextResponse.json(
         {
           success: true,
@@ -239,18 +275,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const verification =
-      await verifyVerificationToken({
-        userId: user.id,
-        type: "EMAIL_VERIFICATION",
-        token: code,
-        target: user.email,
-      });
+    const verification = await verifyVerificationToken({
+      userId: user.id,
+      type: "EMAIL_VERIFICATION",
+      token: code,
+      target: user.email,
+    });
 
     if (!verification.success) {
-      if (
-        verification.error === "MAX_ATTEMPTS_REACHED"
-      ) {
+      if (verification.error === "MAX_ATTEMPTS_REACHED") {
         return NextResponse.json(
           {
             success: false,
@@ -286,16 +319,14 @@ export async function POST(request: NextRequest) {
           error: "INVALID_VERIFICATION",
           message:
             "The verification code is invalid or expired.",
-          ...(
-            "attemptsRemaining" in verification
-              ? {
-                  data: {
-                    attemptsRemaining:
-                      verification.attemptsRemaining,
-                  },
-                }
-              : {}
-          ),
+          ...("attemptsRemaining" in verification
+            ? {
+                data: {
+                  attemptsRemaining:
+                    verification.attemptsRemaining,
+                },
+              }
+            : {}),
         },
         {
           status: 400,
@@ -306,12 +337,19 @@ export async function POST(request: NextRequest) {
 
     const verifiedAt = new Date();
 
+    /*
+     * Successful email verification activates the user account.
+     *
+     * This activates the person's login account only.
+     * Partner/business approval remains a separate workflow.
+     */
     const updatedUser = await prisma.user.update({
       where: {
         id: user.id,
       },
       data: {
         emailVerifiedAt: verifiedAt,
+        status: "ACTIVE",
       },
       select: {
         id: true,
