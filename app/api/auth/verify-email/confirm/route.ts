@@ -8,6 +8,7 @@ import {
   getRateLimitHeaders,
 } from "@/lib/rate-limit";
 
+import { createSession } from "@/lib/session";
 import { verifyVerificationToken } from "@/lib/verification-token";
 
 function databaseNotConfigured() {
@@ -224,8 +225,11 @@ export async function POST(request: NextRequest) {
     }
 
     /*
-     * If the email was already verified, make sure an account
-     * still waiting only for email verification becomes active.
+     * An already verified email does not create a session here.
+     *
+     * Otherwise, knowledge of an existing verified email address
+     * could be used to obtain an authenticated session without
+     * proving possession of a valid verification code.
      */
     if (user.emailVerifiedAt) {
       if (user.status === "PENDING_VERIFICATION") {
@@ -252,6 +256,7 @@ export async function POST(request: NextRequest) {
             message: "Email address is already verified.",
             data: {
               user: activatedUser,
+              sessionCreated: false,
             },
           },
           {
@@ -267,6 +272,7 @@ export async function POST(request: NextRequest) {
           data: {
             emailVerified: true,
             emailVerifiedAt: user.emailVerifiedAt,
+            sessionCreated: false,
           },
         },
         {
@@ -275,6 +281,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    /*
+     * Verify the one-time email verification code.
+     */
     const verification = await verifyVerificationToken({
       userId: user.id,
       type: "EMAIL_VERIFICATION",
@@ -338,9 +347,9 @@ export async function POST(request: NextRequest) {
     const verifiedAt = new Date();
 
     /*
-     * Successful email verification activates the user account.
+     * Successful email verification activates the person's account.
      *
-     * This activates the person's login account only.
+     * This activates the user login account only.
      * Partner/business approval remains a separate workflow.
      */
     const updatedUser = await prisma.user.update({
@@ -361,12 +370,31 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    /*
+     * Start an authenticated session immediately after successful
+     * email verification so the remaining onboarding steps can
+     * securely update the currently authenticated user.
+     *
+     * createSession uses the same session mechanism as normal login:
+     * - random session token
+     * - SHA-256 token hash stored in PostgreSQL
+     * - HTTP-only cookie stored in the browser
+     */
+    const session = await createSession(
+      updatedUser.id,
+      request,
+    );
+
     return NextResponse.json(
       {
         success: true,
         message: "Email address verified successfully.",
         data: {
           user: updatedUser,
+          session: {
+            expiresAt: session.expiresAt,
+          },
+          sessionCreated: true,
         },
       },
       {
