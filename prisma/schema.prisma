@@ -29,6 +29,21 @@ enum VisitorType {
   VISITOR
 }
 
+enum InterestCode {
+  HERITAGE
+  ADVENTURE
+  FOOD
+  EVENTS
+  SHOPPING
+  GUIDES
+  STAYS
+  NATURE
+  FAMILY
+  SPORTS
+  TECHNOLOGY
+  SEASONAL
+}
+
 enum PartnerStatus {
   DRAFT
   SUBMITTED
@@ -122,7 +137,23 @@ model User {
   bookings           Booking[]
   sessions           Session[]
   verificationTokens VerificationToken[]
+  interests          UserInterest[]
   auditLogs          AuditLog[]          @relation("AuditUser")
+}
+
+model UserInterest {
+  id String @id @default(cuid())
+
+  userId String
+  code   InterestCode
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+  @@index([userId])
+  @@index([code])
 }
 
 model Session {

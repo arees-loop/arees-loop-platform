@@ -7,8 +7,22 @@ import { useEffect, useMemo, useState } from "react";
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type UserType = "citizen" | "resident" | "visitor" | "";
 
+type InterestCode =
+  | "HERITAGE"
+  | "ADVENTURE"
+  | "FOOD"
+  | "EVENTS"
+  | "SHOPPING"
+  | "GUIDES"
+  | "STAYS"
+  | "NATURE"
+  | "FAMILY"
+  | "SPORTS"
+  | "TECHNOLOGY"
+  | "SEASONAL";
+
 type Interest = {
-  id: string;
+  id: InterestCode;
   title: string;
   subtitle: string;
   icon: string;
@@ -16,40 +30,76 @@ type Interest = {
 
 const interests: Interest[] = [
   {
-    id: "heritage",
+    id: "HERITAGE",
     title: "التاريخ والتراث",
-    subtitle: "المتاحف والمواقع التاريخية",
+    subtitle: "المتاحف والمعالم والمواقع التاريخية",
     icon: "🏛",
   },
   {
-    id: "guides",
-    title: "المرشدون السياحيون",
-    subtitle: "مرشدون مرخصون حسب موقعك",
-    icon: "◎",
-  },
-  {
-    id: "experiences",
-    title: "التجارب",
-    subtitle: "أنشطة وتجارب محلية مختارة",
+    id: "ADVENTURE",
+    title: "التجارب والمغامرات",
+    subtitle: "أنشطة وتجارب محلية ومغامرات مختارة",
     icon: "✦",
   },
   {
-    id: "food",
-    title: "المطاعم والمقاهي",
-    subtitle: "تجارب الطعام القريبة منك",
+    id: "FOOD",
+    title: "الطعام والمقاهي",
+    subtitle: "مطاعم ومقاهٍ وتجارب طعام محلية",
     icon: "◌",
   },
   {
-    id: "shopping",
-    title: "التسوق",
-    subtitle: "متاجر وأسواق ومنتجات محلية",
+    id: "EVENTS",
+    title: "الفعاليات والترفيه",
+    subtitle: "فعاليات وأنشطة ترفيهية تحدث حولك",
+    icon: "◈",
+  },
+  {
+    id: "SHOPPING",
+    title: "التسوق والأسواق",
+    subtitle: "أسواق ومتاجر ومنتجات محلية",
     icon: "◇",
   },
   {
-    id: "events",
-    title: "الفعاليات",
-    subtitle: "فعاليات تحدث حولك الآن",
-    icon: "◈",
+    id: "GUIDES",
+    title: "الجولات والمرشدون",
+    subtitle: "جولات ومرشدون وتجارب إرشادية",
+    icon: "◎",
+  },
+  {
+    id: "STAYS",
+    title: "الفنادق والإقامة",
+    subtitle: "فنادق ومنتجعات وخيارات إقامة مناسبة",
+    icon: "▣",
+  },
+  {
+    id: "NATURE",
+    title: "الطبيعة والاستجمام",
+    subtitle: "طبيعة ومواقع مفتوحة وتجارب للاسترخاء",
+    icon: "⌁",
+  },
+  {
+    id: "FAMILY",
+    title: "العائلة والأطفال",
+    subtitle: "تجارب وأنشطة مناسبة للعائلات والأطفال",
+    icon: "☆",
+  },
+  {
+    id: "SPORTS",
+    title: "الرياضة واللياقة",
+    subtitle: "أنشطة رياضية وتجارب للحركة واللياقة",
+    icon: "▲",
+  },
+  {
+    id: "TECHNOLOGY",
+    title: "التقنية والابتكار",
+    subtitle: "تجارب رقمية وتفاعلية ومبتكرة",
+    icon: "⌘",
+  },
+  {
+    id: "SEASONAL",
+    title: "التجارب الموسمية",
+    subtitle: "تجارب مرتبطة بالمواسم والمناسبات",
+    icon: "◉",
   },
 ];
 
@@ -116,6 +166,8 @@ const [authLoading, setAuthLoading] = useState(false);
 const [authError, setAuthError] = useState("");
 const [identityLoading, setIdentityLoading] = useState(false);
 const [identityError, setIdentityError] = useState("");
+const [interestsLoading, setInterestsLoading] = useState(false);
+const [interestsError, setInterestsError] = useState("");
 const [otpSent, setOtpSent] = useState(false);
 
   const [userType, setUserType] = useState<UserType>("");
@@ -126,7 +178,7 @@ const [otpSent, setOtpSent] = useState(false);
   const [visaNumber, setVisaNumber] = useState("");
   const [visaIssueDate, setVisaIssueDate] = useState("");
 
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [selectedInterests, setSelectedInterests] = useState<InterestCode[]>([]);
 
   const [locationStatus, setLocationStatus] = useState<
     "idle" | "loading" | "granted" | "denied" | "skipped"
@@ -145,12 +197,58 @@ const [otpSent, setOtpSent] = useState(false);
     return userType !== "";
   }, [userType]);
 
-  function toggleInterest(id: string) {
+  function toggleInterest(id: InterestCode) {
     setSelectedInterests((current) =>
       current.includes(id)
         ? current.filter((item) => item !== id)
         : [...current, id]
     );
+    setInterestsError("");
+  }
+
+  async function continueFromInterests() {
+    if (interestsLoading || selectedInterests.length === 0) return;
+
+    setInterestsLoading(true);
+    setInterestsError("");
+
+    try {
+      const response = await fetch("/api/onboarding/interests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          interests: selectedInterests,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        if (data?.error === "UNAUTHORIZED") {
+          setInterestsError(
+            "انتهت جلسة تسجيل الدخول. يرجى تسجيل الدخول ثم المحاولة مرة أخرى."
+          );
+        } else if (data?.error === "INVALID_INTERESTS") {
+          setInterestsError("يرجى اختيار اهتمامات صحيحة ثم المحاولة مرة أخرى.");
+        } else {
+          setInterestsError(
+            "تعذر حفظ الاهتمامات حاليًا. يرجى المحاولة مرة أخرى."
+          );
+        }
+        return;
+      }
+
+      setStep(5);
+    } catch {
+      setInterestsError(
+        "تعذر الاتصال بالخدمة حاليًا. تحقق من الاتصال ثم حاول مرة أخرى."
+      );
+    } finally {
+      setInterestsLoading(false);
+    }
   }
 
  async function continueFromAccount() {
@@ -1073,11 +1171,24 @@ async function continueFromOtp() {
                   })}
                 </div>
 
+                {interestsError && (
+                  <div
+                    className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700"
+                    role="alert"
+                  >
+                    {interestsError}
+                  </div>
+                )}
+
                 <PrimaryButton
-                  disabled={selectedInterests.length === 0}
-                  onClick={() => setStep(5)}
+                  disabled={
+                    selectedInterests.length === 0 || interestsLoading
+                  }
+                  onClick={continueFromInterests}
                 >
-                  حفظ الاهتمامات
+                  {interestsLoading
+                    ? "جاري حفظ الاهتمامات..."
+                    : `حفظ الاهتمامات (${selectedInterests.length})`}
                 </PrimaryButton>
 
                 <BackButton onClick={() => setStep(3)} />
