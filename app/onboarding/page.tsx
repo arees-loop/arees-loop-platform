@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type UserType = "citizen" | "resident" | "visitor" | "";
@@ -75,6 +75,37 @@ const steps = [
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resumeVerifiedSession() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const result = await response.json().catch(() => null);
+        const user = result?.data?.user;
+
+        if (!cancelled && result?.success && user?.status === "ACTIVE") {
+          setStep(3);
+        }
+      } catch {
+        // No active session: keep the normal onboarding flow at step 1.
+      }
+    }
+
+    void resumeVerifiedSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
  const [fullName, setFullName] = useState("");
 const [email, setEmail] = useState("");
 const [phone, setPhone] = useState("");
@@ -83,6 +114,8 @@ const [otp, setOtp] = useState("");
 
 const [authLoading, setAuthLoading] = useState(false);
 const [authError, setAuthError] = useState("");
+const [identityLoading, setIdentityLoading] = useState(false);
+const [identityError, setIdentityError] = useState("");
 const [otpSent, setOtpSent] = useState(false);
 
   const [userType, setUserType] = useState<UserType>("");
@@ -109,27 +142,8 @@ const [otpSent, setOtpSent] = useState(false);
   }, [step]);
 
   const identityComplete = useMemo(() => {
-    if (userType === "citizen" || userType === "resident") {
-      return identityNumber.trim().length > 0 && birthDate.length > 0;
-    }
-
-    if (userType === "visitor") {
-      return (
-        visaType.length > 0 &&
-        visaNumber.trim().length > 0 &&
-        visaIssueDate.length > 0
-      );
-    }
-
-    return false;
-  }, [
-    userType,
-    identityNumber,
-    birthDate,
-    visaType,
-    visaNumber,
-    visaIssueDate,
-  ]);
+    return userType !== "";
+  }, [userType]);
 
   function toggleInterest(id: string) {
     setSelectedInterests((current) =>
@@ -375,6 +389,53 @@ async function continueFromOtp() {
     setVisaType("");
     setVisaNumber("");
     setVisaIssueDate("");
+    setIdentityError("");
+  }
+
+  async function continueFromIdentity() {
+    if (identityLoading || !identityComplete) return;
+
+    const visitorTypeMap: Record<Exclude<UserType, "">, "CITIZEN" | "RESIDENT" | "VISITOR"> = {
+      citizen: "CITIZEN",
+      resident: "RESIDENT",
+      visitor: "VISITOR",
+    };
+
+    if (!userType) return;
+
+    setIdentityLoading(true);
+    setIdentityError("");
+
+    try {
+      const response = await fetch("/api/onboarding/identity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          visitorType: visitorTypeMap[userType],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data?.error === "UNAUTHORIZED") {
+          setIdentityError("انتهت جلسة تسجيل الدخول. يرجى تسجيل الدخول ثم المحاولة مرة أخرى.");
+        } else if (data?.error === "INVALID_VISITOR_TYPE") {
+          setIdentityError("يرجى اختيار صفة المستخدم بصورة صحيحة.");
+        } else {
+          setIdentityError("تعذر حفظ بيانات الهوية حاليًا. يرجى المحاولة مرة أخرى.");
+        }
+        return;
+      }
+
+      setStep(4);
+    } catch {
+      setIdentityError("تعذر الاتصال بالخدمة حاليًا. تحقق من الاتصال ثم حاول مرة أخرى.");
+    } finally {
+      setIdentityLoading(false);
+    }
   }
 
   function requestLocation() {
@@ -936,11 +997,20 @@ async function continueFromOtp() {
                   </div>
                 )}
 
+                {identityError && (
+                  <div
+                    className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700"
+                    role="alert"
+                  >
+                    {identityError}
+                  </div>
+                )}
+
                 <PrimaryButton
-                  disabled={!identityComplete}
-                  onClick={() => setStep(4)}
+                  disabled={!identityComplete || identityLoading}
+                  onClick={continueFromIdentity}
                 >
-                  حفظ ومتابعة
+                  {identityLoading ? "جاري حفظ البيانات..." : "حفظ ومتابعة"}
                 </PrimaryButton>
 
                 <BackButton onClick={() => setStep(2)} />
