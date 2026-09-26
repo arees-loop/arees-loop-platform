@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getCurrentSession } from "@/lib/session";
 import { createVerificationToken } from "@/lib/verification-token";
 
 function databaseNotConfigured() {
@@ -31,9 +32,21 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
+    const session = await getCurrentSession();
 
-    const phone = normalizePhone(body.phone);
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "UNAUTHENTICATED",
+          message: "You must be signed in to continue.",
+        },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json().catch(() => null);
+    const phone = normalizePhone(body?.phone);
 
     if (!phone) {
       return NextResponse.json(
@@ -60,79 +73,64 @@ export async function POST(request: NextRequest) {
 
     const { prisma } = await import("@/lib/prisma");
 
-    const user = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: {
         phone,
       },
       select: {
         id: true,
-        phone: true,
-        status: true,
-        phoneVerifiedAt: true,
       },
     });
 
-    if (!user) {
-      return NextResponse.json({
-        success: true,
-        message:
-          "If an eligible account exists, a verification code will be sent.",
-      });
-    }
-
     if (
-      user.status === "SUSPENDED" ||
-      user.status === "DISABLED"
+      existingUser &&
+      existingUser.id !== session.user.id
     ) {
-      return NextResponse.json({
-        success: true,
-        message:
-          "If an eligible account exists, a verification code will be sent.",
-      });
-    }
-
-    if (user.phoneVerifiedAt) {
       return NextResponse.json(
         {
           success: false,
-          error: "PHONE_ALREADY_VERIFIED",
-          message: "Phone number is already verified.",
+          error: "PHONE_ALREADY_IN_USE",
+          message:
+            "This phone number is already associated with another account.",
         },
         { status: 409 },
       );
     }
 
-    if (!user.phone) {
+    if (
+      session.user.phone === phone &&
+      session.user.phoneVerifiedAt
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "PHONE_NOT_AVAILABLE",
+          error: "PHONE_ALREADY_VERIFIED",
           message:
-            "No phone number is associated with this account.",
+            "This phone number is already verified on your account.",
         },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
     const verification =
       await createVerificationToken({
-        userId: user.id,
+        userId: session.user.id,
         type: "PHONE_VERIFICATION",
-        target: user.phone,
+        target: phone,
       });
 
     /*
-     * IMPORTANT:
+     * SMS INTEGRATION
      *
-     * The verification code must be sent through
-     * the configured SMS provider.
+     * The verification code must be sent to `phone`
+     * through the configured SMS provider.
      *
      * Do not return verification.token to the client.
      *
-     * Future production flow:
+     * Production flow:
      *
      * await sendVerificationSms({
-     *   to: user.phone,
+     *   to: phone,
      *   code: verification.token,
      * });
      */
@@ -141,8 +139,8 @@ export async function POST(request: NextRequest) {
       console.log(
         "Phone verification code generated:",
         {
-          userId: user.id,
-          phone: user.phone,
+          userId: session.user.id,
+          phone,
           code: verification.token,
           expiresAt: verification.expiresAt,
         },
@@ -151,9 +149,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message:
-        "If an eligible account exists, a verification code will be sent.",
+      message: "Verification code created successfully.",
       data: {
+        phone,
         expiresAt: verification.expiresAt,
       },
     });

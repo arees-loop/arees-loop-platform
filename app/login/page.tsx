@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
     setMouse({
@@ -19,11 +20,13 @@ export default function LoginPage() {
     });
   }
 
-  function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!identifier.trim()) {
-      setError("أدخل رقم الجوال أو البريد الإلكتروني");
+    const email = identifier.trim().toLowerCase();
+
+    if (!email) {
+      setError("أدخل البريد الإلكتروني");
       return;
     }
 
@@ -32,10 +35,48 @@ export default function LoginPage() {
       return;
     }
 
-    setError("");
+    if (loading) return;
 
-    // تسجيل الدخول حاليًا تجريبي Frontend فقط.
-    window.location.href = "/discover";
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          identifier: email,
+          password,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.success) {
+        if (data?.error === "INVALID_CREDENTIALS") {
+          setError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+        } else if (data?.error === "ACCOUNT_SUSPENDED") {
+          setError("هذا الحساب موقوف حاليًا.");
+        } else if (data?.error === "ACCOUNT_DISABLED") {
+          setError("هذا الحساب غير مفعّل.");
+        } else if (data?.error === "RATE_LIMIT_EXCEEDED") {
+          setError("تم تجاوز عدد محاولات الدخول. حاول مرة أخرى لاحقًا.");
+        } else {
+          setError("تعذر تسجيل الدخول. حاول مرة أخرى.");
+        }
+        return;
+      }
+
+      window.location.href = "/discover";
+    } catch (loginError) {
+      console.error("Unable to sign in:", loginError);
+      setError("تعذر الاتصال بالخادم. حاول مرة أخرى.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -160,7 +201,7 @@ export default function LoginPage() {
                           "var(--font-ibm-plex-arabic), sans-serif",
                       }}
                     >
-                      استخدم رقم الجوال أو البريد الإلكتروني المسجل
+                      استخدم بريدك الإلكتروني المسجل
                     </p>
                   </div>
 
@@ -168,14 +209,16 @@ export default function LoginPage() {
                     onSubmit={handleLogin}
                     className="mt-6 space-y-4"
                   >
-                    <Field label="رقم الجوال أو البريد الإلكتروني">
+                    <Field label="البريد الإلكتروني">
                       <div className="relative">
                         <input
+                          type="email"
+                          autoComplete="email"
                           value={identifier}
                           onChange={(e) =>
                             setIdentifier(e.target.value)
                           }
-                          placeholder="05xxxxxxxx أو name@example.com"
+                          placeholder="name@example.com"
                           className={inputClass}
                           dir="ltr"
                         />
@@ -190,6 +233,7 @@ export default function LoginPage() {
                       <div className="relative">
                         <input
                           type={showPassword ? "text" : "password"}
+                          autoComplete="current-password"
                           value={password}
                           onChange={(e) =>
                             setPassword(e.target.value)
@@ -261,14 +305,15 @@ export default function LoginPage() {
 
                     <button
                       type="submit"
-                      className="flex h-[58px] w-full items-center justify-center gap-3 rounded-[18px] bg-[#0D3B34] text-sm font-bold text-white transition hover:bg-[#124B42]"
+                      disabled={loading}
+                      className="flex h-[58px] w-full items-center justify-center gap-3 rounded-[18px] bg-[#0D3B34] text-sm font-bold text-white transition hover:bg-[#124B42] disabled:cursor-wait disabled:opacity-60"
                       style={{
                         fontFamily:
                           "var(--font-ibm-plex-arabic), sans-serif",
                       }}
                     >
-                      تسجيل الدخول
-                      <LoginIcon />
+                      {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+                      {!loading && <LoginIcon />}
                     </button>
                   </form>
 
@@ -289,7 +334,7 @@ export default function LoginPage() {
                   </div>
 
                   <Link
-                    href="/onboarding"
+                    href="/onboarding?mode=new"
                     className="flex h-[54px] w-full items-center justify-center gap-2 rounded-[18px] border border-[#D4AF37]/35 bg-[#FFF7DE]/70 text-xs font-bold text-[#0D3B34] transition hover:bg-[#FFF1BE]"
                     style={{
                       fontFamily:
@@ -358,13 +403,15 @@ export default function LoginPage() {
               onSubmit={handleLogin}
               className="mt-5 space-y-4"
             >
-              <Field label="رقم الجوال أو البريد الإلكتروني">
+              <Field label="البريد الإلكتروني">
                 <input
+                  type="email"
+                  autoComplete="email"
                   value={identifier}
                   onChange={(e) =>
                     setIdentifier(e.target.value)
                   }
-                  placeholder="05xxxxxxxx أو name@example.com"
+                  placeholder="name@example.com"
                   className={inputClass}
                   dir="ltr"
                 />
@@ -374,6 +421,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) =>
                       setPassword(e.target.value)
@@ -426,14 +474,15 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="h-[56px] w-full rounded-[18px] bg-[#0D3B34] text-sm font-bold text-white"
+                disabled={loading}
+                className="h-[56px] w-full rounded-[18px] bg-[#0D3B34] text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60"
               >
-                تسجيل الدخول
+                {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
               </button>
             </form>
 
             <Link
-              href="/onboarding"
+              href="/onboarding?mode=new"
               className="mt-4 flex h-[52px] items-center justify-center rounded-[17px] border border-[#D4AF37]/30 bg-[#FFF7DE]/75 text-xs font-bold"
             >
               إنشاء حساب جديد

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getCurrentSession } from "@/lib/session";
 import { verifyVerificationToken } from "@/lib/verification-token";
 
 function databaseNotConfigured() {
@@ -43,10 +44,23 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
+    const session = await getCurrentSession();
 
-    const phone = normalizePhone(body.phone);
-    const code = normalizeCode(body.code);
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "UNAUTHENTICATED",
+          message: "You must be signed in to continue.",
+        },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json().catch(() => null);
+
+    const phone = normalizePhone(body?.phone);
+    const code = normalizeCode(body?.code);
 
     if (!phone) {
       return NextResponse.json(
@@ -96,74 +110,36 @@ export async function POST(request: NextRequest) {
 
     const { prisma } = await import("@/lib/prisma");
 
-    const user = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: {
         phone,
       },
       select: {
         id: true,
-        phone: true,
-        status: true,
-        phoneVerifiedAt: true,
       },
     });
 
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "INVALID_VERIFICATION",
-          message:
-            "The verification code is invalid or expired.",
-        },
-        { status: 400 },
-      );
-    }
-
     if (
-      user.status === "SUSPENDED" ||
-      user.status === "DISABLED"
+      existingUser &&
+      existingUser.id !== session.user.id
     ) {
       return NextResponse.json(
         {
           success: false,
-          error: "INVALID_VERIFICATION",
+          error: "PHONE_ALREADY_IN_USE",
           message:
-            "The verification code is invalid or expired.",
+            "This phone number is already associated with another account.",
         },
-        { status: 400 },
-      );
-    }
-
-    if (user.phoneVerifiedAt) {
-      return NextResponse.json({
-        success: true,
-        message: "Phone number is already verified.",
-        data: {
-          phoneVerified: true,
-          phoneVerifiedAt: user.phoneVerifiedAt,
-        },
-      });
-    }
-
-    if (!user.phone) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "PHONE_NOT_AVAILABLE",
-          message:
-            "No phone number is associated with this account.",
-        },
-        { status: 400 },
+        { status: 409 },
       );
     }
 
     const verification =
       await verifyVerificationToken({
-        userId: user.id,
+        userId: session.user.id,
         type: "PHONE_VERIFICATION",
         token: code,
-        target: user.phone,
+        target: phone,
       });
 
     if (!verification.success) {
@@ -218,16 +194,22 @@ export async function POST(request: NextRequest) {
 
     const updatedUser = await prisma.user.update({
       where: {
-        id: user.id,
+        id: session.user.id,
       },
       data: {
+        phone,
         phoneVerifiedAt: verifiedAt,
       },
       select: {
         id: true,
+        email: true,
+        username: true,
         phone: true,
+        firstName: true,
+        lastName: true,
         role: true,
         status: true,
+        visitorType: true,
         emailVerifiedAt: true,
         phoneVerifiedAt: true,
       },

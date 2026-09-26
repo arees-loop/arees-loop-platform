@@ -8,6 +8,7 @@ import {
   getRateLimitHeaders,
 } from "@/lib/rate-limit";
 
+import { sendVerificationEmail } from "@/lib/email";
 import { createVerificationToken } from "@/lib/verification-token";
 
 function databaseNotConfigured() {
@@ -16,6 +17,17 @@ function databaseNotConfigured() {
       success: false,
       error: "DATABASE_NOT_CONFIGURED",
       message: "Database connection is not configured yet.",
+    },
+    { status: 503 },
+  );
+}
+
+function emailNotConfigured() {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "EMAIL_NOT_CONFIGURED",
+      message: "Email delivery is not configured yet.",
     },
     { status: 503 },
   );
@@ -55,6 +67,13 @@ function rateLimitExceeded(
 export async function POST(request: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return databaseNotConfigured();
+  }
+
+  if (
+    !process.env.RESEND_API_KEY ||
+    !process.env.EMAIL_FROM
+  ) {
+    return emailNotConfigured();
   }
 
   try {
@@ -198,21 +217,17 @@ export async function POST(request: NextRequest) {
       });
 
     /*
-     * IMPORTANT:
+     * Send the verification code through
+     * the configured transactional email provider.
      *
-     * The verification code must be sent through
-     * the configured email provider.
-     *
-     * Do not return verification.token to the client.
-     *
-     * In local development only, print the code
-     * directly in the server console for testing.
+     * Never return the verification token
+     * to the client.
      */
-    if (process.env.NODE_ENV !== "production") {
-      console.log(
-        `[AREES LOOP DEV OTP] email=${user.email} code=${verification.token} expiresAt=${verification.expiresAt.toISOString()}`,
-      );
-    }
+    await sendVerificationEmail({
+      to: user.email,
+      code: verification.token,
+      expiresAt: verification.expiresAt,
+    });
 
     return NextResponse.json(
       {
@@ -238,7 +253,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: "VERIFICATION_REQUEST_FAILED",
         message:
-          "Unable to create an email verification request.",
+          "Unable to create or send an email verification request.",
       },
       { status: 500 },
     );

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getTotalLoopPoints } from "@/lib/loop-progress";
+import AccountMenu from "@/app/components/AccountMenu";
 
 type ToggleRowProps = {
   title: string;
@@ -13,50 +14,88 @@ type ToggleRowProps = {
 };
 
 
+type VisitorType = "CITIZEN" | "RESIDENT" | "VISITOR";
+type InterestCode =
+  | "HERITAGE"
+  | "ADVENTURE"
+  | "FOOD"
+  | "EVENTS"
+  | "SHOPPING"
+  | "GUIDES"
+  | "STAYS"
+  | "NATURE"
+  | "FAMILY"
+  | "SPORTS"
+  | "TECHNOLOGY"
+  | "SEASONAL";
+
 type ProfileData = {
-  name: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   email: string;
-  userType: string;
+  userType: VisitorType | "";
 };
 
-const DEFAULT_PROFILE: ProfileData = {
-  name: "معتز قنديل",
-  phone: "05XXXXXXXX",
-  email: "user@example.com",
-  userType: "مقيم",
+type AuthUser = {
+  id: string;
+  email: string;
+  username: string | null;
+  phone: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+  status: string;
+  emailVerifiedAt: string | null;
+  phoneVerifiedAt: string | null;
+  visitorType: VisitorType | null;
+  interests: InterestCode[];
 };
 
-const DEFAULT_INTERESTS = [
-  "التاريخ والتراث",
-  "المرشدون السياحيون",
-  "التجارب",
-  "المطاعم والمقاهي",
-];
+const EMPTY_PROFILE: ProfileData = {
+  firstName: "",
+  lastName: "",
+  phone: "",
+  email: "",
+  userType: "",
+};
 
-const ALL_INTERESTS = [
-  "التاريخ والتراث",
-  "المرشدون السياحيون",
-  "التجارب",
-  "المطاعم والمقاهي",
-  "الفعاليات",
-  "التسوق",
-  "العائلة",
-  "المغامرات",
-];
+const INTEREST_LABELS: Record<InterestCode, string> = {
+  HERITAGE: "التاريخ والتراث",
+  ADVENTURE: "التجارب والمغامرات",
+  FOOD: "الطعام والمقاهي",
+  EVENTS: "الفعاليات والترفيه",
+  SHOPPING: "التسوق والأسواق",
+  GUIDES: "الجولات والمرشدون",
+  STAYS: "الفنادق والإقامة",
+  NATURE: "الطبيعة والاستجمام",
+  FAMILY: "العائلة والأطفال",
+  SPORTS: "الرياضة واللياقة",
+  TECHNOLOGY: "التقنية والابتكار",
+  SEASONAL: "التجارب الموسمية",
+};
 
-const PROFILE_STORAGE_KEY = "arees_loop_profile_demo";
-const INTERESTS_STORAGE_KEY = "arees_loop_interests_demo";
+const ALL_INTERESTS = Object.entries(INTEREST_LABELS) as [InterestCode, string][];
+
+function visitorTypeLabel(value: VisitorType | "") {
+  if (value === "CITIZEN") return "مواطن";
+  if (value === "RESIDENT") return "مقيم";
+  if (value === "VISITOR") return "زائر";
+  return "غير محدد";
+}
 
 export default function ProfilePage() {
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [smartRecommendations, setSmartRecommendations] = useState(true);
   const [loopPoints, setLoopPoints] = useState(0);
-  const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
-  const [draftProfile, setDraftProfile] = useState<ProfileData>(DEFAULT_PROFILE);
-  const [interests, setInterests] = useState<string[]>(DEFAULT_INTERESTS);
-  const [draftInterests, setDraftInterests] = useState<string[]>(DEFAULT_INTERESTS);
+  const [profile, setProfile] = useState<ProfileData>(EMPTY_PROFILE);
+  const [draftProfile, setDraftProfile] = useState<ProfileData>(EMPTY_PROFILE);
+  const [interests, setInterests] = useState<InterestCode[]>([]);
+  const [draftInterests, setDraftInterests] = useState<InterestCode[]>([]);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [activePanel, setActivePanel] = useState<
     | null
     | "profile"
@@ -65,60 +104,117 @@ export default function ProfilePage() {
     | "notifications"
     | "personal-data"
     | "privacy"
-    | "login-method"
   >(null);
+
+  const fullName =
+    [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "مستخدم Arees Loop";
+  const firstName = profile.firstName || "زائر";
+  const avatarInitial = firstName.trim().charAt(0) || "ز";
 
   useEffect(() => {
     setLoopPoints(getTotalLoopPoints());
 
-    const storedProfile = window.localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (storedProfile) {
+    let cancelled = false;
+
+    async function loadProfile() {
       try {
-        const parsed = JSON.parse(storedProfile) as ProfileData;
-        setProfile(parsed);
-        setDraftProfile(parsed);
-      } catch {
-        // Keep demo defaults if old local data is invalid.
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          credentials: "include",
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data?.success || !data?.data?.user) return;
+
+        const user = data.data.user as AuthUser;
+        const nextProfile: ProfileData = {
+          firstName: user.firstName ?? "",
+          lastName: user.lastName ?? "",
+          phone: user.phone ?? "",
+          email: user.email ?? "",
+          userType: user.visitorType ?? "",
+        };
+
+        if (!cancelled) {
+          setProfile(nextProfile);
+          setDraftProfile(nextProfile);
+          setInterests(user.interests ?? []);
+          setDraftInterests(user.interests ?? []);
+        }
+      } catch (error) {
+        console.error("Unable to load profile:", error);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
       }
     }
 
-    const storedInterests = window.localStorage.getItem(INTERESTS_STORAGE_KEY);
-    if (storedInterests) {
-      try {
-        const parsed = JSON.parse(storedInterests) as string[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setInterests(parsed);
-          setDraftInterests(parsed);
-        }
-      } catch {
-        // Keep demo defaults if old local data is invalid.
-      }
-    }
+    void loadProfile();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function openProfileEditor() {
     setDraftProfile(profile);
+    setSaveError("");
     setActivePanel("profile");
   }
 
-  function saveProfile() {
-    const clean: ProfileData = {
-      name: draftProfile.name.trim() || profile.name,
-      phone: draftProfile.phone.trim() || profile.phone,
-      email: draftProfile.email.trim() || profile.email,
-      userType: draftProfile.userType.trim() || profile.userType,
-    };
-    setProfile(clean);
-    window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(clean));
-    setActivePanel(null);
+  async function saveProfile() {
+    if (saveLoading) return;
+    setSaveLoading(true);
+    setSaveError("");
+
+    try {
+      const response = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          firstName: draftProfile.firstName,
+          lastName: draftProfile.lastName,
+          phone: draftProfile.phone,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.success) {
+        if (data?.error === "PHONE_ALREADY_IN_USE") {
+          setSaveError("رقم الجوال مستخدم في حساب آخر.");
+        } else if (data?.error === "INVALID_PHONE") {
+          setSaveError("اكتب رقم الجوال بالصيغة الدولية، مثال: +9665XXXXXXXX، أو اتركه فارغًا.");
+        } else {
+          setSaveError("تعذر حفظ البيانات. تأكد منها وحاول مرة أخرى.");
+        }
+        return;
+      }
+
+      const user = data.data.user as AuthUser;
+      const nextProfile: ProfileData = {
+        firstName: user.firstName ?? "",
+        lastName: user.lastName ?? "",
+        phone: user.phone ?? profile.phone,
+        email: user.email ?? profile.email,
+        userType: user.visitorType ?? profile.userType,
+      };
+      setProfile(nextProfile);
+      setDraftProfile(nextProfile);
+      setActivePanel(null);
+    } catch (error) {
+      console.error("Unable to update profile:", error);
+      setSaveError("تعذر الاتصال بالخادم. حاول مرة أخرى.");
+    } finally {
+      setSaveLoading(false);
+    }
   }
 
   function openInterestsEditor() {
     setDraftInterests(interests);
+    setSaveError("");
     setActivePanel("interests");
   }
 
-  function toggleInterest(value: string) {
+  function toggleInterest(value: InterestCode) {
     setDraftInterests((current) =>
       current.includes(value)
         ? current.filter((item) => item !== value)
@@ -126,14 +222,33 @@ export default function ProfilePage() {
     );
   }
 
-  function saveInterests() {
-    if (draftInterests.length === 0) return;
-    setInterests(draftInterests);
-    window.localStorage.setItem(
-      INTERESTS_STORAGE_KEY,
-      JSON.stringify(draftInterests),
-    );
-    setActivePanel(null);
+  async function saveInterests() {
+    if (saveLoading || draftInterests.length === 0) return;
+    setSaveLoading(true);
+    setSaveError("");
+
+    try {
+      const response = await fetch("/api/onboarding/interests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ interests: draftInterests }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.success) {
+        setSaveError("تعذر حفظ الاهتمامات. حاول مرة أخرى.");
+        return;
+      }
+
+      setInterests(draftInterests);
+      setActivePanel(null);
+    } catch (error) {
+      console.error("Unable to update interests:", error);
+      setSaveError("تعذر الاتصال بالخادم. حاول مرة أخرى.");
+    } finally {
+      setSaveLoading(false);
+    }
   }
 
   function requestLocationPermission() {
@@ -195,18 +310,12 @@ export default function ProfilePage() {
               <span className="hidden xl:inline">الإشعارات</span>
             </Link>
 
-            <div className="flex items-center gap-2 rounded-full bg-[#0D3B34] py-1.5 pl-3 pr-1.5 text-white">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#D4AF37] text-[11px] font-bold text-[#0D3B34]">
-                م
-              </div>
-
-              <div className="hidden text-right sm:block">
-                <p className="text-[10px] font-semibold">مرحبًا معتز</p>
-                <p className="text-[8px] text-white/65">حسابي</p>
-              </div>
-
-              <ChevronDownIcon />
-            </div>
+            <AccountMenu
+              firstName={profile.firstName}
+              lastName={profile.lastName}
+              email={profile.email}
+              phone={profile.phone}
+            />
           </div>
         </div>
       </header>
@@ -251,7 +360,7 @@ export default function ProfilePage() {
 
             <div className="relative flex flex-col gap-6 md:flex-row md:items-center">
               <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] border border-white/10 bg-white/[0.07] text-3xl font-bold text-[#D4AF37]">
-                م
+                {avatarInitial}
               </div>
 
               <div>
@@ -263,12 +372,12 @@ export default function ProfilePage() {
                   className="mt-2 text-3xl font-semibold"
                   style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
                 >
-                  معتز قنديل
+                  {profileLoading ? "جاري تحميل الحساب..." : fullName}
                 </h2>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[9px] font-semibold text-white/75">
-                    {profile.userType}
+                    {visitorTypeLabel(profile.userType)}
                   </span>
 
                   <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-3 py-1.5 text-[9px] font-semibold text-[#E3C357]">
@@ -335,24 +444,24 @@ export default function ProfilePage() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <InfoField
                   label="الاسم"
-                  value={profile.name}
+                  value={fullName}
                 />
 
                 <InfoField
                   label="رقم الجوال"
-                  value={profile.phone}
+                  value={profile.phone || "غير مضاف"}
                   ltr
                 />
 
                 <InfoField
                   label="البريد الإلكتروني"
-                  value={profile.email}
+                  value={profile.email || "غير مضاف"}
                   ltr
                 />
 
                 <InfoField
                   label="صفة المستخدم"
-                  value={profile.userType}
+                  value={visitorTypeLabel(profile.userType)}
                 />
               </div>
 
@@ -376,13 +485,13 @@ export default function ProfilePage() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <InfoField
                   label="نوع الهوية"
-                  value="هوية مقيم"
+                  value={profile.userType === "CITIZEN" ? "هوية وطنية" : profile.userType === "RESIDENT" ? "هوية مقيم" : "زائر"}
                 />
 
                 <InfoField
-                  label="رقم الإقامة"
-                  value="•••••••482"
-                  ltr
+                  label="البريد موثّق"
+                  value={profile.email ? "نعم" : "غير متاح"}
+                  success={Boolean(profile.email)}
                 />
 
                 <InfoField
@@ -392,8 +501,8 @@ export default function ProfilePage() {
                 />
 
                 <InfoField
-                  label="آخر تحديث"
-                  value="02 سبتمبر 2026"
+                  label="نوع الحساب"
+                  value={visitorTypeLabel(profile.userType)}
                 />
               </div>
 
@@ -402,8 +511,8 @@ export default function ProfilePage() {
                   <ShieldIcon />
 
                   <p className="text-[10px] leading-5 text-[#0D3B34]/65">
-                    التكامل الرسمي مع قنوات التحقق الحكومية سيضاف عند توافر
-                    الاعتماد والصلاحيات المطلوبة. هذه البيانات تجريبية حاليًا.
+                    بيانات الحساب المعروضة هنا مرتبطة بالحساب الحالي. التحقق الحكومي
+                    من الهوية سيضاف عند توافر الاعتماد والصلاحيات المطلوبة.
                   </p>
                 </div>
               </div>
@@ -423,7 +532,7 @@ export default function ProfilePage() {
 
               <div className="mt-5 flex flex-wrap gap-2">
                 {interests.map((interest) => (
-                  <InterestChip key={interest}>{interest}</InterestChip>
+                  <InterestChip key={interest}>{INTEREST_LABELS[interest]}</InterestChip>
                 ))}
               </div>
 
@@ -515,51 +624,6 @@ export default function ProfilePage() {
               </div>
             </Card>
 
-            {/* ACCOUNT */}
-            <Card>
-              <CardHeader
-                eyebrow="ACCOUNT"
-                title="إدارة الحساب"
-                icon={<UserIcon />}
-              />
-
-              <div className="mt-5 space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setActivePanel("login-method")}
-                  className="flex w-full items-center justify-between rounded-[16px] border border-[#0D3B34]/8 bg-white/55 px-4 py-3.5 text-right transition hover:border-[#0D3B34]/18"
-                >
-                  <div>
-                    <p className="text-[10px] font-semibold text-[#0D3B34]">
-                      تغيير وسيلة تسجيل الدخول
-                    </p>
-
-                    <p className="mt-1 text-[9px] text-[#0D3B34]/55">
-                      تحديث رقم الجوال أو البريد الإلكتروني.
-                    </p>
-                  </div>
-
-                  <ArrowIcon />
-                </button>
-
-                <Link
-                  href="/auth"
-                  className="flex w-full items-center justify-between rounded-[16px] border border-red-600/10 bg-red-50/40 px-4 py-3.5 text-right transition hover:bg-red-50/70"
-                >
-                  <div>
-                    <p className="text-[10px] font-semibold text-red-700/80">
-                      تسجيل الخروج
-                    </p>
-
-                    <p className="mt-1 text-[9px] text-red-700/55">
-                      إنهاء جلسة Arees Loop الحالية.
-                    </p>
-                  </div>
-
-                  <LogoutIcon />
-                </Link>
-              </div>
-            </Card>
           </div>
         </section>
       </div>
@@ -587,7 +651,6 @@ export default function ProfilePage() {
                   {activePanel === "notifications" && "إعدادات الإشعارات"}
                   {activePanel === "personal-data" && "بياناتي الشخصية"}
                   {activePanel === "privacy" && "سياسة الخصوصية"}
-                  {activePanel === "login-method" && "تغيير وسيلة تسجيل الدخول"}
                 </h3>
               </div>
 
@@ -604,40 +667,49 @@ export default function ProfilePage() {
             {activePanel === "profile" && (
               <div className="mt-6 space-y-4">
                 <ProfileInput
-                  label="الاسم"
-                  value={draftProfile.name}
+                  label="الاسم الأول"
+                  value={draftProfile.firstName}
                   onChange={(value) =>
-                    setDraftProfile((current) => ({ ...current, name: value }))
+                    setDraftProfile((current) => ({ ...current, firstName: value }))
                   }
                 />
                 <ProfileInput
-                  label="رقم الجوال"
-                  value={draftProfile.phone}
+                  label="اسم العائلة"
+                  value={draftProfile.lastName}
                   onChange={(value) =>
-                    setDraftProfile((current) => ({ ...current, phone: value }))
+                    setDraftProfile((current) => ({ ...current, lastName: value }))
                   }
-                  ltr
                 />
-                <ProfileInput
+                <div>
+                  <label className="mb-2 block text-[9px] font-semibold text-[#0D3B34]/55">
+                    رقم الجوال <span className="font-normal text-[#0D3B34]/35">(اختياري)</span>
+                  </label>
+                  <input
+                    dir="ltr"
+                    type="tel"
+                    inputMode="tel"
+                    value={draftProfile.phone}
+                    onChange={(event) =>
+                      setDraftProfile((current) => ({
+                        ...current,
+                        phone: event.target.value,
+                      }))
+                    }
+                    placeholder="+9665XXXXXXXX"
+                    className="w-full rounded-[14px] border border-[#0D3B34]/10 bg-white/75 px-4 py-3 text-left text-[11px] text-[#0D3B34] outline-none transition focus:border-[#D4AF37]/60"
+                  />
+                </div>
+
+                <InfoField
                   label="البريد الإلكتروني"
-                  value={draftProfile.email}
-                  onChange={(value) =>
-                    setDraftProfile((current) => ({ ...current, email: value }))
-                  }
+                  value={profile.email || "غير مضاف"}
                   ltr
                 />
-                <ProfileInput
-                  label="صفة المستخدم"
-                  value={draftProfile.userType}
-                  onChange={(value) =>
-                    setDraftProfile((current) => ({
-                      ...current,
-                      userType: value,
-                    }))
-                  }
-                />
-                <DemoNotice text="الحفظ هنا تجريبي على هذا المتصفح إلى حين ربط قاعدة البيانات." />
-                <PrimaryButton onClick={saveProfile}>حفظ التعديلات</PrimaryButton>
+
+                {saveError && <DemoNotice text={saveError} />}
+                <PrimaryButton onClick={saveProfile} disabled={saveLoading}>
+                  {saveLoading ? "جاري الحفظ..." : "حفظ التعديلات"}
+                </PrimaryButton>
               </div>
             )}
 
@@ -647,13 +719,13 @@ export default function ProfilePage() {
                   اختر الاهتمامات التي تريد استخدامها لترتيب التجارب المقترحة لك.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {ALL_INTERESTS.map((interest) => {
-                    const selected = draftInterests.includes(interest);
+                  {ALL_INTERESTS.map(([code, label]) => {
+                    const selected = draftInterests.includes(code);
                     return (
                       <button
-                        key={interest}
+                        key={code}
                         type="button"
-                        onClick={() => toggleInterest(interest)}
+                        onClick={() => toggleInterest(code)}
                         className={`rounded-full border px-4 py-2 text-[9px] font-semibold transition ${
                           selected
                             ? "border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#76580F]"
@@ -661,17 +733,18 @@ export default function ProfilePage() {
                         }`}
                       >
                         {selected ? "✓ " : ""}
-                        {interest}
+                        {label}
                       </button>
                     );
                   })}
                 </div>
+                {saveError && <div className="mt-4"><DemoNotice text={saveError} /></div>}
                 <div className="mt-5">
                   <PrimaryButton
                     onClick={saveInterests}
-                    disabled={draftInterests.length === 0}
+                    disabled={draftInterests.length === 0 || saveLoading}
                   >
-                    حفظ الاهتمامات
+                    {saveLoading ? "جاري الحفظ..." : "حفظ الاهتمامات"}
                   </PrimaryButton>
                 </div>
               </div>
@@ -719,13 +792,10 @@ export default function ProfilePage() {
 
             {activePanel === "personal-data" && (
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <InfoField label="الاسم" value={profile.name} />
-                <InfoField label="رقم الجوال" value={profile.phone} ltr />
-                <InfoField label="البريد الإلكتروني" value={profile.email} ltr />
-                <InfoField label="صفة المستخدم" value={profile.userType} />
-                <div className="sm:col-span-2">
-                  <DemoNotice text="هذه شاشة مراجعة للنسخة التجريبية. تنزيل/حذف بيانات الحساب سيُربط بالخلفية وقاعدة البيانات لاحقًا." />
-                </div>
+                <InfoField label="الاسم" value={fullName} />
+                <InfoField label="رقم الجوال" value={profile.phone || "غير مضاف"} ltr />
+                <InfoField label="البريد الإلكتروني" value={profile.email || "غير مضاف"} ltr />
+                <InfoField label="صفة المستخدم" value={visitorTypeLabel(profile.userType)} />
               </div>
             )}
 
@@ -746,25 +816,6 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {activePanel === "login-method" && (
-              <div className="mt-6 space-y-4">
-                <DemoNotice text="تغيير رقم الجوال أو البريد كوسيلة دخول يحتاج تحققًا آمنًا وربطًا بقاعدة البيانات. لن نغيّر بيانات الدخول فعليًا في نسخة الواجهة التجريبية." />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Link
-                    href="/auth"
-                    className="rounded-[14px] bg-[#0D3B34] px-4 py-3 text-center text-[10px] font-semibold text-white"
-                  >
-                    إدارة تسجيل الدخول
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="rounded-[14px] border border-[#0D3B34]/10 bg-white px-4 py-3 text-center text-[10px] font-semibold text-[#0D3B34]"
-                  >
-                    صفحة تسجيل الدخول
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -1129,21 +1180,6 @@ function BellIconLarge() {
   );
 }
 
-function ChevronDownIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-    >
-      <path d="m7 10 5 5 5-5" />
-    </svg>
-  );
-}
-
 function CompassIcon() {
   return (
     <svg
@@ -1320,19 +1356,3 @@ function ArrowIcon() {
   );
 }
 
-function LogoutIcon() {
-  return (
-    <svg
-      width="17"
-      height="17"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-    >
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <path d="m16 17 5-5-5-5" />
-      <path d="M21 12H9" />
-    </svg>
-  );
-}

@@ -106,6 +106,12 @@ export async function getCurrentSession() {
           status: true,
           emailVerifiedAt: true,
           phoneVerifiedAt: true,
+          visitorType: true,
+          interests: {
+            select: {
+              code: true,
+            },
+          },
         },
       },
     },

@@ -125,37 +125,6 @@ const steps = [
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function resumeVerifiedSession() {
-      try {
-        const response = await fetch("/api/auth/me", {
-          method: "GET",
-          cache: "no-store",
-          credentials: "include",
-        });
-
-        if (!response.ok) return;
-
-        const result = await response.json().catch(() => null);
-        const user = result?.data?.user;
-
-        if (!cancelled && result?.success && user?.status === "ACTIVE") {
-          setStep(3);
-        }
-      } catch {
-        // No active session: keep the normal onboarding flow at step 1.
-      }
-    }
-
-    void resumeVerifiedSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
  const [fullName, setFullName] = useState("");
 const [email, setEmail] = useState("");
 const [phone, setPhone] = useState("");
@@ -187,6 +156,98 @@ const [otpSent, setOtpSent] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<
     "idle" | "granted" | "denied" | "skipped"
   >("idle");
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const params = new URLSearchParams(window.location.search);
+    const isNewAccountFlow = params.get("mode") === "new";
+
+    if (isNewAccountFlow) {
+      setStep(1);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    async function resumeOnboarding() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const result = await response.json().catch(() => null);
+        const user = result?.data?.user;
+
+        if (cancelled || !result?.success || !user) return;
+
+        if (user.email) setEmail(user.email);
+        if (user.phone) setPhone(user.phone);
+
+        const savedName = [user.firstName, user.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+        if (savedName) setFullName(savedName);
+
+        if (user.status !== "ACTIVE" || !user.emailVerifiedAt) {
+          setStep(2);
+          return;
+        }
+
+        const visitorTypeMap: Record<string, UserType> = {
+          CITIZEN: "citizen",
+          RESIDENT: "resident",
+          VISITOR: "visitor",
+        };
+
+        const savedUserType = user.visitorType
+          ? visitorTypeMap[user.visitorType] || ""
+          : "";
+
+        if (!savedUserType) {
+          setStep(3);
+          return;
+        }
+
+        setUserType(savedUserType);
+
+        const validInterestCodes = new Set<InterestCode>(
+          interests.map((item) => item.id)
+        );
+
+        const savedInterests: InterestCode[] = Array.isArray(user.interests)
+          ? user.interests.filter(
+              (item: unknown): item is InterestCode =>
+                typeof item === "string" &&
+                validInterestCodes.has(item as InterestCode)
+            )
+          : [];
+
+        if (savedInterests.length === 0) {
+          setStep(4);
+          return;
+        }
+
+        setSelectedInterests(savedInterests);
+        setStep(5);
+      } catch {
+        // No usable session: keep the normal onboarding flow at step 1.
+      }
+    }
+
+    void resumeOnboarding();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const progress = useMemo(() => {
     if (step === 7) return 100;

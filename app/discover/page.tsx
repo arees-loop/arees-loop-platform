@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { getTotalLoopPoints } from "@/lib/loop-progress";
-
+import AccountMenu from "@/app/components/AccountMenu";
 type Category =
   | "all"
   | "heritage"
@@ -33,6 +33,13 @@ type UserLocation = {
   lat: number;
   lng: number;
   accuracy: number;
+};
+
+type AuthUser = {
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  phone: string | null;
 };
 
 const supportedDestinations = [
@@ -202,6 +209,7 @@ function DiscoverContent() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<string>("");
   const [loopPoints, setLoopPoints] = useState(0);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     setLoopPoints(getTotalLoopPoints());
@@ -218,6 +226,45 @@ function DiscoverContent() {
     ) {
       setSelectedDestination(savedDestination);
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAuthenticatedUser() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const result = await response.json().catch(() => null);
+        const user = result?.data?.user;
+
+        if (cancelled || !result?.success || !user?.email) return;
+
+        setAuthUser({
+          firstName:
+            typeof user.firstName === "string" ? user.firstName : null,
+          lastName:
+            typeof user.lastName === "string" ? user.lastName : null,
+          email: user.email,
+          phone:
+            typeof user.phone === "string" ? user.phone : null,
+        });
+      } catch {
+        // Keep the page usable even if session lookup is temporarily unavailable.
+      }
+    }
+
+    void loadAuthenticatedUser();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -494,26 +541,12 @@ function DiscoverContent() {
               <span className="hidden xl:inline">الإشعارات</span>
             </Link>
 
-            <Link
-              href="/profile"
-              className="flex items-center gap-2 rounded-full border border-[#0D3B34]/[0.08] bg-white/65 py-1.5 pl-3 pr-1.5"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0D3B34] text-[11px] font-bold text-[#D4AF37]">
-                م
-              </div>
-
-              <div className="hidden text-right sm:block">
-                <p className="text-[10px] font-semibold">
-                  مرحبًا معتز
-                </p>
-
-                <p className="text-[8px] text-[#0D3B34]/40">
-                  حسابي
-                </p>
-              </div>
-
-              <ChevronDownIcon />
-            </Link>
+            <AccountMenu
+              firstName={authUser?.firstName}
+              lastName={authUser?.lastName}
+              email={authUser?.email}
+              phone={authUser?.phone}
+            />
           </div>
         </div>
       </header>
@@ -1377,21 +1410,6 @@ function BellIcon() {
     >
       <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
       <path d="M10 21h4" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-    >
-      <path d="m7 10 5 5 5-5" />
     </svg>
   );
 }

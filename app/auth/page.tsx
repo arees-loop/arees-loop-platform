@@ -57,7 +57,9 @@ export default function AuthPage() {
               <div className="mt-5">
                 <h1
                   className="text-[34px] font-semibold leading-[1.25] xl:text-[36px]"
-                  style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
+                  style={{
+                    fontFamily: "var(--font-el-messiri), sans-serif",
+                  }}
                 >
                   مرحبًا بك في أريس لوب
                 </h1>
@@ -107,7 +109,7 @@ export default function AuthPage() {
             <div className="w-full max-w-[520px]">
               {/* Create */}
               <ActionCard
-                href="/onboarding"
+                href="/onboarding?mode=new"
                 type="gold"
                 icon={<UserPlusIcon />}
                 title="إنشاء حساب جديد"
@@ -194,7 +196,9 @@ export default function AuthPage() {
           <div className="mt-5 text-center">
             <h1
               className="text-[28px] font-semibold"
-              style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
+              style={{
+                fontFamily: "var(--font-el-messiri), sans-serif",
+              }}
             >
               مرحبًا بك في أريس لوب
             </h1>
@@ -233,7 +237,7 @@ export default function AuthPage() {
 
           <div className="mt-6">
             <MobileAction
-              href="/onboarding"
+              href="/onboarding?mode=new"
               gold
               icon={<UserPlusIcon />}
               title="إنشاء حساب جديد"
@@ -307,7 +311,9 @@ function ActionCard({
       <div className="min-w-0 flex-1 text-right">
         <p
           className="text-[18px] font-semibold leading-none"
-          style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
+          style={{
+            fontFamily: "var(--font-el-messiri), sans-serif",
+          }}
         >
           {title}
         </p>
@@ -430,7 +436,9 @@ function MobileAction({
       <div className="flex-1 text-right">
         <p
           className="text-[17px] font-semibold"
-          style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}
+          style={{
+            fontFamily: "var(--font-el-messiri), sans-serif",
+          }}
         >
           {title}
         </p>
