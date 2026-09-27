@@ -157,6 +157,9 @@ const heroScenes = [
   },
 
   {
+    id: "alula",
+    nameAr: "العلا",
+    nameEn: "AlUla",
     eyebrowAr: "العلا",
     eyebrowEn: "ALULA",
     titleAr: "حكايات محفورة في الصخر",
@@ -167,6 +170,10 @@ const heroScenes = [
       "Discover AlUla from where you are, then let AREES Loop lead you to nearby experiences and missions.",
     image: "/Image/destinations/alula-hero.webp",
     coords: { lat: 26.6084, lng: 37.9232 },
+    metaAr: "بين الصخر والتاريخ",
+    metaEn: "Among rock and history",
+    detailAr: "تراث · طبيعة · مغامرة",
+    detailEn: "Heritage · Nature · Adventure",
   },
 ];
 
@@ -193,6 +200,7 @@ const distanceKm = (
 };
 
 export default function Home() {
+  const [partnersNudge, setPartnersNudge] = useState(0);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [activeScene, setActiveScene] = useState(0);
   const [locationReady, setLocationReady] = useState(false);
@@ -1265,128 +1273,88 @@ export default function Home() {
       </section>
 
       {/* =====================================================
-          PARTNERS
+          SUCCESS PARTNERS — CONTINUOUS LUXURY RIBBON
       ====================================================== */}
 
-      <section
-        id="partners"
-        className="relative bg-[#f7f7f2] px-6 py-24 md:px-10"
-      >
-        <div
-          dir="rtl"
-          className="mx-auto grid max-w-7xl overflow-hidden rounded-[38px] border border-[#0D3B34]/10 bg-white shadow-[0_25px_80px_rgba(13,59,52,0.08)] lg:grid-cols-[1.1fr_0.9fr]"
-        >
-          {/* Partner content */}
-          <div className="p-8 text-right md:p-14">
-            <p className="text-sm font-bold tracking-[0.18em] text-[#D4AF37]">
-              أريس لوب للأعمال
-            </p>
+      <section id="partners" className="relative overflow-hidden bg-[#F8F0E2] px-0 py-20 md:py-24">
+        <div className="pointer-events-none absolute inset-0 opacity-80">
+          <div className="absolute -left-[12%] top-[12%] h-[2px] w-[62%] rotate-[-5deg] bg-gradient-to-r from-transparent via-[#D4AF37]/35 to-transparent" />
+          <div className="absolute -right-[10%] top-[24%] h-[2px] w-[58%] rotate-[5deg] bg-gradient-to-r from-transparent via-[#B98A20]/25 to-transparent" />
+          <div className="absolute left-[8%] top-[36%] h-24 w-[84%] rounded-[50%] border-t border-[#D4AF37]/20" />
+          <div className="absolute inset-x-0 bottom-0 h-44 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.14),transparent_68%)]" />
+        </div>
 
-            <h2 className="mt-4 max-w-2xl text-4xl font-black leading-tight text-[#0D3B34] md:text-5xl">
-              حوّل الزوار القريبين
-              <span className="block">إلى زيارات قابلة للقياس</span>
-            </h2>
-
-            <p className="mt-6 max-w-2xl text-lg leading-9 text-[#0D3B34]/65">
-              للمتاحف والمعالم ومقدمي التجارب والمنشآت السياحية: اعرض تجربتك،
-              أطلق مهمات ذكية، واستهدف الزوار المناسبين بالقرب منك.
-            </p>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl bg-[#0D3B34]/[0.05] px-5 py-4 font-bold text-[#0D3B34]">
-                ✓ إدارة التجارب والحجوزات
-              </div>
-
-              <div className="rounded-2xl bg-[#0D3B34]/[0.05] px-5 py-4 font-bold text-[#0D3B34]">
-                ✓ حملات حسب الموقع
-              </div>
-
-              <div className="rounded-2xl bg-[#0D3B34]/[0.05] px-5 py-4 font-bold text-[#0D3B34]">
-                ✓ قياس الزيارات والتحويل
-              </div>
-
-              <div className="rounded-2xl bg-[#0D3B34]/[0.05] px-5 py-4 font-bold text-[#0D3B34]">
-                ✓ مكافآت ومهمات ذكية
-              </div>
-            </div>
-
-            <Link
-              href="/partner/onboarding"
-              className="mt-9 inline-flex rounded-full bg-[#0D3B34] px-8 py-4 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#145347] hover:shadow-[0_12px_30px_rgba(13,59,52,0.20)]"
-            >
-              انضم كشريك
-            </Link>
+        <div dir="rtl" className="relative z-20 mx-auto max-w-7xl px-6 text-center md:px-10">
+          <p className="text-sm font-black tracking-[0.20em] text-[#A87917] md:text-base">شركاء النجاح</p>
+          <h2 className="mt-3 text-4xl font-black leading-tight text-[#11130F] md:text-6xl">
+            شراكات تصنع تجربة أقرب
+            <span className="text-[#A87917]"> وأثراً أكبر</span>
+          </h2>
+          <div className="mx-auto mt-5 flex w-52 items-center justify-center gap-3">
+            <span className="h-px flex-1 bg-gradient-to-l from-[#B88A25] to-transparent" />
+            <span className="h-2.5 w-2.5 rotate-45 border border-[#A87917] bg-[#D4AF37]/45" />
+            <span className="h-px flex-1 bg-gradient-to-r from-[#B88A25] to-transparent" />
           </div>
+          <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-8 text-[#34382F]/65 md:text-lg">
+            نعمل مع شركائنا لربط الزائر بالخدمات والتجارب والفرص التي تثري رحلته، ضمن منظومة رقمية واحدة تجمع الاكتشاف والحجز والتفاعل.
+          </p>
+        </div>
 
-          {/* Partner visual */}
-          <div className="relative min-h-[400px] overflow-hidden bg-[#0D3B34] p-8 md:p-12">
-            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#D4AF37]/15 blur-3xl" />
+        <div className="partners-stage relative z-20 mt-12 overflow-hidden py-14 md:mt-16 md:py-20">
+          <div className="pointer-events-none absolute left-1/2 top-[26%] h-20 w-[115%] -translate-x-1/2 rounded-[50%] border-t-[3px] border-[#C28B18]/70 shadow-[0_-2px_12px_rgba(255,209,87,.35)]" />
+          <div className="pointer-events-none absolute left-1/2 bottom-[23%] h-20 w-[115%] -translate-x-1/2 rounded-[50%] border-b-[3px] border-[#C28B18]/70 shadow-[0_3px_14px_rgba(255,196,50,.35)]" />
 
-            <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-white/[0.06] blur-3xl" />
+          <button type="button" aria-label="الشريك السابق" className="partner-arrow left-4 md:left-8" onClick={() => setPartnersNudge((value) => value - 1)}>‹</button>
+          <button type="button" aria-label="الشريك التالي" className="partner-arrow right-4 md:right-8" onClick={() => setPartnersNudge((value) => value + 1)}>›</button>
 
-            <div className="relative flex h-full items-center">
-              <div className="w-full rounded-[30px] border border-white/20 bg-white/[0.07] p-6 text-white backdrop-blur-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold tracking-[0.16em] text-white/55">
-                      أداء الحملة
-                    </p>
-
-                    <p className="mt-2 text-2xl font-black">
-                      أداء تجربة اليوم
-                    </p>
+          <div className="partners-marquee" style={{ "--partners-nudge": `${partnersNudge * 210}px` } as React.CSSProperties}>
+            {[0, 1].map((group) => (
+              <div key={group} className="partners-group" aria-hidden={group === 1}>
+                {[
+                  { src: "/Logo/arees-travel-solutions-logo.png", alt: "أريس للسفر والسياحة" },
+                  { src: "/Logo/tarco-aviation-logo.png", alt: "تاركو للطيران" },
+                  { src: "/Logo/badr-airlines-transparent-v2.png", alt: "بدر للطيران" },
+                  { src: "/Logo/sudan-airways-transparent-v2.png", alt: "الخطوط الجوية السودانية" },
+                  { src: "/Logo/arees-travel-solutions-logo.png", alt: "أريس للسفر والسياحة" },
+                  { src: "/Logo/tarco-aviation-logo.png", alt: "تاركو للطيران" },
+                  { src: "/Logo/badr-airlines-transparent-v2.png", alt: "بدر للطيران" },
+                  { src: "/Logo/sudan-airways-transparent-v2.png", alt: "الخطوط الجوية السودانية" },
+                ].map((partner, index) => (
+                  <div key={`${group}-${index}`} className="partner-slot">
+                    <div className="partner-glass">
+                      <Image src={partner.src} alt={group === 0 ? partner.alt : ""} width={420} height={190} className="h-auto max-h-[78px] w-auto max-w-[165px] object-contain md:max-h-[96px] md:max-w-[205px]" />
+                    </div>
                   </div>
-
-                  <span className="rounded-full bg-[#D4AF37]/15 px-4 py-2 text-sm font-bold text-[#e5b83f]">
-                    مباشر
-                  </span>
-                </div>
-
-                <div className="mt-8 grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl bg-black/10 p-5">
-                    <p className="text-sm text-white/50">
-                      تم الوصول إليهم
-                    </p>
-
-                    <p className="mt-2 text-3xl font-black">
-                      1,284
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-black/10 p-5">
-                    <p className="text-sm text-white/50">
-                      الحجوزات
-                    </p>
-
-                    <p className="mt-2 text-3xl font-black text-[#e5b83f]">
-                      126
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-black/10 p-5">
-                    <p className="text-sm text-white/50">
-                      زيارات مؤكدة
-                    </p>
-
-                    <p className="mt-2 text-3xl font-black">
-                      104
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-black/10 p-5">
-                    <p className="text-sm text-white/50">
-                      معدل التحويل
-                    </p>
-
-                    <p className="mt-2 text-3xl font-black text-[#e5b83f]">
-                      9.8%
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
-            </div>
+            ))}
           </div>
         </div>
+
+        <div className="relative z-20 mx-auto mt-2 flex max-w-5xl flex-col items-center justify-between gap-4 px-6 text-center md:flex-row md:px-10 md:text-right" dir="rtl">
+          <div>
+            <p className="text-lg font-black text-[#201B12]">انضم إلى منظومة أريس لوب</p>
+            <p className="mt-1 text-sm font-medium leading-7 text-[#3D3528]/65">للشركات ومقدمي التجارب والجهات الراغبة في الوصول إلى الزوار عبر تجربة رقمية ذكية.</p>
+          </div>
+          <Link href="/partner/onboarding" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/55 px-8 py-3.5 font-black text-[#8B6718] shadow-[0_12px_35px_rgba(155,112,24,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/75">انضم كشريك</Link>
+        </div>
+
+        <style jsx>{`
+          .partners-stage { perspective: 1200px; }
+          .partners-marquee { display:flex; width:max-content; transform:translateX(var(--partners-nudge)); transition:transform .55s cubic-bezier(.2,.8,.2,1); animation:partnersFlow 34s linear infinite; will-change:transform; }
+          .partners-stage:hover .partners-marquee { animation-play-state:paused; }
+          .partners-group { display:flex; flex-shrink:0; align-items:center; }
+          .partner-slot { width:210px; flex:0 0 210px; padding:0 10px; transform:translateY(0); }
+          .partner-slot:nth-child(8n+1), .partner-slot:nth-child(8n+8) { transform:translateY(18px) scale(.88); }
+          .partner-slot:nth-child(8n+2), .partner-slot:nth-child(8n+7) { transform:translateY(8px) scale(.94); }
+          .partner-glass { display:flex; height:126px; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.68); border-radius:30px; background:linear-gradient(135deg,rgba(255,255,255,.52),rgba(255,248,231,.20)); box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 16px 35px rgba(115,78,12,.08); backdrop-filter:blur(14px); transition:transform .28s ease,box-shadow .28s ease,background .28s ease; }
+          .partner-glass:hover { transform:translateY(-8px) scale(1.12); background:linear-gradient(135deg,rgba(255,255,255,.76),rgba(255,249,232,.34)); box-shadow:inset 0 1px 0 white,0 22px 42px rgba(132,89,12,.16),0 0 28px rgba(212,175,55,.16); }
+          .partner-arrow { position:absolute; z-index:40; top:50%; display:flex; height:48px; width:48px; transform:translateY(-50%); align-items:center; justify-content:center; border:1px solid rgba(184,138,37,.32); border-radius:999px; background:rgba(255,255,255,.72); color:#8B6718; font-size:32px; line-height:1; box-shadow:0 10px 30px rgba(86,57,8,.12); backdrop-filter:blur(12px); transition:.25s ease; }
+          .partner-arrow:hover { transform:translateY(-50%) scale(1.08); background:white; }
+          @keyframes partnersFlow { from { transform:translateX(calc(var(--partners-nudge) + 0px)); } to { transform:translateX(calc(var(--partners-nudge) - 1680px)); } }
+          @media (max-width:767px) { .partner-slot{width:165px;flex-basis:165px;padding:0 7px}.partner-glass{height:105px;border-radius:24px}.partners-marquee{animation-duration:28s}@keyframes partnersFlow{from{transform:translateX(calc(var(--partners-nudge) + 0px))}to{transform:translateX(calc(var(--partners-nudge) - 1320px))}} }
+          @media (prefers-reduced-motion:reduce){.partners-marquee{animation:none}}
+        `}</style>
       </section>
 
       {/* =====================================================
@@ -1717,6 +1685,10 @@ export default function Home() {
               <a href="#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</a>
               <a href="#rewards" className="transition hover:text-[#D4AF37]">المكافآت</a>
               <a href="#partners" className="transition hover:text-[#D4AF37]">للشركاء</a>
+              <Link href="/privacy-policy" className="transition hover:text-[#D4AF37]">سياسة الخصوصية</Link>
+              <Link href="/cancellation-refund-policy" className="transition hover:text-[#D4AF37]">الإلغاء والاسترداد</Link>
+              <Link href="/deposit-refund-policy" className="transition hover:text-[#D4AF37]">التأمين واسترداده</Link>
+              <Link href="/service-unavailability-policy" className="transition hover:text-[#D4AF37]">تعذّر تقديم الخدمة</Link>
             </div>
 
             <div className="flex items-center justify-center gap-2 text-center md:justify-end md:text-left">
