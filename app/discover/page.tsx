@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { getTotalLoopPoints } from "@/lib/loop-progress";
 import AccountMenu from "@/app/components/AccountMenu";
+import { getCurrentLocation } from "@/lib/location";
 type Category =
   | "all"
   | "heritage"
@@ -33,6 +34,12 @@ type UserLocation = {
   lat: number;
   lng: number;
   accuracy: number;
+};
+
+type ExploreDestination = {
+  name: string;
+  lat: number;
+  lng: number;
 };
 
 type AuthUser = {
@@ -208,6 +215,11 @@ function DiscoverContent() {
   const [locationStatus, setLocationStatus] = useState("فعّل موقعك لعرض الأقرب إليك");
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<string>("");
+  const [exploreDestination, setExploreDestination] =
+    useState<ExploreDestination | null>(null);
+  const [destinationQuery, setDestinationQuery] = useState("");
+  const [destinationLoading, setDestinationLoading] = useState(false);
+  const [destinationError, setDestinationError] = useState("");
   const [loopPoints, setLoopPoints] = useState(0);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
@@ -218,13 +230,34 @@ function DiscoverContent() {
       "arees-loop-next-destination"
     );
 
-    if (
-      savedDestination &&
-      supportedDestinations.some(
-        (destination) => destination.nameAr === savedDestination
-      )
-    ) {
-      setSelectedDestination(savedDestination);
+    if (savedDestination) {
+      try {
+        const parsed = JSON.parse(savedDestination) as ExploreDestination;
+        if (
+          parsed &&
+          typeof parsed.name === "string" &&
+          Number.isFinite(parsed.lat) &&
+          Number.isFinite(parsed.lng)
+        ) {
+          setSelectedDestination(parsed.name);
+          setExploreDestination(parsed);
+          setDestinationQuery(parsed.name);
+        }
+      } catch {
+        const knownDestination = supportedDestinations.find(
+          (destination) => destination.nameAr === savedDestination
+        );
+        if (knownDestination) {
+          const restored = {
+            name: knownDestination.nameAr,
+            lat: knownDestination.lat,
+            lng: knownDestination.lng,
+          };
+          setSelectedDestination(restored.name);
+          setExploreDestination(restored);
+          setDestinationQuery(restored.name);
+        }
+      }
     }
   }, []);
 
@@ -268,36 +301,65 @@ function DiscoverContent() {
   }, []);
 
   useEffect(() => {
-    const latParam = searchParams.get("lat");
-    const lngParam = searchParams.get("lng");
-    const source = searchParams.get("source");
+    let cancelled = false;
 
-    if (!latParam || !lngParam || source !== "location") {
-      return;
+    async function resolveLocation() {
+      const latParam = searchParams.get("lat");
+      const lngParam = searchParams.get("lng");
+      const source = searchParams.get("source");
+
+      if (latParam && lngParam && source === "location") {
+        const lat = Number(latParam);
+        const lng = Number(lngParam);
+
+        if (
+          Number.isFinite(lat) &&
+          Number.isFinite(lng) &&
+          lat >= -90 &&
+          lat <= 90 &&
+          lng >= -180 &&
+          lng <= 180
+        ) {
+          setUserLocation({ lat, lng, accuracy: 0 });
+          setLocationEnabled(true);
+          setLocationStatus("يتم ترتيب التجارب حسب قربها من موقعك");
+          return;
+        }
+      }
+
+      setLocationLoading(true);
+      setLocationStatus("جارٍ تحديد موقعك وترتيب الأقرب إليك...");
+
+      try {
+        const location = await getCurrentLocation();
+        if (cancelled) return;
+
+        setUserLocation({
+          lat: location.coordinates.lat,
+          lng: location.coordinates.lng,
+          accuracy: location.coordinates.accuracy ?? 0,
+        });
+        setLocationEnabled(true);
+        setLocationStatus(
+          location.address
+            ? `نعرض الأقرب إليك من ${location.address}`
+            : "تم تحديد موقعك وترتيب التجارب حسب المسافة"
+        );
+      } catch {
+        if (cancelled) return;
+        setLocationEnabled(false);
+        setUserLocation(null);
+        setLocationStatus("تعذر الوصول لموقعك. يمكنك إعادة المحاولة.");
+      } finally {
+        if (!cancelled) setLocationLoading(false);
+      }
     }
 
-    const lat = Number(latParam);
-    const lng = Number(lngParam);
+    void resolveLocation();
 
-    if (
-      !Number.isFinite(lat) ||
-      !Number.isFinite(lng) ||
-      lat < -90 ||
-      lat > 90 ||
-      lng < -180 ||
-      lng > 180
-    ) {
-      return;
-    }
-
-    setUserLocation({
-      lat,
-      lng,
-      accuracy: 0,
-    });
-    setLocationEnabled(true);
-    setLocationLoading(false);
-    setLocationStatus("تم استخدام موقعك المحدد في الصفحة الرئيسية");
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams]);
 
   const rewardLevel =
@@ -339,10 +401,14 @@ function DiscoverContent() {
     currentDestination !== null && currentDestination.distanceKm <= 80;
 
   const activeDestinationName =
-    selectedDestination ||
+    exploreDestination?.name ||
     (destinationIsNearby && currentDestination
       ? currentDestination.nameAr
       : "");
+
+  const explorationLocation = exploreDestination
+    ? { lat: exploreDestination.lat, lng: exploreDestination.lng }
+    : userLocation;
 
   const hasLocalDemoContent =
     !activeDestinationName || activeDestinationName === "المدينة المنورة";
@@ -354,7 +420,7 @@ function DiscoverContent() {
   const filteredExperiences = useMemo(() => {
     const normalizedSearch = search.trim();
 
-    const filtered = experiences.filter((experience) => {
+    const matchingExperiences = experiences.filter((experience) => {
       const matchesCategory =
         activeCategory === "all" ||
         activeCategory === "guides" ||
@@ -367,90 +433,159 @@ function DiscoverContent() {
         experience.categoryLabel.includes(normalizedSearch) ||
         experience.location.includes(normalizedSearch);
 
-      const matchesDestination =
-        !activeDestinationName ||
-        experience.location.includes(activeDestinationName) ||
-        (activeDestinationName === "المدينة المنورة" &&
-          experience.location.includes("المنطقة المركزية"));
-
-      return matchesCategory && matchesSearch && matchesDestination;
+      return matchesCategory && matchesSearch;
     });
 
-    if (!userLocation) {
-      return filtered;
-    }
+    const destinationMatches = activeDestinationName
+      ? matchingExperiences.filter(
+          (experience) =>
+            experience.location.includes(activeDestinationName) ||
+            (activeDestinationName === "المدينة المنورة" &&
+              experience.location.includes("المنطقة المركزية"))
+        )
+      : matchingExperiences;
 
-    return [...filtered].sort((a, b) => {
+    // If the current/selected destination has no experiences, do not stop at
+    // an empty state. Fall back to every matching experience and rank them
+    // geographically so the nearest available option is shown first.
+    const candidates =
+      destinationMatches.length > 0 ? destinationMatches : matchingExperiences;
+
+    if (!explorationLocation) return candidates;
+
+    return [...candidates].sort((a, b) => {
       const distanceA = calculateDistanceKm(
-        userLocation.lat,
-        userLocation.lng,
+        explorationLocation.lat,
+        explorationLocation.lng,
         a.lat,
         a.lng
       );
-
       const distanceB = calculateDistanceKm(
-        userLocation.lat,
-        userLocation.lng,
+        explorationLocation.lat,
+        explorationLocation.lng,
         b.lat,
         b.lng
       );
-
       return distanceA - distanceB;
     });
-  }, [activeCategory, search, userLocation, activeDestinationName]);
+  }, [activeCategory, search, explorationLocation, activeDestinationName]);
 
+  function useCurrentLocationForExplore() {
+    setSelectedDestination("");
+    setExploreDestination(null);
+    setDestinationQuery("");
+    setDestinationError("");
+    window.localStorage.removeItem("arees-loop-next-destination");
+  }
 
-  function requestLocation() {
-    if (locationEnabled) {
-      setLocationEnabled(false);
-      setUserLocation(null);
-      setLocationStatus("تم إيقاف استخدام الموقع");
+  function chooseKnownDestination(name: string) {
+    if (!name) return;
+    const destination = supportedDestinations.find(
+      (item) => item.nameAr === name
+    );
+    if (!destination) return;
+
+    const nextDestination: ExploreDestination = {
+      name: destination.nameAr,
+      lat: destination.lat,
+      lng: destination.lng,
+    };
+    setSelectedDestination(nextDestination.name);
+    setExploreDestination(nextDestination);
+    setDestinationQuery(nextDestination.name);
+    setDestinationError("");
+    window.localStorage.setItem(
+      "arees-loop-next-destination",
+      JSON.stringify(nextDestination)
+    );
+  }
+
+  async function searchDestination() {
+    const query = destinationQuery.trim();
+    if (!query) {
+      useCurrentLocationForExplore();
       return;
     }
 
-    if (!navigator.geolocation) {
-      setLocationStatus("المتصفح لا يدعم تحديد الموقع");
+    const knownDestination = supportedDestinations.find(
+      (destination) =>
+        destination.nameAr === query ||
+        destination.nameAr.includes(query) ||
+        query.includes(destination.nameAr)
+    );
+    if (knownDestination) {
+      chooseKnownDestination(knownDestination.nameAr);
       return;
     }
 
+    setDestinationLoading(true);
+    setDestinationError("");
+    try {
+      const response = await fetch(
+        `/api/location/search?query=${encodeURIComponent(query)}`,
+        { method: "GET", headers: { Accept: "application/json" }, cache: "no-store" }
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.location) {
+        throw new Error(data?.error || "Destination search failed");
+      }
+
+      const nextDestination: ExploreDestination = {
+        name: data.name || query,
+        lat: Number(data.location.lat),
+        lng: Number(data.location.lng),
+      };
+      if (
+        !Number.isFinite(nextDestination.lat) ||
+        !Number.isFinite(nextDestination.lng)
+      ) {
+        throw new Error("Invalid destination coordinates");
+      }
+
+      setSelectedDestination(nextDestination.name);
+      setExploreDestination(nextDestination);
+      setDestinationQuery(nextDestination.name);
+      window.localStorage.setItem(
+        "arees-loop-next-destination",
+        JSON.stringify(nextDestination)
+      );
+    } catch {
+      setDestinationError(
+        "لم نجد هذه الوجهة الآن. جرّب كتابة اسم المدينة بشكل أوضح."
+      );
+    } finally {
+      setDestinationLoading(false);
+    }
+  }
+
+  async function requestLocation() {
     setLocationLoading(true);
-    setLocationStatus("جارٍ تحديد موقعك...");
+    setLocationStatus("جارٍ تحديث موقعك...");
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-        });
-
-        setLocationEnabled(true);
-        setLocationLoading(false);
-        setLocationStatus("تم تحديد موقعك بنجاح");
-      },
-      (error) => {
-        setLocationEnabled(false);
-        setUserLocation(null);
-        setLocationLoading(false);
-
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationStatus("اسمح للمتصفح بالوصول إلى موقعك ثم حاول مرة أخرى");
-          return;
-        }
-
-        if (error.code === error.TIMEOUT) {
-          setLocationStatus("استغرق تحديد الموقع وقتًا أطول من المتوقع. حاول مرة أخرى");
-          return;
-        }
-
-        setLocationStatus("تعذر تحديد موقعك الآن");
-      },
-      {
+    try {
+      const location = await getCurrentLocation({
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 0,
-      }
-    );
+      });
+
+      setUserLocation({
+        lat: location.coordinates.lat,
+        lng: location.coordinates.lng,
+        accuracy: location.coordinates.accuracy ?? 0,
+      });
+      setLocationEnabled(true);
+      setLocationStatus(
+        location.address
+          ? `نعرض الأقرب إليك من ${location.address}`
+          : "تم تحديث موقعك وترتيب التجارب حسب المسافة"
+      );
+    } catch {
+      setLocationEnabled(false);
+      setLocationStatus("تعذر الوصول لموقعك. تأكد من صلاحية الموقع ثم أعد المحاولة.");
+    } finally {
+      setLocationLoading(false);
+    }
   }
 
   function toggleSaved(id: number) {
@@ -562,20 +697,22 @@ function DiscoverContent() {
 
             <div className="relative z-10">
               <div className="mb-5 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={requestLocation}
-                  disabled={locationLoading}
-                  className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 text-[10px] text-white/75 backdrop-blur-xl"
-                >
-                  <LocationSmallIcon />
-
-                  {locationLoading
-                    ? "جارٍ تحديد موقعك..."
-                    : locationEnabled
-                      ? "موقعك الحالي • GPS مفعّل"
-                      : "تفعيل الموقع"}
-                </button>
+                {locationEnabled ? (
+                  <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 text-[10px] text-white/75 backdrop-blur-xl">
+                    <LocationSmallIcon />
+                    موقعك الحالي • GPS مفعّل
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={requestLocation}
+                    disabled={locationLoading}
+                    className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 text-[10px] text-white/75 backdrop-blur-xl"
+                  >
+                    <LocationSmallIcon />
+                    {locationLoading ? "جارٍ تحديد موقعك..." : "إعادة محاولة تحديد الموقع"}
+                  </button>
+                )}
 
                 {locationEnabled && (
                   <span className="rounded-full bg-[#D4AF37]/12 px-3 py-2 text-[9px] font-semibold text-[#E3C357]">
@@ -631,26 +768,44 @@ function DiscoverContent() {
                     خطط لوجهتك القادمة:
                   </span>
 
-                  <select
-                    value={selectedDestination}
-                    onChange={(e) => {
-                      const destination = e.target.value;
-                      setSelectedDestination(destination);
+                  <div className="flex min-w-[280px] flex-1 items-center rounded-full border border-white/20 bg-white/[0.11] p-1.5 backdrop-blur-xl">
+                    <input
+                      value={destinationQuery}
+                      onChange={(e) => {
+                        setDestinationQuery(e.target.value);
+                        setDestinationError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void searchDestination();
+                        }
+                      }}
+                      placeholder="اكتب المدينة: جدة، الرياض، أبها..."
+                      className="min-w-0 flex-1 bg-transparent px-4 py-2 text-sm font-bold text-white outline-none placeholder:text-white/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void searchDestination()}
+                      disabled={destinationLoading}
+                      className="rounded-full bg-[#D4AF37] px-5 py-2.5 text-[11px] font-bold text-[#0D3B34] transition hover:bg-[#E0BE50] disabled:opacity-60"
+                    >
+                      {destinationLoading ? "جارٍ البحث..." : "استكشف"}
+                    </button>
+                  </div>
 
-                      if (destination) {
-                        window.localStorage.setItem(
-                          "arees-loop-next-destination",
-                          destination
-                        );
-                      } else {
-                        window.localStorage.removeItem(
-                          "arees-loop-next-destination"
-                        );
-                      }
-                    }}
-                    className="min-h-11 rounded-full border border-white/20 bg-white/[0.11] px-5 py-2.5 text-sm font-bold text-white outline-none backdrop-blur-xl"
+                  <select
+                    value={
+                      supportedDestinations.some(
+                        (destination) => destination.nameAr === selectedDestination
+                      )
+                        ? selectedDestination
+                        : ""
+                    }
+                    onChange={(e) => chooseKnownDestination(e.target.value)}
+                    className="min-h-11 rounded-full border border-white/20 bg-white/[0.11] px-4 py-2.5 text-xs font-bold text-white outline-none backdrop-blur-xl"
                   >
-                    <option value="">موقعي الحالي</option>
+                    <option value="">وجهات سريعة</option>
                     {supportedDestinations.map((destination) => (
                       <option
                         key={destination.nameAr}
@@ -661,11 +816,27 @@ function DiscoverContent() {
                       </option>
                     ))}
                   </select>
+
+                  {exploreDestination && (
+                    <button
+                      type="button"
+                      onClick={useCurrentLocationForExplore}
+                      className="min-h-11 rounded-full border border-white/20 bg-white/[0.08] px-4 py-2.5 text-xs font-bold text-white/80 transition hover:bg-white/[0.13]"
+                    >
+                      ← موقعي الحالي
+                    </button>
+                  )}
                 </div>
 
-                {selectedDestination && (
+                {destinationError && (
+                  <p className="mt-3 text-sm font-semibold leading-6 text-[#FFD7D7]">
+                    {destinationError}
+                  </p>
+                )}
+
+                {exploreDestination && (
                   <p className="mt-3 text-sm font-semibold leading-6 text-[#E3C357]">
-                    تعرض لك الصفحة الآن محتوى {selectedDestination} كوجهتك القادمة.
+                    تستكشف الآن {exploreDestination.name}. موقعك الحقيقي لم يتغير.
                   </p>
                 )}
 
@@ -849,10 +1020,16 @@ function DiscoverContent() {
         <section className="mt-8">
           <SectionTitle
             eyebrow="NEAR YOU"
-            title="تجارب قريبة منك"
+            title={
+              exploreDestination
+                ? `أقرب التجارب المتاحة إلى ${exploreDestination.name}`
+                : "تجارب قريبة منك"
+            }
             description={
-              userLocation
-                ? "مرتبة فعليًا من الأقرب إلى الأبعد حسب موقعك الحالي."
+              explorationLocation
+                ? exploreDestination
+                  ? `مرتبة من الأقرب إلى الأبعد بالنسبة إلى ${exploreDestination.name}.`
+                  : "مرتبة فعليًا من الأقرب إلى الأبعد حسب موقعك الحالي."
                 : "فعّل موقعك لترتيب التجارب حسب القرب الفعلي."
             }
           />
@@ -865,11 +1042,11 @@ function DiscoverContent() {
                     key={experience.id}
                     experience={experience}
                     distance={
-                      userLocation
+                      explorationLocation
                         ? formatDistance(
                             calculateDistanceKm(
-                              userLocation.lat,
-                              userLocation.lng,
+                              explorationLocation.lat,
+                              explorationLocation.lng,
                               experience.lat,
                               experience.lng
                             )
@@ -911,12 +1088,7 @@ function DiscoverContent() {
 
                     <button
                       type="button"
-                      onClick={() => {
-                        setSelectedDestination("");
-                        window.localStorage.removeItem(
-                          "arees-loop-next-destination"
-                        );
-                      }}
+                      onClick={useCurrentLocationForExplore}
                       className="mt-5 rounded-full bg-[#0D3B34] px-5 py-2.5 text-[10px] font-semibold text-white transition hover:bg-[#145347]"
                     >
                       العودة إلى موقعي الحالي

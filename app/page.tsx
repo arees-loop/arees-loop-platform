@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
+import { getCurrentLocation } from "../lib/location";
 
 const experiences = [
   {
@@ -197,6 +198,7 @@ export default function Home() {
   const [locationReady, setLocationReady] = useState(false);
   const [showLocationNotice, setShowLocationNotice] = useState(false);
   const [detectedLocationScene, setDetectedLocationScene] = useState<(typeof heroScenes)[number] | null>(null);
+  const [detectedAddress, setDetectedAddress] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [heroLanguage, setHeroLanguage] = useState<"ar" | "en">("ar");
   const wheelLocked = useRef(false);
@@ -211,17 +213,19 @@ export default function Home() {
     : "/discover";
 
   useEffect(() => {
-    if (!("geolocation" in navigator)) {
-      setLocationReady(true);
-      return;
-    }
+    let cancelled = false;
+    let noticeTimer: number | undefined;
 
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        setUserCoords({
-          lat: coords.latitude,
-          lng: coords.longitude,
-        });
+    const detectLocation = async () => {
+      try {
+        const location = await getCurrentLocation();
+
+        if (cancelled) return;
+
+        const { lat, lng } = location.coordinates;
+
+        setUserCoords({ lat, lng });
+        setDetectedAddress(location.address);
 
         let nearestIndex = 0;
         let nearestDistance = Number.POSITIVE_INFINITY;
@@ -230,8 +234,8 @@ export default function Home() {
           if (!scene.coords) return;
 
           const distance = distanceKm(
-            coords.latitude,
-            coords.longitude,
+            lat,
+            lng,
             scene.coords.lat,
             scene.coords.lng,
           );
@@ -245,23 +249,38 @@ export default function Home() {
         if (nearestDistance <= 80) {
           setDetectedLocationScene(heroScenes[nearestIndex]);
           setActiveScene(nearestIndex);
-          window.setTimeout(() => setShowLocationNotice(true), 650);
+          noticeTimer = window.setTimeout(
+            () => setShowLocationNotice(true),
+            650,
+          );
         } else {
+          setDetectedLocationScene(null);
           setActiveScene(0);
         }
+      } catch (error) {
+        console.error("Arees Loop location detection failed:", error);
 
-        setLocationReady(true);
-      },
-      () => {
-        setActiveScene(0);
-        setLocationReady(true);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60 * 1000,
-      },
-    );
+        if (!cancelled) {
+          setDetectedLocationScene(null);
+          setDetectedAddress(null);
+          setActiveScene(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setLocationReady(true);
+        }
+      }
+    };
+
+    void detectLocation();
+
+    return () => {
+      cancelled = true;
+
+      if (noticeTimer !== undefined) {
+        window.clearTimeout(noticeTimer);
+      }
+    };
   }, []);
 
 
@@ -538,6 +557,12 @@ export default function Home() {
                       ? `أنت الآن في ${detectedLocationScene.nameAr}`
                       : `You are now in ${detectedLocationScene.nameEn}`}
                   </p>
+
+                  {detectedAddress && (
+                    <p className="mt-1 truncate text-[11px] text-white/65 md:text-xs">
+                      {detectedAddress}
+                    </p>
+                  )}
 
                   <p className="mt-1 text-xs leading-6 text-white/78 md:text-sm">
                     {isArabic
