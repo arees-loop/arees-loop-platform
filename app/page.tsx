@@ -1685,12 +1685,9 @@ export default function Home() {
               <a href="#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</a>
               <a href="#rewards" className="transition hover:text-[#D4AF37]">المكافآت</a>
               <a href="#partners" className="transition hover:text-[#D4AF37]">للشركاء</a>
-              <Link href="/privacy-policy" className="transition hover:text-[#D4AF37]">سياسة الخصوصية</Link>
-              <Link href="/cancellation-refund-policy" className="transition hover:text-[#D4AF37]">الإلغاء والاسترداد</Link>
-              <Link href="/deposit-refund-policy" className="transition hover:text-[#D4AF37]">التأمين واسترداده</Link>
-              <Link href="/service-unavailability-policy" className="transition hover:text-[#D4AF37]">تعذّر تقديم الخدمة</Link>
+            <Link href="/privacy-policy" className="transition hover:text-[#D4AF37]">سياسة الخصوصية</Link>
+<Link href="/terms" className="transition hover:text-[#D4AF37]">الشروط والأحكام</Link>
             </div>
-
             <div className="flex items-center justify-center gap-2 text-center md:justify-end md:text-left">
               <span className="text-[9px] text-[#0D3B34]/40">
                 إحدى منتجات شركة أريس الحلول المتكاملة المحدودة

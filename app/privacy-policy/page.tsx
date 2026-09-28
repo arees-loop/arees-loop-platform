@@ -53,6 +53,21 @@ export default function PrivacyPolicyPage() {
       {/* Content */}
       <section className="px-5 py-12 md:px-8 md:py-16">
         <article className="mx-auto max-w-5xl rounded-[32px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_50px_rgba(13,59,52,0.07)] md:p-10">
+          <div className="mb-10 grid gap-3 rounded-[26px] border border-[#D4AF37]/25 bg-[#D4AF37]/[0.07] p-5 text-sm md:grid-cols-3 md:p-6">
+            <div>
+              <p className="text-xs font-bold text-[#0D3B34]/45">الجهة المالكة والمشغلة</p>
+              <p className="mt-1 font-black">شركة أريس الحلول المتكاملة المحدودة</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-[#0D3B34]/45">السجل التجاري</p>
+              <p dir="ltr" className="mt-1 text-right font-black">7037003618</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-[#0D3B34]/45">المقر</p>
+              <p className="mt-1 font-black">المدينة المنورة، المملكة العربية السعودية</p>
+            </div>
+          </div>
+
           <PolicySection title="1. مقدمة">
             <p>
               تلتزم <strong>شركة أريس الحلول المتكاملة المحدودة</strong>،
