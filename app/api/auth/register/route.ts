@@ -302,23 +302,7 @@ export async function POST(
         { status: 400 },
       );
     }
-
-    if (
-      role === "PARTNER_OWNER" &&
-      !username
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "USERNAME_REQUIRED",
-          message:
-            "Username is required for partner owner accounts.",
-        },
-        { status: 400 },
-      );
-    }
-
+ 
     const { prisma } =
       await import("@/lib/prisma");
 

@@ -44,16 +44,47 @@ enum InterestCode {
   SEASONAL
 }
 
+enum PartnerType {
+  INDIVIDUAL
+  BUSINESS
+  GOVERNMENT_NONPROFIT
+}
+
+enum PartnerApplicantRole {
+  OWNER
+  REPRESENTATIVE
+}
+
 enum PartnerStatus {
   DRAFT
   SUBMITTED
   UNDER_REVIEW
+  NEEDS_COMPLETION
   PRE_APPROVED
   WAITING_AGREEMENT
   AGREEMENT_ACCEPTED
   APPROVED
   ACTIVE
   SUSPENDED
+  REJECTED
+}
+
+enum PartnerDocumentType {
+  IDENTITY
+  BUSINESS_PROOF
+  COMMERCIAL_REGISTER
+  AUTHORIZATION
+  VAT_CERTIFICATE
+  IBAN_CERTIFICATE
+  GOVERNMENT_LETTER
+  OTHER
+}
+
+enum PartnerDocumentStatus {
+  PENDING
+  AI_REVIEWED
+  NEEDS_CORRECTION
+  VERIFIED
   REJECTED
 }
 
@@ -115,15 +146,15 @@ enum VerificationTokenType {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  username     String?    @unique
-  phone        String?    @unique
+  id           String       @id @default(cuid())
+  email        String       @unique
+  username     String?      @unique
+  phone        String?      @unique
   passwordHash String
   firstName    String?
   lastName     String?
-  role         UserRole   @default(CUSTOMER)
-  status       UserStatus @default(PENDING_VERIFICATION)
+  role         UserRole     @default(CUSTOMER)
+  status       UserStatus   @default(PENDING_VERIFICATION)
   visitorType  VisitorType?
 
   emailVerifiedAt DateTime?
@@ -206,6 +237,9 @@ model VerificationToken {
 model Partner {
   id String @id @default(cuid())
 
+  partnerType   PartnerType?
+  applicantRole PartnerApplicantRole?
+
   legalNameAr String
   legalNameEn String?
   tradeNameAr String?
@@ -213,10 +247,28 @@ model Partner {
 
   unifiedNumber      String? @unique
   commercialRegister String? @unique
-  vatNumber          String?
+  proofType          String?
+  descriptionAr      String?
+
+  vatRegistered Boolean @default(false)
+  vatNumber     String?
 
   logoUrl    String?
   websiteUrl String?
+
+  country          String?
+  city             String?
+  address          String?
+  locationName     String?
+  formattedAddress String?
+  placeId          String?
+  latitude         Decimal? @db.Decimal(10, 7)
+  longitude        Decimal? @db.Decimal(10, 7)
+
+  businessPhone String?
+  businessEmail String?
+
+  applicantJobTitle String?
 
   financeContactName  String?
   financeContactEmail String?
@@ -227,26 +279,63 @@ model Partner {
   mainContactPhone    String?
   mainContactJobTitle String?
 
-  iban            String?
-  bankName        String?
-  swiftCode       String?
-  beneficiaryName String?
+  operates24h    Boolean @default(false)
+  operatingHours String?
+
+  receivesPayments Boolean @default(false)
+  iban             String?
+  bankName         String?
+  swiftCode        String?
+  beneficiaryName  String?
+
+  publicName String?
 
   commissionRate Decimal? @db.Decimal(5, 2)
   transferFee    Decimal  @default(1.00) @db.Decimal(10, 2)
 
   status PartnerStatus @default(DRAFT)
 
+  submittedAt   DateTime?
+  reviewedAt    DateTime?
+  preApprovedAt DateTime?
+  approvedAt    DateTime?
+  activatedAt   DateTime?
+  suspendedAt   DateTime?
+  rejectedAt    DateTime?
+
+  reviewNotes     String?
+  completionNotes String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  documents   PartnerDocument[]
   members     PartnerMember[]
   licenses    License[]
+  categories  PartnerCategory[]
   services    Service[]
   bookings    Booking[]
   invoices    Invoice[]
   settlements Settlement[]
   agreements  Agreement[]
+
+  @@index([status])
+  @@index([partnerType])
+  @@index([city])
+}
+
+model PartnerCategory {
+  id String @id @default(cuid())
+
+  partnerId String
+  name      String
+
+  createdAt DateTime @default(now())
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, name])
+  @@index([partnerId])
 }
 
 model PartnerMember {
@@ -266,6 +355,37 @@ model PartnerMember {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([partnerId, userId])
+  @@index([userId])
+}
+
+model PartnerDocument {
+  id String @id @default(cuid())
+
+  partnerId String
+
+  type           PartnerDocumentType
+  label          String?
+  fileUrl        String
+  fileName       String?
+  mimeType       String?
+  documentNumber String?
+  issuer         String?
+  issueDate      DateTime?
+  expiryDate     DateTime?
+
+  status      PartnerDocumentStatus  @default(PENDING)
+  aiStatus    PartnerDocumentStatus?
+  aiNotes     String?
+  reviewNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([type])
+  @@index([status])
 }
 
 model License {
@@ -290,6 +410,7 @@ model License {
   services Service[]
 
   @@unique([partnerId, licenseNumber])
+  @@index([partnerId])
 }
 
 model Service {
@@ -333,6 +454,10 @@ model Service {
 
   images   ServiceImage[]
   bookings Booking[]
+
+  @@index([partnerId])
+  @@index([status])
+  @@index([category])
 }
 
 model ServiceImage {
@@ -344,6 +469,8 @@ model ServiceImage {
   createdAt DateTime @default(now())
 
   service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
 }
 
 model Booking {
@@ -381,6 +508,11 @@ model Booking {
   service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
 
   invoice Invoice?
+
+  @@index([userId])
+  @@index([partnerId])
+  @@index([serviceId])
+  @@index([status])
 }
 
 model Invoice {
@@ -407,6 +539,9 @@ model Invoice {
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   partner Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+
+  @@index([partnerId])
+  @@index([status])
 }
 
 model Settlement {
@@ -435,6 +570,9 @@ model Settlement {
   updatedAt DateTime @updatedAt
 
   partner Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+
+  @@index([partnerId])
+  @@index([status])
 }
 
 model Agreement {
@@ -460,6 +598,9 @@ model Agreement {
   updatedAt DateTime @updatedAt
 
   partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([status])
 }
 
 model AuditLog {
@@ -480,4 +621,8 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   user User? @relation("AuditUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }

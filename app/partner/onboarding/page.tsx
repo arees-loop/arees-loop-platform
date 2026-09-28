@@ -3,86 +3,75 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-
 type StepId =
-  | "email"
-  | "phone"
   | "account"
   | "business"
-  | "category"
-  | "sales"
-  | "legal"
-  | "licenses"
-  | "tax"
-  | "bank"
-  | "contacts"
-  | "brand"
+  | "categories"
+  | "documents"
+  | "operations"
   | "review"
   | "done";
 
-type License = {
+type PartnerType = "" | "individual" | "business" | "government";
+type ApplicantRole = "" | "owner" | "representative";
+
+type DocumentItem = {
   id: number;
   type: string;
-  issuer: string;
-  customIssuer: string;
   number: string;
+  issuer: string;
   issueDate: string;
   expiryDate: string;
-  coveredActivities: string[];
   fileName: string;
+  coveredCategories: string[];
 };
 
 type FormData = {
-  email: string;
-  emailOtp: string;
-  phone: string;
-  phoneOtp: string;
-
   firstName: string;
   lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+
+  partnerType: PartnerType;
+  applicantRole: ApplicantRole;
   jobTitle: string;
+  authorizationFile: string;
 
   tradeName: string;
-  entityType: string;
+  legalName: string;
+  unifiedNumber: string;
+  registrationNumber: string;
   proofType: string;
+  description: string;
+
+  country: string;
+  city: string;
+  district: string;
+  street: string;
+  shortNationalAddress: string;
+  nationalAddressFile: string;
+  website: string;
+  businessPhone: string;
+  businessEmail: string;
 
   categories: string[];
-  subCategories: string[];
-
-  sellsOnline: boolean;
-  hasPhysicalLocation: boolean;
-  branches: string;
-  website: string;
-  socialAccount: string;
-  city: string;
-  serviceArea: string;
-
-  unifiedNumber: string;
-  crNumber: string;
-  legalNameAr: string;
-  legalNameEn: string;
-  legalAddress: string;
 
   vatRegistered: boolean;
   vatNumber: string;
   vatCertificate: string;
 
+  receivesPayments: boolean;
   iban: string;
-  bankName: string;
-  swift: string;
   beneficiaryName: string;
-  currency: string;
   ibanCertificate: string;
 
-  financeName: string;
-  financeTitle: string;
-  financeEmail: string;
-  financePhone: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
 
-  operationsName: string;
-  operationsTitle: string;
-  operationsEmail: string;
-  operationsPhone: string;
+  operates24h: boolean;
+  operatingHours: string;
 
   publicName: string;
   logoFile: string;
@@ -91,168 +80,142 @@ type FormData = {
   termsAccepted: boolean;
 };
 
-const steps: { id: StepId; title: string }[] = [
-  { id: "email", title: "تحقق البريد الإلكتروني" },
-  { id: "phone", title: "تحقق رقم الجوال" },
-  { id: "account", title: "بيانات صاحب الحساب" },
-  { id: "business", title: "أساسيات المنشأة" },
-  { id: "category", title: "الأنشطة والتصنيفات" },
-  { id: "sales", title: "طريقة تقديم الخدمة" },
-  { id: "legal", title: "البيانات القانونية" },
-  { id: "licenses", title: "التراخيص وربط الأنشطة" },
-  { id: "tax", title: "البيانات الضريبية" },
-  { id: "bank", title: "التفاصيل البنكية" },
-  { id: "contacts", title: "جهات التواصل" },
-  { id: "brand", title: "هوية الظهور" },
-  { id: "review", title: "مراجعة الطلب" },
+const steps: {
+  id: Exclude<StepId, "done">;
+  title: string;
+  short: string;
+}[] = [
+  {
+    id: "account",
+    title: "الحساب وصفة مقدم الخدمة",
+    short: "الحساب",
+  },
+  {
+    id: "business",
+    title: "بيانات النشاط والموقع",
+    short: "النشاط",
+  },
+  {
+    id: "categories",
+    title: "نوع الخدمات",
+    short: "الخدمات",
+  },
+  {
+    id: "documents",
+    title: "التراخيص والوثائق",
+    short: "الوثائق",
+  },
+  {
+    id: "operations",
+    title: "التشغيل والتسوية",
+    short: "التشغيل",
+  },
+  {
+    id: "review",
+    title: "المراجعة والإرسال",
+    short: "المراجعة",
+  },
 ];
 
-const categories: Record<string, string[]> = {
-  "وكالات سفر وسياحة": [
-    "حجوزات السفر",
-    "حجوزات الطيران",
-    "حجوزات الفنادق",
-    "خدمات التأشيرات",
-    "خدمات سياحية متنوعة",
-  ],
-
-  "خدمات سفر وسياحة (عام)": [
-    "خدمات حجز",
-    "خدمات استقبال",
-    "خدمات مساندة للمسافر",
-    "خدمات سياحية عامة",
-  ],
-
-  "تنظيم الرحلات السياحية": [
-    "جولات يومية",
-    "برامج سياحية",
-    "رحلات داخلية",
-    "رحلات جماعية",
-    "برامج خاصة",
-  ],
-
-  "حجز وحدات الضيافة": [
-    "فنادق",
-    "شقق مخدومة",
-    "منتجعات",
-    "نزل",
-    "وحدات ضيافة أخرى",
-  ],
-
-  "مرشد سياحي": [
-    "مرشد موقع",
-    "مرشد مسار",
-    "مرشد متخصص",
-  ],
-
-  "مزود تجربة أو نشاط": [
-    "تجربة ثقافية",
-    "تجربة تراثية",
-    "تجربة مغامرات",
-    "نشاط ترفيهي",
-    "تجربة طعام",
-    "تجربة تعليمية",
-  ],
-
-  "وجهة أو موقع سياحي": [
-    "متحف",
-    "مركز زوار",
-    "موقع تراثي",
-    "معلم سياحي",
-    "وجهة ترفيهية",
-    "موقع طبيعي",
-  ],
-
-  "خدمات نقل": [
-    "نقل أفراد",
-    "نقل مجموعات",
-    "تنقل بين المدن",
-    "نقل سياحي",
-    "خدمة سائق",
-  ],
-
-  "إيواء سياحي": [
-    "فندق",
-    "منتجع",
-    "شقق مخدومة",
-    "نزل",
-    "مخيم سياحي",
-  ],
-
-  "مطعم أو مقهى": [
-    "مطعم",
-    "مقهى",
-    "تجربة طعام",
-    "مأكولات محلية",
-  ],
-
-  "فعاليات وترفيه": [
-    "فعالية",
-    "مهرجان",
-    "عرض ترفيهي",
-    "نشاط عائلي",
-    "نشاط موسمي",
-  ],
-
-  "متجر أو نشاط للزائر": [
-    "هدايا",
-    "منتجات محلية",
-    "تجزئة",
-    "منتجات تراثية",
-  ],
-};
+const categoryOptions = [
+  {
+    name: "تجارب وجولات",
+    description:
+      "جولات يومية، تجارب ثقافية وتراثية ومغامرات وتجارب متخصصة.",
+  },
+  {
+    name: "فعاليات",
+    description:
+      "فعاليات ومهرجانات وعروض وأنشطة موسمية وترفيهية.",
+  },
+  {
+    name: "مرشدون",
+    description:
+      "خدمات الإرشاد السياحي والإرشاد المتخصص.",
+  },
+  {
+    name: "نقل",
+    description:
+      "نقل الزوار والمجموعات والتنقل بين المواقع والمدن.",
+  },
+  {
+    name: "ضيافة",
+    description:
+      "فنادق وشقق مخدومة ومنتجعات ومرافق الضيافة.",
+  },
+  {
+    name: "مطاعم ومقاهي",
+    description:
+      "مطاعم ومقاهٍ وتجارب الطعام والمأكولات المحلية.",
+  },
+  {
+    name: "حرف ومنتجات محلية",
+    description:
+      "الحرف والهدايا والمنتجات التراثية والمحلية.",
+  },
+  {
+    name: "أسر منتجة",
+    description:
+      "منتجات وخدمات وتجارب مقدمة من الأسر المنتجة.",
+  },
+  {
+    name: "خدمات زوار",
+    description:
+      "الخدمات المساندة والإثرائية المقدمة للزائر.",
+  },
+  {
+    name: "خدمات أخرى",
+    description:
+      "الخدمات التي لا تندرج ضمن التصنيفات السابقة.",
+  },
+];
 
 const initialData: FormData = {
-  email: "",
-  emailOtp: "",
-  phone: "",
-  phoneOtp: "",
-
   firstName: "",
   lastName: "",
+  email: "",
+  phone: "",
+  password: "",
+
+  partnerType: "",
+  applicantRole: "",
   jobTitle: "",
+  authorizationFile: "",
 
   tradeName: "",
-  entityType: "",
+  legalName: "",
+  unifiedNumber: "",
+  registrationNumber: "",
   proofType: "",
+  description: "",
+
+  country: "المملكة العربية السعودية",
+  city: "",
+  district: "",
+  street: "",
+  shortNationalAddress: "",
+  nationalAddressFile: "",
+  website: "",
+  businessPhone: "",
+  businessEmail: "",
 
   categories: [],
-  subCategories: [],
-
-  sellsOnline: false,
-  hasPhysicalLocation: true,
-  branches: "1",
-  website: "",
-  socialAccount: "",
-  city: "",
-  serviceArea: "",
-
-  unifiedNumber: "",
-  crNumber: "",
-  legalNameAr: "",
-  legalNameEn: "",
-  legalAddress: "",
 
   vatRegistered: false,
   vatNumber: "",
   vatCertificate: "",
 
+  receivesPayments: false,
   iban: "",
-  bankName: "",
-  swift: "",
   beneficiaryName: "",
-  currency: "SAR",
   ibanCertificate: "",
 
-  financeName: "",
-  financeTitle: "",
-  financeEmail: "",
-  financePhone: "",
+  contactName: "",
+  contactPhone: "",
+  contactEmail: "",
 
-  operationsName: "",
-  operationsTitle: "",
-  operationsEmail: "",
-  operationsPhone: "",
+  operates24h: false,
+  operatingHours: "",
 
   publicName: "",
   logoFile: "",
@@ -262,47 +225,53 @@ const initialData: FormData = {
 };
 
 export default function PartnerOnboardingPage() {
-  const [currentStep, setCurrentStep] = useState<StepId>("email");
-  const [data, setData] = useState<FormData>(initialData);
+  const [currentStep, setCurrentStep] =
+    useState<StepId>("account");
 
+  const [data, setData] =
+    useState<FormData>(initialData);
+
+  const [documents, setDocuments] =
+    useState<DocumentItem[]>([
+      {
+        id: 1,
+        type: "",
+        number: "",
+        issuer: "",
+        issueDate: "",
+        expiryDate: "",
+        fileName: "",
+        coveredCategories: [],
+      },
+    ]);
+
+  const [draftSaved, setDraftSaved] =
+    useState(false);
+
+  const [validationErrors, setValidationErrors] =
+    useState<Record<string, string>>({});
+
+  const [emailOtp, setEmailOtp] = useState("");
   const [emailOtpSent, setEmailOtpSent] = useState(false);
-  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
-
-  const [licenses, setLicenses] = useState<License[]>([
-    {
-      id: 1,
-      type: "",
-      issuer: "",
-      customIssuer: "",
-      number: "",
-      issueDate: "",
-      expiryDate: "",
-      coveredActivities: [],
-      fileName: "",
-    },
-  ]);
-
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailOtpLoading, setEmailOtpLoading] = useState(false);
+  const [emailOtpError, setEmailOtpError] = useState("");
   const activeIndex = useMemo(
-    () => steps.findIndex((step) => step.id === currentStep),
+    () =>
+      steps.findIndex(
+        (step) => step.id === currentStep
+      ),
     [currentStep]
   );
 
-  const progress = useMemo(() => {
-    if (currentStep === "done") return 100;
-
-    return Math.max(
-      5,
-      Math.round(((activeIndex + 1) / steps.length) * 100)
-    );
-  }, [activeIndex, currentStep]);
-
-  const availableSubCategories = useMemo(() => {
-    return Array.from(
-      new Set(
-        data.categories.flatMap((category) => categories[category] || [])
-      )
-    );
-  }, [data.categories]);
+  const progress =
+    currentStep === "done"
+      ? 100
+      : Math.round(
+          ((Math.max(activeIndex, 0) + 1) /
+            steps.length) *
+            100
+        );
 
   const update = <K extends keyof FormData>(
     key: K,
@@ -312,169 +281,625 @@ export default function PartnerOnboardingPage() {
       ...current,
       [key]: value,
     }));
-  };
 
-  const toggleCategory = (category: string) => {
-    setData((current) => {
-      const selected = current.categories.includes(category);
+    setDraftSaved(false);
 
-      const nextCategories = selected
-        ? current.categories.filter((item) => item !== category)
-        : [...current.categories, category];
+    if (key === "email") {
+      setEmailVerified(false);
+      setEmailOtpSent(false);
+      setEmailOtp("");
+      setEmailOtpError("");
+    }
 
-      const allowedSubCategories = new Set(
-        nextCategories.flatMap((item) => categories[item] || [])
-      );
-
-      setLicenses((currentLicenses) =>
-        currentLicenses.map((license) => ({
-          ...license,
-          coveredActivities: license.coveredActivities.filter((item) =>
-            nextCategories.includes(item)
-          ),
-        }))
-      );
-
-      return {
-        ...current,
-        categories: nextCategories,
-        subCategories: current.subCategories.filter((item) =>
-          allowedSubCategories.has(item)
-        ),
-      };
+    setValidationErrors((current) => {
+      if (!current[String(key)]) return current;
+      const next = { ...current };
+      delete next[String(key)];
+      return next;
     });
   };
 
-  const toggleSubCategory = (subCategory: string) => {
+  const toggleCategory = (
+    category: string
+  ) => {
     setData((current) => ({
       ...current,
-      subCategories: current.subCategories.includes(subCategory)
-        ? current.subCategories.filter((item) => item !== subCategory)
-        : [...current.subCategories, subCategory],
+      categories:
+        current.categories.includes(category)
+          ? current.categories.filter(
+              (item) => item !== category
+            )
+          : [
+              ...current.categories,
+              category,
+            ],
     }));
+
+    setDraftSaved(false);
+    setValidationErrors((current) => {
+      if (!current.categories) return current;
+      const next = { ...current };
+      delete next.categories;
+      return next;
+    });
   };
 
-  const next = () => {
-    const index = steps.findIndex((step) => step.id === currentStep);
+  const updateDocument = <
+    K extends keyof DocumentItem
+  >(
+    id: number,
+    key: K,
+    value: DocumentItem[K]
+  ) => {
+    setDocuments((current) =>
+      current.map((document) =>
+        document.id === id
+          ? {
+              ...document,
+              [key]: value,
+            }
+          : document
+      )
+    );
 
-    if (index >= 0 && index < steps.length - 1) {
-      setCurrentStep(steps[index + 1].id);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setDraftSaved(false);
+    setValidationErrors((current) => {
+      if (!current.documents) return current;
+      const next = { ...current };
+      delete next.documents;
+      return next;
+    });
   };
 
-  const back = () => {
-    const index = steps.findIndex((step) => step.id === currentStep);
-
-    if (index > 0) {
-      setCurrentStep(steps[index - 1].id);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const addLicense = () => {
-    setLicenses((current) => [
+  const addDocument = () => {
+    setDocuments((current) => [
       ...current,
       {
         id: Date.now(),
         type: "",
-        issuer: "",
-        customIssuer: "",
         number: "",
+        issuer: "",
         issueDate: "",
         expiryDate: "",
-        coveredActivities: [],
         fileName: "",
+        coveredCategories: [],
       },
     ]);
   };
 
-  const updateLicense = (
-    id: number,
-    key: keyof License,
-    value: string
+  const removeDocument = (
+    id: number
   ) => {
-    setLicenses((current) =>
-      current.map((license) =>
-        license.id === id
-          ? {
-              ...license,
-              [key]: value,
-            }
-          : license
+    setDocuments((current) =>
+      current.filter(
+        (document) =>
+          document.id !== id
       )
     );
   };
 
-  const toggleLicenseActivity = (
-    licenseId: number,
-    activity: string
+  const toggleDocumentCategory = (
+    id: number,
+    category: string
   ) => {
-    setLicenses((current) =>
-      current.map((license) => {
-        if (license.id !== licenseId) return license;
+    const document =
+      documents.find(
+        (item) => item.id === id
+      );
 
-        const selected =
-          license.coveredActivities.includes(activity);
+    if (!document) return;
 
-        return {
-          ...license,
-          coveredActivities: selected
-            ? license.coveredActivities.filter(
-                (item) => item !== activity
-              )
-            : [...license.coveredActivities, activity],
-        };
-      })
+    updateDocument(
+      id,
+      "coveredCategories",
+      document.coveredCategories.includes(
+        category
+      )
+        ? document.coveredCategories.filter(
+            (item) =>
+              item !== category
+          )
+        : [
+            ...document.coveredCategories,
+            category,
+          ]
     );
   };
 
-  const removeLicense = (id: number) => {
-    if (licenses.length === 1) return;
+  const requestPartnerEmailOtp = async () => {
+    if (emailOtpLoading) return;
 
-    setLicenses((current) =>
-      current.filter((license) => license.id !== id)
-    );
-  };
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanPhone = data.phone.trim();
+    const cleanPassword = data.password;
 
-  const simulateBusinessLookup = () => {
-    if (!data.unifiedNumber && !data.crNumber) return;
+    if (!data.firstName.trim()) {
+      setValidationErrors((current) => ({
+        ...current,
+        firstName: "الاسم الأول مطلوب.",
+      }));
+      return;
+    }
 
-    update(
-      "legalNameAr",
-      data.tradeName || "اسم المنشأة وفق السجل التجاري"
-    );
+    if (!data.lastName.trim()) {
+      setValidationErrors((current) => ({
+        ...current,
+        lastName: "اسم العائلة مطلوب.",
+      }));
+      return;
+    }
 
-    update(
-      "legalNameEn",
-      data.tradeName
-        ? `${data.tradeName} Company`
-        : "Verified Legal Business Name"
-    );
+    if (!cleanEmail) {
+      setValidationErrors((current) => ({
+        ...current,
+        email: "البريد الإلكتروني مطلوب.",
+      }));
+      return;
+    }
 
-    update(
-      "legalAddress",
-      "المدينة المنورة - المملكة العربية السعودية"
-    );
-  };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setValidationErrors((current) => ({
+        ...current,
+        email: "أدخل بريداً إلكترونياً صحيحاً.",
+      }));
+      return;
+    }
 
-  const simulateIbanLookup = () => {
-    const clean = data.iban.replace(/\s+/g, "").toUpperCase();
+    if (!cleanPhone) {
+      setValidationErrors((current) => ({
+        ...current,
+        phone: "رقم الجوال مطلوب.",
+      }));
+      return;
+    }
 
-    if (clean.startsWith("SA80")) {
-      update("bankName", "مصرف الراجحي");
-      update("swift", "RJHISARIXXX");
-    } else if (clean.startsWith("SA")) {
-      update("bankName", "تم التعرف على البنك");
-      update("swift", "BANKSARIXXX");
+    if (cleanPassword.length < 8) {
+      setValidationErrors((current) => ({
+        ...current,
+        password: "كلمة المرور يجب ألا تقل عن 8 أحرف.",
+      }));
+      return;
+    }
+
+    setEmailOtpLoading(true);
+    setEmailOtpError("");
+
+    try {
+      const registerResponse = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: cleanEmail,
+          password: cleanPassword,
+          phone: cleanPhone,
+          firstName: data.firstName.trim(),
+          lastName: data.lastName.trim(),
+          role: "PARTNER_OWNER",
+        }),
+      });
+
+      const registerResult = await registerResponse.json().catch(() => null);
+
+      if (
+        !registerResponse.ok &&
+        registerResult?.error !== "EMAIL_ALREADY_EXISTS"
+      ) {
+        if (registerResult?.error === "PHONE_ALREADY_EXISTS") {
+          setEmailOtpError("رقم الجوال مستخدم في حساب آخر.");
+        } else if (registerResult?.error === "WEAK_PASSWORD") {
+          setEmailOtpError(
+            "كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على حروف وأرقام."
+          );
+        } else if (registerResult?.error === "RATE_LIMIT_EXCEEDED") {
+          setEmailOtpError("تمت محاولات كثيرة. يرجى المحاولة بعد قليل.");
+        } else {
+          setEmailOtpError(
+            registerResult?.message || "تعذر إنشاء حساب الشريك."
+          );
+        }
+        return;
+      }
+
+      const response = await fetch("/api/auth/verify-email/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        if (result?.error === "RATE_LIMIT_EXCEEDED") {
+          setEmailOtpError(
+            "تمت محاولات كثيرة لإرسال رمز التحقق. يرجى المحاولة بعد قليل."
+          );
+        } else if (result?.error === "EMAIL_ALREADY_VERIFIED") {
+          setEmailVerified(true);
+          setEmailOtpSent(false);
+          setEmailOtpError("");
+        } else {
+          setEmailOtpError(
+            result?.message || "تعذر إرسال رمز التحقق. حاول مرة أخرى."
+          );
+        }
+        return;
+      }
+
+      setEmailOtp("");
+      setEmailOtpSent(true);
+      setEmailVerified(false);
+    } catch {
+      setEmailOtpError(
+        "تعذر الاتصال بخدمة التحقق حالياً. حاول مرة أخرى."
+      );
+    } finally {
+      setEmailOtpLoading(false);
     }
   };
 
+  const confirmPartnerEmailOtp = async () => {
+    if (emailOtpLoading) return;
+
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanOtp = emailOtp.trim();
+
+    if (!/^\d{6}$/.test(cleanOtp)) {
+      setEmailOtpError("أدخل رمز التحقق المكوّن من 6 أرقام.");
+      return;
+    }
+
+    setEmailOtpLoading(true);
+    setEmailOtpError("");
+
+    try {
+      const response = await fetch("/api/auth/verify-email/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: cleanEmail,
+          code: cleanOtp,
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const messages: Record<string, string> = {
+          INVALID_CODE: "رمز التحقق غير صحيح. تأكد من الرمز وحاول مرة أخرى.",
+          TOKEN_EXPIRED: "انتهت صلاحية رمز التحقق. اطلب رمزاً جديداً.",
+          MAX_ATTEMPTS_REACHED:
+            "تم تجاوز عدد محاولات التحقق المسموح بها. اطلب رمزاً جديداً.",
+          RATE_LIMIT_EXCEEDED:
+            "تمت محاولات كثيرة خلال وقت قصير. يرجى المحاولة بعد قليل.",
+        };
+
+        setEmailOtpError(
+          messages[result?.error] ||
+            "تعذر التحقق من الرمز. تأكد منه وحاول مرة أخرى."
+        );
+        return;
+      }
+
+      setEmailVerified(true);
+      setEmailOtpSent(false);
+      setEmailOtp("");
+      setEmailOtpError("");
+      setValidationErrors((current) => {
+        if (!current.emailVerification) return current;
+        const next = { ...current };
+        delete next.emailVerification;
+        return next;
+      });
+    } catch {
+      setEmailOtpError(
+        "تعذر الاتصال بخدمة التحقق حالياً. حاول مرة أخرى."
+      );
+    } finally {
+      setEmailOtpLoading(false);
+    }
+  };
+
+  const validateCurrentStep = () => {
+    const errors: Record<string, string> = {};
+
+    if (currentStep === "account") {
+      if (!data.firstName.trim()) errors.firstName = "الاسم الأول مطلوب.";
+      if (!data.lastName.trim()) errors.lastName = "اسم العائلة مطلوب.";
+      if (!data.email.trim()) {
+        errors.email = "البريد الإلكتروني مطلوب.";  
+           } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+        errors.email = "أدخل بريداً إلكترونياً صحيحاً.";
+      }
+      if (!emailVerified) {
+        errors.emailVerification = "يجب التحقق من البريد الإلكتروني قبل المتابعة.";
+      }
+      if (!data.phone.trim()) errors.phone = "رقم الجوال مطلوب.";
+      if (!data.password.trim()) {
+        errors.password = "كلمة المرور مطلوبة.";
+      } else if (data.password.length < 8) {
+        errors.password = "كلمة المرور يجب ألا تقل عن 8 أحرف.";
+      }
+      if (!data.partnerType) errors.partnerType = "اختر نوع مقدم الخدمة.";
+
+      if (data.partnerType === "business") {
+        if (!data.applicantRole) {
+          errors.applicantRole = "حدد صفتك لدى المنشأة.";
+        }
+        if (data.applicantRole === "representative") {
+          if (!data.jobTitle.trim()) errors.jobTitle = "المسمى الوظيفي مطلوب.";
+          if (!data.authorizationFile) {
+            errors.authorizationFile =
+              "يلزم إرفاق تفويض ساري ومصدّق من الغرفة التجارية.";
+          }
+        }
+      }
+    }
+
+    if (currentStep === "business") {
+      if (!data.tradeName.trim()) errors.tradeName = "الاسم التجاري / اسم النشاط مطلوب.";
+      if (!data.city.trim()) errors.city = "المدينة مطلوبة.";
+      if (!data.district.trim()) errors.district = "الحي مطلوب.";
+      if (!data.street.trim()) errors.street = "الشارع مطلوب.";
+      if (!data.shortNationalAddress.trim()) {
+        errors.shortNationalAddress = "العنوان الوطني المختصر مطلوب.";
+      } else if (!/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
+        errors.shortNationalAddress = "أدخل عنواناً وطنياً مختصراً صحيحاً: 4 أحرف ثم 4 أرقام، مثال ABCD1234.";
+      }
+      if (!data.nationalAddressFile) {
+        errors.nationalAddressFile = "أرفق مستند العنوان الوطني للمنشأة.";
+      }
+    }
+
+    if (currentStep === "categories") {
+      if (data.categories.length === 0) {
+        errors.categories = "اختر نوع خدمة واحداً على الأقل.";
+      }
+    }
+
+    if (currentStep === "documents") {
+      const hasDocument = documents.some(
+        (document) => document.fileName || document.number.trim()
+      );
+      if (!hasDocument) {
+        errors.documents = "أضف مستنداً أو ترخيصاً واحداً على الأقل.";
+      }
+    }
+
+    if (currentStep === "operations" && data.receivesPayments) {
+      if (!data.iban.trim()) errors.iban = "رقم IBAN مطلوب لاستقبال التسويات.";
+      if (!data.beneficiaryName.trim()) {
+        errors.beneficiaryName = "اسم المستفيد مطلوب لاستقبال التسويات.";
+      }
+    }
+
+    setValidationErrors(errors);
+
+    const firstError = Object.keys(errors)[0];
+    if (firstError) {
+      requestAnimationFrame(() => {
+        document
+          .querySelector(`[data-validation="${firstError}"]`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const goNext = () => {
+    if (!validateCurrentStep()) return;
+
+    const index =
+      steps.findIndex(
+        (step) =>
+          step.id === currentStep
+      );
+
+    if (
+      index >= 0 &&
+      index < steps.length - 1
+    ) {
+      setValidationErrors({});
+      setCurrentStep(
+        steps[index + 1].id
+      );
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const goBack = () => {
+    const index =
+      steps.findIndex(
+        (step) =>
+          step.id === currentStep
+      );
+
+    if (index > 0) {
+      setCurrentStep(
+        steps[index - 1].id
+      );
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  };
+    const saveDraft = () => {
+    try {
+      localStorage.setItem(
+        "arees-loop-partner-onboarding-draft",
+        JSON.stringify({
+          data,
+          documents,
+          savedAt: new Date().toISOString(),
+        })
+      );
+
+      setDraftSaved(true);
+    } catch {
+      setDraftSaved(true);
+    }
+  };
+
+  const aiChecks = useMemo(() => {
+    const checks: {
+      label: string;
+      state: "ok" | "warn";
+      note: string;
+    }[] = [];
+
+    const accountOk = Boolean(
+      data.firstName.trim() &&
+        data.lastName.trim() &&
+        data.email.trim() &&
+        data.phone.trim() &&
+        data.password.trim() &&
+        emailVerified &&
+        data.partnerType
+    );
+
+    checks.push({
+      label: "بيانات الحساب",
+      state: accountOk
+        ? "ok"
+        : "warn",
+      note: accountOk
+        ? "البيانات الأساسية مكتملة."
+        : "توجد بيانات أساسية ناقصة.",
+    });
+
+    const roleOk =
+      data.partnerType !== "business" ||
+      Boolean(data.applicantRole);
+
+    checks.push({
+      label: "صفة مقدم الطلب",
+      state: roleOk
+        ? "ok"
+        : "warn",
+      note: roleOk
+        ? "صفة مقدم الطلب محددة."
+        : "حدد هل مقدم الطلب مالك المنشأة أم ممثلاً مفوضاً.",
+    });
+
+    const authorizationOk =
+      data.partnerType !== "business" ||
+      data.applicantRole !==
+        "representative" ||
+      Boolean(
+        data.authorizationFile
+      );
+
+    checks.push({
+      label: "صلاحية الممثل",
+      state: authorizationOk
+        ? "ok"
+        : "warn",
+      note:
+        data.partnerType ===
+          "business" &&
+        data.applicantRole ===
+          "representative"
+          ? authorizationOk
+            ? "تم إرفاق التفويض للمراجعة."
+            : "يلزم إرفاق تفويض ساري ومصدق من الغرفة التجارية."
+          : "لا يوجد متطلب تفويض إضافي حسب الاختيار الحالي.",
+    });
+
+    const businessOk = Boolean(
+      data.tradeName.trim() &&
+        data.country.trim() &&
+        data.city.trim() &&
+        data.district.trim() &&
+        data.street.trim() &&
+        /^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase()) &&
+        Boolean(data.nationalAddressFile)
+    );
+
+    checks.push({
+      label: "بيانات النشاط",
+      state: businessOk
+        ? "ok"
+        : "warn",
+      note: businessOk
+        ? "بيانات النشاط الأساسية مكتملة."
+        : "أكمل اسم النشاط والمدينة والحي والشارع والعنوان الوطني ومرفقه.",
+    });
+
+    checks.push({
+      label: "نوع الخدمات",
+      state:
+        data.categories.length > 0
+          ? "ok"
+          : "warn",
+      note:
+        data.categories.length > 0
+          ? `تم اختيار ${data.categories.length} تصنيف.`
+          : "اختر تصنيف خدمة واحداً على الأقل.",
+    });
+
+    const documentsOk =
+      documents.some(
+        (document) =>
+          document.fileName ||
+          document.number
+      );
+
+    checks.push({
+      label: "الوثائق والتراخيص",
+      state: documentsOk
+        ? "ok"
+        : "warn",
+      note: documentsOk
+        ? "توجد مستندات جاهزة للتدقيق."
+        : "لم تتم إضافة مستند أو ترخيص بعد.",
+    });
+
+    const settlementOk =
+      !data.receivesPayments ||
+      Boolean(
+        data.iban.trim() &&
+          data.beneficiaryName.trim()
+      );
+
+    checks.push({
+      label: "بيانات التسوية",
+      state: settlementOk
+        ? "ok"
+        : "warn",
+      note: settlementOk
+        ? data.receivesPayments
+          ? "بيانات التسوية الأساسية مكتملة."
+          : "التسوية عبر Arees Loop غير مفعلة."
+        : "أكمل IBAN واسم المستفيد.",
+    });
+
+    return checks;
+  }, [data, documents, emailVerified]);
+
+  const canSubmit =
+    data.declaration &&
+    data.termsAccepted &&
+    !aiChecks.some(
+      (item) =>
+        item.state === "warn"
+    );
+
   const submitApplication = () => {
-    if (!data.declaration || !data.termsAccepted) return;
+    if (!canSubmit) return;
 
     setCurrentStep("done");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   return (
@@ -482,16 +907,17 @@ export default function PartnerOnboardingPage() {
       dir="rtl"
       className="min-h-screen overflow-x-hidden bg-[#F5F1E8] text-[#0D3B34]"
       style={{
-        fontFamily: "var(--font-ibm-plex-arabic), sans-serif",
+        fontFamily:
+          "var(--font-ibm-plex-arabic), sans-serif",
       }}
     >
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-40 top-16 h-[560px] w-[560px] rounded-full bg-[#0D3B34]/6 blur-[120px]" />
-        <div className="absolute -left-40 top-[38%] h-[480px] w-[480px] rounded-full bg-[#D4AF37]/10 blur-[120px]" />
-        <div className="absolute bottom-[-180px] right-[25%] h-[520px] w-[520px] rounded-full bg-[#B99124]/6 blur-[130px]" />
+        <div className="absolute -right-40 top-10 h-[560px] w-[560px] rounded-full bg-[#0D3B34]/6 blur-[120px]" />
+
+        <div className="absolute -left-40 top-[40%] h-[500px] w-[500px] rounded-full bg-[#D4AF37]/10 blur-[120px]" />
       </div>
 
-      <header className="relative z-40 border-b border-[#0D3B34]/7 bg-[#F9F6EF]/88 backdrop-blur-xl">
+      <header className="relative z-40 border-b border-[#0D3B34]/7 bg-[#F9F6EF]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1420px] items-center justify-between px-5 py-4 md:px-8">
           <Link href="/">
             <Image
@@ -510,13 +936,13 @@ export default function PartnerOnboardingPage() {
             </p>
 
             <p className="mt-1 text-xs font-semibold text-[#0D3B34]/60">
-              بوابة تسجيل الشركاء ومزودي الخدمات
+              بوابة انضمام واعتماد الشركاء
             </p>
           </div>
 
           <Link
             href="/"
-            className="rounded-full border border-[#0D3B34]/10 bg-white/65 px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/70"
+            className="rounded-full border border-[#0D3B34]/10 bg-white/70 px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/70"
           >
             العودة للمنصة
           </Link>
@@ -524,1088 +950,1510 @@ export default function PartnerOnboardingPage() {
       </header>
 
       {currentStep !== "done" && (
-        <div className="relative z-20 border-b border-[#0D3B34]/5 bg-white/28">
-          <div className="mx-auto max-w-[1050px] px-5 py-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-semibold text-[#0D3B34]/45">
-                  تقدم طلب الانضمام
-                </p>
+        <>
+          <div className="relative z-20 border-b border-[#0D3B34]/5 bg-white/30">
+            <div className="mx-auto max-w-[1100px] px-5 py-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-semibold text-[#0D3B34]/45">
+                    طلب اعتماد شريك
+                  </p>
 
-                <p className="mt-1 text-sm font-bold">
-                  {steps[activeIndex]?.title}
-                </p>
+                  <p className="mt-1 text-sm font-bold">
+                    {
+                      steps[
+                        activeIndex
+                      ]?.title
+                    }
+                  </p>
+                </div>
+
+                <span className="text-lg font-bold text-[#B99124]">
+                  {progress}%
+                </span>
               </div>
 
-              <span className="text-lg font-bold text-[#B99124]">
-                {progress}%
-              </span>
-            </div>
-
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#0D3B34]/8">
-              <div
-                className="h-full rounded-full bg-gradient-to-l from-[#D4AF37] to-[#0D3B34] transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#0D3B34]/8">
+                <div
+                  className="h-full rounded-full bg-gradient-to-l from-[#D4AF37] to-[#0D3B34] transition-all duration-500"
+                  style={{
+                    width: `${progress}%`,
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
+
+          <div className="relative z-20 hidden border-b border-[#0D3B34]/5 bg-[#F9F6EF]/55 md:block">
+            <div className="mx-auto grid max-w-[1100px] grid-cols-6 gap-2 px-5 py-3">
+              {steps.map(
+                (step, index) => (
+                  <div
+                    key={step.id}
+                    className={`rounded-xl px-2 py-2 text-center text-[10px] font-bold ${
+                      index ===
+                      activeIndex
+                        ? "bg-[#0D3B34] text-white"
+                        : index <
+                            activeIndex
+                          ? "bg-[#E9F3EE] text-[#267247]"
+                          : "text-[#0D3B34]/35"
+                    }`}
+                  >
+                    {index <
+                    activeIndex
+                      ? "✓ "
+                      : ""}
+                    {step.short}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       <div className="relative z-10 mx-auto max-w-[980px] px-5 py-10 md:px-8 md:py-14">
-        {currentStep === "email" && (
+        {currentStep ===
+          "account" && (
           <StepCard
-            eyebrow="STEP 01"
-            title="ابدأ ببريدك الإلكتروني"
-            description="سنستخدم البريد لإنشاء حساب الشريك وإرسال الإشعارات المتعلقة بطلب الانضمام."
+            eyebrow="STEP 01 / 06"
+            title="الحساب وصفة مقدم الخدمة"
+            description="أنشئ حساب الشريك وحدد صفتك والجهة التي تمثلها."
           >
-            <Field label="البريد الإلكتروني">
-              <input
-                type="email"
-                value={data.email}
-                onChange={(e) => update("email", e.target.value)}
-                placeholder="name@company.com"
-                className={inputClass}
-                dir="ltr"
-              />
-            </Field>
-
-            {!emailOtpSent ? (
-              <PrimaryButton
-                label="إرسال رمز التحقق"
-                onClick={() => {
-                  if (data.email.trim()) setEmailOtpSent(true);
-                }}
-              />
-            ) : (
-              <>
-                <InfoBox>
-                  تم إرسال رمز تحقق تجريبي إلى{" "}
-                  <strong>{data.email}</strong>. استخدم أي 6 أرقام.
-                </InfoBox>
-
-                <Field label="رمز التحقق">
-                  <input
-                    value={data.emailOtp}
-                    onChange={(e) =>
-                      update(
-                        "emailOtp",
-                        e.target.value.replace(/\D/g, "").slice(0, 6)
-                      )
-                    }
-                    className={`${inputClass} text-center text-xl tracking-[0.35em]`}
-                    dir="ltr"
-                  />
-                </Field>
-
-                <PrimaryButton
-                  label="تحقق ومتابعة"
-                  onClick={() => {
-                    if (data.emailOtp.length === 6) {
-                      setCurrentStep("phone");
-                    }
-                  }}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div data-validation="firstName"><Field label="الاسم الأول *">
+                <input
+                  value={
+                    data.firstName
+                  }
+                  onChange={(e) =>
+                    update(
+                      "firstName",
+                      e.target.value
+                    )
+                  }
+                  className={`${inputClass} ${validationErrors.firstName ? errorInputClass : ""}`}
                 />
-              </>
-            )}
-          </StepCard>
-        )}
+              </Field><ValidationError message={validationErrors.firstName} /></div>
 
-        {currentStep === "phone" && (
-          <StepCard
-            eyebrow="STEP 02"
-            title="تحقق من رقم الجوال"
-            description="رقم الجوال الموثق يستخدم للتنبيهات المهمة والتوقيع الإلكتروني لاحقًا."
-          >
-            <Field label="رقم الجوال">
-              <div className="flex gap-3" dir="ltr">
-                <div className="flex h-14 w-[82px] items-center justify-center rounded-2xl border border-[#0D3B34]/10 bg-[#F5F2EB] text-sm font-bold">
-                  +966
+              <div data-validation="lastName"><Field label="اسم العائلة *">
+                <input
+                  value={
+                    data.lastName
+                  }
+                  onChange={(e) =>
+                    update(
+                      "lastName",
+                      e.target.value
+                    )
+                  }
+                  className={`${inputClass} ${validationErrors.lastName ? errorInputClass : ""}`}
+                />
+              </Field><ValidationError message={validationErrors.lastName} /></div>
+
+              <div data-validation="email"><Field label="البريد الإلكتروني *">
+                <input
+                  type="email"
+                  value={data.email}
+                  onChange={(e) =>
+                    update(
+                      "email",
+                      e.target.value
+                    )
+                  }
+                  placeholder="name@company.com"
+                  className={`${inputClass} ${validationErrors.email ? errorInputClass : ""}`}
+                  dir="ltr"
+                />
+              </Field><ValidationError message={validationErrors.email} /></div>
+
+              <div
+                data-validation="emailVerification"
+                className="md:col-span-2 rounded-[22px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-4"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-[#0D3B34]">
+                      التحقق من البريد الإلكتروني *
+                    </p>
+                    <p className="mt-1 text-xs leading-6 text-[#0D3B34]/55">
+                      نرسل رمزاً من 6 أرقام إلى البريد المسجل للتأكد من ملكيته.
+                    </p>
+                  </div>
+
+                  {emailVerified ? (
+                    <span className="rounded-full bg-[#E8F5EC] px-4 py-2 text-xs font-bold text-[#267247]">
+                      ✓ تم التحقق
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={requestPartnerEmailOtp}
+                      disabled={emailOtpLoading || !data.email.trim()}
+                      className="rounded-2xl bg-[#0D3B34] px-5 py-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {emailOtpLoading
+                        ? "جاري الإرسال..."
+                        : emailOtpSent
+                          ? "إعادة إرسال الرمز"
+                          : "إرسال رمز التحقق"}
+                    </button>
+                  )}
                 </div>
 
+                {emailOtpSent && !emailVerified && (
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <input
+                      value={emailOtp}
+                      onChange={(e) => {
+                        setEmailOtp(
+                          e.target.value.replace(/\D/g, "").slice(0, 6)
+                        );
+                        setEmailOtpError("");
+                      }}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      placeholder="000000"
+                      dir="ltr"
+                      className={`${inputClass} text-center text-lg font-bold tracking-[0.35em]`}
+                    />
+                    <button
+                      type="button"
+                      onClick={confirmPartnerEmailOtp}
+                      disabled={emailOtpLoading || emailOtp.length !== 6}
+                      className="rounded-2xl bg-[#D4AF37] px-6 py-3 text-xs font-bold text-[#0D3B34] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {emailOtpLoading ? "جاري التحقق..." : "تأكيد الرمز"}
+                    </button>
+                  </div>
+                )}
+
+                {emailOtpError && (
+                  <p className="mt-3 text-xs font-semibold text-[#B42318]">
+                    {emailOtpError}
+                  </p>
+                )}
+
+                <ValidationError
+                  message={validationErrors.emailVerification}
+                />
+              </div>
+
+              <div data-validation="phone"><Field label="رقم الجوال *">
                 <input
                   value={data.phone}
                   onChange={(e) =>
                     update(
                       "phone",
-                      e.target.value.replace(/\D/g, "").slice(0, 9)
-                    )
-                  }
-                  placeholder="5XXXXXXXX"
-                  className={inputClass}
-                />
-              </div>
-            </Field>
-
-            {!phoneOtpSent ? (
-              <PrimaryButton
-                label="إرسال رمز التحقق"
-                onClick={() => {
-                  if (data.phone.length >= 9) setPhoneOtpSent(true);
-                }}
-              />
-            ) : (
-              <>
-                <InfoBox>
-                  تم إرسال رمز تحقق تجريبي إلى +966 {data.phone}. استخدم أي
-                  6 أرقام.
-                </InfoBox>
-
-                <Field label="رمز التحقق">
-                  <input
-                    value={data.phoneOtp}
-                    onChange={(e) =>
-                      update(
-                        "phoneOtp",
-                        e.target.value.replace(/\D/g, "").slice(0, 6)
+                      e.target.value.replace(
+                        /[^\d+]/g,
+                        ""
                       )
-                    }
-                    className={`${inputClass} text-center text-xl tracking-[0.35em]`}
-                    dir="ltr"
-                  />
-                </Field>
-
-                <PrimaryButton
-                  label="تحقق ومتابعة"
-                  onClick={() => {
-                    if (data.phoneOtp.length === 6) {
-                      setCurrentStep("account");
-                    }
-                  }}
-                />
-              </>
-            )}
-
-            <StepActions onBack={back} hideNext />
-          </StepCard>
-        )}
-
-        {currentStep === "account" && (
-          <StepCard
-            eyebrow="ACCOUNT OWNER"
-            title="من يدير هذا الحساب؟"
-            description="بيانات الشخص المفوض بمتابعة طلب الشريك وإدارة الحساب الأساسي."
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="الاسم الأول">
-                <input
-                  value={data.firstName}
-                  onChange={(e) => update("firstName", e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="اسم العائلة">
-                <input
-                  value={data.lastName}
-                  onChange={(e) => update("lastName", e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-
-            <Field label="المسمى الوظيفي">
-              <input
-                value={data.jobTitle}
-                onChange={(e) => update("jobTitle", e.target.value)}
-                className={inputClass}
-              />
-            </Field>
-
-            <VerifiedSummary
-              email={data.email}
-              phone={`+966 ${data.phone}`}
-            />
-
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
-
-        {currentStep === "business" && (
-          <StepCard
-            eyebrow="BUSINESS BASICS"
-            title="أساسيات المنشأة"
-            description="بيانات المنشأة أو النشاط الراغب في الانضمام إلى Arees Loop."
-          >
-            <Field label="الاسم التجاري">
-              <input
-                value={data.tradeName}
-                onChange={(e) => {
-                  update("tradeName", e.target.value);
-
-                  if (!data.publicName) {
-                    update("publicName", e.target.value);
-                  }
-                }}
-                className={inputClass}
-              />
-            </Field>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="نوع الكيان">
-                <select
-                  value={data.entityType}
-                  onChange={(e) => update("entityType", e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">اختر</option>
-                  <option>شركة</option>
-                  <option>مؤسسة</option>
-                  <option>فرد مرخص</option>
-                  <option>جهة غير ربحية</option>
-                  <option>أخرى</option>
-                </select>
-              </Field>
-
-              <Field label="نوع الإثبات القانوني">
-                <select
-                  value={data.proofType}
-                  onChange={(e) => update("proofType", e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">اختر</option>
-                  <option>سجل تجاري</option>
-                  <option>وثيقة عمل حر</option>
-                  <option>ترخيص مهني</option>
-                  <option>وثيقة نظامية أخرى</option>
-                </select>
-              </Field>
-            </div>
-
-            <InfoBox>
-              السجل أو الوثيقة يثبت الكيان، أما تراخيص مزاولة النشاط فيتم
-              إضافتها بصورة مستقلة لاحقًا.
-            </InfoBox>
-
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
-
-        {currentStep === "category" && (
-          <StepCard
-            eyebrow="PARTNER ACTIVITIES"
-            title="ما الخدمات التي تقدمها؟"
-            description="يمكنك اختيار أكثر من نشاط. سنراجع التراخيص المطلوبة لكل نشاط قبل تفعيله."
-          >
-            <div className="grid gap-3 md:grid-cols-2">
-              {Object.keys(categories).map((category) => {
-                const active = data.categories.includes(category);
-
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => toggleCategory(category)}
-                    className={`relative min-h-[104px] rounded-[22px] border p-5 text-right transition ${
-                      active
-                        ? "border-[#D4AF37] bg-[#0D3B34] text-white"
-                        : "border-[#0D3B34]/10 bg-[#FAF8F3] hover:border-[#D4AF37]/50"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-bold">{category}</p>
-
-                        <p
-                          className={`mt-2 text-xs ${
-                            active
-                              ? "text-white/55"
-                              : "text-[#0D3B34]/45"
-                          }`}
-                        >
-                          اضغط للاختيار
-                        </p>
-                      </div>
-
-                      <div
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                          active
-                            ? "bg-[#D4AF37] text-[#0D3B34]"
-                            : "bg-[#0D3B34]/6 text-transparent"
-                        }`}
-                      >
-                        ✓
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {data.categories.length > 0 && (
-              <>
-                <div className="rounded-[22px] bg-[#EEF3F0] p-4">
-                  <p className="text-xs font-semibold text-[#0D3B34]/55">
-                    الأنشطة المختارة
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {data.categories.map((category) => (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => toggleCategory(category)}
-                        className="rounded-full bg-[#0D3B34] px-3 py-2 text-xs font-semibold text-white"
-                      >
-                        {category} ×
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
-                  <p className="text-[10px] font-bold tracking-[0.16em] text-[#B99124]">
-                    SUBCATEGORIES
-                  </p>
-
-                  <h3
-                    className="mt-1 text-xl font-bold"
-                    style={{
-                      fontFamily: "var(--font-el-messiri), serif",
-                    }}
-                  >
-                    حدد الخدمات الفرعية
-                  </h3>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {availableSubCategories.map((subCategory) => {
-                      const active =
-                        data.subCategories.includes(subCategory);
-
-                      return (
-                        <button
-                          key={subCategory}
-                          type="button"
-                          onClick={() =>
-                            toggleSubCategory(subCategory)
-                          }
-                          className={`rounded-full border px-4 py-2.5 text-xs font-semibold transition ${
-                            active
-                              ? "border-[#0D3B34] bg-[#0D3B34] text-white"
-                              : "border-[#0D3B34]/10 bg-white text-[#0D3B34]/65"
-                          }`}
-                        >
-                          {active && "✓ "}
-                          {subCategory}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
-
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
-
-        {currentStep === "sales" && (
-          <StepCard
-            eyebrow="SERVICE CHANNELS"
-            title="كيف تقدم خدماتك؟"
-            description="بيانات التشغيل والمواقع تستخدم داخليًا ولا تعرض وسائل التواصل المباشر للزائر."
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              <ChoiceCard
-                title="عبر الإنترنت"
-                description="موقع إلكتروني، متجر أو قناة رقمية."
-                checked={data.sellsOnline}
-                onClick={() =>
-                  update("sellsOnline", !data.sellsOnline)
-                }
-              />
-
-              <ChoiceCard
-                title="موقع أو فرع فعلي"
-                description="وجهة، متحف، فندق، مطعم، مكتب أو نقطة تجمع."
-                checked={data.hasPhysicalLocation}
-                onClick={() =>
-                  update(
-                    "hasPhysicalLocation",
-                    !data.hasPhysicalLocation
-                  )
-                }
-              />
-            </div>
-
-            {data.hasPhysicalLocation && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="المدينة الرئيسية">
-                  <input
-                    value={data.city}
-                    onChange={(e) => update("city", e.target.value)}
-                    className={inputClass}
-                  />
-                </Field>
-
-                <Field label="عدد الفروع / المواقع">
-                  <input
-                    type="number"
-                    min="1"
-                    value={data.branches}
-                    onChange={(e) => update("branches", e.target.value)}
-                    className={inputClass}
-                  />
-                </Field>
-              </div>
-            )}
-
-            <Field label="نطاق تقديم الخدمة">
-              <input
-                value={data.serviceArea}
-                onChange={(e) => update("serviceArea", e.target.value)}
-                className={inputClass}
-              />
-            </Field>
-
-            {data.sellsOnline && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="الموقع الإلكتروني / المتجر">
-                  <input
-                    value={data.website}
-                    onChange={(e) => update("website", e.target.value)}
-                    className={inputClass}
-                    dir="ltr"
-                  />
-                </Field>
-
-                <Field label="حساب التواصل الاجتماعي">
-                  <input
-                    value={data.socialAccount}
-                    onChange={(e) =>
-                      update("socialAccount", e.target.value)
-                    }
-                    className={inputClass}
-                    dir="ltr"
-                  />
-                </Field>
-              </div>
-            )}
-
-            <InfoBox>
-              الموقع الإلكتروني وحسابات التواصل تبقى داخلية ولا تظهر
-              للعميل.
-            </InfoBox>
-
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
-
-        {currentStep === "legal" && (
-          <StepCard
-            eyebrow="LEGAL VERIFICATION"
-            title="البيانات القانونية"
-            description="التحقق حاليًا تجريبي، ولاحقًا يتم ربطه بمصادر التحقق الرسمية."
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="الرقم الموحد">
-                <input
-                  value={data.unifiedNumber}
-                  onChange={(e) =>
-                    update(
-                      "unifiedNumber",
-                      e.target.value.replace(/\D/g, "")
                     )
                   }
-                  className={inputClass}
+                  placeholder="+966 5XXXXXXXX"
+                  className={`${inputClass} ${validationErrors.phone ? errorInputClass : ""}`}
                   dir="ltr"
                 />
+              </Field><ValidationError message={validationErrors.phone} /></div>
+            </div>
+
+            <div data-validation="password"><Field label="كلمة المرور *">
+              <input
+                type="password"
+                value={data.password}
+                onChange={(e) =>
+                  update(
+                    "password",
+                    e.target.value
+                  )
+                }
+                className={`${inputClass} ${validationErrors.password ? errorInputClass : ""}`}
+                dir="ltr"
+              />
+            </Field><ValidationError message={validationErrors.password} /></div>
+
+            <div data-validation="partnerType">
+              <Field label="نوع مقدم الخدمة *">
+              <div className={`grid gap-3 rounded-[22px] ${
+                validationErrors.partnerType ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
+              } md:grid-cols-3`}>
+                <SelectCard
+                  title="فرد"
+                  description="مقدم خدمة فردي أو مهني"
+                  active={
+                    data.partnerType ===
+                    "individual"
+                  }
+                  onClick={() => {
+                    update(
+                      "partnerType",
+                      "individual"
+                    );
+
+                    update(
+                      "applicantRole",
+                      ""
+                    );
+                  }}
+                />
+
+                <SelectCard
+                  title="مؤسسة أو شركة"
+                  description="منشأة تجارية مسجلة"
+                  active={
+                    data.partnerType ===
+                    "business"
+                  }
+                  onClick={() =>
+                    update(
+                      "partnerType",
+                      "business"
+                    )
+                  }
+                />
+
+                <SelectCard
+                  title="جهة حكومية أو غير ربحية"
+                  description="جهة مؤسسية أو مجتمعية"
+                  active={
+                    data.partnerType ===
+                    "government"
+                  }
+                  onClick={() => {
+                    update(
+                      "partnerType",
+                      "government"
+                    );
+
+                    update(
+                      "applicantRole",
+                      ""
+                    );
+                  }}
+                />
+              </div>
+            </Field>
+            <ValidationError message={validationErrors.partnerType} />
+            </div>
+
+            {data.partnerType ===
+              "business" && (
+              <div className="rounded-[24px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
+                <div data-validation="applicantRole">
+                <Field label="صفتك لدى المنشأة *">
+                  <div className={`grid gap-3 rounded-[22px] ${
+                    validationErrors.applicantRole ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
+                  } md:grid-cols-2`}>
+                    <SelectCard
+                      title="مالك المنشأة"
+                      description="صاحب المنشأة أو المالك المخول"
+                      active={
+                        data.applicantRole ===
+                        "owner"
+                      }
+                      onClick={() => {
+                        update(
+                          "applicantRole",
+                          "owner"
+                        );
+
+                        update(
+                          "authorizationFile",
+                          ""
+                        );
+                      }}
+                    />
+
+                    <SelectCard
+                      title="ممثل مفوض"
+                      description="ممثل مفوض بالتسجيل والتعاقد"
+                      active={
+                        data.applicantRole ===
+                        "representative"
+                      }
+                      onClick={() =>
+                        update(
+                          "applicantRole",
+                          "representative"
+                        )
+                      }
+                    />
+                  </div>
+                </Field>
+                <ValidationError message={validationErrors.applicantRole} />
+                </div>
+
+                {data.applicantRole ===
+                  "representative" && (
+                  <div className="mt-5 space-y-4">
+                    <div data-validation="jobTitle"><Field label="المسمى الوظيفي *">
+                      <input
+                        value={
+                          data.jobTitle
+                        }
+                        onChange={(
+                          e
+                        ) =>
+                          update(
+                            "jobTitle",
+                            e.target
+                              .value
+                          )
+                        }
+                        className={`${inputClass} ${validationErrors.jobTitle ? errorInputClass : ""}`}
+                      />
+                    </Field><ValidationError message={validationErrors.jobTitle} /></div>
+
+                    <div className="rounded-[20px] border border-[#D4AF37]/25 bg-[#FFF9E8] p-4">
+                      <p className="text-sm font-bold text-[#8B6812]">
+                        تفويض الممثل
+                      </p>
+
+                      <p className="mt-2 text-xs leading-7 text-[#0D3B34]/65">
+                        في حال التسجيل
+                        كممثل عن المنشأة،
+                        يلزم إرفاق تفويض
+                        ساري ومصدّق من
+                        الغرفة التجارية
+                        يثبت صلاحية الممثل
+                        في التسجيل
+                        والتعاقد نيابةً عن
+                        المنشأة.
+                      </p>
+                    </div>
+
+                    <div data-validation="authorizationFile"><Field label="التفويض المصدق من الغرفة التجارية *">
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        onChange={(
+                          e
+                        ) =>
+                          update(
+                            "authorizationFile",
+                            e.target
+                              .files?.[0]
+                              ?.name || ""
+                          )
+                        }
+                        className={`${inputClass} ${validationErrors.authorizationFile ? errorInputClass : ""}`}
+                      />
+                    </Field><ValidationError message={validationErrors.authorizationFile} /></div>
+
+                    <AiHint
+                      title="فحص المستند بالذكاء الاصطناعي"
+                      text="سيتم فحص وضوح المستند واسم المنشأة واسم الممثل وفترة الصلاحية مبدئياً. الاعتماد النهائي يتم بواسطة فريق أريس."
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <Actions
+              onBack={goBack}
+              onNext={goNext}
+              onSave={saveDraft}
+              saved={draftSaved}
+              first
+            />
+          </StepCard>
+        )}
+                {currentStep === "business" && (
+          <StepCard
+            eyebrow="STEP 02 / 06"
+            title="بيانات النشاط والمقر"
+            description="أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <div data-validation="tradeName"><Field label="الاسم التجاري / اسم النشاط *">
+                <input
+                  value={data.tradeName}
+                  onChange={(e) => {
+                    update(
+                      "tradeName",
+                      e.target.value
+                    );
+
+                    if (!data.publicName) {
+                      update(
+                        "publicName",
+                        e.target.value
+                      );
+                    }
+                  }}
+                  className={`${inputClass} ${validationErrors.tradeName ? errorInputClass : ""}`}
+                />
+              </Field><ValidationError message={validationErrors.tradeName} /></div>
+
+              <Field label="الاسم القانوني">
+                <input
+                  value={data.legalName}
+                  onChange={(e) =>
+                    update(
+                      "legalName",
+                      e.target.value
+                    )
+                  }
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="نوع الإثبات">
+                <select
+                  value={data.proofType}
+                  onChange={(e) =>
+                    update(
+                      "proofType",
+                      e.target.value
+                    )
+                  }
+                  className={inputClass}
+                >
+                  <option value="">
+                    اختر حسب نوع مقدم الخدمة
+                  </option>
+                  <option>
+                    سجل تجاري
+                  </option>
+                  <option>
+                    وثيقة عمل حر
+                  </option>
+                  <option>
+                    ترخيص مهني
+                  </option>
+                  <option>
+                    وثيقة أسر منتجة
+                  </option>
+                  <option>
+                    وثيقة جهة حكومية أو غير ربحية
+                  </option>
+                  <option>
+                    وثيقة نظامية أخرى
+                  </option>
+                </select>
               </Field>
 
               <Field label="رقم السجل / الوثيقة">
                 <input
-                  value={data.crNumber}
+                  value={
+                    data.registrationNumber
+                  }
                   onChange={(e) =>
-                    update("crNumber", e.target.value)
+                    update(
+                      "registrationNumber",
+                      e.target.value
+                    )
                   }
                   className={inputClass}
                   dir="ltr"
                 />
               </Field>
-            </div>
 
-            <button
-              type="button"
-              onClick={simulateBusinessLookup}
-              className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFF9E8] px-5 py-3 text-sm font-bold text-[#8B6812]"
-            >
-              تحقق من البيانات — نموذج تجريبي
-            </button>
-
-            {(data.legalNameAr || data.legalNameEn) && (
-              <div className="rounded-[24px] border border-[#0D3B34]/8 bg-[#F5F7F4] p-5">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <ReadOnlyValue
-                    label="الاسم القانوني بالعربية"
-                    value={data.legalNameAr}
-                  />
-
-                  <ReadOnlyValue
-                    label="Legal Name"
-                    value={data.legalNameEn}
-                  />
-                </div>
-
-                <div className="mt-4">
-                  <ReadOnlyValue
-                    label="العنوان القانوني"
-                    value={data.legalAddress}
-                  />
-                </div>
-              </div>
-            )}
-
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
-
-        {currentStep === "licenses" && (
-          <StepCard
-            eyebrow="LICENSES & COMPLIANCE"
-            title="التراخيص وربط الأنشطة"
-            description="حدد الأنشطة التي يغطيها كل ترخيص. لاحقًا لن يسمح النظام بنشر خدمة بدون ترخيص ساري ومعتمد يغطي نشاطها."
-          >
-            {data.categories.length === 0 && (
-              <InfoBox>
-                لم يتم اختيار أي نشاط. ارجع إلى مرحلة الأنشطة وحدد نشاطًا
-                واحدًا على الأقل.
-              </InfoBox>
-            )}
-
-            <div className="space-y-5">
-              {licenses.map((license, index) => (
-                <div
-                  key={license.id}
-                  className="rounded-[26px] border border-[#0D3B34]/9 bg-[#FAF9F5] p-5"
-                >
-                  <div className="mb-5 flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-bold text-[#B99124]">
-                        LICENSE {String(index + 1).padStart(2, "0")}
-                      </p>
-
-                      <h3 className="mt-1 font-bold">
-                        الترخيص رقم {index + 1}
-                      </h3>
-                    </div>
-
-                    {licenses.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeLicense(license.id)}
-                        className="rounded-full bg-[#A43131]/8 px-3 py-1.5 text-xs font-semibold text-[#A43131]"
-                      >
-                        حذف
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="نوع الترخيص">
-                      <input
-                        value={license.type}
-                        onChange={(e) =>
-                          updateLicense(
-                            license.id,
-                            "type",
-                            e.target.value
-                          )
-                        }
-                        placeholder="مثال: ترخيص خدمات سفر وسياحة"
-                        className={inputClass}
-                      />
-                    </Field>
-
-                    <Field label="جهة الإصدار">
-                      <select
-                        value={license.issuer}
-                        onChange={(e) =>
-                          updateLicense(
-                            license.id,
-                            "issuer",
-                            e.target.value
-                          )
-                        }
-                        className={inputClass}
-                      >
-                        <option value="">اختر</option>
-                        <option>وزارة السياحة</option>
-                        <option>وزارة التجارة</option>
-                        <option>وزارة الموارد البشرية</option>
-                        <option>وزارة البلديات والإسكان</option>
-                        <option>أخرى</option>
-                      </select>
-                    </Field>
-
-                    {license.issuer === "أخرى" && (
-                      <Field label="اسم جهة الإصدار">
-                        <input
-                          value={license.customIssuer}
-                          onChange={(e) =>
-                            updateLicense(
-                              license.id,
-                              "customIssuer",
-                              e.target.value
-                            )
-                          }
-                          className={inputClass}
-                        />
-                      </Field>
-                    )}
-
-                    <Field label="رقم الترخيص">
-                      <input
-                        value={license.number}
-                        onChange={(e) =>
-                          updateLicense(
-                            license.id,
-                            "number",
-                            e.target.value
-                          )
-                        }
-                        className={inputClass}
-                      />
-                    </Field>
-
-                    <Field label="تاريخ الإصدار">
-                      <input
-                        type="date"
-                        value={license.issueDate}
-                        onChange={(e) =>
-                          updateLicense(
-                            license.id,
-                            "issueDate",
-                            e.target.value
-                          )
-                        }
-                        className={inputClass}
-                      />
-                    </Field>
-
-                    <Field label="تاريخ الانتهاء">
-                      <input
-                        type="date"
-                        value={license.expiryDate}
-                        onChange={(e) =>
-                          updateLicense(
-                            license.id,
-                            "expiryDate",
-                            e.target.value
-                          )
-                        }
-                        className={inputClass}
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="mt-5 rounded-[22px] border border-[#0D3B34]/8 bg-white p-4">
-                    <p className="text-xs font-bold">
-                      الأنشطة التي يغطيها هذا الترخيص
-                    </p>
-
-                    <p className="mt-1 text-[11px] leading-5 text-[#0D3B34]/45">
-                      اختر من الأنشطة التي حددتها للمنشأة.
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {data.categories.map((activity) => {
-                        const active =
-                          license.coveredActivities.includes(activity);
-
-                        return (
-                          <button
-                            key={activity}
-                            type="button"
-                            onClick={() =>
-                              toggleLicenseActivity(
-                                license.id,
-                                activity
-                              )
-                            }
-                            className={`rounded-full border px-4 py-2.5 text-xs font-semibold transition ${
-                              active
-                                ? "border-[#D4AF37] bg-[#0D3B34] text-white"
-                                : "border-[#0D3B34]/10 bg-[#F8F7F3] text-[#0D3B34]/65"
-                            }`}
-                          >
-                            {active && "✓ "}
-                            {activity}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {license.coveredActivities.length > 0 && (
-                      <div className="mt-4 rounded-xl bg-[#EAF4EF] px-3 py-2 text-[11px] font-semibold text-[#267247]">
-                        يغطي {license.coveredActivities.length} نشاط
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4">
-                    <Field label="مرفق الترخيص PDF">
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) =>
-                          updateLicense(
-                            license.id,
-                            "fileName",
-                            e.target.files?.[0]?.name || ""
-                          )
-                        }
-                        className={inputClass}
-                      />
-                    </Field>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={addLicense}
-              className="w-full rounded-2xl border border-dashed border-[#B99124]/45 bg-[#FFF9EA]/70 py-4 text-sm font-bold text-[#8B6812]"
-            >
-              + إضافة ترخيص آخر
-            </button>
-
-            <InfoBox>
-              مثال: إذا كانت المنشأة تقدم «وكالات سفر وسياحة» و«تنظيم
-              الرحلات السياحية»، يمكن لترخيص واحد أن يغطي النشاطين أو
-              يكون لكل نشاط ترخيص مستقل.
-            </InfoBox>
-
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
-
-        {currentStep === "tax" && (
-          <StepCard
-            eyebrow="TAX PROFILE"
-            title="البيانات الضريبية"
-            description="تستخدم البيانات الضريبية في الفوترة والحسابات والتسويات."
-          >
-            <ChoiceCard
-              title="المنشأة مسجلة في ضريبة القيمة المضافة"
-              description="فعّل الخيار إذا كانت المنشأة تحمل رقم تسجيل ضريبي."
-              checked={data.vatRegistered}
-              onClick={() =>
-                update("vatRegistered", !data.vatRegistered)
-              }
-            />
-
-            {data.vatRegistered && (
-              <>
-                <Field label="رقم التسجيل الضريبي">
+              {data.partnerType ===
+                "business" && (
+                <Field label="الرقم الموحد">
                   <input
-                    value={data.vatNumber}
+                    value={
+                      data.unifiedNumber
+                    }
                     onChange={(e) =>
                       update(
-                        "vatNumber",
-                        e.target.value.replace(/\D/g, "")
+                        "unifiedNumber",
+                        e.target.value.replace(
+                          /\D/g,
+                          ""
+                        )
                       )
                     }
                     className={inputClass}
                     dir="ltr"
                   />
                 </Field>
+              )}
 
-                <Field label="شهادة التسجيل الضريبي PDF">
+              <Field label="الدولة">
+                <input
+                  value="المملكة العربية السعودية"
+                  readOnly
+                  className={`${inputClass} cursor-not-allowed bg-[#F1EFE8] font-semibold`}
+                />
+              </Field>
+
+              <div data-validation="city"><Field label="المدينة *">
+                <input
+                  value={data.city}
+                  onChange={(e) => update("city", e.target.value)}
+                  placeholder="مثال: المدينة المنورة"
+                  className={`${inputClass} ${validationErrors.city ? errorInputClass : ""}`}
+                />
+              </Field><ValidationError message={validationErrors.city} /></div>
+
+              <div data-validation="district"><Field label="الحي *">
+                <input
+                  value={data.district}
+                  onChange={(e) => update("district", e.target.value)}
+                  placeholder="اسم الحي"
+                  className={`${inputClass} ${validationErrors.district ? errorInputClass : ""}`}
+                />
+              </Field><ValidationError message={validationErrors.district} /></div>
+
+              <div data-validation="street"><Field label="الشارع *">
+                <input
+                  value={data.street}
+                  onChange={(e) => update("street", e.target.value)}
+                  placeholder="اسم الشارع"
+                  className={`${inputClass} ${validationErrors.street ? errorInputClass : ""}`}
+                />
+              </Field><ValidationError message={validationErrors.street} /></div>
+
+              <div data-validation="shortNationalAddress">
+                <Field label="العنوان الوطني المختصر *">
                   <input
-                    type="file"
-                    accept=".pdf"
+                    value={data.shortNationalAddress}
                     onChange={(e) =>
                       update(
-                        "vatCertificate",
-                        e.target.files?.[0]?.name || ""
+                        "shortNationalAddress",
+                        e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8)
                       )
                     }
-                    className={inputClass}
+                    placeholder="مثال: ABCD1234"
+                    maxLength={8}
+                    dir="ltr"
+                    className={`${inputClass} ${validationErrors.shortNationalAddress ? errorInputClass : ""}`}
                   />
                 </Field>
-              </>
-            )}
+                <ValidationError message={validationErrors.shortNationalAddress} />
+              </div>
 
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
+              <div data-validation="nationalAddressFile" className="md:col-span-2">
+                <Field label="مرفق العنوان الوطني للمنشأة *">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => update("nationalAddressFile", e.target.files?.[0]?.name || "")}
+                    className={`${inputClass} ${validationErrors.nationalAddressFile ? errorInputClass : ""}`}
+                  />
+                </Field>
+                <ValidationError message={validationErrors.nationalAddressFile} />
+                <p className="mt-2 text-xs leading-6 text-[#0D3B34]/50">
+                  أرفق نسخة من إثبات العنوان الوطني الخاص بمقر المنشأة بصيغة PDF أو صورة.
+                </p>
+              </div>
+            </div>
 
-        {currentStep === "bank" && (
-          <StepCard
-            eyebrow="SETTLEMENT ACCOUNT"
-            title="التفاصيل البنكية"
-            description="الحساب الذي يتم تحويل مستحقات الشريك إليه."
-          >
-            <InfoBox>
-              يجب أن يكون الحساب البنكي باسم المنشأة أو يخضع للمراجعة قبل
-              الاعتماد.
-            </InfoBox>
+            <Field label="نبذة عن النشاط">
+              <textarea
+                value={data.description}
+                onChange={(e) =>
+                  update(
+                    "description",
+                    e.target.value
+                  )
+                }
+                rows={4}
+                className={`${inputClass} h-auto py-4`}
+                placeholder="اكتب وصفاً مختصراً للنشاط والخدمات..."
+              />
+            </Field>
 
-            <Field label="IBAN">
-              <div className="flex gap-3">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="البريد التجاري">
                 <input
-                  value={data.iban}
+                  type="email"
+                  value={
+                    data.businessEmail
+                  }
                   onChange={(e) =>
                     update(
-                      "iban",
+                      "businessEmail",
                       e.target.value
-                        .toUpperCase()
-                        .replace(/[^A-Z0-9]/g, "")
-                        .slice(0, 24)
                     )
                   }
-                  onBlur={simulateIbanLookup}
                   className={inputClass}
                   dir="ltr"
                 />
-
-                <button
-                  type="button"
-                  onClick={simulateIbanLookup}
-                  className="shrink-0 rounded-2xl bg-[#0D3B34] px-4 text-xs font-bold text-white"
-                >
-                  تحقق
-                </button>
-              </div>
-            </Field>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <ReadOnlyValue
-                label="اسم البنك"
-                value={data.bankName || "سيظهر بعد التحقق"}
-              />
-
-              <ReadOnlyValue
-                label="SWIFT"
-                value={data.swift || "سيظهر بعد التحقق"}
-              />
-            </div>
-
-            <Field label="اسم المستفيد">
-              <input
-                value={data.beneficiaryName}
-                onChange={(e) =>
-                  update("beneficiaryName", e.target.value)
-                }
-                className={inputClass}
-              />
-            </Field>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="العملة">
-                <select
-                  value={data.currency}
-                  onChange={(e) => update("currency", e.target.value)}
-                  className={inputClass}
-                >
-                  <option>SAR</option>
-                </select>
               </Field>
 
-              <Field label="شهادة IBAN / خطاب البنك">
+              <Field label="جوال / هاتف النشاط">
                 <input
-                  type="file"
-                  accept=".pdf,.png,.jpg,.jpeg"
+                  value={
+                    data.businessPhone
+                  }
                   onChange={(e) =>
                     update(
-                      "ibanCertificate",
-                      e.target.files?.[0]?.name || ""
+                      "businessPhone",
+                      e.target.value
+                    )
+                  }
+                  className={inputClass}
+                  dir="ltr"
+                />
+              </Field>
+            </div>
+
+            <Field label="الموقع الإلكتروني — اختياري">
+              <input
+                value={data.website}
+                onChange={(e) =>
+                  update(
+                    "website",
+                    e.target.value
+                  )
+                }
+                placeholder="https://"
+                className={inputClass}
+                dir="ltr"
+              />
+            </Field>
+
+            <InfoBox>
+              بيانات التواصل والمعلومات
+              الداخلية لا تظهر تلقائياً
+              للزائر. بيانات صفحة الشريك
+              العامة يتم التحكم فيها بعد
+              تفعيل الحساب.
+            </InfoBox>
+
+            <Actions
+              onBack={goBack}
+              onNext={goNext}
+              onSave={saveDraft}
+              saved={draftSaved}
+            />
+          </StepCard>
+        )}
+
+        {currentStep ===
+          "categories" && (
+          <StepCard
+            eyebrow="STEP 03 / 06"
+            title="ما الخدمات التي ستقدمها؟"
+            description="يمكن اختيار أكثر من تصنيف. هذه الاختيارات تحدد أنواع الخدمات التي يمكن إضافتها بعد تفعيل حساب الشريك."
+          >
+            <div data-validation="categories">
+            <div className={`grid gap-3 rounded-[22px] ${
+              validationErrors.categories ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
+            } md:grid-cols-2`}>
+              {categoryOptions.map(
+                (category) => (
+                  <SelectCard
+                    key={category.name}
+                    title={
+                      category.name
+                    }
+                    description={
+                      category.description
+                    }
+                    active={data.categories.includes(
+                      category.name
+                    )}
+                    onClick={() =>
+                      toggleCategory(
+                        category.name
+                      )
+                    }
+                  />
+                )
+              )}
+            </div>
+            <ValidationError message={validationErrors.categories} />
+            </div>
+
+            {data.categories.length >
+              0 && (
+              <div className="rounded-[22px] bg-[#EEF3F0] p-4">
+                <p className="text-xs font-semibold text-[#0D3B34]/55">
+                  التصنيفات المختارة
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {data.categories.map(
+                    (category) => (
+                      <button
+                        key={
+                          category
+                        }
+                        type="button"
+                        onClick={() =>
+                          toggleCategory(
+                            category
+                          )
+                        }
+                        className="rounded-full bg-[#0D3B34] px-3 py-2 text-xs font-semibold text-white"
+                      >
+                        {category} ×
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+
+            <AiHint
+              title="متطلبات ذكية حسب نوع الخدمة"
+              text="لن نفرض نفس المستندات على الجميع. المرحلة التالية تعرض متطلبات الوثائق والتراخيص بحسب نوع مقدم الخدمة والتصنيفات التي اخترتها."
+            />
+
+            <Actions
+              onBack={goBack}
+              onNext={goNext}
+              onSave={saveDraft}
+              saved={draftSaved}
+            />
+          </StepCard>
+        )}
+
+        {currentStep ===
+          "documents" && (
+          <StepCard
+            eyebrow="STEP 04 / 06"
+            title="التراخيص والوثائق"
+            description="أرفق الوثائق المناسبة لطبيعة الجهة والخدمات المختارة. المتطلبات تختلف بين المنشآت والأفراد والجهات المؤسسية."
+          >
+            <AiHint
+              title="مساعد الامتثال الذكي"
+              text="يفحص النظام اكتمال البيانات والمستندات ويعرض الملاحظات قبل الإرسال. التحقق الآلي مساعد، أما اعتماد الشريك والمستندات فيتم بواسطة أريس."
+            />
+
+            {data.partnerType ===
+              "business" && (
+              <Requirement
+                title="إثبات المنشأة"
+                text="السجل التجاري أو الوثيقة النظامية المناسبة للمنشأة."
+              />
+            )}
+
+            {data.partnerType ===
+              "individual" && (
+              <Requirement
+                title="إثبات مقدم الخدمة"
+                text="الوثيقة المهنية أو الترخيص أو الإثبات المناسب لطبيعة الخدمة."
+              />
+            )}
+
+            {data.partnerType ===
+              "government" && (
+              <Requirement
+                title="إثبات الجهة"
+                text="المستند أو التعريف الرسمي المناسب للجهة الحكومية أو غير الربحية."
+              />
+            )}
+
+            {data.applicantRole ===
+              "representative" && (
+              <Requirement
+                title="تفويض الممثل"
+                text="تفويض ساري ومصدق من الغرفة التجارية يثبت صلاحية التسجيل والتعاقد نيابةً عن المنشأة."
+                important
+              />
+            )}
+
+            <div data-validation="documents">
+              <ValidationError message={validationErrors.documents} />
+            <div className={`space-y-4 rounded-[22px] ${
+              validationErrors.documents ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
+            }`}>
+              {documents.map(
+                (
+                  document,
+                  index
+                ) => (
+                  <div
+                    key={
+                      document.id
+                    }
+                    className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5"
+                  >
+                    <div className="mb-5 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[10px] font-bold text-[#B99124]">
+                          DOCUMENT{" "}
+                          {String(
+                            index + 1
+                          ).padStart(
+                            2,
+                            "0"
+                          )}
+                        </p>
+
+                        <h3 className="mt-1 font-bold">
+                          مستند /
+                          ترخيص{" "}
+                          {index + 1}
+                        </h3>
+                      </div>
+
+                      {documents.length >
+                        1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeDocument(
+                              document.id
+                            )
+                          }
+                          className="rounded-full bg-[#A43131]/8 px-3 py-1.5 text-xs font-semibold text-[#A43131]"
+                        >
+                          حذف
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Field label="نوع المستند / الترخيص">
+                        <input
+                          value={
+                            document.type
+                          }
+                          onChange={(
+                            e
+                          ) =>
+                            updateDocument(
+                              document.id,
+                              "type",
+                              e.target
+                                .value
+                            )
+                          }
+                          placeholder="مثال: ترخيص مرشد سياحي"
+                          className={
+                            inputClass
+                          }
+                        />
+                      </Field>
+
+                      <Field label="جهة الإصدار">
+                        <input
+                          value={
+                            document.issuer
+                          }
+                          onChange={(
+                            e
+                          ) =>
+                            updateDocument(
+                              document.id,
+                              "issuer",
+                              e.target
+                                .value
+                            )
+                          }
+                          className={
+                            inputClass
+                          }
+                        />
+                      </Field>
+
+                      <Field label="رقم المستند">
+                        <input
+                          value={
+                            document.number
+                          }
+                          onChange={(
+                            e
+                          ) =>
+                            updateDocument(
+                              document.id,
+                              "number",
+                              e.target
+                                .value
+                            )
+                          }
+                          className={
+                            inputClass
+                          }
+                          dir="ltr"
+                        />
+                      </Field>
+
+                      <Field label="تاريخ الإصدار">
+                        <input
+                          type="date"
+                          value={
+                            document.issueDate
+                          }
+                          onChange={(
+                            e
+                          ) =>
+                            updateDocument(
+                              document.id,
+                              "issueDate",
+                              e.target
+                                .value
+                            )
+                          }
+                          className={
+                            inputClass
+                          }
+                        />
+                      </Field>
+
+                      <Field label="تاريخ الانتهاء — إن وجد">
+                        <input
+                          type="date"
+                          value={
+                            document.expiryDate
+                          }
+                          onChange={(
+                            e
+                          ) =>
+                            updateDocument(
+                              document.id,
+                              "expiryDate",
+                              e.target
+                                .value
+                            )
+                          }
+                          className={
+                            inputClass
+                          }
+                        />
+                      </Field>
+
+                      <Field label="رفع المستند">
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={(
+                            e
+                          ) =>
+                            updateDocument(
+                              document.id,
+                              "fileName",
+                              e.target
+                                .files?.[0]
+                                ?.name ||
+                                ""
+                            )
+                          }
+                          className={
+                            inputClass
+                          }
+                        />
+                      </Field>
+                    </div>
+
+                    {data.categories
+                      .length >
+                      0 && (
+                      <div className="mt-5">
+                        <p className="text-xs font-bold">
+                          الخدمات التي
+                          يغطيها هذا
+                          الترخيص
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {data.categories.map(
+                            (
+                              category
+                            ) => {
+                              const active =
+                                document.coveredCategories.includes(
+                                  category
+                                );
+
+                              return (
+                                <button
+                                  key={
+                                    category
+                                  }
+                                  type="button"
+                                  onClick={() =>
+                                    toggleDocumentCategory(
+                                      document.id,
+                                      category
+                                    )
+                                  }
+                                  className={`rounded-full border px-4 py-2 text-xs font-semibold ${
+                                    active
+                                      ? "border-[#D4AF37] bg-[#0D3B34] text-white"
+                                      : "border-[#0D3B34]/10 bg-white text-[#0D3B34]/60"
+                                  }`}
+                                >
+                                  {active
+                                    ? "✓ "
+                                    : ""}
+                                  {
+                                    category
+                                  }
+                                </button>
+                              );
+                            }
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={addDocument}
+              className="w-full rounded-2xl border border-dashed border-[#B99124]/45 bg-[#FFF9EA]/70 py-4 text-sm font-bold text-[#8B6812]"
+            >
+              + إضافة مستند أو ترخيص آخر
+            </button>
+
+            <Actions
+              onBack={goBack}
+              onNext={goNext}
+              onSave={saveDraft}
+              saved={draftSaved}
+            />
+          </StepCard>
+        )}
+                {currentStep === "operations" && (
+          <StepCard
+            eyebrow="STEP 05 / 06"
+            title="بيانات التشغيل والتسوية"
+            description="أدخل بيانات التواصل والتشغيل. بيانات التسوية المالية مطلوبة فقط إذا كانت المدفوعات ستتم عبر Arees Loop."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="مسؤول التواصل">
+                <input
+                  value={data.contactName}
+                  onChange={(e) =>
+                    update(
+                      "contactName",
+                      e.target.value
                     )
                   }
                   className={inputClass}
                 />
               </Field>
+
+              <Field label="جوال مسؤول التواصل">
+                <input
+                  value={data.contactPhone}
+                  onChange={(e) =>
+                    update(
+                      "contactPhone",
+                      e.target.value
+                    )
+                  }
+                  className={inputClass}
+                  dir="ltr"
+                />
+              </Field>
             </div>
 
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
-
-        {currentStep === "contacts" && (
-          <StepCard
-            eyebrow="PARTNER CONTACTS"
-            title="جهات التواصل"
-            description="حدد المسؤول المالي ومسؤول الحجوزات والتشغيل."
-          >
-            <ContactSection
-              title="المسؤول المالي"
-              name={data.financeName}
-              titleValue={data.financeTitle}
-              email={data.financeEmail}
-              phone={data.financePhone}
-              onName={(value) => update("financeName", value)}
-              onTitle={(value) => update("financeTitle", value)}
-              onEmail={(value) => update("financeEmail", value)}
-              onPhone={(value) => update("financePhone", value)}
-            />
-
-            <ContactSection
-              title="مسؤول الحجوزات والتشغيل"
-              name={data.operationsName}
-              titleValue={data.operationsTitle}
-              email={data.operationsEmail}
-              phone={data.operationsPhone}
-              onName={(value) => update("operationsName", value)}
-              onTitle={(value) => update("operationsTitle", value)}
-              onEmail={(value) => update("operationsEmail", value)}
-              onPhone={(value) => update("operationsPhone", value)}
-            />
-
-            <StepActions onBack={back} onNext={next} />
-          </StepCard>
-        )}
-
-        {currentStep === "brand" && (
-          <StepCard
-            eyebrow="PUBLIC PROFILE"
-            title="هوية الشريك داخل Arees Loop"
-            description="حدد الاسم والشعار المستخدمين عند عرض الخدمات داخل المنصة."
-          >
-            <Field label="اسم العرض">
+            <Field label="البريد التشغيلي">
               <input
-                value={data.publicName}
-                onChange={(e) => update("publicName", e.target.value)}
-                className={inputClass}
-              />
-            </Field>
-
-            <Field label="شعار المنشأة">
-              <input
-                type="file"
-                accept=".png,.jpg,.jpeg,.webp"
+                type="email"
+                value={data.contactEmail}
                 onChange={(e) =>
                   update(
-                    "logoFile",
-                    e.target.files?.[0]?.name || ""
+                    "contactEmail",
+                    e.target.value
                   )
                 }
                 className={inputClass}
+                dir="ltr"
               />
             </Field>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <DataVisibilityCard
-                title="يمكن عرضه للزائر"
-                items={[
-                  "اسم العرض",
-                  "الشعار",
-                  "الخدمات والصور",
-                  "السعر النهائي",
-                  "موقع تنفيذ الخدمة عند الحاجة",
-                ]}
-                positive
+            <SelectCard
+              title="الخدمة متاحة على مدار 24 ساعة"
+              description="فعّل الخيار إذا كانت الجهة تستقبل الطلبات أو تقدم الخدمة طوال اليوم."
+              active={data.operates24h}
+              onClick={() =>
+                update(
+                  "operates24h",
+                  !data.operates24h
+                )
+              }
+            />
+
+            {!data.operates24h && (
+              <Field label="ساعات وأيام العمل">
+                <input
+                  value={
+                    data.operatingHours
+                  }
+                  onChange={(e) =>
+                    update(
+                      "operatingHours",
+                      e.target.value
+                    )
+                  }
+                  placeholder="مثال: الأحد–الخميس، 9 ص – 6 م"
+                  className={inputClass}
+                />
+              </Field>
+            )}
+
+            <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
+              <SelectCard
+                title="استقبال المدفوعات والتسويات عبر Arees Loop"
+                description="فعّل هذا الخيار إذا كانت مستحقات الحجوزات ستتم تسويتها للشريك عبر المنصة."
+                active={
+                  data.receivesPayments
+                }
+                onClick={() =>
+                  update(
+                    "receivesPayments",
+                    !data.receivesPayments
+                  )
+                }
               />
 
-              <DataVisibilityCard
-                title="بيانات داخلية"
-                items={[
-                  "الجوال",
-                  "البريد",
-                  "الموقع الإلكتروني",
-                  "حسابات التواصل",
-                  "البيانات البنكية",
-                ]}
-              />
+              {data.receivesPayments && (
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <div data-validation="iban"><Field label="IBAN *">
+                    <input
+                      value={data.iban}
+                      onChange={(e) =>
+                        update(
+                          "iban",
+                          e.target.value
+                            .toUpperCase()
+                            .replace(
+                              /[^A-Z0-9]/g,
+                              ""
+                            )
+                            .slice(0, 24)
+                        )
+                      }
+                      placeholder="SA..."
+                      className={`${inputClass} ${validationErrors.iban ? errorInputClass : ""}`}
+                      dir="ltr"
+                    />
+                  </Field><ValidationError message={validationErrors.iban} /></div>
+
+                  <div data-validation="beneficiaryName"><Field label="اسم المستفيد *">
+                    <input
+                      value={
+                        data.beneficiaryName
+                      }
+                      onChange={(e) =>
+                        update(
+                          "beneficiaryName",
+                          e.target.value
+                        )
+                      }
+                      className={`${inputClass} ${validationErrors.beneficiaryName ? errorInputClass : ""}`}
+                    />
+                  </Field><ValidationError message={validationErrors.beneficiaryName} /></div>
+
+                  <Field label="شهادة IBAN / خطاب البنك">
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) =>
+                        update(
+                          "ibanCertificate",
+                          e.target
+                            .files?.[0]
+                            ?.name || ""
+                        )
+                      }
+                      className={
+                        inputClass
+                      }
+                    />
+                  </Field>
+                </div>
+              )}
             </div>
 
-            <StepActions onBack={back} onNext={next} />
+            <SelectCard
+              title="مسجل في ضريبة القيمة المضافة"
+              description="فعّل الخيار إذا كان مقدم الخدمة مسجلاً في ضريبة القيمة المضافة."
+              active={
+                data.vatRegistered
+              }
+              onClick={() =>
+                update(
+                  "vatRegistered",
+                  !data.vatRegistered
+                )
+              }
+            />
+
+            {data.vatRegistered && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="رقم التسجيل الضريبي">
+                  <input
+                    value={
+                      data.vatNumber
+                    }
+                    onChange={(e) =>
+                      update(
+                        "vatNumber",
+                        e.target.value.replace(
+                          /\D/g,
+                          ""
+                        )
+                      )
+                    }
+                    className={
+                      inputClass
+                    }
+                    dir="ltr"
+                  />
+                </Field>
+
+                <Field label="شهادة التسجيل الضريبي">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) =>
+                      update(
+                        "vatCertificate",
+                        e.target
+                          .files?.[0]
+                          ?.name || ""
+                      )
+                    }
+                    className={
+                      inputClass
+                    }
+                  />
+                </Field>
+              </div>
+            )}
+
+            <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
+              <div className="mb-5">
+                <h3 className="font-bold">
+                  هوية الظهور داخل المنصة
+                </h3>
+
+                <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">
+                  الاسم والشعار اللذان
+                  سيظهران للزوار بعد
+                  اعتماد وتفعيل حساب
+                  الشريك.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="اسم العرض">
+                  <input
+                    value={
+                      data.publicName
+                    }
+                    onChange={(e) =>
+                      update(
+                        "publicName",
+                        e.target.value
+                      )
+                    }
+                    className={
+                      inputClass
+                    }
+                  />
+                </Field>
+
+                <Field label="شعار الجهة">
+                  <input
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.webp"
+                    onChange={(e) =>
+                      update(
+                        "logoFile",
+                        e.target
+                          .files?.[0]
+                          ?.name || ""
+                      )
+                    }
+                    className={
+                      inputClass
+                    }
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <Actions
+              onBack={goBack}
+              onNext={goNext}
+              onSave={saveDraft}
+              saved={draftSaved}
+            />
           </StepCard>
         )}
 
         {currentStep === "review" && (
           <StepCard
-            eyebrow="FINAL REVIEW"
-            title="راجع طلب الانضمام"
-            description="تحقق من البيانات قبل إرسال الطلب إلى Arees Loop."
+            eyebrow="STEP 06 / 06"
+            title="المراجعة والإرسال"
+            description="راجع البيانات. مساعد الامتثال يفحص اكتمال الطلب قبل إرساله إلى فريق أريس للمراجعة النهائية."
           >
-            <ReviewSection
-              title="صاحب الحساب"
-              items={[
-                ["الاسم", `${data.firstName} ${data.lastName}`],
-                ["البريد", data.email],
-                ["الجوال", `+966 ${data.phone}`],
-                ["المسمى", data.jobTitle],
-              ]}
-            />
+            <div className="rounded-[26px] bg-[#0D3B34] p-5 text-white">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-bold tracking-[0.16em] text-[#E5BE45]">
+                    AI COMPLIANCE CHECK
+                  </p>
 
-            <ReviewSection
-              title="المنشأة والأنشطة"
-              items={[
-                ["الاسم التجاري", data.tradeName],
-                ["نوع الكيان", data.entityType],
-                ["الإثبات", data.proofType],
-                [
-                  "الأنشطة",
-                  data.categories.length
-                    ? data.categories.join("، ")
-                    : "—",
-                ],
-                [
-                  "الخدمات الفرعية",
-                  data.subCategories.length
-                    ? data.subCategories.join("، ")
-                    : "—",
-                ],
-              ]}
-            />
+                  <h3 className="mt-1 text-lg font-bold">
+                    الفحص المبدئي للطلب
+                  </h3>
+                </div>
 
-            <ReviewSection
-              title="المعلومات القانونية"
-              items={[
-                ["الرقم الموحد", data.unifiedNumber],
-                ["رقم السجل / الوثيقة", data.crNumber],
-                ["الاسم القانوني", data.legalNameAr],
-                [
-                  "الرقم الضريبي",
-                  data.vatRegistered ? data.vatNumber : "غير مسجل",
-                ],
-                ["عدد التراخيص", String(licenses.length)],
-              ]}
-            />
-
-            <div className="rounded-[22px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
-              <p className="font-bold">
-                تغطية الأنشطة بالتراخيص
-              </p>
-
-              <div className="mt-4 space-y-3">
-                {licenses.map((license, index) => (
-                  <div
-                    key={license.id}
-                    className="rounded-2xl bg-white p-4"
-                  >
-                    <p className="text-xs font-bold">
-                      {license.type || `الترخيص ${index + 1}`}
-                    </p>
-
-                    <p className="mt-2 text-[11px] leading-6 text-[#0D3B34]/55">
-                      {license.coveredActivities.length
-                        ? license.coveredActivities.join("، ")
-                        : "لم يتم تحديد الأنشطة المغطاة"}
-                    </p>
-                  </div>
-                ))}
+                <span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold">
+                  مساعد امتثال
+                </span>
               </div>
+
+              <div className="mt-5 space-y-3">
+                {aiChecks.map(
+                  (check) => (
+                    <div
+                      key={
+                        check.label
+                      }
+                      className="flex items-start gap-3 rounded-2xl bg-white/7 p-4"
+                    >
+                      <span
+                        className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          check.state ===
+                          "ok"
+                            ? "bg-[#DFF2E7] text-[#267247]"
+                            : "bg-[#FFF1D5] text-[#9A6B10]"
+                        }`}
+                      >
+                        {check.state ===
+                        "ok"
+                          ? "✓"
+                          : "!"}
+                      </span>
+
+                      <div>
+                        <p className="text-sm font-bold">
+                          {
+                            check.label
+                          }
+                        </p>
+
+                        <p className="mt-1 text-xs leading-6 text-white/55">
+                          {
+                            check.note
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+
+              <p className="mt-4 text-[11px] leading-6 text-white/45">
+                هذا فحص مساعد ولا يمثل
+                اعتماداً نهائياً للشريك
+                أو للمستندات.
+              </p>
             </div>
 
             <ReviewSection
-              title="البيانات البنكية"
+              title="الحساب والصفة"
               items={[
-                ["IBAN", data.iban],
-                ["البنك", data.bankName],
-                ["SWIFT", data.swift],
-                ["المستفيد", data.beneficiaryName],
+                [
+                  "الاسم",
+                  `${data.firstName} ${data.lastName}`,
+                ],
+                [
+                  "البريد",
+                  data.email,
+                ],
+                [
+                  "الجوال",
+                  data.phone,
+                ],
+                [
+                  "نوع مقدم الخدمة",
+                  partnerTypeLabel(
+                    data.partnerType
+                  ),
+                ],
+                [
+                  "صفة مقدم الطلب",
+                  data.applicantRole ===
+                  "owner"
+                    ? "مالك المنشأة"
+                    : data.applicantRole ===
+                        "representative"
+                      ? "ممثل مفوض"
+                      : "—",
+                ],
               ]}
             />
 
             <ReviewSection
-              title="جهات التواصل"
+              title="النشاط والخدمات"
               items={[
-                ["المسؤول المالي", data.financeName],
-                ["جوال المالية", data.financePhone],
-                ["مسؤول التشغيل", data.operationsName],
-                ["جوال التشغيل", data.operationsPhone],
+                [
+                  "الاسم التجاري",
+                  data.tradeName,
+                ],
+                [
+                  "المدينة",
+                  data.city,
+                ],
+                [
+                  "الحي",
+                  data.district,
+                ],
+                [
+                  "الشارع",
+                  data.street,
+                ],
+                [
+                  "العنوان الوطني المختصر",
+                  data.shortNationalAddress,
+                ],
+                [
+                  "مرفق العنوان الوطني",
+                  data.nationalAddressFile || "غير مرفق",
+                ],
+                [
+                  "رقم السجل / الوثيقة",
+                  data.registrationNumber,
+                ],
+                [
+                  "الخدمات",
+                  data.categories.join(
+                    "، "
+                  ),
+                ],
+              ]}
+            />
+
+            <ReviewSection
+              title="الوثائق والتشغيل"
+              items={[
+                [
+                  "عدد المستندات",
+                  String(
+                    documents.length
+                  ),
+                ],
+                [
+                  "التفويض",
+                  data.applicantRole ===
+                  "representative"
+                    ? data.authorizationFile ||
+                      "غير مرفق"
+                    : "غير مطلوب",
+                ],
+                [
+                  "التسوية عبر المنصة",
+                  data.receivesPayments
+                    ? "نعم"
+                    : "لا",
+                ],
+                [
+                  "التسجيل الضريبي",
+                  data.vatRegistered
+                    ? "نعم"
+                    : "لا",
+                ],
               ]}
             />
 
@@ -1613,22 +2461,27 @@ export default function PartnerOnboardingPage() {
               <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
-                  checked={data.declaration}
+                  checked={
+                    data.declaration
+                  }
                   onChange={(e) =>
-                    update("declaration", e.target.checked)
+                    update(
+                      "declaration",
+                      e.target.checked
+                    )
                   }
                   className="mt-1 h-4 w-4 accent-[#0D3B34]"
                 />
 
                 <span className="text-sm leading-7 text-[#0D3B34]/75">
-                  أؤكد أن لدي الصلاحية النظامية لتقديم هذا الطلب نيابةً
-                  عن المنشأة، وأن جميع البيانات والمعلومات والمستندات
-                  المقدمة صحيحة ودقيقة وكاملة حسب علمي. كما أتعهد بتحديث
-                  منصة Arees Loop بأي تغيير يطرأ على بيانات المنشأة أو
-                  التراخيص أو المعلومات الضريبية أو البنكية أو بيانات
-                  التواصل، وأوافق على التحقق من البيانات والمستندات
-                  المقدمة من الجهات والمصادر المعتمدة وفق الأنظمة
-                  والسياسات ذات الصلة.
+                  أقر بصحة ودقة
+                  البيانات والمستندات
+                  المقدمة وبأن لدي
+                  الصلاحية اللازمة
+                  لتقديم طلب الانضمام،
+                  وأتعهد بتحديث البيانات
+                  عند حدوث أي تغيير
+                  جوهري.
                 </span>
               </label>
             </div>
@@ -1637,52 +2490,108 @@ export default function PartnerOnboardingPage() {
               <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
-                  checked={data.termsAccepted}
+                  checked={
+                    data.termsAccepted
+                  }
                   onChange={(e) =>
-                    update("termsAccepted", e.target.checked)
+                    update(
+                      "termsAccepted",
+                      e.target.checked
+                    )
                   }
                   className="mt-1 h-4 w-4 accent-[#0D3B34]"
                 />
 
                 <span className="text-sm leading-7 text-[#0D3B34]/75">
-                  أوافق على شروط استخدام منصة Arees Loop وسياسة
-                  الخصوصية، وأقر بأن إرسال الطلب لا يعني تفعيل حساب
-                  الشريك أو اعتماد خدماته إلا بعد استكمال إجراءات
-                  التحقق والمراجعة والموافقة النهائية.
+                  أوافق على شروط
+                  استخدام Arees Loop
+                  وسياسة الخصوصية،
+                  وأفهم أن إرسال الطلب
+                  لا يعني اعتماد الشريك
+                  أو السماح بنشر الخدمات
+                  قبل استكمال المراجعة
+                  والتعاقد والتفعيل.
                 </span>
               </label>
             </div>
 
-            <div className="rounded-[22px] bg-[#0D3B34] p-5 text-white">
-              <p className="text-xs font-bold text-[#E5BE45]">
+            <div className="rounded-[24px] border border-[#0D3B34]/8 bg-[#EEF3F0] p-5">
+              <p className="font-bold">
                 ماذا يحدث بعد الإرسال؟
               </p>
 
-              <p className="mt-2 text-sm leading-7 text-white/65">
-                ينتقل الطلب إلى التدقيق. بعد الموافقة المبدئية تحدد
-                Arees Loop العمولة والرسوم التجارية وترسل الاتفاقية
-                الإلكترونية للشريك قبل الاعتماد النهائي.
+              <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                <MiniStatus
+                  number="01"
+                  label="تحت مراجعة أريس"
+                />
+
+                <MiniStatus
+                  number="02"
+                  label="مؤهل للتعاقد"
+                />
+
+                <MiniStatus
+                  number="03"
+                  label="العقد الإلكتروني"
+                />
+
+                <MiniStatus
+                  number="04"
+                  label="تفعيل الشريك"
+                />
+              </div>
+
+              <p className="mt-4 text-xs leading-6 text-[#0D3B34]/55">
+                إذا احتاج الطلب إلى
+                تعديل، ستظهر الحالة
+                «مطلوب استكمال» مع
+                الملاحظات المطلوبة.
+                بعد اجتياز المراجعة
+                ينتقل الشريك إلى العقد
+                الإلكتروني، ولا تفتح
+                صلاحيات إضافة ونشر
+                الخدمات قبل التفعيل.
               </p>
             </div>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-              <SecondaryButton label="العودة" onClick={back} />
+              <SecondaryButton
+                label="العودة"
+                onClick={goBack}
+              />
 
-              <button
-                type="button"
-                disabled={!data.declaration || !data.termsAccepted}
-                onClick={submitApplication}
-                className="rounded-2xl bg-[#D4AF37] px-7 py-4 text-sm font-bold text-[#0D3B34] transition disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                إرسال الطلب
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <SecondaryButton
+                  label={
+                    draftSaved
+                      ? "تم حفظ المسودة ✓"
+                      : "حفظ ومتابعة لاحقاً"
+                  }
+                  onClick={
+                    saveDraft
+                  }
+                />
+
+                <button
+                  type="button"
+                  disabled={
+                    !canSubmit
+                  }
+                  onClick={
+                    submitApplication
+                  }
+                  className="rounded-2xl bg-[#D4AF37] px-7 py-4 text-sm font-bold text-[#0D3B34] transition disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  إرسال طلب الاعتماد
+                </button>
+              </div>
             </div>
           </StepCard>
         )}
-
-        {currentStep === "done" && (
-          <div className="mx-auto max-w-[720px] rounded-[34px] border border-white/80 bg-white/74 p-8 text-center backdrop-blur-xl md:p-12">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E8F4EE] text-3xl">
+                {currentStep === "done" && (
+          <div className="mx-auto max-w-[760px] rounded-[34px] border border-white/80 bg-white/75 p-8 text-center shadow-[0_20px_70px_rgba(13,59,52,0.05)] backdrop-blur-xl md:p-12">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E8F4EE] text-3xl font-bold text-[#267247]">
               ✓
             </div>
 
@@ -1693,51 +2602,94 @@ export default function PartnerOnboardingPage() {
             <h1
               className="mt-3 text-3xl font-bold md:text-[40px]"
               style={{
-                fontFamily: "var(--font-el-messiri), serif",
+                fontFamily:
+                  "var(--font-el-messiri), serif",
               }}
             >
-              تم استلام طلبك
+              تم استلام طلب الاعتماد
             </h1>
 
             <p className="mx-auto mt-4 max-w-xl text-sm leading-8 text-[#0D3B34]/60">
               تم إرسال طلب انضمام{" "}
-              <strong>{data.tradeName || data.publicName}</strong> إلى
-              Arees Loop للمراجعة والتدقيق.
+              <strong>
+                {data.tradeName ||
+                  data.publicName ||
+                  "الشريك"}
+              </strong>{" "}
+              إلى Arees Loop للمراجعة.
+              لا يعتبر حساب الشريك
+              مفعلاً في هذه المرحلة.
             </p>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <StatusCard
+            <div className="mt-8 grid gap-3 sm:grid-cols-4">
+              <MiniStatus
                 number="01"
-                label="تم استلام الطلب"
+                label="تم الاستلام"
                 active
               />
 
-              <StatusCard
+              <MiniStatus
                 number="02"
-                label="التدقيق والمراجعة"
+                label="مراجعة أريس"
               />
 
-              <StatusCard
+              <MiniStatus
                 number="03"
-                label="العرض والاتفاقية"
+                label="العقد"
+              />
+
+              <MiniStatus
+                number="04"
+                label="التفعيل"
               />
             </div>
 
-            <div className="mt-8 rounded-[22px] bg-[#F6F3EC] p-5">
+            <div className="mt-7 rounded-[22px] border border-[#D4AF37]/20 bg-[#FFF9E8] p-5 text-right">
+              <p className="font-bold">
+                مسار اعتماد الشريك
+              </p>
+
+              <p className="mt-2 text-xs leading-7 text-[#0D3B34]/60">
+                تحت المراجعة ← مطلوب
+                استكمال عند وجود ملاحظات
+                ← مؤهل للتعاقد ← العقد
+                الإلكتروني ← توقيع الشريك
+                ← اعتماد أريس ← شريك مفعّل.
+              </p>
+            </div>
+
+            <div className="mt-5 rounded-[22px] bg-[#F6F3EC] p-5">
               <p className="text-xs text-[#0D3B34]/45">
                 رقم الطلب التجريبي
               </p>
 
-              <p className="mt-2 font-bold tracking-[0.12em]" dir="ltr">
+              <p
+                className="mt-2 font-bold tracking-[0.12em]"
+                dir="ltr"
+              >
                 AL-P-2026-00001
               </p>
             </div>
 
+            <div className="mt-5 rounded-[22px] border border-[#0D3B34]/8 bg-[#EEF3F0] p-5 text-right">
+              <p className="text-sm font-bold">
+                قبل تفعيل الحساب
+              </p>
+
+              <p className="mt-2 text-xs leading-7 text-[#0D3B34]/60">
+                لا يمكن للشريك إضافة
+                خدمات للسوق أو نشرها قبل
+                اكتمال المراجعة والعقد
+                الإلكتروني واعتماد أريس
+                وتفعيل حساب الشريك.
+              </p>
+            </div>
+
             <Link
-              href="/"
+              href="/partner/status"
               className="mt-7 inline-flex rounded-2xl bg-[#0D3B34] px-6 py-3.5 text-sm font-bold text-white"
             >
-              العودة إلى Arees Loop
+              متابعة حالة الطلب
             </Link>
           </div>
         )}
@@ -1746,8 +2698,39 @@ export default function PartnerOnboardingPage() {
   );
 }
 
+function partnerTypeLabel(
+  value: PartnerType
+) {
+  if (value === "individual") {
+    return "فرد";
+  }
+
+  if (value === "business") {
+    return "مؤسسة أو شركة";
+  }
+
+  if (value === "government") {
+    return "جهة حكومية أو غير ربحية";
+  }
+
+  return "—";
+}
+
 const inputClass =
   "h-14 w-full rounded-2xl border border-[#0D3B34]/10 bg-[#F9F8F4] px-4 text-sm text-[#0D3B34] outline-none transition placeholder:text-[#0D3B34]/30 focus:border-[#D4AF37]/65 focus:bg-white";
+
+const errorInputClass =
+  "border-[#C83B3B] bg-[#FFF8F8] focus:border-[#C83B3B]";
+
+function ValidationError({ message }: { message?: string }) {
+  if (!message) return null;
+
+  return (
+    <p className="mt-2 text-xs font-semibold text-[#B42318]">
+      {message}
+    </p>
+  );
+}
 
 function StepCard({
   eyebrow,
@@ -1761,7 +2744,7 @@ function StepCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[34px] border border-white/80 bg-white/72 p-6 backdrop-blur-xl md:p-9">
+    <section className="rounded-[34px] border border-white/80 bg-white/75 p-6 shadow-[0_20px_70px_rgba(13,59,52,0.05)] backdrop-blur-xl md:p-9">
       <div className="mb-8">
         <p className="text-[10px] font-bold tracking-[0.2em] text-[#B99124]">
           {eyebrow}
@@ -1770,7 +2753,8 @@ function StepCard({
         <h1
           className="mt-2 text-3xl font-bold md:text-[38px]"
           style={{
-            fontFamily: "var(--font-el-messiri), serif",
+            fontFamily:
+              "var(--font-el-messiri), serif",
           }}
         >
           {title}
@@ -1781,7 +2765,9 @@ function StepCard({
         </p>
       </div>
 
-      <div className="space-y-5">{children}</div>
+      <div className="space-y-5">
+        {children}
+      </div>
     </section>
   );
 }
@@ -1804,65 +2790,53 @@ function Field({
   );
 }
 
-function PrimaryButton({
-  label,
+function SelectCard({
+  title,
+  description,
+  active,
   onClick,
 }: {
-  label: string;
+  title: string;
+  description: string;
+  active: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-2xl bg-[#0D3B34] px-6 py-4 text-sm font-bold text-white"
+      className={`flex min-h-[94px] w-full items-start justify-between gap-4 rounded-[22px] border p-5 text-right transition ${
+        active
+          ? "border-[#D4AF37] bg-[#0D3B34] text-white shadow-[0_10px_30px_rgba(13,59,52,0.10)]"
+          : "border-[#0D3B34]/10 bg-[#FAF9F5] hover:border-[#D4AF37]/50"
+      }`}
     >
-      {label}
-    </button>
-  );
-}
+      <div>
+        <p className="font-bold">
+          {title}
+        </p>
 
-function SecondaryButton({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-2xl border border-[#0D3B34]/10 bg-white px-6 py-3.5 text-sm font-bold text-[#0D3B34]/70"
-    >
-      {label}
-    </button>
-  );
-}
-
-function StepActions({
-  onBack,
-  onNext,
-  hideNext = false,
-}: {
-  onBack: () => void;
-  onNext?: () => void;
-  hideNext?: boolean;
-}) {
-  return (
-    <div className="flex flex-col-reverse gap-3 border-t border-[#0D3B34]/7 pt-5 sm:flex-row sm:justify-between">
-      <SecondaryButton label="العودة" onClick={onBack} />
-
-      {!hideNext && onNext && (
-        <button
-          type="button"
-          onClick={onNext}
-          className="rounded-2xl bg-[#0D3B34] px-7 py-3.5 text-sm font-bold text-white"
+        <p
+          className={`mt-1 text-xs leading-6 ${
+            active
+              ? "text-white/55"
+              : "text-[#0D3B34]/48"
+          }`}
         >
-          متابعة
-        </button>
-      )}
-    </div>
+          {description}
+        </p>
+      </div>
+
+      <span
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+          active
+            ? "bg-[#D4AF37] text-[#0D3B34]"
+            : "bg-[#0D3B34]/6 text-transparent"
+        }`}
+      >
+        ✓
+      </span>
+    </button>
   );
 }
 
@@ -1878,206 +2852,126 @@ function InfoBox({
   );
 }
 
-function VerifiedSummary({
-  email,
-  phone,
+function AiHint({
+  title,
+  text,
 }: {
-  email: string;
-  phone: string;
+  title: string;
+  text: string;
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <div className="rounded-2xl bg-[#EDF5F1] p-4">
-        <p className="text-[10px] text-[#0D3B34]/45">
-          البريد الموثق
-        </p>
+    <div className="rounded-[22px] border border-[#0D3B34]/8 bg-[#EEF3F0] p-4">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0D3B34] text-xs font-bold text-[#E5BE45]">
+          AI
+        </span>
 
-        <p className="mt-1 break-all text-sm font-semibold">
-          {email}
-        </p>
-      </div>
+        <div>
+          <p className="text-sm font-bold">
+            {title}
+          </p>
 
-      <div className="rounded-2xl bg-[#EDF5F1] p-4">
-        <p className="text-[10px] text-[#0D3B34]/45">
-          الجوال الموثق
-        </p>
-
-        <p className="mt-1 text-sm font-semibold" dir="ltr">
-          {phone}
-        </p>
+          <p className="mt-1 text-xs leading-6 text-[#0D3B34]/55">
+            {text}
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
-function ChoiceCard({
+function Requirement({
   title,
-  description,
-  checked,
-  onClick,
+  text,
+  important = false,
 }: {
   title: string;
-  description: string;
-  checked: boolean;
+  text: string;
+  important?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[20px] border p-4 ${
+        important
+          ? "border-[#D4AF37]/35 bg-[#FFF8E4]"
+          : "border-[#0D3B34]/8 bg-[#FAF9F5]"
+      }`}
+    >
+      <p className="text-sm font-bold">
+        {important
+          ? "مطلوب — "
+          : ""}
+        {title}
+      </p>
+
+      <p className="mt-1 text-xs leading-6 text-[#0D3B34]/55">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function Actions({
+  onBack,
+  onNext,
+  onSave,
+  first = false,
+  saved = false,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  onSave: () => void;
+  first?: boolean;
+  saved?: boolean;
+}) {
+  return (
+    <div className="flex flex-col-reverse gap-3 border-t border-[#0D3B34]/7 pt-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        {!first && (
+          <SecondaryButton
+            label="العودة"
+            onClick={onBack}
+          />
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <SecondaryButton
+          label={
+            saved
+              ? "تم حفظ المسودة ✓"
+              : "حفظ ومتابعة لاحقاً"
+          }
+          onClick={onSave}
+        />
+
+        <button
+          type="button"
+          onClick={onNext}
+          className="rounded-2xl bg-[#0D3B34] px-7 py-3.5 text-sm font-bold text-white transition hover:opacity-95"
+        >
+          متابعة
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SecondaryButton({
+  label,
+  onClick,
+}: {
+  label: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center justify-between gap-4 rounded-[22px] border p-5 text-right transition ${
-        checked
-          ? "border-[#0D3B34] bg-[#F0F5F2]"
-          : "border-[#0D3B34]/10 bg-[#FAF9F5]"
-      }`}
+      className="rounded-2xl border border-[#0D3B34]/10 bg-white px-6 py-3.5 text-sm font-bold text-[#0D3B34]/70 transition hover:border-[#D4AF37]/50"
     >
-      <div>
-        <p className="font-bold">{title}</p>
-
-        <p className="mt-1 text-xs leading-6 text-[#0D3B34]/48">
-          {description}
-        </p>
-      </div>
-
-      <div
-        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${
-          checked
-            ? "bg-[#0D3B34] text-white"
-            : "bg-[#0D3B34]/7 text-transparent"
-        }`}
-      >
-        ✓
-      </div>
+      {label}
     </button>
-  );
-}
-
-function ReadOnlyValue({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-[#0D3B34]/7 bg-white px-4 py-3">
-      <p className="text-[10px] text-[#0D3B34]/42">
-        {label}
-      </p>
-
-      <p className="mt-1 break-words text-sm font-semibold text-[#0D3B34]/75">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function ContactSection({
-  title,
-  name,
-  titleValue,
-  email,
-  phone,
-  onName,
-  onTitle,
-  onEmail,
-  onPhone,
-}: {
-  title: string;
-  name: string;
-  titleValue: string;
-  email: string;
-  phone: string;
-  onName: (value: string) => void;
-  onTitle: (value: string) => void;
-  onEmail: (value: string) => void;
-  onPhone: (value: string) => void;
-}) {
-  return (
-    <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
-      <h3 className="mb-5 text-base font-bold">
-        {title}
-      </h3>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="الاسم">
-          <input
-            value={name}
-            onChange={(e) => onName(e.target.value)}
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label="المسمى الوظيفي">
-          <input
-            value={titleValue}
-            onChange={(e) => onTitle(e.target.value)}
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label="البريد الإلكتروني">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => onEmail(e.target.value)}
-            className={inputClass}
-            dir="ltr"
-          />
-        </Field>
-
-        <Field label="رقم الجوال">
-          <input
-            value={phone}
-            onChange={(e) => onPhone(e.target.value)}
-            className={inputClass}
-            dir="ltr"
-          />
-        </Field>
-      </div>
-    </div>
-  );
-}
-
-function DataVisibilityCard({
-  title,
-  items,
-  positive = false,
-}: {
-  title: string;
-  items: string[];
-  positive?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-[20px] border p-4 ${
-        positive
-          ? "border-[#267247]/12 bg-[#EAF5EE]"
-          : "border-[#A16628]/12 bg-[#FFF6E8]"
-      }`}
-    >
-      <p
-        className={`text-sm font-bold ${
-          positive ? "text-[#267247]" : "text-[#8A5F25]"
-        }`}
-      >
-        {title}
-      </p>
-
-      <div className="mt-3 space-y-2">
-        {items.map((item) => (
-          <div
-            key={item}
-            className="flex items-center gap-2 text-xs"
-          >
-            <span>{positive ? "✓" : "•"}</span>
-            <span className="text-[#0D3B34]/65">
-              {item}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -2095,29 +2989,36 @@ function ReviewSection({
     >
       <summary className="cursor-pointer list-none px-5 py-4">
         <div className="flex items-center justify-between">
-          <span className="font-bold">{title}</span>
-          <span className="text-[#B99124]">⌄</span>
+          <span className="font-bold">
+            {title}
+          </span>
+
+          <span className="text-[#B99124]">
+            ⌄
+          </span>
         </div>
       </summary>
 
       <div className="grid gap-3 border-t border-[#0D3B34]/7 px-5 py-4 md:grid-cols-2">
-        {items.map(([label, value]) => (
-          <div key={label}>
-            <p className="text-[10px] text-[#0D3B34]/42">
-              {label}
-            </p>
+        {items.map(
+          ([label, value]) => (
+            <div key={label}>
+              <p className="text-[10px] text-[#0D3B34]/42">
+                {label}
+              </p>
 
-            <p className="mt-1 break-words text-sm font-semibold text-[#0D3B34]/75">
-              {value || "—"}
-            </p>
-          </div>
-        ))}
+              <p className="mt-1 break-words text-sm font-semibold text-[#0D3B34]/75">
+                {value || "—"}
+              </p>
+            </div>
+          )
+        )}
       </div>
     </details>
   );
 }
 
-function StatusCard({
+function MiniStatus({
   number,
   label,
   active = false,
@@ -2128,14 +3029,14 @@ function StatusCard({
 }) {
   return (
     <div
-      className={`rounded-[20px] border p-4 ${
+      className={`rounded-[18px] border p-3 ${
         active
-          ? "border-[#D4AF37]/35 bg-[#FFF8E4]"
-          : "border-[#0D3B34]/7 bg-[#F8F7F3]"
+          ? "border-[#D4AF37]/40 bg-[#FFF8E4]"
+          : "border-[#0D3B34]/7 bg-white/65"
       }`}
     >
       <p
-        className={`text-[10px] font-bold ${
+        className={`text-[9px] font-bold ${
           active
             ? "text-[#B99124]"
             : "text-[#0D3B34]/35"
@@ -2144,9 +3045,14 @@ function StatusCard({
         {number}
       </p>
 
-      <p className="mt-2 text-xs font-bold">
+      <p className="mt-1 text-[11px] font-bold">
         {label}
       </p>
     </div>
   );
 }
+
+
+
+
+
