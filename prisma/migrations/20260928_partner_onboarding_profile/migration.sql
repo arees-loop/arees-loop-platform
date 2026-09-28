@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "PartnerType" AS ENUM ('INDIVIDUAL', 'BUSINESS', 'GOVERNMENT_NONPROFIT');
 
 -- CreateEnum
