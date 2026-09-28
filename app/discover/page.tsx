@@ -1197,7 +1197,7 @@ function DiscoverContent() {
       </div>
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-3 left-1/2 z-50 flex w-[calc(100%-24px)] max-w-md -translate-x-1/2 items-center justify-around rounded-[20px] border border-white/80 bg-white/85 px-2 py-2 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
+     <nav className="fixed bottom-3 left-1/2 z-50 flex w-[calc(100%-24px)] max-w-md -translate-x-1/2 items-center justify-end gap-3 rounded-[20px] border border-white/80 bg-white/85 py-2 pl-[118px] pr-3 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
         <MobileNavItem
           href="/discover"
           icon={<CompassIcon />}
