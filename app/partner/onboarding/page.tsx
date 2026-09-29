@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -891,8 +891,80 @@ export default function PartnerOnboardingPage() {
         item.state === "warn"
     );
 
-  const submitApplication = () => {
-    if (!canSubmit) return;
+  const submitApplication = async () => {
+  if (!canSubmit) return;
+
+  try {
+    const response = await fetch("/api/partner/application", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        legalNameAr: data.legalName,
+        tradeNameAr: data.tradeName,
+
+        partnerType: data.partnerType,
+        applicantRole: data.applicantRole,
+        applicantJobTitle: data.jobTitle,
+
+        unifiedNumber: data.unifiedNumber,
+        commercialRegister: data.registrationNumber,
+        proofType: data.proofType,
+        descriptionAr: data.description,
+
+        vatRegistered: data.vatRegistered,
+        vatNumber: data.vatNumber,
+
+        websiteUrl: data.website,
+
+        country: data.country,
+        city: data.city,
+        address: [
+          data.district,
+          data.street,
+          data.shortNationalAddress,
+        ]
+          .filter(Boolean)
+          .join(" - "),
+
+        businessPhone: data.businessPhone,
+        businessEmail: data.businessEmail,
+
+        mainContactName: data.contactName,
+        mainContactEmail: data.contactEmail,
+        mainContactPhone: data.contactPhone,
+        mainContactJobTitle: data.jobTitle,
+
+        operates24h: data.operates24h,
+        operatingHours: data.operatingHours,
+
+        receivesPayments: data.receivesPayments,
+        iban: data.iban,
+        beneficiaryName: data.beneficiaryName,
+
+        publicName: data.publicName,
+
+        categories: data.categories,
+
+        licenses: documents.map((document) => ({
+          type: document.type,
+          issuer: document.issuer,
+          licenseNumber: document.number,
+          issueDate: document.issueDate || null,
+          expiryDate: document.expiryDate || null,
+        })),
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      window.alert(
+        result.message || "تعذر إرسال طلب الشراكة."
+      );
+      return;
+    }
 
     setCurrentStep("done");
 
@@ -900,7 +972,17 @@ export default function PartnerOnboardingPage() {
       top: 0,
       behavior: "smooth",
     });
-  };
+  } catch (error) {
+    console.error(
+      "Partner application submission failed:",
+      error
+    );
+
+    window.alert(
+      "تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى."
+    );
+  }
+};
 
   return (
     <main
