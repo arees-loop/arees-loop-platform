@@ -69,6 +69,14 @@ enum PartnerStatus {
   REJECTED
 }
 
+enum PartnerChangeRequestStatus {
+  PENDING
+  NEEDS_INFO
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum PartnerDocumentType {
   IDENTITY
   BUSINESS_PROOF
@@ -318,10 +326,38 @@ model Partner {
   invoices    Invoice[]
   settlements Settlement[]
   agreements  Agreement[]
+  changeRequests PartnerChangeRequest[]
 
   @@index([status])
   @@index([partnerType])
   @@index([city])
+}
+
+model PartnerChangeRequest {
+  id String @id @default(cuid())
+
+  partnerId String
+  requestedByUserId String?
+
+  changes Json
+  reason  String?
+
+  status PartnerChangeRequestStatus @default(PENDING)
+  adminNotes String?
+
+  submittedAt DateTime @default(now())
+  reviewedAt  DateTime?
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([status])
+  @@index([submittedAt])
 }
 
 model PartnerCategory {
