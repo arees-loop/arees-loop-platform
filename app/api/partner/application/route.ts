@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 import { getCurrentSession } from "@/lib/session";
+import { runPartnerApplicationWorkflow } from "@/lib/partners/application-workflow";
 
 
 
@@ -845,11 +846,11 @@ export async function POST(request: NextRequest) {
 
 
 
-          status: "UNDER_REVIEW",
+          status: "SUBMITTED",
 
           submittedAt: new Date(),
 
-          reviewedAt: new Date(),
+          reviewedAt: null,
 
 
 
@@ -937,7 +938,7 @@ export async function POST(request: NextRequest) {
 
           afterData: {
 
-            status: "UNDER_REVIEW",
+            status: "SUBMITTED",
 
             legalNameAr,
 
@@ -954,7 +955,16 @@ export async function POST(request: NextRequest) {
       return createdPartner;
 
     });
-
+    runPartnerApplicationWorkflow({
+      partnerId: partner.id,
+      legalNameAr: partner.legalNameAr,
+      tradeNameAr: partner.tradeNameAr,
+      partnerEmail: session.user.email,
+      status: partner.status,
+      nextAction: "سيبدأ تدقيق الطلب ومراجعته، وسيتم إشعاركم بأي تحديث.",
+    }).catch((error) => {
+      console.error("Partner application workflow failed:", error);
+    });
 
 
     return NextResponse.json(
