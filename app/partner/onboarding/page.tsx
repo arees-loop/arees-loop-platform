@@ -231,6 +231,20 @@ export default function PartnerOnboardingPage() {
   const [data, setData] =
     useState<FormData>(initialData);
 
+  const [uploadedFiles, setUploadedFiles] = useState<{
+    authorization: File | null;
+    nationalAddress: File | null;
+    ibanCertificate: File | null;
+    vatCertificate: File | null;
+    documents: Record<number, File>;
+  }>({
+    authorization: null,
+    nationalAddress: null,
+    ibanCertificate: null,
+    vatCertificate: null,
+    documents: {},
+  });
+
   const [documents, setDocuments] =
     useState<DocumentItem[]>([
       {
@@ -966,6 +980,107 @@ export default function PartnerOnboardingPage() {
       return;
     }
 
+    const filesToUpload: Array<{
+      file: File;
+      type: string;
+      label: string;
+    }> = [];
+
+    if (uploadedFiles.authorization) {
+      filesToUpload.push({
+        file: uploadedFiles.authorization,
+        type: "AUTHORIZATION",
+        label: "تفويض ممثل المنشأة",
+      });
+    }
+
+    if (uploadedFiles.nationalAddress) {
+      filesToUpload.push({
+        file: uploadedFiles.nationalAddress,
+        type: "BUSINESS_PROOF",
+        label: "إثبات العنوان الوطني",
+      });
+    }
+
+    if (uploadedFiles.ibanCertificate) {
+      filesToUpload.push({
+        file: uploadedFiles.ibanCertificate,
+        type: "IBAN_CERTIFICATE",
+        label: "شهادة IBAN / خطاب البنك",
+      });
+    }
+
+    if (uploadedFiles.vatCertificate) {
+      filesToUpload.push({
+        file: uploadedFiles.vatCertificate,
+        type: "VAT_CERTIFICATE",
+        label: "شهادة التسجيل الضريبي",
+      });
+    }
+
+    for (const document of documents) {
+      const file = uploadedFiles.documents[document.id];
+
+      if (file) {
+        const documentLabel = document.type.trim();
+        const normalizedLabel = documentLabel.toLowerCase();
+
+        let uploadType = "OTHER";
+
+        if (
+          normalizedLabel.includes("سجل تجاري") ||
+          normalizedLabel.includes("السجل التجاري") ||
+          normalizedLabel.includes("commercial register") ||
+          normalizedLabel.includes("commercial registration")
+        ) {
+          uploadType = "COMMERCIAL_REGISTER";
+        } else if (
+          normalizedLabel.includes("إثبات منشأة") ||
+          normalizedLabel.includes("وثيقة المنشأة")
+        ) {
+          uploadType = "BUSINESS_PROOF";
+        }
+
+        filesToUpload.push({
+          file,
+          type: uploadType,
+          label: documentLabel || "مستند / ترخيص",
+        });
+      }
+    }
+
+    for (const item of filesToUpload) {
+      const uploadData = new FormData();
+
+      uploadData.append("file", item.file);
+      uploadData.append("type", item.type);
+      uploadData.append("label", item.label);
+
+      const uploadResponse = await fetch(
+        "/api/partner/documents/upload",
+        {
+          method: "POST",
+          body: uploadData,
+        }
+      );
+
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        console.error(
+          "Partner document upload failed:",
+          uploadResult
+        );
+
+        window.alert(
+          uploadResult.message ||
+            "تم إنشاء طلب الشراكة، لكن تعذر رفع أحد المستندات."
+        );
+
+        return;
+      }
+    }
+
     setCurrentStep("done");
 
     window.scrollTo({
@@ -1414,12 +1529,14 @@ export default function PartnerOnboardingPage() {
                         onChange={(
                           e
                         ) =>
-                          update(
-                            "authorizationFile",
-                            e.target
-                              .files?.[0]
-                              ?.name || ""
-                          )
+                          {
+                            const file = e.target.files?.[0] ?? null;
+                            update("authorizationFile", file?.name || "");
+                            setUploadedFiles((current) => ({
+                              ...current,
+                              authorization: file,
+                            }));
+                          }
                         }
                         className={`${inputClass} ${validationErrors.authorizationFile ? errorInputClass : ""}`}
                       />
@@ -1615,7 +1732,14 @@ export default function PartnerOnboardingPage() {
                   <input
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) => update("nationalAddressFile", e.target.files?.[0]?.name || "")}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      update("nationalAddressFile", file?.name || "");
+                      setUploadedFiles((current) => ({
+                        ...current,
+                        nationalAddress: file,
+                      }));
+                    }}
                     className={`${inputClass} ${validationErrors.nationalAddressFile ? errorInputClass : ""}`}
                   />
                 </Field>
@@ -2001,14 +2125,30 @@ export default function PartnerOnboardingPage() {
                           onChange={(
                             e
                           ) =>
-                            updateDocument(
-                              document.id,
-                              "fileName",
-                              e.target
-                                .files?.[0]
-                                ?.name ||
-                                ""
-                            )
+                            {
+                              const file = e.target.files?.[0] ?? null;
+                              updateDocument(
+                                document.id,
+                                "fileName",
+                                file?.name || ""
+                              );
+                              setUploadedFiles((current) => {
+                                const nextDocuments = {
+                                  ...current.documents,
+                                };
+
+                                if (file) {
+                                  nextDocuments[document.id] = file;
+                                } else {
+                                  delete nextDocuments[document.id];
+                                }
+
+                                return {
+                                  ...current,
+                                  documents: nextDocuments,
+                                };
+                              });
+                            }
                           }
                           className={
                             inputClass
@@ -2228,12 +2368,14 @@ export default function PartnerOnboardingPage() {
                       type="file"
                       accept=".pdf,.png,.jpg,.jpeg"
                       onChange={(e) =>
-                        update(
-                          "ibanCertificate",
-                          e.target
-                            .files?.[0]
-                            ?.name || ""
-                        )
+                        {
+                          const file = e.target.files?.[0] ?? null;
+                          update("ibanCertificate", file?.name || "");
+                          setUploadedFiles((current) => ({
+                            ...current,
+                            ibanCertificate: file,
+                          }));
+                        }
                       }
                       className={
                         inputClass
@@ -2286,12 +2428,14 @@ export default function PartnerOnboardingPage() {
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
                     onChange={(e) =>
-                      update(
-                        "vatCertificate",
-                        e.target
-                          .files?.[0]
-                          ?.name || ""
-                      )
+                      {
+                        const file = e.target.files?.[0] ?? null;
+                        update("vatCertificate", file?.name || "");
+                        setUploadedFiles((current) => ({
+                          ...current,
+                          vatCertificate: file,
+                        }));
+                      }
                     }
                     className={
                       inputClass
@@ -3133,6 +3277,10 @@ function MiniStatus({
     </div>
   );
 }
+
+
+
+
 
 
 
