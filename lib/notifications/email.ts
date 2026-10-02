@@ -13,14 +13,19 @@ export type EmailDeliveryResult =
 
 function getEmailConfig() {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.RESEND_FROM_EMAIL?.trim();
+  const from =
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    process.env.EMAIL_FROM?.trim();
 
   if (!apiKey) {
     return { ok: false as const, reason: "RESEND_API_KEY_NOT_CONFIGURED" };
   }
 
   if (!from) {
-    return { ok: false as const, reason: "RESEND_FROM_EMAIL_NOT_CONFIGURED" };
+    return {
+      ok: false as const,
+      reason: "RESEND_FROM_EMAIL_OR_EMAIL_FROM_NOT_CONFIGURED",
+    };
   }
 
   return { ok: true as const, apiKey, from };
