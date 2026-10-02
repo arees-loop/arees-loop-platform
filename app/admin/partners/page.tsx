@@ -18,8 +18,6 @@ type PartnerStatus =
 
   | "NEEDS_INFO"
 
-  | "PRE_APPROVED"
-
   | "AWAITING_PARTNER_ACCEPTANCE"
 
   | "PARTNER_ACCEPTED"
@@ -140,13 +138,14 @@ function normalizeStatus(status?: string | null): PartnerStatus {
   switch (status) {
     case "SUBMITTED":
     case "UNDER_REVIEW":
-    case "PRE_APPROVED":
     case "ACTIVE":
     case "REJECTED":
       return status;
     case "NEEDS_COMPLETION":
     case "NEEDS_INFO":
       return "NEEDS_INFO";
+    case "PRE_APPROVED":
+      return "UNDER_REVIEW";
     case "WAITING_AGREEMENT":
     case "AWAITING_PARTNER_ACCEPTANCE":
       return "AWAITING_PARTNER_ACCEPTANCE";
@@ -248,14 +247,6 @@ const statusConfig: Record<
 
   },
 
-  PRE_APPROVED: {
-
-    label: "موافقة مبدئية",
-
-    className: "bg-[#E8F2FF] text-[#265D91]",
-
-  },
-
   AWAITING_PARTNER_ACCEPTANCE: {
 
     label: "بانتظار موافقة الشريك",
@@ -311,6 +302,7 @@ export default function AdminPartnersPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
 
   const [search, setSearch] = useState("");
 
@@ -466,17 +458,78 @@ export default function AdminPartnersPage() {
 
 
 
-  const sendCommercialTerms = () => {
+  const runAdminDecision = async (
+    action:
+      | "REQUEST_COMPLETION"
+      | "SEND_AGREEMENT"
+      | "REJECT"
+      | "ACTIVATE",
+    options?: {
+      notes?: string;
+      commissionRate?: number;
+    }
+  ) => {
+    if (!selectedPartner || adminActionLoading) return;
 
-    updateSelected({
+    setAdminActionLoading(true);
 
-      status: "AWAITING_PARTNER_ACCEPTANCE",
+    try {
+      const response = await fetch(
+        `/api/admin/partners/${selectedPartner.id}/decision`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action,
+            notes: options?.notes,
+            commissionRate:
+              options?.commissionRate,
+          }),
+        }
+      );
 
-    });
+      const payload = await response.json();
 
+      if (!response.ok || !payload.success) {
+        throw new Error(
+          payload.message || "تعذر تنفيذ الإجراء."
+        );
+      }
+
+      const mappedStatus = normalizeStatus(
+        payload.data?.status
+      );
+
+      updateSelected({
+        status: mappedStatus,
+        completionRequest:
+          payload.data?.completionNotes || undefined,
+        commission:
+          Number(payload.data?.commissionRate) ||
+          selectedPartner.commission,
+      });
+
+      return payload;
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "تعذر تنفيذ الإجراء."
+      );
+      return null;
+    } finally {
+      setAdminActionLoading(false);
+    }
   };
 
-
+  const sendCommercialTerms = async () => {
+    await runAdminDecision("SEND_AGREEMENT", {
+      commissionRate:
+        selectedPartner?.commission || 10,
+    });
+  };
 
   const requestMoreInfo = () => {
 
@@ -490,13 +543,18 @@ export default function AdminPartnersPage() {
 
 
 
-  const confirmRequestMoreInfo = () => {
+  const confirmRequestMoreInfo = async () => {
 
     const note = completionNote.trim();
 
     if (!note) return;
 
-    updateSelected({ status: "NEEDS_INFO", completionRequest: note });
+    const result = await runAdminDecision(
+      "REQUEST_COMPLETION",
+      { notes: note }
+    );
+
+    if (!result) return;
 
     setShowCompletionModal(false);
 
@@ -588,26 +646,22 @@ export default function AdminPartnersPage() {
 
 
 
-  const preApprove = () => {
+  const rejectPartner = async () => {
+    if (!selectedPartner) return;
 
-    updateSelected({
+    const reason = window.prompt(
+      "اكتب سبب رفض طلب الشريك:"
+    )?.trim();
 
-      status: "PRE_APPROVED",
+    if (!reason) return;
 
+    await runAdminDecision("REJECT", {
+      notes: reason,
     });
-
   };
 
-
-
-  const finalApprove = () => {
-
-    updateSelected({
-
-      status: "ACTIVE",
-
-    });
-
+  const finalApprove = async () => {
+    await runAdminDecision("ACTIVATE");
   };
 
 
@@ -956,8 +1010,6 @@ export default function AdminPartnersPage() {
                 <option value="UNDER_REVIEW">تحت التدقيق</option>
 
                 <option value="NEEDS_INFO">مطلوب استكمال</option>
-
-                <option value="PRE_APPROVED">موافقة مبدئية</option>
 
                 <option value="AWAITING_PARTNER_ACCEPTANCE">
 
@@ -1603,9 +1655,7 @@ export default function AdminPartnersPage() {
 
                 <p className="mt-2 text-xs leading-6 text-white/55">
 
-                  بيانات الطلبات محمّلة من قاعدة البيانات الحقيقية. إجراءات الاعتماد أدناه
-
-                  ما زالت محلية في الواجهة إلى حين ربط مسارات التحديث الإدارية.
+                  قرارات الإدارة مرتبطة مباشرة بقاعدة البيانات وإشعارات الشريك. تقرير AI يساعد في التدقيق ولا يتخذ قرار الاعتماد النهائي.
 
                 </p>
 
@@ -1627,11 +1677,11 @@ export default function AdminPartnersPage() {
 
                   <ActionButton
 
-                    onClick={preApprove}
+                    onClick={sendCommercialTerms}
 
-                    label="موافقة مبدئية"
+                    label="إرسال الاتفاقية"
 
-                    secondary
+                    gold
 
                   />
 
@@ -1639,11 +1689,11 @@ export default function AdminPartnersPage() {
 
                   <ActionButton
 
-                    onClick={sendCommercialTerms}
+                    onClick={rejectPartner}
 
-                    label="إرسال الشروط والعقد"
+                    label="رفض الطلب"
 
-                    gold
+                    secondary
 
                   />
 
@@ -1658,6 +1708,12 @@ export default function AdminPartnersPage() {
                   />
 
                 </div>
+
+                {adminActionLoading && (
+                  <p className="mt-3 text-xs text-white/55">
+                    جارٍ تنفيذ الإجراء وتحديث الطلب...
+                  </p>
+                )}
 
 
 
