@@ -319,6 +319,7 @@ export default function PartnerOnboardingPage() {
   const [contactPhoneOtpError, setContactPhoneOtpError] = useState("");
   const [aiReviewResult, setAiReviewResult] =
     useState<AiReviewClientResult | null>(null);
+  const [applicationId, setApplicationId] = useState("");
 
   const activeIndex = useMemo(
     () =>
@@ -1317,6 +1318,10 @@ export default function PartnerOnboardingPage() {
         result.message || "تعذر إرسال طلب الشراكة."
       );
       return;
+    }
+
+    if (result?.application?.id) {
+      setApplicationId(String(result.application.id));
     }
 
     const filesToUpload: Array<{
@@ -3283,7 +3288,7 @@ export default function PartnerOnboardingPage() {
             </div>
 
             <p className="mt-7 text-[10px] font-bold tracking-[0.22em] text-[#B99124]">
-              APPLICATION SUBMITTED
+              AI REVIEW COMPLETED
             </p>
 
             <h1
@@ -3293,19 +3298,19 @@ export default function PartnerOnboardingPage() {
                   "var(--font-el-messiri), serif",
               }}
             >
-              تم استلام طلب الاعتماد
+              {aiReviewResult?.outcome === "NEEDS_COMPLETION"
+                ? "تمت المراجعة ويحتاج الطلب استكمال"
+                : aiReviewResult?.outcome === "MANUAL_REVIEW"
+                  ? "تم تحويل الطلب للمراجعة الإدارية"
+                  : aiReviewResult?.outcome === "READY"
+                    ? "اكتملت المراجعة الآلية"
+                    : "تم استلام طلب الاعتماد"}
             </h1>
 
             <p className="mx-auto mt-4 max-w-xl text-sm leading-8 text-[#0D3B34]/60">
-              تم إرسال طلب انضمام{" "}
-              <strong>
-                {data.tradeName ||
-                  data.publicName ||
-                  "الشريك"}
-              </strong>{" "}
-              إلى Arees Loop للمراجعة.
-              لا يعتبر حساب الشريك
-              مفعلاً في هذه المرحلة.
+              {aiReviewResult?.partnerMessage ||
+                "تم حفظ الطلب والمستندات وإرسالها للمراجعة."}
+              {" "}لا يعتبر حساب الشريك مفعلاً حتى اكتمال الاعتماد النهائي من Arees Loop.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-4">
@@ -3317,17 +3322,18 @@ export default function PartnerOnboardingPage() {
 
               <MiniStatus
                 number="02"
-                label="مراجعة أريس"
+                label="مراجعة AI"
+                active={Boolean(aiReviewResult)}
               />
 
               <MiniStatus
                 number="03"
-                label="العقد"
+                label="مراجعة أريس"
               />
 
               <MiniStatus
                 number="04"
-                label="التفعيل"
+                label="العقد والتفعيل"
               />
             </div>
 
@@ -3337,24 +3343,23 @@ export default function PartnerOnboardingPage() {
               </p>
 
               <p className="mt-2 text-xs leading-7 text-[#0D3B34]/60">
-                تحت المراجعة ← مطلوب
-                استكمال عند وجود ملاحظات
-                ← مؤهل للتعاقد ← العقد
-                الإلكتروني ← توقيع الشريك
-                ← اعتماد أريس ← شريك مفعّل.
+                تم الاستلام ← مراجعة الذكاء الاصطناعي
+                ← استكمال عند وجود ملاحظات
+                ← مراجعة أريس ← الاتفاقية الإلكترونية
+                ← قبول الشريك ← اعتماد أريس والتفعيل.
               </p>
             </div>
 
             <div className="mt-5 rounded-[22px] bg-[#F6F3EC] p-5">
               <p className="text-xs text-[#0D3B34]/45">
-                رقم الطلب التجريبي
+                رقم الطلب
               </p>
 
               <p
                 className="mt-2 font-bold tracking-[0.12em]"
                 dir="ltr"
               >
-                AL-P-2026-00001
+                {applicationId || "—"}
               </p>
             </div>
 
