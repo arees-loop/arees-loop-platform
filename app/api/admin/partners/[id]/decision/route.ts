@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { sendEmail } from "@/lib/notifications/email";
 
 type AdminDecision =
   | "REQUEST_COMPLETION"
   | "SEND_AGREEMENT"
-  | "REJECT";
+  | "REJECT"
+  | "ACTIVATE";
 
 type DecisionBody = {
   action?: AdminDecision;
@@ -24,6 +26,15 @@ function getRequestIp(request: NextRequest) {
   return request.headers.get("x-real-ip");
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -33,10 +44,7 @@ export async function POST(
 
     if (!session) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "يجب تسجيل الدخول أولاً.",
-        },
+        { success: false, message: "يجب تسجيل الدخول أولاً." },
         { status: 401 }
       );
     }
@@ -55,18 +63,13 @@ export async function POST(
     }
 
     const { id } = await context.params;
-
     const body = (await request.json()) as DecisionBody;
-
     const action = body.action;
     const notes = body.notes?.trim() || null;
 
     if (!action) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "نوع الإجراء مطلوب.",
-        },
+        { success: false, message: "نوع الإجراء مطلوب." },
         { status: 400 }
       );
     }
@@ -74,13 +77,11 @@ export async function POST(
     if (
       action !== "REQUEST_COMPLETION" &&
       action !== "SEND_AGREEMENT" &&
-      action !== "REJECT"
+      action !== "REJECT" &&
+      action !== "ACTIVATE"
     ) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "الإجراء المطلوب غير صالح.",
-        },
+        { success: false, message: "الإجراء المطلوب غير صالح." },
         { status: 400 }
       );
     }
@@ -102,16 +103,10 @@ export async function POST(
     }
 
     const partner = await prisma.partner.findUnique({
-      where: {
-        id,
-      },
-
+      where: { id },
       include: {
         members: {
-          where: {
-            isActive: true,
-          },
-
+          where: { isActive: true },
           include: {
             user: {
               select: {
@@ -124,11 +119,8 @@ export async function POST(
             },
           },
         },
-
         agreements: {
-          orderBy: {
-            createdAt: "desc",
-          },
+          orderBy: { createdAt: "desc" },
           take: 1,
         },
       },
@@ -136,18 +128,19 @@ export async function POST(
 
     if (!partner) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "طلب الشريك غير موجود.",
-        },
+        { success: false, message: "طلب الشريك غير موجود." },
         { status: 404 }
       );
     }
 
+    const reviewActionsAllowed =
+      partner.status === "SUBMITTED" ||
+      partner.status === "UNDER_REVIEW" ||
+      partner.status === "NEEDS_COMPLETION";
+
     if (
-      partner.status !== "SUBMITTED" &&
-      partner.status !== "UNDER_REVIEW" &&
-      partner.status !== "NEEDS_COMPLETION"
+      action !== "ACTIVATE" &&
+      !reviewActionsAllowed
     ) {
       return NextResponse.json(
         {
@@ -159,8 +152,21 @@ export async function POST(
       );
     }
 
-    const now = new Date();
+    if (
+      action === "ACTIVATE" &&
+      partner.status !== "AGREEMENT_ACCEPTED"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "لا يمكن تفعيل الشريك قبل قبوله الاتفاقية الإلكترونية.",
+        },
+        { status: 409 }
+      );
+    }
 
+    const now = new Date();
     const beforeData = {
       status: partner.status,
       reviewNotes: partner.reviewNotes,
@@ -170,30 +176,13 @@ export async function POST(
       commissionRate: partner.commissionRate?.toString() ?? null,
     };
 
-    let nextStatus:
-      | "NEEDS_COMPLETION"
-      | "WAITING_AGREEMENT"
-      | "REJECTED";
-
-    if (action === "REQUEST_COMPLETION") {
-      nextStatus = "NEEDS_COMPLETION";
-    } else if (action === "SEND_AGREEMENT") {
-      nextStatus = "WAITING_AGREEMENT";
-    } else {
-      nextStatus = "REJECTED";
-    }
-
     const result = await prisma.$transaction(async (tx) => {
       if (action === "REQUEST_COMPLETION") {
         const updatedPartner = await tx.partner.update({
-          where: {
-            id: partner.id,
-          },
-
+          where: { id: partner.id },
           data: {
             status: "NEEDS_COMPLETION",
             completionNotes: notes,
-            reviewNotes: null,
             reviewedAt: now,
             rejectedAt: null,
           },
@@ -216,10 +205,7 @@ export async function POST(
           },
         });
 
-        return {
-          partner: updatedPartner,
-          agreement: null,
-        };
+        return { partner: updatedPartner, agreement: null };
       }
 
       if (action === "SEND_AGREEMENT") {
@@ -228,10 +214,9 @@ export async function POST(
             ? body.commissionRate
             : partner.commissionRate
               ? Number(partner.commissionRate)
-              : null;
+              : 10;
 
         if (
-          commissionRate === null ||
           !Number.isFinite(commissionRate) ||
           commissionRate < 0 ||
           commissionRate > 100
@@ -256,10 +241,7 @@ export async function POST(
         });
 
         const updatedPartner = await tx.partner.update({
-          where: {
-            id: partner.id,
-          },
-
+          where: { id: partner.id },
           data: {
             status: "WAITING_AGREEMENT",
             commissionRate,
@@ -291,17 +273,42 @@ export async function POST(
           },
         });
 
-        return {
-          partner: updatedPartner,
-          agreement,
-        };
+        return { partner: updatedPartner, agreement };
+      }
+
+      if (action === "ACTIVATE") {
+        const updatedPartner = await tx.partner.update({
+          where: { id: partner.id },
+          data: {
+            status: "ACTIVE",
+            approvedAt: now,
+            activatedAt: now,
+            rejectedAt: null,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: session.user.id,
+            action: "PARTNER_ACTIVATED",
+            entityType: "Partner",
+            entityId: partner.id,
+            beforeData,
+            afterData: {
+              status: updatedPartner.status,
+              approvedAt: updatedPartner.approvedAt,
+              activatedAt: updatedPartner.activatedAt,
+            },
+            ipAddress: getRequestIp(request),
+            userAgent: request.headers.get("user-agent"),
+          },
+        });
+
+        return { partner: updatedPartner, agreement: partner.agreements[0] ?? null };
       }
 
       const updatedPartner = await tx.partner.update({
-        where: {
-          id: partner.id,
-        },
-
+        where: { id: partner.id },
         data: {
           status: "REJECTED",
           reviewNotes: notes,
@@ -329,10 +336,7 @@ export async function POST(
         },
       });
 
-      return {
-        partner: updatedPartner,
-        agreement: null,
-      };
+      return { partner: updatedPartner, agreement: null };
     });
 
     const contactEmail =
@@ -345,14 +349,65 @@ export async function POST(
       )?.user.email ||
       null;
 
+    let notification:
+      | { sent: true; id: string | null }
+      | { sent: false; reason: string } = {
+      sent: false,
+      reason: "PARTNER_EMAIL_NOT_AVAILABLE",
+    };
+
+    if (contactEmail) {
+      const displayName =
+        partner.tradeNameAr ||
+        partner.legalNameAr;
+
+      const subject =
+        action === "REQUEST_COMPLETION"
+          ? "مطلوب استكمال طلب الشراكة — Arees Loop"
+          : action === "SEND_AGREEMENT"
+            ? "اتفاقية الشريك جاهزة للمراجعة — Arees Loop"
+            : action === "ACTIVATE"
+              ? "تم اعتماد وتفعيل حساب الشريك — Arees Loop"
+              : "تحديث طلب الشراكة — Arees Loop";
+
+      const bodyText =
+        action === "REQUEST_COMPLETION"
+          ? `نحتاج استكمال بعض البيانات أو المستندات: ${notes ?? ""}`
+          : action === "SEND_AGREEMENT"
+            ? "اكتملت مراجعة الطلب، والاتفاقية الإلكترونية جاهزة الآن للمراجعة والقبول."
+            : action === "ACTIVATE"
+              ? "تم اعتماد وتفعيل حساب الشريك بنجاح."
+              : `تم تحديث حالة طلب الشراكة. سبب الرفض: ${notes ?? ""}`;
+
+      notification = await sendEmail({
+        to: contactEmail,
+        subject,
+        html: `
+          <div dir="rtl" style="font-family:Arial,sans-serif;max-width:640px;margin:auto;line-height:1.8;color:#17201d">
+            <h2>تحديث طلب الشراكة</h2>
+            <p>مرحباً <strong>${escapeHtml(displayName)}</strong>،</p>
+            <p>${escapeHtml(bodyText)}</p>
+            <p><strong>رقم الطلب:</strong> ${escapeHtml(partner.id)}</p>
+            ${
+              action === "SEND_AGREEMENT"
+                ? '<p>يمكنكم فتح بوابة الشريك ومراجعة الاتفاقية الإلكترونية.</p>'
+                : ""
+            }
+          </div>
+        `,
+      });
+    }
+
     return NextResponse.json({
       success: true,
       message:
         action === "REQUEST_COMPLETION"
           ? "تم إرسال الطلب للاستكمال."
           : action === "SEND_AGREEMENT"
-            ? "تم اعتماد المراجعة وإرسال الطلب إلى مرحلة الاتفاقية."
-            : "تم رفض طلب الشريك.",
+            ? "تم إرسال الاتفاقية للشريك."
+            : action === "ACTIVATE"
+              ? "تم اعتماد وتفعيل الشريك."
+              : "تم رفض طلب الشريك.",
       data: {
         id: result.partner.id,
         status: result.partner.status,
@@ -370,8 +425,7 @@ export async function POST(
           : null,
         notification: {
           email: contactEmail,
-          sent: false,
-          reason: "EMAIL_NOT_CONNECTED_YET",
+          ...notification,
         },
       },
     });
