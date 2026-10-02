@@ -559,7 +559,17 @@ export default function PartnerOnboardingPage() {
           }
         }
 
-        setCurrentStep("done");
+        const resumeRequested =
+          new URLSearchParams(
+            window.location.search
+          ).get("resume") === "1";
+
+        setCurrentStep(
+          application.status === "NEEDS_COMPLETION" &&
+            resumeRequested
+            ? "business"
+            : "done"
+        );
       } catch (error) {
         console.error(
           "Unable to load existing partner application:",
