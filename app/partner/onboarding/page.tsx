@@ -347,6 +347,185 @@ export default function PartnerOnboardingPage() {
           String(application.status || "")
         );
 
+        const existingDocuments = Array.isArray(
+          application.documents
+        )
+          ? application.documents
+          : [];
+
+        const existingCategories = Array.isArray(
+          application.categories
+        )
+          ? application.categories
+              .map((item: { name?: string }) =>
+                String(item?.name || "").trim()
+              )
+              .filter(Boolean)
+          : [];
+
+        const addressParts = String(
+          application.address || ""
+        )
+          .split(" - ")
+          .map((item) => item.trim());
+
+        const existingFileName = (
+          type: string
+        ) =>
+          String(
+            existingDocuments.find(
+              (item: { type?: string }) =>
+                item?.type === type
+            )?.fileName || ""
+          );
+
+        const mappedPartnerType: PartnerType =
+          application.partnerType === "BUSINESS"
+            ? "business"
+            : application.partnerType === "GOVERNMENT_NONPROFIT"
+              ? "government"
+              : application.partnerType === "INDIVIDUAL"
+                ? "individual"
+                : "";
+
+        const mappedApplicantRole: ApplicantRole =
+          application.applicantRole === "OWNER"
+            ? "owner"
+            : application.applicantRole === "REPRESENTATIVE"
+              ? "representative"
+              : "";
+
+        setData((current) => ({
+          ...current,
+          partnerType: mappedPartnerType,
+          applicantRole: mappedApplicantRole,
+          jobTitle:
+            String(application.applicantJobTitle || ""),
+          authorizationFile:
+            existingFileName("AUTHORIZATION"),
+
+          tradeName:
+            String(application.tradeNameAr || ""),
+          legalName:
+            String(application.legalNameAr || ""),
+          unifiedNumber:
+            String(application.unifiedNumber || ""),
+          registrationNumber:
+            String(application.commercialRegister || ""),
+          proofType:
+            String(application.proofType || ""),
+          description:
+            String(application.descriptionAr || ""),
+
+          country:
+            String(
+              application.country ||
+                "المملكة العربية السعودية"
+            ),
+          city: String(application.city || ""),
+          district: addressParts[0] || "",
+          street: addressParts[1] || "",
+          shortNationalAddress:
+            addressParts.find((item) =>
+              /^[A-Z]{4}\d{4}$/i.test(item)
+            ) || "",
+          nationalAddressFile:
+            existingFileName("BUSINESS_PROOF"),
+          website:
+            String(application.websiteUrl || ""),
+          businessPhone:
+            String(application.businessPhone || ""),
+          businessEmail:
+            String(application.businessEmail || ""),
+
+          categories: existingCategories,
+
+          vatRegistered:
+            Boolean(application.vatRegistered),
+          vatNumber:
+            String(application.vatNumber || ""),
+          vatCertificate:
+            existingFileName("VAT_CERTIFICATE"),
+
+          receivesPayments:
+            Boolean(application.receivesPayments),
+          iban: String(application.iban || ""),
+          beneficiaryName:
+            String(application.beneficiaryName || ""),
+          ibanCertificate:
+            existingFileName("IBAN_CERTIFICATE"),
+
+          contactName:
+            String(application.mainContactName || ""),
+          contactPhone:
+            String(application.mainContactPhone || ""),
+          contactEmail:
+            String(application.mainContactEmail || ""),
+
+          operates24h:
+            Boolean(application.operates24h),
+          operatingHours:
+            String(application.operatingHours || ""),
+
+          publicName:
+            String(application.publicName || ""),
+          declaration: false,
+          termsAccepted: false,
+        }));
+
+        if (
+          Array.isArray(application.licenses) &&
+          application.licenses.length > 0
+        ) {
+          setDocuments(
+            application.licenses.map(
+              (
+                license: {
+                  type?: string;
+                  issuer?: string;
+                  licenseNumber?: string;
+                  issueDate?: string | null;
+                  expiryDate?: string | null;
+                },
+                index: number
+              ) => ({
+                id: index + 1,
+                type: String(license.type || ""),
+                number: String(
+                  license.licenseNumber || ""
+                ),
+                issuer: String(license.issuer || ""),
+                issueDate: license.issueDate
+                  ? String(license.issueDate).slice(0, 10)
+                  : "",
+                expiryDate: license.expiryDate
+                  ? String(license.expiryDate).slice(0, 10)
+                  : "",
+                fileName:
+                  existingDocuments.length > 0
+                    ? "مرفوع مسبقاً"
+                    : "",
+                coveredCategories: [],
+              })
+            )
+          );
+        }
+
+        const normalizedExistingContact =
+          normalizeSaudiMobileForCheck(
+            String(application.mainContactPhone || "")
+          );
+
+        if (
+          application.mainContactPhoneVerifiedAt &&
+          normalizedExistingContact
+        ) {
+          setContactPhoneVerified(true);
+          setContactPhoneVerifiedValue(
+            normalizedExistingContact
+          );
+        }
+
         if (
           application.status === "NEEDS_COMPLETION" &&
           application.completionNotes
