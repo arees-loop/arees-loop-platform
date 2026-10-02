@@ -44,13 +44,13 @@ const steps: Step[] = [
   },
   {
     key: "ai",
-    title: "المراجعة الآلية",
-    description: "يقوم الذكاء الاصطناعي بفحص اكتمال البيانات واتساق المستندات وإعداد تقرير المراجعة.",
+    title: "مراجعة الطلب",
+    description: "يقوم فريق أريس بمراجعة طلبك والبيانات والمستندات المرفقة.",
   },
   {
     key: "review",
     title: "مراجعة أريس",
-    description: "يراجع فريق Arees Loop تقرير الذكاء الاصطناعي والبيانات قبل الانتقال للاتفاقية.",
+    description: "يستكمل فريق أريس مراجعة الطلب قبل الانتقال إلى الاتفاقية.",
   },
   {
     key: "agreement",
@@ -100,10 +100,10 @@ function statusToStep(status: string): StatusKey {
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
     DRAFT: "مسودة",
-    SUBMITTED: "المراجعة الآلية",
-    UNDER_REVIEW: "لدى مراجعة أريس",
+    SUBMITTED: "مراجعة الطلب",
+    UNDER_REVIEW: "قيد مراجعة أريس",
     NEEDS_COMPLETION: "مطلوب استكمال",
-    PRE_APPROVED: "لدى مراجعة أريس",
+    PRE_APPROVED: "قيد مراجعة أريس",
     WAITING_AGREEMENT: "بانتظار موافقتك على الاتفاقية",
     AGREEMENT_ACCEPTED: "تمت الموافقة على الشروط",
     APPROVED: "بانتظار التفعيل",
