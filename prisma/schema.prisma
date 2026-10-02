@@ -176,6 +176,7 @@ model User {
   bookings           Booking[]
   sessions           Session[]
   verificationTokens VerificationToken[]
+  partnerContactVerification PartnerContactVerification?
   interests          UserInterest[]
   auditLogs          AuditLog[]          @relation("AuditUser")
 }
@@ -242,6 +243,22 @@ model VerificationToken {
   @@index([consumedAt])
 }
 
+model PartnerContactVerification {
+  id String @id @default(cuid())
+
+  userId String @unique
+  phone  String
+
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([phone])
+}
+
 model Partner {
   id String @id @default(cuid())
 
@@ -282,10 +299,11 @@ model Partner {
   financeContactEmail String?
   financeContactPhone String?
 
-  mainContactName     String?
-  mainContactEmail    String?
-  mainContactPhone    String?
-  mainContactJobTitle String?
+  mainContactName            String?
+  mainContactEmail           String?
+  mainContactPhone           String?
+  mainContactPhoneVerifiedAt DateTime?
+  mainContactJobTitle        String?
 
   operates24h    Boolean @default(false)
   operatingHours String?
