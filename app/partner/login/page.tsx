@@ -179,13 +179,13 @@ export default function PartnerLoginPage() {
               className="mx-auto h-auto w-[145px] md:mr-0 md:ml-auto md:w-[165px] lg:w-[175px]"
             />
 
-            <p className="mt-4 text-[11px] font-bold tracking-[.20em] text-[#9A7415]">
+            <p className="mt-4 text-[11px] font-extrabold tracking-[.20em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,.75)]">
               PARTNER PORTAL
             </p>
-            <h1 className="mt-3 text-3xl font-extrabold leading-tight md:text-4xl lg:text-[42px]">
+            <h1 className="mt-3 text-3xl font-extrabold leading-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,.80)] md:text-4xl lg:text-[42px]">
               مرحباً بك، شريك أريس
             </h1>
-            <p className="mt-4 max-w-[560px] text-[15px] font-semibold leading-7 text-[#0D3B34] lg:text-base">
+            <p className="mt-4 max-w-[560px] text-[15px] font-bold leading-7 text-white drop-shadow-[0_2px_9px_rgba(0,0,0,.78)] lg:text-base">
               سوّق تجاربك وخدماتك لآلاف العملاء المهتمين، واستهدف العملاء الحقيقيين
               الباحثين عنها في الوقت والمكان المناسبين.
             </p>
@@ -196,7 +196,7 @@ export default function PartnerLoginPage() {
               <Value title="نمو مستمر" text="مع منظومة Arees Loop" />
             </div>
 
-            <p className="mt-6 text-sm font-extrabold text-[#7A5A0B]">
+            <p className="mt-6 text-sm font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,.78)]">
               تجربتك تستحق أن تصل لمن يبحث عنها.
             </p>
           </div>
@@ -211,9 +211,9 @@ const inputClass =
 
 function Value({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[18px] border border-[#0D3B34]/12 bg-white/62 px-3 py-4 shadow-sm backdrop-blur-md">
-      <p className="text-sm font-extrabold text-[#0D3B34]">{title}</p>
-      <p className="mt-1 text-[11px] font-semibold text-[#0D3B34]/75">{text}</p>
+    <div className="rounded-[18px] border border-white/35 bg-[#0D3B34]/38 px-3 py-4 shadow-[0_8px_24px_rgba(0,0,0,.18)] backdrop-blur-md">
+      <p className="text-sm font-extrabold text-white drop-shadow-[0_1px_5px_rgba(0,0,0,.65)]">{title}</p>
+      <p className="mt-1 text-[11px] font-semibold text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,.55)]">{text}</p>
     </div>
   );
 }
