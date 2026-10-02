@@ -305,6 +305,16 @@ export async function GET() {
 
             },
 
+            documents: {
+
+              orderBy: {
+
+                createdAt: "asc",
+
+              },
+
+            },
+
             agreements: {
 
               orderBy: {
