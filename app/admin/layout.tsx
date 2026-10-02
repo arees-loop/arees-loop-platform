@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (pathname === "/admin/login") return <>{children}</>;
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#FBF8F1] text-[#171717]" style={{fontFamily:"var(--font-ibm-plex-arabic), sans-serif"}}>
+    <div dir="rtl" className="min-h-screen bg-[#FCFAF5] text-[#171717]" style={{fontFamily:"var(--font-ibm-plex-arabic), sans-serif"}}>
       <div className="flex min-h-screen flex-row">
         <aside className="hidden w-[265px] shrink-0 border-r border-white/65 bg-[#FFFDF8]/72 shadow-[10px_0_34px_rgba(91,70,32,.12)] backdrop-blur-xl lg:flex lg:flex-col">
           <div className="flex h-[108px] items-center justify-center border-b border-[#171717]/5">
@@ -46,11 +46,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-[90] border-b border-[#171717]/8 bg-[#FFFDF9]/96 backdrop-blur-xl">
+          <header className="sticky top-0 z-[90] border-b border-[#171717]/8 bg-[#FFFEFA]/92 backdrop-blur-xl">
             <div className="flex h-[78px] items-center justify-between px-5 md:px-8">
               <div className="relative">
-                <button onClick={()=>setMenuOpen(v=>!v)} className="flex items-center gap-3 rounded-full border border-[#171717]/10 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#CBA544] to-[#987017] font-bold text-white">A</div>
+                <button onClick={()=>setMenuOpen(v=>!v)} className="flex items-center gap-3 rounded-2xl border border-[#D9C99F]/45 bg-white/55 px-3 py-2 shadow-[0_6px_20px_rgba(80,62,30,.07)] backdrop-blur-xl">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#B58A25] font-bold text-white">A</div>
                   <div className="hidden text-right sm:block"><p className="text-xs font-bold">Arees Admin</p><p className="text-[10px] text-[#171717]/45">admin@areesloop.com</p></div>
                   <span className="text-sm">⌄</span>
                 </button>
@@ -67,7 +67,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             </div>
           </header>
-          <div className="min-h-[calc(100vh-78px)] bg-[radial-gradient(circle_at_70%_10%,rgba(216,176,75,.08),transparent_32%)]">{children}</div>
+          <div className="min-h-[calc(100vh-78px)] bg-[radial-gradient(circle_at_70%_10%,rgba(216,176,75,.035),transparent_32%)]">{children}</div>
         </div>
       </div>
     </div>
