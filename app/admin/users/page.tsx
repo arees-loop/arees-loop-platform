@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type AdminUser={id:string;email:string;firstName:string|null;lastName:string|null;role:string;status:string;adminPermissions:unknown};
 
 const permissions=[
  ["طلبات الشركاء","عرض طلبات الانضمام، مراجعة بيانات الشريك وطلب الاستكمال."],
@@ -19,13 +21,16 @@ export default function AdminUsersPage(){
  const [selected,setSelected]=useState<string[]>([]);
  const [sending,setSending]=useState(false);
  const [notice,setNotice]=useState("");
+ const [users,setUsers]=useState<AdminUser[]>([]);
+ async function loadUsers(){try{const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json();if(r.ok&&d.success)setUsers(d.data||[]);}catch{}}
+ useEffect(()=>{void loadUsers();},[]);
  const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS"];
  async function sendInvite(){
   setNotice(""); setSending(true);
   try{
    const res=await fetch("/api/admin/users/invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email,permissions:selected})});
    const data=await res.json(); setNotice(data.message||"تعذر إرسال الدعوة.");
-   if(res.ok&&data.success){setName("");setEmail("");setSelected([]);}
+   if(res.ok&&data.success){setName("");setEmail("");setSelected([]);await loadUsers();setTimeout(()=>setOpen(false),700);}
   }catch{setNotice("تعذر الاتصال بالخادم.");}
   finally{setSending(false);}
  }
@@ -36,21 +41,26 @@ export default function AdminUsersPage(){
     <button onClick={()=>setOpen(true)} className="rounded-xl border border-[#B68A21] !bg-[#C99A1B] px-6 py-3 text-sm font-extrabold !text-[#073F35] shadow-[0_6px_18px_rgba(182,138,33,.25)] transition hover:!bg-[#B68A21] hover:shadow-[0_8px_22px_rgba(182,138,33,.35)]">+ إضافة مستخدم</button>
    </div>
    <section className="mt-8 max-w-5xl">
-    <div className="hidden grid-cols-[1.25fr_1.65fr_.85fr_.65fr_.35fr] gap-4 px-6 pb-3 text-[11px] font-bold text-black/40 md:grid">
-     <span>المستخدم</span><span>البريد الإلكتروني</span><span>الدور</span><span>الحالة</span><span></span>
+    <div className="hidden grid-cols-[1.25fr_1.55fr_.8fr_.75fr_1.2fr_.3fr] gap-4 px-6 pb-3 text-[11px] font-bold text-black/40 md:grid">
+     <span>المستخدم</span><span>البريد الإلكتروني</span><span>الدور</span><span>الحالة</span><span>الصلاحيات</span><span></span>
     </div>
-    <div className="group relative overflow-hidden rounded-[20px] border border-[#D8C79D]/55 bg-white/75 px-6 py-5 shadow-[0_10px_35px_rgba(61,50,25,.06)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A348]/70 hover:shadow-[0_14px_38px_rgba(182,138,33,.16)]">
-     <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-[#D9B95D] via-[#B68A21] to-[#0D4A40]"></div>
-     <div className="grid items-center gap-4 md:grid-cols-[1.25fr_1.65fr_.85fr_.65fr_.35fr]">
-      <div className="flex items-center gap-3">
-       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#D7BE78]/60 bg-[#F7F1E4] text-sm font-black text-[#0D4A40] shadow-inner">AA</div>
-       <div><b className="block text-sm text-[#103F38]">Arees Admin</b><span className="mt-0.5 block text-[11px] text-black/35">الإدارة الرئيسية</span></div>
+    <div className="space-y-3">
+     {users.map((user)=>{
+      const fullName=[user.firstName,user.lastName].filter(Boolean).join(" ")||"مستخدم إداري";
+      const perms=Array.isArray(user.adminPermissions)?user.adminPermissions.length:0;
+      const active=user.status==="ACTIVE";
+      return <div key={user.id} className="group relative overflow-hidden rounded-[18px] border border-[#D8C79D]/50 bg-white/75 px-6 py-4 shadow-[0_8px_28px_rgba(61,50,25,.05)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A348]/70 hover:shadow-[0_12px_34px_rgba(182,138,33,.15)]">
+       <div className="absolute inset-y-0 right-0 w-[3px] bg-gradient-to-b from-[#D9B95D] via-[#B68A21] to-[#0D4A40]"></div>
+       <div className="grid items-center gap-4 md:grid-cols-[1.25fr_1.55fr_.8fr_.75fr_1.2fr_.3fr]">
+        <div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7BE78]/60 bg-[#F7F1E4] text-xs font-black text-[#0D4A40]">{fullName.split(" ").map(x=>x[0]).slice(0,2).join("").toUpperCase()}</div><b className="text-sm text-[#103F38]">{fullName}</b></div>
+        <span className="text-sm text-black/65">{user.email}</span>
+        <span className="text-xs font-extrabold text-[#8D6B16]">{user.role==="SUPER_ADMIN"?"Super Admin":"Admin"}</span>
+        <span><i className={`inline-flex items-center gap-1.5 not-italic rounded-full px-3 py-1.5 text-xs font-bold ${active?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}><i className={`h-1.5 w-1.5 rounded-full ${active?"bg-emerald-500":"bg-amber-500"}`}></i>{active?"نشط":"تم إرسال الدعوة"}</i></span>
+        <span className="text-xs text-black/50">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":perms+" صلاحيات"}</span>
+        <button aria-label="إجراءات المستخدم" className="flex h-8 w-8 items-center justify-center rounded-full text-lg font-bold text-[#0D4A40] transition hover:bg-[#FFF9EA] hover:shadow-[0_5px_16px_rgba(182,138,33,.22)]">•••</button>
+       </div>
       </div>
-      <span className="text-sm text-black/65">admin@areesloop.com</span>
-      <span><i className="not-italic rounded-full border border-[#D5B65B]/35 bg-[#FBF5E6] px-3 py-1.5 text-xs font-extrabold text-[#8D6B16]">Super Admin</i></span>
-      <span><i className="inline-flex items-center gap-1.5 not-italic rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"><i className="h-1.5 w-1.5 rounded-full bg-emerald-500"></i>نشط</i></span>
-      <button aria-label="إجراءات المستخدم" className="flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-lg font-bold text-[#0D4A40] transition hover:border-[#D6B45B]/45 hover:bg-[#FFF9EA] hover:shadow-[0_5px_16px_rgba(182,138,33,.22)]">•••</button>
-     </div>
+     })}
     </div>
    </section>
    <div className="mt-4 rounded-xl bg-[#F7F0E2] px-5 py-4 text-xs text-black/55">الـ Super Admin يملك كامل الصلاحيات. الأدمن العادي تظهر له فقط الأقسام الممنوحة له.</div>
