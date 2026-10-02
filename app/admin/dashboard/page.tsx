@@ -12,8 +12,8 @@ const requests=[
 const tone:any={amber:"bg-[#FFF2D5] text-[#B67C00]",blue:"bg-[#E5F3FF] text-[#1880D0]",green:"bg-[#E2F4E9] text-[#287B50]",red:"bg-[#FFE8E8] text-[#E44C4C]"};
 
 export default function AdminDashboardPage(){
- return <main dir="rtl" className="min-h-screen bg-[#FBF8F1] px-6 py-8 text-[#171717] md:px-10">
-  <div className="mx-auto max-w-[1450px]">
+ return <main dir="rtl" className="min-h-screen bg-[#FBF8F1] px-6 py-10 text-[#171717] md:px-10 xl:px-12">
+  <div className="mx-auto max-w-[1500px]">
    <section className="flex flex-col-reverse gap-5 md:flex-row md:items-start md:justify-between">
     <div className="text-left md:text-right">
       <p className="text-sm font-bold">الخميس، 2 أكتوبر 2026</p>
@@ -32,7 +32,7 @@ export default function AdminDashboardPage(){
     <Stat label="إجمالي الشركاء" value="12" icon="♧"/>
    </section>
 
-   <section className="mt-6 grid gap-5 xl:grid-cols-[1.45fr_.75fr]">
+   <section className="mt-6 grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
     <div className="rounded-[20px] border border-[#171717]/8 bg-white/75 p-5 shadow-sm">
       <div className="flex items-center justify-between"><h2 className="text-lg font-bold">⚓ أحدث طلبات الشركاء</h2><Link href="/admin/partners" className="rounded-full bg-[#FFF4D9] px-4 py-2 text-xs font-bold text-[#B47D08]">عرض جميع الطلبات ←</Link></div>
       <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[700px] text-right text-xs">
@@ -40,10 +40,10 @@ export default function AdminDashboardPage(){
        <tbody>{requests.map((r,i)=><tr key={r.name} className="border-b border-[#171717]/6 last:border-0"><td className="py-4 font-bold">{i+1}</td><td className="py-4 font-bold">{r.name}</td><td className="py-4 text-[#171717]/60">{r.activity}</td><td className="py-4"><span className={`rounded-full px-3 py-1.5 font-bold ${tone[r.tone]}`}>{r.status}</span></td><td className="py-4">{r.date}</td><td className="py-4"><Link href="/admin/partners" className="rounded-lg border border-[#171717]/10 px-3 py-1.5">•••</Link></td></tr>)}</tbody>
       </table></div>
     </div>
-    <div className="space-y-5">
+    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1">
       <div className="rounded-[20px] border border-[#171717]/8 bg-white/75 p-5 shadow-sm">
        <div className="flex items-center justify-between"><h2 className="text-lg font-bold">📊 إحصاءات سريعة</h2><span className="rounded-lg border border-[#171717]/10 px-3 py-2 text-xs">آخر 30 يوم⌄</span></div>
-       <div className="mt-6 h-40 rounded-xl bg-[linear-gradient(to_top,rgba(210,158,32,.13),transparent),repeating-linear-gradient(to_right,transparent,transparent_19%,rgba(0,0,0,.04)_20%)] p-4">
+       <div className="mt-6 h-52 rounded-xl bg-[linear-gradient(to_top,rgba(210,158,32,.13),transparent),repeating-linear-gradient(to_right,transparent,transparent_19%,rgba(0,0,0,.04)_20%)] p-4">
         <div className="flex h-full items-end gap-2">{[18,25,35,58,55,70,55,65,78,56,72,86,98].map((h,i)=><div key={i} className="flex-1 rounded-t bg-[#D39B16]" style={{height:`${h}%`}}/>)}</div>
        </div>
       </div>
@@ -58,7 +58,7 @@ export default function AdminDashboardPage(){
    </section>
 
    <section className="relative mt-6 overflow-hidden rounded-[20px] border border-[#D7B75D]/25 bg-gradient-to-l from-[#FFF9EA] via-white to-[#F8EBD0] px-8 py-7 shadow-sm">
-    <div className="absolute left-10 top-1/2 -translate-y-1/2 text-5xl text-[#B88A20]">∞</div>
+    <img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="absolute left-8 top-1/2 h-16 w-auto -translate-y-1/2 object-contain" />
     <div className="text-center"><h2 className="text-2xl font-bold md:text-3xl">نبني معاً تجارب سياحية استثنائية</h2><p className="mt-2 text-sm text-[#171717]/55">دعم شركائنا هو أساس نجاح المنصة.</p></div>
    </section>
   </div>
