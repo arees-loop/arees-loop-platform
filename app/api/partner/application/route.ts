@@ -1072,3 +1072,361 @@ export async function POST(request: NextRequest) {
   }
 
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getCurrentSession();
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "يجب تسجيل الدخول أولاً." },
+        { status: 401 },
+      );
+    }
+
+    if (
+      session.user.role !== "PARTNER_OWNER" &&
+      session.user.role !== "PARTNER_ADMIN"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "هذا الحساب غير مخول لاستكمال طلب الشريك.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const membership = await prisma.partnerMember.findFirst({
+      where: {
+        userId: session.user.id,
+        isActive: true,
+      },
+      include: {
+        partner: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "لا يوجد طلب شراكة مرتبط بهذا الحساب.",
+        },
+        { status: 404 },
+      );
+    }
+
+    if (
+      membership.partner.status !== "NEEDS_COMPLETION" &&
+      membership.partner.status !== "SUBMITTED"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "لا يمكن تعديل الطلب في حالته الحالية. انتظر تحديث فريق Arees Loop.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const body = (await request.json()) as PartnerApplicationBody;
+
+    const legalNameAr = cleanRequired(body.legalNameAr);
+    const partnerType = normalizePartnerType(body.partnerType);
+    const applicantRole = normalizeApplicantRole(body.applicantRole);
+
+    if (!legalNameAr || !partnerType || !applicantRole) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "بيانات مقدم الخدمة الأساسية غير مكتملة.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const unifiedNumber = clean(body.unifiedNumber);
+    const commercialRegister = clean(body.commercialRegister);
+
+    if (unifiedNumber) {
+      const duplicate = await prisma.partner.findUnique({
+        where: { unifiedNumber },
+        select: { id: true },
+      });
+
+      if (
+        duplicate &&
+        duplicate.id !== membership.partnerId
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "الرقم الموحد مستخدم في طلب شريك آخر.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    if (commercialRegister) {
+      const duplicate = await prisma.partner.findUnique({
+        where: { commercialRegister },
+        select: { id: true },
+      });
+
+      if (
+        duplicate &&
+        duplicate.id !== membership.partnerId
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "رقم السجل التجاري مستخدم في طلب شريك آخر.",
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    const smsVerificationEnabled =
+      isSmsVerificationEnabled();
+    const normalizedMainContactPhone =
+      normalizeSaudiMobile(body.mainContactPhone);
+
+    let mainContactPhoneVerifiedAt =
+      membership.partner.mainContactPhoneVerifiedAt;
+
+    const previousNormalizedPhone =
+      normalizeSaudiMobile(
+        membership.partner.mainContactPhone,
+      );
+
+    if (
+      previousNormalizedPhone !==
+      normalizedMainContactPhone
+    ) {
+      mainContactPhoneVerifiedAt = null;
+    }
+
+    if (smsVerificationEnabled) {
+      if (!normalizedMainContactPhone) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "يجب إدخال رقم جوال سعودي صحيح لمسؤول التواصل.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const verification =
+        await prisma.partnerContactVerification.findUnique({
+          where: {
+            userId: session.user.id,
+          },
+          select: {
+            phone: true,
+            verifiedAt: true,
+          },
+        });
+
+      if (
+        verification?.phone !== normalizedMainContactPhone ||
+        !verification.verifiedAt
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "يجب التحقق من رقم جوال مسؤول التواصل قبل إعادة إرسال الطلب.",
+          },
+          { status: 403 },
+        );
+      }
+
+      mainContactPhoneVerifiedAt =
+        verification.verifiedAt;
+    }
+
+    const categories = Array.from(
+      new Set(
+        (body.categories ?? [])
+          .map((category) => category.trim())
+          .filter(Boolean),
+      ),
+    );
+
+    const licenses = (body.licenses ?? []).filter(
+      (license) =>
+        clean(license.type) ||
+        clean(license.issuer) ||
+        clean(license.licenseNumber),
+    );
+
+    const updated = await prisma.$transaction(
+      async (tx) => {
+        await tx.partnerCategory.deleteMany({
+          where: {
+            partnerId: membership.partnerId,
+          },
+        });
+
+        await tx.license.deleteMany({
+          where: {
+            partnerId: membership.partnerId,
+          },
+        });
+
+        const partner = await tx.partner.update({
+          where: {
+            id: membership.partnerId,
+          },
+          data: {
+            legalNameAr,
+            legalNameEn: clean(body.legalNameEn),
+            tradeNameAr: clean(body.tradeNameAr),
+            tradeNameEn: clean(body.tradeNameEn),
+
+            partnerType,
+            applicantRole,
+            applicantJobTitle: clean(body.applicantJobTitle),
+
+            unifiedNumber,
+            commercialRegister,
+            proofType: clean(body.proofType),
+            descriptionAr: clean(body.descriptionAr),
+
+            vatRegistered: Boolean(body.vatRegistered),
+            vatNumber: clean(body.vatNumber),
+
+            websiteUrl: clean(body.websiteUrl),
+
+            country: clean(body.country),
+            city: clean(body.city),
+            address: clean(body.address),
+            locationName: clean(body.locationName),
+            formattedAddress: clean(body.formattedAddress),
+            placeId: clean(body.placeId),
+            latitude: decimalOrNull(body.latitude),
+            longitude: decimalOrNull(body.longitude),
+
+            businessPhone: clean(body.businessPhone),
+            businessEmail: clean(body.businessEmail),
+
+            financeContactName: clean(body.financeContactName),
+            financeContactEmail: clean(body.financeContactEmail),
+            financeContactPhone: clean(body.financeContactPhone),
+
+            mainContactName: clean(body.mainContactName),
+            mainContactEmail: clean(body.mainContactEmail),
+            mainContactPhone:
+              normalizedMainContactPhone ||
+              clean(body.mainContactPhone),
+            mainContactPhoneVerifiedAt,
+            mainContactJobTitle: clean(body.mainContactJobTitle),
+
+            operates24h: Boolean(body.operates24h),
+            operatingHours: clean(body.operatingHours),
+
+            receivesPayments: Boolean(body.receivesPayments),
+            iban: clean(body.iban),
+            bankName: clean(body.bankName),
+            swiftCode: clean(body.swiftCode),
+            beneficiaryName: clean(body.beneficiaryName),
+
+            publicName: clean(body.publicName),
+
+            status: "SUBMITTED",
+            reviewedAt: null,
+            reviewNotes: null,
+            completionNotes: null,
+            rejectedAt: null,
+          },
+        });
+
+        if (categories.length > 0) {
+          await tx.partnerCategory.createMany({
+            data: categories.map((name) => ({
+              partnerId: partner.id,
+              name,
+            })),
+          });
+        }
+
+        if (licenses.length > 0) {
+          await tx.license.createMany({
+            data: licenses.map((license) => ({
+              partnerId: partner.id,
+              type:
+                cleanRequired(license.type) ||
+                "غير محدد",
+              issuer:
+                cleanRequired(license.issuer) ||
+                "غير محدد",
+              licenseNumber:
+                cleanRequired(license.licenseNumber) ||
+                "غير محدد",
+              issueDate: dateOrNull(license.issueDate),
+              expiryDate: dateOrNull(license.expiryDate),
+              documentUrl: clean(license.documentUrl),
+              status: "PENDING",
+            })),
+          });
+        }
+
+        await tx.auditLog.create({
+          data: {
+            userId: session.user.id,
+            action: "PARTNER_APPLICATION_RESUBMITTED",
+            entityType: "Partner",
+            entityId: partner.id,
+            beforeData: {
+              status: membership.partner.status,
+              completionNotes:
+                membership.partner.completionNotes,
+            },
+            afterData: {
+              status: "SUBMITTED",
+              legalNameAr,
+              tradeNameAr: clean(body.tradeNameAr),
+            },
+          },
+        });
+
+        return partner;
+      },
+    );
+
+    return NextResponse.json({
+      success: true,
+      message:
+        "تم حفظ الاستكمال وسيتم تشغيل المراجعة الآلية بعد رفع المستندات.",
+      application: {
+        id: updated.id,
+        status: updated.status,
+        legalNameAr: updated.legalNameAr,
+        tradeNameAr: updated.tradeNameAr,
+        submittedAt: updated.submittedAt,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "PATCH /api/partner/application failed:",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "تعذر حفظ استكمال طلب الشريك.",
+      },
+      { status: 500 },
+    );
+  }
+}
