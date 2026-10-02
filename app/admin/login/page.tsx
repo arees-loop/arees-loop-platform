@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -59,7 +60,15 @@ export default function AdminLoginPage() {
                 <span className="inline-flex rounded-full border border-[#D4AF37]/35 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-[.18em] text-[#E6C55A]">
                   AREES LOOP · ADMIN
                 </span>
-                <h1 className="mt-8 text-4xl font-extrabold leading-tight">إدارة أريس لوب</h1>
+                <Image
+                  src="/Logo/arees-loop-brand.png"
+                  alt="Arees Loop"
+                  width={180}
+                  height={180}
+                  priority
+                  className="mx-auto mt-8 h-auto w-[110px] brightness-0 invert"
+                />
+                <h1 className="mt-5 text-center text-4xl font-extrabold leading-tight">إدارة أريس لوب</h1>
                 <p className="mt-4 max-w-md text-sm leading-7 text-white/70">
                   بوابتك لإدارة أريس لوب. راجع، قرّر، وأنجز — وخلي الباقي علينا 😄
                 </p>
