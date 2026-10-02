@@ -261,18 +261,32 @@ export async function POST(
       );
     }
 
-    if (
-      portal === "partner" &&
-      !["PARTNER_OWNER", "PARTNER_ADMIN", "PARTNER_STAFF"].includes(user.role)
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "PARTNER_ACCOUNT_REQUIRED",
-          message: "This account is not registered as an Arees Loop partner.",
-        },
-        { status: 403 },
-      );
+    if (portal === "partner") {
+      const partnerMembership =
+        await prisma.partnerMember.findFirst({
+          where: {
+            userId: user.id,
+            isActive: true,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      const canStartPartnerApplication =
+        user.role === "PARTNER_OWNER" ||
+        user.role === "PARTNER_ADMIN";
+
+      if (!partnerMembership && !canStartPartnerApplication) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "PARTNER_ACCOUNT_REQUIRED",
+            message: "This account is not registered as an Arees Loop partner.",
+          },
+          { status: 403 },
+        );
+      }
     }
 
     const loginTime =
