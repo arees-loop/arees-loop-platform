@@ -33,11 +33,11 @@ export default function AdminDashboardPage(){
    </section>
 
    <section className="mt-6 grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
-    <div className="rounded-[20px] border border-[#171717]/8 bg-white/75 p-5 shadow-sm">
+    <div className="rounded-[20px] border border-[#D8CDB8]/55 bg-[#FFFDF8] p-5 shadow-[0_10px_28px_rgba(90,70,35,.06)]">
       <div className="flex items-center justify-between"><h2 className="text-lg font-bold">⚓ أحدث طلبات الشركاء</h2><Link href="/admin/partners" className="rounded-full bg-[#FFF4D9] px-4 py-2 text-xs font-bold text-[#B47D08]">عرض جميع الطلبات ←</Link></div>
       <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[700px] text-right text-xs">
        <thead><tr className="border-b border-[#171717]/8 text-[#171717]/45"><th className="pb-3">#</th><th className="pb-3">اسم الشريك</th><th className="pb-3">النشاط</th><th className="pb-3">الحالة</th><th className="pb-3">تاريخ الطلب</th><th className="pb-3">إجراءات</th></tr></thead>
-       <tbody>{requests.map((r,i)=><tr key={r.name} className="border-b border-[#171717]/6 last:border-0"><td className="py-4 font-bold">{i+1}</td><td className="py-4 font-bold">{r.name}</td><td className="py-4 text-[#171717]/60">{r.activity}</td><td className="py-4"><span className={`rounded-full px-3 py-1.5 font-bold ${tone[r.tone]}`}>{r.status}</span></td><td className="py-4">{r.date}</td><td className="py-4"><Link href="/admin/partners" className="rounded-lg border border-[#171717]/10 px-3 py-1.5">•••</Link></td></tr>)}</tbody>
+       <tbody>{requests.map((r,i)=><tr key={r.name} className="border-b border-[#E9E1D3]/70 last:border-0"><td className="py-4 font-bold">{i+1}</td><td className="py-4 font-bold">{r.name}</td><td className="py-4 text-[#171717]/60">{r.activity}</td><td className="py-4"><span className={`rounded-full px-3 py-1.5 font-bold ${tone[r.tone]}`}>{r.status}</span></td><td className="py-4">{r.date}</td><td className="py-4"><Link href="/admin/partners" className="rounded-lg border border-[#171717]/10 px-3 py-1.5">•••</Link></td></tr>)}</tbody>
       </table></div>
     </div>
     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1">
@@ -57,11 +57,11 @@ export default function AdminDashboardPage(){
     </div>
    </section>
 
-   <section className="relative mt-6 overflow-hidden rounded-[20px] border border-[#D7B75D]/25 bg-gradient-to-l from-[#FFF9EA] via-white to-[#F8EBD0] px-8 py-7 shadow-sm">
-    <img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="absolute left-8 top-1/2 h-16 w-auto -translate-y-1/2 object-contain" />
+   <section className="relative mt-6 min-h-[112px] overflow-hidden rounded-[20px] border border-[#D7B75D]/25 bg-gradient-to-l from-[#FFF9EA] via-[#FFFDF8] to-[#F3E4C8] px-8 py-7 shadow-[0_10px_28px_rgba(90,70,35,.06)]">
+    <img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="absolute left-8 top-1/2 h-20 w-auto -translate-y-1/2 object-contain" />
     <div className="text-center"><h2 className="text-2xl font-bold md:text-3xl">نبني معاً تجارب سياحية استثنائية</h2><p className="mt-2 text-sm text-[#171717]/55">دعم شركائنا هو أساس نجاح المنصة.</p></div>
    </section>
   </div>
  </main>
 }
-function Stat({label,value,icon,emphasis=false}:{label:string;value:string;icon:string;emphasis?:boolean}){return <div className={`flex items-center justify-between rounded-[18px] border bg-white/80 p-5 shadow-sm ${emphasis?"border-[#D7B75D]/55":"border-[#171717]/8"}`}><div><p className="text-sm font-semibold text-[#555]">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div><div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FBF5E6] text-[32px] font-bold text-[#D39B16]">{icon}</div></div>}
+function Stat({label,value,icon,emphasis=false}:{label:string;value:string;icon:string;emphasis?:boolean}){return <div className={`flex items-center justify-between rounded-[18px] border bg-[#FFFDF9] p-5 shadow-[0_8px_24px_rgba(90,70,35,.05)] ${emphasis?"border-[#D7B75D]/55":"border-[#E4DAC8]/70"}`}><div><p className="text-sm font-semibold text-[#555]">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div><div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FBF5E6] text-[32px] font-bold text-[#D39B16]">{icon}</div></div>}
