@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 type StepId =
   | "account"
   | "business"
@@ -170,6 +170,30 @@ const categoryOptions = [
   },
 ];
 
+const normalizeSaudiMobileForCheck = (
+  value: string
+) => {
+  let digits = value.replace(/\D/g, "");
+
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+
+  if (/^05\d{8}$/.test(digits)) {
+    return `966${digits.slice(1)}`;
+  }
+
+  if (/^5\d{8}$/.test(digits)) {
+    return `966${digits}`;
+  }
+
+  if (/^9665\d{8}$/.test(digits)) {
+    return digits;
+  }
+
+  return "";
+};
+
 const initialData: FormData = {
   firstName: "",
   lastName: "",
@@ -256,6 +280,18 @@ export default function PartnerOnboardingPage() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [emailOtpLoading, setEmailOtpLoading] = useState(false);
   const [emailOtpError, setEmailOtpError] = useState("");
+
+  const [smsVerificationEnabled, setSmsVerificationEnabled] =
+    useState<boolean | null>(null);
+  const [contactPhoneOtp, setContactPhoneOtp] = useState("");
+  const [contactPhoneOtpSent, setContactPhoneOtpSent] = useState(false);
+  const [contactPhoneVerified, setContactPhoneVerified] = useState(false);
+  const [contactPhoneVerifiedValue, setContactPhoneVerifiedValue] =
+    useState("");
+  const [contactPhoneOtpLoading, setContactPhoneOtpLoading] =
+    useState(false);
+  const [contactPhoneOtpError, setContactPhoneOtpError] = useState("");
+
   const activeIndex = useMemo(
     () =>
       steps.findIndex(
@@ -289,6 +325,14 @@ export default function PartnerOnboardingPage() {
       setEmailOtpSent(false);
       setEmailOtp("");
       setEmailOtpError("");
+    }
+
+    if (key === "contactPhone") {
+      setContactPhoneVerified(false);
+      setContactPhoneVerifiedValue("");
+      setContactPhoneOtpSent(false);
+      setContactPhoneOtp("");
+      setContactPhoneOtpError("");
     }
 
     setValidationErrors((current) => {
@@ -599,6 +643,230 @@ export default function PartnerOnboardingPage() {
     }
   };
 
+  useEffect(() => {
+    if (
+      currentStep !== "operations" ||
+      !emailVerified
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadSmsVerificationStatus = async () => {
+      try {
+        const response = await fetch(
+          "/api/partner/contact-phone/status",
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        );
+
+        const result =
+          await response.json().catch(() => null);
+
+        if (cancelled) return;
+
+        setSmsVerificationEnabled(
+          Boolean(result?.enabled)
+        );
+
+        const verifiedPhone =
+          typeof result?.verification?.phone === "string"
+            ? result.verification.phone
+            : "";
+
+        if (
+          result?.verification?.verifiedAt &&
+          verifiedPhone
+        ) {
+          setContactPhoneVerifiedValue(
+            verifiedPhone
+          );
+
+          setContactPhoneVerified(
+            normalizeSaudiMobileForCheck(
+              data.contactPhone
+            ) === verifiedPhone
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setSmsVerificationEnabled(false);
+        }
+      }
+    };
+
+    void loadSmsVerificationStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentStep,
+    emailVerified,
+    data.contactPhone,
+  ]);
+
+  const requestPartnerContactPhoneOtp = async () => {
+    if (
+      contactPhoneOtpLoading ||
+      smsVerificationEnabled !== true
+    ) {
+      return;
+    }
+
+    const phone =
+      normalizeSaudiMobileForCheck(
+        data.contactPhone
+      );
+
+    if (!phone) {
+      setContactPhoneOtpError(
+        "أدخل رقم جوال سعودي صحيحاً."
+      );
+      return;
+    }
+
+    setContactPhoneOtpLoading(true);
+    setContactPhoneOtpError("");
+
+    try {
+      const response = await fetch(
+        "/api/partner/contact-phone/request",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phone: data.contactPhone,
+          }),
+        }
+      );
+
+      const result =
+        await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setContactPhoneOtpError(
+          result?.message ||
+            "تعذر إرسال رمز التحقق."
+        );
+        return;
+      }
+
+      if (result?.alreadyVerified) {
+        setContactPhoneVerified(true);
+        setContactPhoneVerifiedValue(
+          phone
+        );
+        setContactPhoneOtpSent(false);
+        setContactPhoneOtp("");
+        return;
+      }
+
+      setContactPhoneOtpSent(true);
+      setContactPhoneVerified(false);
+      setContactPhoneVerifiedValue("");
+      setContactPhoneOtp("");
+    } catch {
+      setContactPhoneOtpError(
+        "تعذر الاتصال بخدمة الرسائل حالياً."
+      );
+    } finally {
+      setContactPhoneOtpLoading(false);
+    }
+  };
+
+  const confirmPartnerContactPhoneOtp = async () => {
+    if (
+      contactPhoneOtpLoading ||
+      smsVerificationEnabled !== true
+    ) {
+      return;
+    }
+
+    const phone =
+      normalizeSaudiMobileForCheck(
+        data.contactPhone
+      );
+
+    if (!phone) {
+      setContactPhoneOtpError(
+        "أدخل رقم جوال سعودي صحيحاً."
+      );
+      return;
+    }
+
+    if (!/^\d{6}$/.test(
+      contactPhoneOtp.trim()
+    )) {
+      setContactPhoneOtpError(
+        "أدخل رمز التحقق المكوّن من 6 أرقام."
+      );
+      return;
+    }
+
+    setContactPhoneOtpLoading(true);
+    setContactPhoneOtpError("");
+
+    try {
+      const response = await fetch(
+        "/api/partner/contact-phone/confirm",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phone: data.contactPhone,
+            code:
+              contactPhoneOtp.trim(),
+          }),
+        }
+      );
+
+      const result =
+        await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setContactPhoneOtpError(
+          result?.message ||
+            "تعذر التحقق من الرمز."
+        );
+        return;
+      }
+
+      setContactPhoneVerified(true);
+      setContactPhoneVerifiedValue(
+        phone
+      );
+      setContactPhoneOtpSent(false);
+      setContactPhoneOtp("");
+      setContactPhoneOtpError("");
+
+      setValidationErrors((current) => {
+        if (
+          !current.contactPhoneVerification
+        ) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next.contactPhoneVerification;
+        return next;
+      });
+    } catch {
+      setContactPhoneOtpError(
+        "تعذر الاتصال بخدمة التحقق حالياً."
+      );
+    } finally {
+      setContactPhoneOtpLoading(false);
+    }
+  };
+
   const validateCurrentStep = () => {
     const errors: Record<string, string> = {};
 
@@ -665,10 +933,37 @@ export default function PartnerOnboardingPage() {
       }
     }
 
-    if (currentStep === "operations" && data.receivesPayments) {
-      if (!data.iban.trim()) errors.iban = "رقم IBAN مطلوب لاستقبال التسويات.";
-      if (!data.beneficiaryName.trim()) {
-        errors.beneficiaryName = "اسم المستفيد مطلوب لاستقبال التسويات.";
+    if (currentStep === "operations") {
+      if (smsVerificationEnabled === true) {
+        if (
+          !normalizeSaudiMobileForCheck(
+            data.contactPhone
+          )
+        ) {
+          errors.contactPhone =
+            "أدخل رقم جوال سعودي صحيح لمسؤول التواصل.";
+        } else if (
+          !contactPhoneVerified ||
+          contactPhoneVerifiedValue !==
+            normalizeSaudiMobileForCheck(
+              data.contactPhone
+            )
+        ) {
+          errors.contactPhoneVerification =
+            "يجب التحقق من رقم جوال مسؤول التواصل قبل المتابعة.";
+        }
+      }
+
+      if (data.receivesPayments) {
+        if (!data.iban.trim()) {
+          errors.iban =
+            "رقم IBAN مطلوب لاستقبال التسويات.";
+        }
+
+        if (!data.beneficiaryName.trim()) {
+          errors.beneficiaryName =
+            "اسم المستفيد مطلوب لاستقبال التسويات.";
+        }
       }
     }
 
@@ -880,8 +1175,38 @@ export default function PartnerOnboardingPage() {
         : "أكمل IBAN واسم المستفيد.",
     });
 
+    const contactPhoneOk =
+      smsVerificationEnabled !== true ||
+      Boolean(
+        contactPhoneVerified &&
+          contactPhoneVerifiedValue ===
+            normalizeSaudiMobileForCheck(
+              data.contactPhone
+            )
+      );
+
+    checks.push({
+      label: "جوال مسؤول التواصل",
+      state: contactPhoneOk
+        ? "ok"
+        : "warn",
+      note:
+        smsVerificationEnabled !== true
+          ? "التحقق عبر الرسائل غير مفعّل حالياً."
+          : contactPhoneOk
+            ? "تم توثيق رقم مسؤول التواصل."
+            : "يلزم توثيق رقم مسؤول التواصل عبر SMS.",
+    });
+
     return checks;
-  }, [data, documents, emailVerified]);
+  }, [
+    data,
+    documents,
+    emailVerified,
+    smsVerificationEnabled,
+    contactPhoneVerified,
+    contactPhoneVerifiedValue,
+  ]);
 
   const canSubmit =
     data.declaration &&
@@ -2110,19 +2435,119 @@ export default function PartnerOnboardingPage() {
                 />
               </Field>
 
-              <Field label="جوال مسؤول التواصل">
-                <input
-                  value={data.contactPhone}
-                  onChange={(e) =>
-                    update(
-                      "contactPhone",
-                      e.target.value
-                    )
+              <div data-validation="contactPhone">
+                <Field label="جوال مسؤول التواصل">
+                  <input
+                    value={data.contactPhone}
+                    onChange={(e) =>
+                      update(
+                        "contactPhone",
+                        e.target.value
+                      )
+                    }
+                    placeholder="05xxxxxxxx"
+                    className={`${inputClass} ${
+                      validationErrors.contactPhone
+                        ? errorInputClass
+                        : ""
+                    }`}
+                    dir="ltr"
+                  />
+
+                  {smsVerificationEnabled === null ? (
+                    <p className="mt-2 text-[11px] text-[#0D3B34]/45">
+                      جاري التحقق من حالة خدمة الرسائل...
+                    </p>
+                  ) : smsVerificationEnabled === false ? (
+                    <div className="mt-2 rounded-xl border border-[#0D3B34]/8 bg-[#0D3B34]/[0.035] px-3 py-2 text-[11px] leading-5 text-[#0D3B34]/55">
+                      التحقق عبر SMS جاهز تقنياً وغير مفعّل حالياً. لن يتم إرسال أي رسالة أو احتساب تكلفة.
+                    </div>
+                  ) : contactPhoneVerified ? (
+                    <div className="mt-2 flex items-center gap-2 text-xs font-bold text-emerald-700">
+                      <span>✓</span>
+                      <span>تم التحقق من الرقم</span>
+                    </div>
+                  ) : (
+                    <div className="mt-3 space-y-3">
+                      <button
+                        type="button"
+                        onClick={
+                          requestPartnerContactPhoneOtp
+                        }
+                        disabled={
+                          contactPhoneOtpLoading
+                        }
+                        className="rounded-xl border border-[#B99124]/35 bg-[#FFF9EA] px-4 py-2.5 text-xs font-bold text-[#8B6812] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {contactPhoneOtpLoading
+                          ? "جاري الإرسال..."
+                          : contactPhoneOtpSent
+                            ? "إعادة إرسال الرمز"
+                            : "تحقق من الرقم"}
+                      </button>
+
+                      {contactPhoneOtpSent && (
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <input
+                            value={
+                              contactPhoneOtp
+                            }
+                            onChange={(e) =>
+                              setContactPhoneOtp(
+                                e.target.value
+                                  .replace(
+                                    /\D/g,
+                                    ""
+                                  )
+                                  .slice(0, 6)
+                              )
+                            }
+                            placeholder="رمز التحقق"
+                            inputMode="numeric"
+                            className={inputClass}
+                            dir="ltr"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={
+                              confirmPartnerContactPhoneOtp
+                            }
+                            disabled={
+                              contactPhoneOtpLoading
+                            }
+                            className="shrink-0 rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            تأكيد الرمز
+                          </button>
+                        </div>
+                      )}
+
+                      {contactPhoneOtpError && (
+                        <p className="text-xs font-semibold text-red-600">
+                          {
+                            contactPhoneOtpError
+                          }
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </Field>
+
+                <ValidationError
+                  message={
+                    validationErrors.contactPhone
                   }
-                  className={inputClass}
-                  dir="ltr"
                 />
-              </Field>
+
+                <div data-validation="contactPhoneVerification">
+                  <ValidationError
+                    message={
+                      validationErrors.contactPhoneVerification
+                    }
+                  />
+                </div>
+              </div>
             </div>
 
             <Field label="البريد التشغيلي">

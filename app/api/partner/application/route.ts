@@ -5,6 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 import { getCurrentSession } from "@/lib/session";
+import {
+  isSmsVerificationEnabled,
+  normalizeSaudiMobile,
+} from "@/lib/sms";
 
 
 
@@ -507,7 +511,63 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as PartnerApplicationBody;
 
+    const smsVerificationEnabled =
+      isSmsVerificationEnabled();
 
+    const normalizedMainContactPhone =
+      normalizeSaudiMobile(
+        body.mainContactPhone,
+      );
+
+    let mainContactPhoneVerifiedAt:
+      | Date
+      | null = null;
+
+    if (smsVerificationEnabled) {
+      if (!normalizedMainContactPhone) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "CONTACT_PHONE_REQUIRED",
+            message:
+              "يجب إدخال رقم جوال سعودي صحيح لمسؤول التواصل.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const contactVerification =
+        await prisma.partnerContactVerification.findUnique({
+          where: {
+            userId: session.user.id,
+          },
+          select: {
+            phone: true,
+            verifiedAt: true,
+          },
+        });
+
+      if (
+        !contactVerification?.verifiedAt ||
+        contactVerification.phone !==
+          normalizedMainContactPhone
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "CONTACT_PHONE_NOT_VERIFIED",
+            message:
+              "يجب التحقق من رقم جوال مسؤول التواصل قبل إرسال الطلب.",
+          },
+          { status: 403 },
+        );
+      }
+
+      mainContactPhoneVerifiedAt =
+        contactVerification.verifiedAt;
+    }
 
     const legalNameAr = cleanRequired(body.legalNameAr);
 
@@ -817,7 +877,11 @@ export async function POST(request: NextRequest) {
 
           mainContactEmail: clean(body.mainContactEmail),
 
-          mainContactPhone: clean(body.mainContactPhone),
+          mainContactPhone:
+            normalizedMainContactPhone ??
+            clean(body.mainContactPhone),
+
+          mainContactPhoneVerifiedAt,
 
           mainContactJobTitle: clean(body.mainContactJobTitle),
 
