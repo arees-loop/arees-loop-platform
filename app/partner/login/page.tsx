@@ -79,9 +79,9 @@ export default function PartnerLoginPage() {
         <div className="absolute inset-0 bg-gradient-to-l from-[#F7F2E7]/72 via-[#F7F2E7]/68 to-[#F7F2E7]/90" />
       </div>
 
-      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1360px] items-center gap-12 px-6 py-14 md:grid-cols-[1fr_1.08fr] md:px-10 lg:gap-24 lg:px-14">
-        <section className="order-2 md:order-2">
-          <div className="mx-auto max-w-[500px] rounded-[30px] border border-white/80 bg-white/72 p-6 shadow-[0_28px_80px_rgba(13,59,52,.10)] backdrop-blur-xl sm:p-8">
+      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1500px] grid-cols-1 items-center gap-10 px-6 py-12 md:grid-cols-2 md:gap-14 md:px-12 lg:gap-24 lg:px-20">
+        <section className="order-2 md:order-1 md:flex md:justify-end">
+          <div className="w-full max-w-[500px] rounded-[30px] border border-white/80 bg-white/78 p-6 shadow-[0_28px_80px_rgba(0,0,0,.18)] backdrop-blur-xl sm:p-8">
             <div className="mb-6">
               <span className="inline-flex rounded-full border border-[#D4AF37]/35 bg-[#FFF8E4]/80 px-4 py-2 text-[11px] font-bold text-[#9A7415]">
                 بوابة شركاء Arees Loop
@@ -168,8 +168,8 @@ export default function PartnerLoginPage() {
           </div>
         </section>
 
-        <section className="order-1 flex justify-center md:order-1">
-          <div className="max-w-[590px] text-center md:text-right">
+        <section className="order-1 flex justify-center md:order-2 md:justify-start">
+          <div className="w-full max-w-[590px] text-center md:text-right">
             <Image
               src="/Logo/arees-loop-brand.png"
               alt="Arees Loop"
