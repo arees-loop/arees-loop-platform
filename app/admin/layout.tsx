@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div dir="rtl" className="min-h-screen bg-[#FCFAF5] text-[#171717]" style={{fontFamily:"var(--font-ibm-plex-arabic), sans-serif"}}>
       <div className="flex min-h-screen flex-row">
-        <aside className="hidden w-[265px] shrink-0 border-r border-white/65 bg-[#FFFDF8]/72 shadow-[10px_0_34px_rgba(91,70,32,.12)] backdrop-blur-xl lg:flex lg:flex-col">
+        <aside className="hidden w-[265px] shrink-0 border-r border-white/90 bg-white/72 shadow-[12px_0_34px_rgba(70,60,40,.08),inset_-1px_0_0_rgba(255,255,255,.9)] backdrop-blur-2xl lg:flex lg:flex-col">
           <div className="flex h-[108px] items-center justify-center border-b border-[#171717]/5">
             <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={120} height={65} className="h-[62px] w-auto object-contain" priority />
           </div>
@@ -49,8 +49,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <header className="sticky top-0 z-[90] border-b border-[#171717]/8 bg-[#FFFEFA]/92 backdrop-blur-xl">
             <div className="flex h-[78px] items-center justify-between px-5 md:px-8">
               <div className="relative">
-                <button onClick={()=>setMenuOpen(v=>!v)} className="flex items-center gap-3 rounded-2xl border border-[#D9C99F]/45 bg-white/55 px-3 py-2 shadow-[0_6px_20px_rgba(80,62,30,.07)] backdrop-blur-xl">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#B58A25] font-bold text-white">A</div>
+                <button onClick={()=>setMenuOpen(v=>!v)} className="flex items-center gap-2 px-2 py-1.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#B58A25] font-bold text-white">A</div>
                   <div className="hidden text-right sm:block"><p className="text-xs font-bold">Arees Admin</p><p className="text-[10px] text-[#171717]/45">admin@areesloop.com</p></div>
                   <span className="text-sm">⌄</span>
                 </button>
