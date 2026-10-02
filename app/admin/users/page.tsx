@@ -21,8 +21,8 @@ export default function AdminUsersPage(){
     <button onClick={()=>setOpen(true)} className="rounded-xl border border-[#B68A21] !bg-[#C99A1B] px-6 py-3 text-sm font-extrabold !text-[#073F35] shadow-[0_6px_18px_rgba(182,138,33,.25)] transition hover:!bg-[#B68A21] hover:shadow-[0_8px_22px_rgba(182,138,33,.35)]">+ إضافة مستخدم</button>
    </div>
    <section className="mt-8 max-w-5xl overflow-hidden rounded-[22px] border border-black/5 bg-white shadow-[0_10px_30px_rgba(70,60,40,.06)]">
-    <div className="grid grid-cols-[1.4fr_1.5fr_.8fr_.8fr_.5fr] gap-3 border-b border-black/5 bg-[#FFFCF6] px-6 py-4 text-xs font-bold text-black/45"><span>المستخدم</span><span>البريد الإلكتروني</span><span>الدور</span><span>الحالة</span><span>إجراءات</span></div>
-    <div className="grid grid-cols-[1.4fr_1.5fr_.8fr_.8fr_.5fr] items-center gap-3 px-6 py-5 text-sm"><b>Arees Admin</b><span>admin@areesloop.com</span><span className="font-bold text-[#B68A21]">Super Admin</span><span><i className="not-italic rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">نشط</i></span><button className="text-xl">•••</button></div>
+    <div className="grid grid-cols-[1.4fr_1.5fr_.8fr_.8fr_.5fr] items-center gap-3 border-b border-black/5 bg-[#FFFCF6] px-6 py-4 text-xs font-bold text-black/45"><span>المستخدم</span><span>البريد الإلكتروني</span><span>الدور</span><span>الحالة</span><span>إجراءات</span></div>
+    <div className="grid grid-cols-[1.4fr_1.5fr_.8fr_.8fr_.5fr] items-center gap-3 px-6 py-5 text-sm"><b className="whitespace-nowrap">Arees Admin</b><span className="whitespace-nowrap">admin@areesloop.com</span><span className="whitespace-nowrap font-bold text-[#B68A21]">Super Admin</span><span><i className="not-italic rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">نشط</i></span><button className="text-xl">•••</button></div>
    </section>
    <div className="mt-4 rounded-xl bg-[#F7F0E2] px-5 py-4 text-xs text-black/55">الـ Super Admin يملك كامل الصلاحيات. الأدمن العادي تظهر له فقط الأقسام الممنوحة له.</div>
   </div>
