@@ -320,6 +320,81 @@ export default function PartnerOnboardingPage() {
   const [aiReviewResult, setAiReviewResult] =
     useState<AiReviewClientResult | null>(null);
   const [applicationId, setApplicationId] = useState("");
+  const [applicationStatus, setApplicationStatus] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadExistingApplication() {
+      try {
+        const response = await fetch(
+          "/api/partner/application",
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const application = payload?.application;
+
+        if (!application || cancelled) return;
+
+        setApplicationId(String(application.id || ""));
+        setApplicationStatus(
+          String(application.status || "")
+        );
+
+        if (
+          application.status === "NEEDS_COMPLETION" &&
+          application.completionNotes
+        ) {
+          setAiReviewResult({
+            outcome: "NEEDS_COMPLETION",
+            summary: "يوجد استكمال مطلوب على الطلب.",
+            partnerMessage:
+              String(application.completionNotes),
+            issues: [],
+          });
+        } else if (
+          typeof application.reviewNotes === "string" &&
+          application.reviewNotes.trim()
+        ) {
+          try {
+            const parsed = JSON.parse(
+              application.reviewNotes
+            ) as AiReviewClientResult;
+
+            if (
+              parsed &&
+              (parsed.outcome === "READY" ||
+                parsed.outcome === "NEEDS_COMPLETION" ||
+                parsed.outcome === "MANUAL_REVIEW")
+            ) {
+              setAiReviewResult(parsed);
+            }
+          } catch {
+            // reviewNotes may contain an admin note rather than an AI JSON report.
+          }
+        }
+
+        setCurrentStep("done");
+      } catch (error) {
+        console.error(
+          "Unable to load existing partner application:",
+          error
+        );
+      }
+    }
+
+    void loadExistingApplication();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeIndex = useMemo(
     () =>
@@ -1324,6 +1399,12 @@ export default function PartnerOnboardingPage() {
       setApplicationId(String(result.application.id));
     }
 
+    if (result?.application?.status) {
+      setApplicationStatus(
+        String(result.application.status)
+      );
+    }
+
     const filesToUpload: Array<{
       file: File;
       type: string;
@@ -1437,6 +1518,12 @@ export default function PartnerOnboardingPage() {
     if (reviewPayload?.review) {
       setAiReviewResult(
         reviewPayload.review as AiReviewClientResult
+      );
+    }
+
+    if (reviewPayload?.application?.status) {
+      setApplicationStatus(
+        String(reviewPayload.application.status)
       );
     }
 
