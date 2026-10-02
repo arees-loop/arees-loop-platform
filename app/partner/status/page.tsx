@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 type StatusKey =
   | "received"
+  | "ai"
   | "review"
-  | "preapproved"
   | "agreement"
   | "accepted"
   | "final"
@@ -36,25 +37,53 @@ type PartnerApplication = {
 };
 
 const steps: Step[] = [
-  { key: "received", title: "تم استلام الطلب", description: "تم استلام بيانات المنشأة والمستندات بنجاح." },
-  { key: "review", title: "تحت التدقيق", description: "يقوم فريق Arees Loop بمراجعة البيانات والتراخيص والمرفقات." },
-  { key: "preapproved", title: "الموافقة المبدئية", description: "تم اجتياز التدقيق الأولي وتحديد الشروط التجارية." },
-  { key: "agreement", title: "بانتظار موافقتك على الاتفاقية", description: "راجع النسبة والرسوم والشروط قبل الموافقة الإلكترونية." },
-  { key: "accepted", title: "تمت الموافقة على الشروط", description: "تم تسجيل موافقتك الإلكترونية على الاتفاقية." },
-  { key: "final", title: "بانتظار الاعتماد النهائي", description: "الطلب جاهز للمراجعة والاعتماد النهائي من Arees Loop." },
-  { key: "active", title: "معتمد ونشط", description: "تم اعتماد المنشأة ويمكنك الآن إدارة خدماتك وطلباتك." },
+  {
+    key: "received",
+    title: "تم استلام الطلب",
+    description: "تم حفظ بيانات طلب الشراكة والمستندات المرفوعة.",
+  },
+  {
+    key: "ai",
+    title: "المراجعة الآلية",
+    description: "يقوم الذكاء الاصطناعي بفحص اكتمال البيانات واتساق المستندات وإعداد تقرير المراجعة.",
+  },
+  {
+    key: "review",
+    title: "مراجعة أريس",
+    description: "يراجع فريق Arees Loop تقرير الذكاء الاصطناعي والبيانات قبل الانتقال للاتفاقية.",
+  },
+  {
+    key: "agreement",
+    title: "الاتفاقية الإلكترونية",
+    description: "راجع العمولة والرسوم والشروط التجارية ثم وافق على الاتفاقية إلكترونياً.",
+  },
+  {
+    key: "accepted",
+    title: "تم قبول الاتفاقية",
+    description: "تم تسجيل قبول الشريك للشروط والاتفاقية.",
+  },
+  {
+    key: "final",
+    title: "الاعتماد النهائي",
+    description: "يتم استكمال قرار الاعتماد النهائي قبل تفعيل حساب الشريك.",
+  },
+  {
+    key: "active",
+    title: "معتمد ونشط",
+    description: "تم اعتماد المنشأة ويمكنك الآن إدارة خدماتك وطلباتك.",
+  },
 ];
 
 function statusToStep(status: string): StatusKey {
   switch (status) {
     case "DRAFT":
-    case "SUBMITTED":
       return "received";
+    case "SUBMITTED":
+      return "ai";
     case "UNDER_REVIEW":
     case "NEEDS_COMPLETION":
-      return "review";
     case "PRE_APPROVED":
-      return "preapproved";
+      return "review";
     case "WAITING_AGREEMENT":
       return "agreement";
     case "AGREEMENT_ACCEPTED":
@@ -71,10 +100,10 @@ function statusToStep(status: string): StatusKey {
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
     DRAFT: "مسودة",
-    SUBMITTED: "تم استلام الطلب",
-    UNDER_REVIEW: "تحت التدقيق",
+    SUBMITTED: "المراجعة الآلية",
+    UNDER_REVIEW: "لدى مراجعة أريس",
     NEEDS_COMPLETION: "مطلوب استكمال",
-    PRE_APPROVED: "موافقة مبدئية",
+    PRE_APPROVED: "لدى مراجعة أريس",
     WAITING_AGREEMENT: "بانتظار موافقتك على الاتفاقية",
     AGREEMENT_ACCEPTED: "تمت الموافقة على الشروط",
     APPROVED: "بانتظار التفعيل",
@@ -305,20 +334,32 @@ export default function PartnerStatusPage() {
             <section className="rounded-[30px] border border-[#E4D5A7] bg-[#FFF9E9] p-6">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#D4A72C]/15 font-bold text-[#A67B11]">!</div>
               <h3 className="mt-4 text-lg font-bold text-[#0D463D]">
-                {application.status === "NEEDS_COMPLETION" ? "مطلوب منك استكمال الطلب" : "لا يوجد إجراء مطلوب منك الآن"}
+                {application.status === "NEEDS_COMPLETION"
+                  ? "مطلوب منك استكمال الطلب"
+                  : "لا يوجد إجراء مطلوب منك الآن"}
               </h3>
               <p className="mt-2 text-sm leading-7 text-[#71837E]">
                 {application.status === "NEEDS_COMPLETION"
-                  ? application.completionNotes || "راجع الملاحظات واستكمل البيانات المطلوبة."
+                  ? application.completionNotes ||
+                    "راجع الملاحظات واستكمل البيانات المطلوبة."
                   : "سيظهر هنا أي مستند ناقص أو إجراء يحتاج إلى استكماله."}
               </p>
+
+              {application.status === "NEEDS_COMPLETION" && (
+                <Link
+                  href="/partner/onboarding?resume=1"
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-[#0D463D] px-4 py-3 text-sm font-bold text-white"
+                >
+                  استكمال الطلب الآن
+                </Link>
+              )}
             </section>
 
             <section className="rounded-[30px] bg-[#ECE9DE] p-6">
               <p className="text-xs font-semibold text-[#7D8D89]">الخطوة التالية</p>
-              <h3 className="mt-2 text-lg font-bold">الموافقة المبدئية والشروط التجارية</h3>
+              <h3 className="mt-2 text-lg font-bold">مراجعة أريس ثم الاتفاقية</h3>
               <p className="mt-2 text-sm leading-7 text-[#71837E]">
-                بعد اكتمال التدقيق ستظهر لك النسبة المتفق عليها، الرسوم والشروط التجارية والاتفاقية الإلكترونية للمراجعة والموافقة.
+                بعد اكتمال المراجعة الإدارية، تنتقل للاتفاقية الإلكترونية التي توضح العمولة والرسوم والشروط التجارية قبل قبول الشريك.
               </p>
             </section>
           </aside>
