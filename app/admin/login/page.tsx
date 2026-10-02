@@ -51,8 +51,8 @@ export default function AdminLoginPage() {
 
   return (
     <main dir="rtl" className="min-h-screen bg-[#F3EFE4] px-5 py-10 text-[#0D3B34]">
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-[1180px] items-center justify-center">
-        <div className="grid w-full overflow-hidden rounded-[34px] border border-[#D9D2C2] bg-white shadow-[0_28px_80px_rgba(29,45,39,.12)] md:grid-cols-[.9fr_1.1fr]">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-[980px] items-center justify-center">
+        <div className="grid w-full overflow-hidden rounded-[34px] border border-[#D9D2C2] bg-white shadow-[0_28px_80px_rgba(29,45,39,.12)] md:grid-cols-2">
           <section className="bg-[#0D463D] p-8 text-white md:p-12">
             <div className="flex h-full min-h-[360px] flex-col justify-between">
               <div>
@@ -61,10 +61,10 @@ export default function AdminLoginPage() {
                 </span>
                 <h1 className="mt-8 text-4xl font-extrabold leading-tight">إدارة أريس لوب</h1>
                 <p className="mt-4 max-w-md text-sm leading-7 text-white/70">
-                  بوابة داخلية مخصصة لفريق أريس لإدارة طلبات الشركاء والمراجعات والتشغيل.
+                  بوابتك لإدارة أريس لوب. راجع، قرّر، وأنجز — وخلي الباقي علينا 😄
                 </p>
               </div>
-              <p className="mt-10 text-xs text-white/45">Authorized personnel only</p>
+              <div className="mt-10"><p className="text-sm font-bold text-[#E6C55A]">يوم إداري جميل يبدأ من هنا ✨</p><p className="mt-2 text-xs text-white/50">ركّز على القرار... أريس لوب يرتّب لك التفاصيل.</p></div>
             </div>
           </section>
 
@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
               {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">{error}</div>}
 
               <button type="submit" disabled={loading}
-                className="h-14 w-full rounded-2xl bg-[#0D463D] text-sm font-bold text-white transition hover:bg-[#123F38] disabled:opacity-60">
+                className="mx-auto flex h-14 w-full max-w-[320px] items-center justify-center rounded-2xl bg-[#0D463D] text-sm font-bold text-white transition hover:bg-[#123F38] disabled:opacity-60">
                 {loading ? "جاري الدخول..." : "دخول لوحة الإدارة"}
               </button>
             </form>
