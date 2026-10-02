@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BadgeCheck, FilePenLine, FileClock, UsersRound } from "lucide-react";
 
 const requests=[
  {name:"شركة اريس الحلول المتكاملة",activity:"السفر والسياحة",date:"2026/10/01",status:"مطلوب استكمال",tone:"amber"},
@@ -26,10 +27,10 @@ export default function AdminDashboardPage(){
    </section>
 
    <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-    <Stat label="الشركاء المعتمدون" value="8" icon="✓"/>
-    <Stat label="مطلوب استكمال" value="1" icon="▧" emphasis/>
-    <Stat label="طلبات قيد المراجعة" value="3" icon="▤"/>
-    <Stat label="إجمالي الشركاء" value="12" icon="♧"/>
+    <Stat label="الشركاء المعتمدون" value="8" icon={<BadgeCheck size={30} strokeWidth={1.8}/>}/>
+    <Stat label="مطلوب استكمال" value="1" icon={<FilePenLine size={30} strokeWidth={1.8}/>} emphasis/>
+    <Stat label="طلبات قيد المراجعة" value="3" icon={<FileClock size={30} strokeWidth={1.8}/>}/>
+    <Stat label="إجمالي الشركاء" value="12" icon={<UsersRound size={30} strokeWidth={1.8}/>}/>
    </section>
 
    <section className="mt-6 grid items-start gap-5 xl:grid-cols-[1.6fr_1fr]">
@@ -64,4 +65,4 @@ export default function AdminDashboardPage(){
   </div>
  </main>
 }
-function Stat({label,value,icon,emphasis=false}:{label:string;value:string;icon:string;emphasis?:boolean}){return <div className={`flex items-center justify-between rounded-[22px] border border-white/55 bg-white/35 p-5 shadow-[0_10px_30px_rgba(110,85,35,.08),inset_0_1px_0_rgba(255,255,255,.75)] backdrop-blur-xl ${emphasis?"ring-1 ring-[#D7B75D]/25":""}`}><div><p className="text-sm font-semibold text-[#555]">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div><div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FBF5E6] text-[32px] font-bold text-[#D39B16]">{icon}</div></div>}
+function Stat({label,value,icon,emphasis=false}:{label:string;value:string;icon:React.ReactNode;emphasis?:boolean}){return <div className={`flex items-center justify-between rounded-[22px] border border-white/55 bg-white/35 p-5 shadow-[0_10px_30px_rgba(110,85,35,.08),inset_0_1px_0_rgba(255,255,255,.75)] backdrop-blur-xl ${emphasis?"ring-1 ring-[#D7B75D]/25":""}`}><div><p className="text-sm font-semibold text-[#555]">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div><div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FBF5E6] text-[32px] font-bold text-[#D39B16]">{icon}</div></div>}
