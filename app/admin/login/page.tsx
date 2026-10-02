@@ -54,10 +54,10 @@ export default function AdminLoginPage() {
     <main dir="rtl" className="min-h-screen bg-[#F3EFE4] px-5 py-10 text-[#0D3B34]">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-[980px] items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-[34px] border border-[#D9D2C2] bg-white shadow-[0_28px_80px_rgba(29,45,39,.12)] md:grid-cols-2">
-          <section className="bg-[#0D463D] p-8 text-white md:p-12">
+          <section className="relative overflow-hidden bg-gradient-to-br from-[#EEE7D8] via-[#E5DED0] to-[#D8D2C7] p-8 text-[#0D463D] md:p-12">
             <div className="flex h-full min-h-[360px] flex-col justify-between">
               <div>
-                <span className="inline-flex rounded-full border border-[#D4AF37]/35 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-[.18em] text-[#E6C55A]">
+                <span className="inline-flex rounded-full border border-[#B88716]/30 bg-white/45 px-4 py-2 text-[11px] font-bold tracking-[.18em] text-[#8D6814]">
                   AREES LOOP · ADMIN
                 </span>
                 <Image
@@ -66,14 +66,14 @@ export default function AdminLoginPage() {
                   width={180}
                   height={180}
                   priority
-                  className="mx-auto mt-8 h-auto w-[110px] brightness-0 invert"
+                  className="mx-auto mt-8 h-auto w-[180px] drop-shadow-[0_12px_28px_rgba(80,65,30,.16)]"
                 />
                 <h1 className="mt-5 text-center text-4xl font-extrabold leading-tight">إدارة أريس لوب</h1>
-                <p className="mt-4 max-w-md text-sm leading-7 text-white/70">
+                <p className="mt-4 max-w-md text-sm leading-7 text-[#526B65]">
                   بوابتك لإدارة أريس لوب. راجع، قرّر، وأنجز — وخلي الباقي علينا 😄
                 </p>
               </div>
-              <div className="mt-10"><p className="text-sm font-bold text-[#E6C55A]">يوم إداري جميل يبدأ من هنا ✨</p><p className="mt-2 text-xs text-white/50">ركّز على القرار... أريس لوب يرتّب لك التفاصيل.</p></div>
+              <div className="mt-10"><p className="text-sm font-bold text-[#9A7318]">يوم إداري جميل يبدأ من هنا ✨</p><p className="mt-2 text-xs text-[#687B76]">ركّز على القرار... أريس لوب يرتّب لك التفاصيل.</p></div>
             </div>
           </section>
 
