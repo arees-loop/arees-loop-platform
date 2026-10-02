@@ -40,7 +40,7 @@ export default function AdminUsersPage(){
     <div><p className="text-xs font-bold tracking-[.18em] text-[#B68A21]">ADMIN ACCESS</p><h1 className="mt-2 text-3xl font-bold">المستخدمين والصلاحيات</h1><p className="mt-2 text-sm text-black/50">إدارة حسابات فريق الإدارة والتحكم في صلاحيات الوصول.</p></div>
     <button onClick={()=>setOpen(true)} className="rounded-xl border border-[#B68A21] !bg-[#C99A1B] px-6 py-3 text-sm font-extrabold !text-[#073F35] shadow-[0_6px_18px_rgba(182,138,33,.25)] transition hover:!bg-[#B68A21] hover:shadow-[0_8px_22px_rgba(182,138,33,.35)]">+ إضافة مستخدم</button>
    </div>
-   <section className="mt-8 max-w-6xl overflow-hidden rounded-[24px] border border-[#D8C79D]/45 bg-white/70 shadow-[0_18px_55px_rgba(61,50,25,.07)] backdrop-blur-xl">
+   <section className="mt-8 w-full overflow-hidden rounded-[26px] border border-[#D8C79D]/45 bg-white/70 shadow-[0_18px_55px_rgba(61,50,25,.07)] backdrop-blur-xl">
     <div className="flex items-center justify-between border-b border-[#D8C79D]/30 bg-gradient-to-l from-[#FBF6EA]/90 to-white/70 px-7 py-5">
      <div><h2 className="text-base font-extrabold text-[#103F38]">فريق الإدارة</h2><p className="mt-1 text-xs text-black/40">{users.length} مستخدم إداري</p></div>
      <div className="rounded-full border border-[#D5B65B]/30 bg-white/70 px-3 py-1.5 text-[11px] font-bold text-[#8D6B16]">AREES LOOP</div>
@@ -54,12 +54,12 @@ export default function AdminUsersPage(){
       const perms=Array.isArray(user.adminPermissions)?user.adminPermissions.length:0;
       const active=user.status==="ACTIVE";
       const initials=fullName.split(" ").filter(Boolean).map(x=>x[0]).slice(0,2).join("").toUpperCase();
-      return <div key={user.id} className="group relative grid gap-4 px-7 py-5 transition-all duration-300 hover:bg-[#FFF9EA]/65 hover:shadow-[inset_4px_0_0_#C7A044,0_8px_28px_rgba(182,138,33,.09)] md:grid-cols-[1.25fr_1.55fr_.8fr_.8fr_1.15fr_.3fr] md:items-center">
+      return <div key={user.id} className="group relative grid gap-4 px-7 py-5 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.006] hover:rounded-[18px] hover:bg-[#FFFDF7] hover:shadow-[0_14px_38px_rgba(182,138,33,.24),0_0_30px_rgba(214,177,78,.20)] md:grid-cols-[1.25fr_1.55fr_.8fr_.8fr_1.15fr_.3fr] md:items-center">
        <div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7BE78]/55 bg-gradient-to-br from-[#FFF9EA] to-[#F1E5C8] text-xs font-black text-[#0D4A40] shadow-sm">{initials}</div><div><b className="block text-sm text-[#103F38]">{fullName}</b><span className="mt-0.5 block text-[10px] text-black/30">{user.role==="SUPER_ADMIN"?"الإدارة الرئيسية":"فريق الإدارة"}</span></div></div>
        <span className="text-sm text-black/60">{user.email}</span>
        <span><i className="not-italic rounded-full border border-[#D5B65B]/30 bg-[#FBF5E6] px-3 py-1.5 text-[11px] font-extrabold text-[#8D6B16]">{user.role==="SUPER_ADMIN"?"Super Admin":"Admin"}</i></span>
        <span><i className={`inline-flex items-center gap-1.5 not-italic rounded-full px-3 py-1.5 text-[11px] font-bold ${active?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}><i className={`h-1.5 w-1.5 rounded-full ${active?"bg-emerald-500":"bg-amber-500"}`}></i>{active?"نشط":"تم إرسال الدعوة"}</i></span>
-       <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":perms+" صلاحيات ممنوحة"}</span>
+       <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة")).join(" • "):perms+" صلاحيات"}</span>
        <button aria-label="إجراءات المستخدم" className="flex h-8 w-8 items-center justify-center rounded-full text-lg font-bold text-[#0D4A40] transition-all hover:bg-white hover:shadow-[0_5px_18px_rgba(182,138,33,.22)]">•••</button>
       </div>
      })}
