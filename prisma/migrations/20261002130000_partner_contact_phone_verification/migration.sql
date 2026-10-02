@@ -1,3 +1,6 @@
+ALTER TYPE "VerificationTokenType"
+ADD VALUE 'PARTNER_CONTACT_PHONE_VERIFICATION';
+
 ALTER TABLE "Partner"
 ADD COLUMN "mainContactPhoneVerifiedAt" TIMESTAMP(3);
 
