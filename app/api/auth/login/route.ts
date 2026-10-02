@@ -103,6 +103,11 @@ export async function POST(
         ? body.password
         : "";
 
+    const portal =
+      typeof body.portal === "string"
+        ? body.portal.trim().toLowerCase()
+        : "";
+
     if (!identifier) {
       return NextResponse.json(
         {
@@ -254,6 +259,48 @@ export async function POST(
         },
         { status: 403 },
       );
+    }
+
+    if (
+      portal === "admin" &&
+      !["ADMIN", "SUPER_ADMIN"].includes(user.role)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "ADMIN_ACCOUNT_REQUIRED",
+          message: "This account is not authorized for the Arees Loop administration portal.",
+        },
+        { status: 403 },
+      );
+    }
+
+    if (portal === "partner") {
+      const partnerMembership =
+        await prisma.partnerMember.findFirst({
+          where: {
+            userId: user.id,
+            isActive: true,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      const canStartPartnerApplication =
+        user.role === "PARTNER_OWNER" ||
+        user.role === "PARTNER_ADMIN";
+
+      if (!partnerMembership && !canStartPartnerApplication) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "PARTNER_ACCOUNT_REQUIRED",
+            message: "This account is not registered as an Arees Loop partner.",
+          },
+          { status: 403 },
+        );
+      }
     }
 
     const loginTime =

@@ -1,18 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-
-type AgreementStatus =
-  | "READY"
-  | "OTP_SENT"
-  | "SIGNED"
-  | "PENDING_FINAL_APPROVAL";
+import { useEffect, useState } from "react";
 
 type AgreementSection = {
   id: string;
   title: string;
   content: string[];
+};
+
+type AgreementData = {
+  id: string;
+  version: string;
+  commissionRate: string | null;
+  termsSnapshot: Record<string, unknown>;
+  sentAt: string | null;
+  acceptedAt: string | null;
+  status: string;
+};
+
+type PartnerData = {
+  id: string;
+  status: string;
+  legalNameAr: string;
+  tradeNameAr: string | null;
+  unifiedNumber?: string | null;
+  commercialRegister?: string | null;
+  mainContactName?: string | null;
+  mainContactEmail?: string | null;
+  mainContactPhone?: string | null;
+  transferFee?: string | null;
 };
 
 const agreementSections: AgreementSection[] = [
@@ -92,49 +109,64 @@ const agreementSections: AgreementSection[] = [
 ];
 
 export default function PartnerAgreementPage() {
-  const [status, setStatus] = useState<AgreementStatus>("READY");
-  const [agreementAccepted, setAgreementAccepted] = useState(false);
-  const [authorityConfirmed, setAuthorityConfirmed] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [openSections, setOpenSections] = useState<string[]>([
-    "scope",
-    "commission",
-  ]);
+  const [partner, setPartner] =
+    useState<PartnerData | null>(null);
+  const [agreement, setAgreement] =
+    useState<AgreementData | null>(null);
+  const [agreementAccepted, setAgreementAccepted] =
+    useState(false);
+  const [authorityConfirmed, setAuthorityConfirmed] =
+    useState(false);
+  const [openSections, setOpenSections] =
+    useState<string[]>(["scope", "commission"]);
+  const [loading, setLoading] = useState(true);
+  const [accepting, setAccepting] = useState(false);
+  const [error, setError] = useState("");
 
-  const partner = {
-    applicationNumber: "AL-P-00001",
-    tradeName: "تجارب المدينة",
-    legalName: "شركة تجارب المدينة السياحية المحدودة",
-    unifiedNumber: "7037003618",
-    crNumber: "4650123456",
-    representative: "محمد أحمد",
-    representativePhone: "+966 55 123 4567",
-    representativeEmail: "admin@example.sa",
-  };
+  useEffect(() => {
+    let active = true;
 
-  const commercialTerms = {
-    commissionRate: 10,
-    paymentProcessing: "يتحملها الشريك حسب التكلفة الفعلية",
-    settlementFee: 1,
-    settlementCycle: "كل 7 أيام",
-    currency: "SAR",
-    agreementVersion: "AL-PA-v1.0",
-    effectiveDate: "بعد الاعتماد النهائي",
-  };
+    async function loadAgreement() {
+      try {
+        const response = await fetch(
+          "/api/partner/agreement",
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        );
 
-  const canSign = agreementAccepted && authorityConfirmed;
+        const payload = await response.json();
 
-  const progress = useMemo(() => {
-    if (status === "READY") return 50;
-    if (status === "OTP_SENT") return 75;
-    if (
-      status === "SIGNED" ||
-      status === "PENDING_FINAL_APPROVAL"
-    )
-      return 100;
+        if (!response.ok) {
+          throw new Error(
+            payload.message ||
+              "تعذر تحميل اتفاقية الشريك."
+          );
+        }
 
-    return 50;
-  }, [status]);
+        if (!active) return;
+
+        setPartner(payload.partner ?? null);
+        setAgreement(payload.agreement ?? null);
+      } catch (err) {
+        if (!active) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : "تعذر تحميل اتفاقية الشريك."
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadAgreement();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const toggleSection = (id: string) => {
     setOpenSections((current) =>
@@ -144,29 +176,126 @@ export default function PartnerAgreementPage() {
     );
   };
 
-  const sendOtp = () => {
-    if (!canSign) return;
+  const acceptAgreement = async () => {
+    if (
+      !agreementAccepted ||
+      !authorityConfirmed ||
+      accepting
+    ) {
+      return;
+    }
 
-    setStatus("OTP_SENT");
+    setAccepting(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        "/api/partner/agreement",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            acceptedTerms: true,
+            authorityConfirmed: true,
+          }),
+        }
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ||
+            "تعذر تسجيل قبول الاتفاقية."
+        );
+      }
+
+      setPartner((current) =>
+        current
+          ? {
+              ...current,
+              status:
+                payload.partner?.status ||
+                "AGREEMENT_ACCEPTED",
+            }
+          : current
+      );
+
+      setAgreement((current) =>
+        current
+          ? {
+              ...current,
+              status:
+                payload.agreement?.status ||
+                "ACCEPTED",
+              acceptedAt:
+                payload.agreement?.acceptedAt ||
+                new Date().toISOString(),
+            }
+          : current
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "تعذر تسجيل قبول الاتفاقية."
+      );
+    } finally {
+      setAccepting(false);
+    }
   };
 
-  const signAgreement = () => {
-    if (otp.length !== 6) return;
+  if (loading) {
+    return (
+      <main
+        dir="rtl"
+        className="flex min-h-screen items-center justify-center bg-[#F7F4EA] px-5 text-[#0D3B34]"
+      >
+        <p className="text-sm font-semibold">
+          جاري تحميل الاتفاقية...
+        </p>
+      </main>
+    );
+  }
 
-    setStatus("PENDING_FINAL_APPROVAL");
-  };
+  if (error && !agreement) {
+    return (
+      <StateCard
+        title="تعذر تحميل الاتفاقية"
+        description={error}
+      />
+    );
+  }
 
-  if (status === "PENDING_FINAL_APPROVAL") {
+  if (!partner || !agreement) {
+    return (
+      <StateCard
+        title="الاتفاقية غير جاهزة بعد"
+        description="عند اكتمال مراجعة أريس وإرسال الاتفاقية ستظهر هنا تلقائياً."
+      />
+    );
+  }
+
+  const accepted =
+    agreement.status === "ACCEPTED" ||
+    partner.status === "AGREEMENT_ACCEPTED" ||
+    partner.status === "APPROVED" ||
+    partner.status === "ACTIVE";
+
+  if (accepted) {
     return (
       <main
         dir="rtl"
         className="min-h-screen bg-[#F7F4EA] px-5 py-12 text-[#0D3B34]"
         style={{
-          fontFamily: "var(--font-ibm-plex-arabic), sans-serif",
+          fontFamily:
+            "var(--font-ibm-plex-arabic), sans-serif",
         }}
       >
         <div className="mx-auto max-w-[760px]">
-          <div className="rounded-[34px] border border-white/80 bg-white/75 p-8 text-center backdrop-blur-xl md:p-12">
+          <div className="rounded-[34px] border border-white/80 bg-white/80 p-8 text-center shadow-sm md:p-12">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E8F4EE] text-3xl font-bold text-[#267247]">
               ✓
             </div>
@@ -175,81 +304,77 @@ export default function PartnerAgreementPage() {
               AGREEMENT ACCEPTED
             </p>
 
-            <h1
-              className="mt-3 text-3xl font-bold md:text-[40px]"
-              style={{
-                fontFamily: "var(--font-el-messiri), serif",
-              }}
-            >
-              تمت الموافقة على الشروط
+            <h1 className="mt-3 text-3xl font-bold md:text-[40px]">
+              تم قبول الاتفاقية إلكترونياً
             </h1>
 
             <p className="mx-auto mt-4 max-w-xl text-sm leading-8 text-[#0D3B34]/65">
-              تم تسجيل موافقتك الإلكترونية على اتفاقية الشريك والشروط
-              التجارية بنجاح. طلبك الآن بانتظار الاعتماد النهائي من
-              Arees Loop.
+              تم تسجيل قبول الشريك للاتفاقية والشروط
+              التجارية. الطلب الآن بانتظار الاعتماد
+              النهائي من Arees Loop.
             </p>
 
             <div className="mt-8 rounded-[24px] bg-[#F5F2E9] p-5 text-right">
               <InfoRow
                 label="المنشأة"
-                value={partner.legalName}
+                value={
+                  partner.tradeNameAr ||
+                  partner.legalNameAr
+                }
               />
-
               <InfoRow
                 label="نسخة الاتفاقية"
-                value={commercialTerms.agreementVersion}
+                value={agreement.version}
               />
-
               <InfoRow
-                label="العمولة المعتمدة"
-                value={`${commercialTerms.commissionRate}%`}
+                label="العمولة"
+                value={
+                  agreement.commissionRate
+                    ? `${agreement.commissionRate}%`
+                    : "—"
+                }
               />
-
               <InfoRow
                 label="الحالة"
-                value="بانتظار الاعتماد النهائي"
-              />
-            </div>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <StatusCard
-                number="01"
-                label="التدقيق"
-                completed
-              />
-
-              <StatusCard
-                number="02"
-                label="الاتفاقية"
-                completed
-              />
-
-              <StatusCard
-                number="03"
-                label="الاعتماد النهائي"
-                active
+                value={
+                  partner.status === "ACTIVE"
+                    ? "معتمد ونشط"
+                    : "بانتظار الاعتماد النهائي"
+                }
               />
             </div>
 
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
                 href="/partner/status"
-                className="inline-flex rounded-2xl bg-[#0D3B34] px-6 py-3.5 text-sm font-bold text-white"
+                className="rounded-2xl bg-[#0D3B34] px-6 py-3.5 text-sm font-bold text-white"
               >
                 متابعة حالة الطلب
               </Link>
-
-              <Link
-                href="/partner/dashboard"
-                className="inline-flex rounded-2xl border border-[#0D3B34]/10 bg-white px-6 py-3.5 text-sm font-bold text-[#0D3B34]"
-              >
-                العودة للوحة التحكم
-              </Link>
+              {partner.status === "ACTIVE" && (
+                <Link
+                  href="/partner/dashboard"
+                  className="rounded-2xl border border-[#0D3B34]/10 bg-white px-6 py-3.5 text-sm font-bold"
+                >
+                  لوحة الشريك
+                </Link>
+              )}
             </div>
           </div>
         </div>
       </main>
+    );
+  }
+
+  if (
+    partner.status !== "WAITING_AGREEMENT" ||
+    agreement.status !== "SENT"
+  ) {
+    return (
+      <StateCard
+        title="الاتفاقية ليست بانتظار قبولك"
+        description="تابع حالة طلب الشراكة لمعرفة المرحلة الحالية."
+      />
     );
   }
 
@@ -258,420 +383,190 @@ export default function PartnerAgreementPage() {
       dir="rtl"
       className="min-h-screen bg-[#F7F4EA] text-[#0D3B34]"
       style={{
-        fontFamily: "var(--font-ibm-plex-arabic), sans-serif",
+        fontFamily:
+          "var(--font-ibm-plex-arabic), sans-serif",
       }}
     >
-      {/* BACKGROUND */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-40 top-20 h-[500px] w-[500px] rounded-full bg-[#0D3B34]/6 blur-[120px]" />
-        <div className="absolute -left-32 top-[42%] h-[430px] w-[430px] rounded-full bg-[#D4AF37]/10 blur-[115px]" />
-      </div>
-
-      {/* HEADER */}
-      <header className="relative z-40 border-b border-[#0D3B34]/8 bg-[#F9F6EF]/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1450px] items-center justify-between px-5 py-5 md:px-8">
+      <header className="border-b border-[#0D3B34]/8 bg-[#FAF8F1]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 md:px-8">
           <div>
             <p className="text-[10px] font-bold tracking-[0.22em] text-[#B99124]">
-              AREES LOOP PARTNER
+              AREES LOOP PARTNER AGREEMENT
             </p>
-
-            <p className="mt-1 text-sm font-bold">
-              الاتفاقية الإلكترونية
-            </p>
+            <h1 className="mt-1 text-lg font-bold">
+              اتفاقية الشريك الإلكترونية
+            </h1>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/admin/dashboard"
-              className="rounded-full bg-[#0D3B34] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#124A41]"
-            >
-              لوحة الإدارة والمؤشرات
-            </Link>
-
-            <Link
-              href="/partner/dashboard"
-              className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/70"
-            >
-              لوحة الشريك
-            </Link>
-
-            <Link
-              href="/partner/status"
-              className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/70"
-            >
-              حالة الطلب
-            </Link>
-          </div>
+          <Link
+            href="/partner/status"
+            className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2 text-xs font-semibold"
+          >
+            حالة الطلب
+          </Link>
         </div>
       </header>
 
-      {/* PROGRESS */}
-      <div className="relative z-20 border-b border-[#0D3B34]/6 bg-white/30">
-        <div className="mx-auto max-w-[1100px] px-5 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-[#0D3B34]/45">
-                مرحلة الاتفاقية
-              </p>
+      <div className="mx-auto max-w-6xl px-5 py-10 md:px-8">
+        <section className="rounded-[32px] bg-[#0D3B34] p-6 text-white md:p-8">
+          <p className="text-xs font-semibold text-[#E6C45D]">
+            الاتفاقية المرسلة من Arees Loop
+          </p>
+          <h2 className="mt-2 text-3xl font-bold">
+            {partner.tradeNameAr ||
+              partner.legalNameAr}
+          </h2>
+          <p className="mt-3 text-sm text-white/60">
+            رقم الطلب:{" "}
+            <span dir="ltr">{partner.id}</span>
+          </p>
 
-              <p className="mt-1 text-sm font-bold">
-                مراجعة الشروط والتوقيع الإلكتروني
-              </p>
-            </div>
-
-            <span className="text-lg font-bold text-[#B99124]">
-              {progress}%
-            </span>
-          </div>
-
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#0D3B34]/8">
-            <div
-              className="h-full rounded-full bg-gradient-to-l from-[#D4AF37] to-[#0D3B34] transition-all duration-500"
-              style={{ width: `${progress}%` }}
+          <div className="mt-7 grid gap-3 sm:grid-cols-3">
+            <TermCard
+              label="نسخة الاتفاقية"
+              value={agreement.version}
+            />
+            <TermCard
+              label="عمولة المنصة"
+              value={
+                agreement.commissionRate
+                  ? `${agreement.commissionRate}%`
+                  : "—"
+              }
+            />
+            <TermCard
+              label="رسوم التحويل"
+              value={
+                partner.transferFee
+                  ? `${partner.transferFee} ر.س`
+                  : "حسب الاتفاقية"
+              }
             />
           </div>
-        </div>
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-[1200px] px-5 py-10 md:px-8 md:py-14">
-        {/* PAGE TITLE */}
-        <section className="mb-8">
-          <p className="text-[10px] font-bold tracking-[0.22em] text-[#B99124]">
-            PARTNER AGREEMENT
-          </p>
-
-          <h1
-            className="mt-2 text-3xl font-bold md:text-[46px]"
-            style={{
-              fontFamily: "var(--font-el-messiri), serif",
-            }}
-          >
-            العرض التجاري واتفاقية الشريك
-          </h1>
-
-          <p className="mt-4 max-w-3xl text-sm leading-8 text-[#0D3B34]/60">
-            راجع الشروط التجارية والاتفاقية بعناية قبل تسجيل موافقتك
-            الإلكترونية. لا يتم تفعيل حساب الشريك إلا بعد الاعتماد
-            النهائي من Arees Loop.
-          </p>
         </section>
 
-        <div className="grid gap-7 xl:grid-cols-[1fr_0.42fr]">
-          {/* AGREEMENT */}
-          <section className="space-y-6">
-            {/* COMMERCIAL TERMS */}
-            <div className="rounded-[30px] border border-[#D4AF37]/25 bg-gradient-to-br from-[#FFFDF7] to-[#F6EFDC] p-6 md:p-8">
-              <div className="mb-6">
-                <p className="text-[10px] font-bold tracking-[0.2em] text-[#B99124]">
-                  COMMERCIAL TERMS
-                </p>
+        <div className="mt-7 grid gap-7 lg:grid-cols-[1.35fr_0.65fr]">
+          <section className="space-y-4">
+            {agreementSections.map((section) => {
+              const open =
+                openSections.includes(section.id);
 
-                <h2
-                  className="mt-2 text-2xl font-bold"
-                  style={{
-                    fontFamily: "var(--font-el-messiri), serif",
-                  }}
+              return (
+                <article
+                  key={section.id}
+                  className="overflow-hidden rounded-[26px] border border-[#DDD9CC] bg-white"
                 >
-                  الشروط التجارية المعتمدة
-                </h2>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <CommercialCard
-                  label="عمولة Arees Loop"
-                  value={`${commercialTerms.commissionRate}%`}
-                  important
-                />
-
-                <CommercialCard
-                  label="رسوم التحويل"
-                  value={`${commercialTerms.settlementFee} ريال`}
-                />
-
-                <CommercialCard
-                  label="دورة التسوية"
-                  value={commercialTerms.settlementCycle}
-                />
-
-                <CommercialCard
-                  label="العملة"
-                  value={commercialTerms.currency}
-                />
-              </div>
-
-              <div className="mt-5 rounded-[20px] border border-[#0D3B34]/8 bg-white/70 p-4">
-                <p className="text-[10px] font-semibold text-[#0D3B34]/45">
-                  رسوم معالجة الدفع
-                </p>
-
-                <p className="mt-2 text-sm font-bold text-[#0D3B34]/75">
-                  {commercialTerms.paymentProcessing}
-                </p>
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <MiniInfo
-                  label="نسخة الاتفاقية"
-                  value={commercialTerms.agreementVersion}
-                />
-
-                <MiniInfo
-                  label="تاريخ السريان"
-                  value={commercialTerms.effectiveDate}
-                />
-              </div>
-            </div>
-
-            {/* AGREEMENT TEXT */}
-            <div className="rounded-[30px] border border-[#0D3B34]/8 bg-white/72 p-6 backdrop-blur-xl md:p-8">
-              <div className="mb-6">
-                <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">
-                  AGREEMENT TERMS
-                </p>
-
-                <h2
-                  className="mt-2 text-2xl font-bold"
-                  style={{
-                    fontFamily: "var(--font-el-messiri), serif",
-                  }}
-                >
-                  بنود اتفاقية الشريك
-                </h2>
-
-                <p className="mt-3 text-sm leading-7 text-[#0D3B34]/55">
-                  نسخة تشغيلية أولية للمنصة. الصياغة القانونية النهائية
-                  يتم اعتمادها قبل الإطلاق التجاري.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {agreementSections.map((section) => {
-                  const open = openSections.includes(section.id);
-
-                  return (
-                    <div
-                      key={section.id}
-                      className="overflow-hidden rounded-[22px] border border-[#0D3B34]/8 bg-[#FAF9F5]"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => toggleSection(section.id)}
-                        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-right"
-                      >
-                        <span className="font-bold">
-                          {section.title}
-                        </span>
-
-                        <span
-                          className={`text-[#B99124] transition ${
-                            open ? "rotate-180" : ""
-                          }`}
-                        >
-                          ⌄
-                        </span>
-                      </button>
-
-                      {open && (
-                        <div className="border-t border-[#0D3B34]/7 px-5 py-5">
-                          <div className="space-y-3">
-                            {section.content.map((paragraph) => (
-                              <div
-                                key={paragraph}
-                                className="flex items-start gap-3 text-sm leading-7 text-[#0D3B34]/65"
-                              >
-                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#D4AF37]" />
-
-                                <p>{paragraph}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* ACCEPTANCE */}
-            <div className="rounded-[30px] border border-[#0D3B34]/8 bg-white/75 p-6 backdrop-blur-xl md:p-8">
-              <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">
-                ELECTRONIC ACCEPTANCE
-              </p>
-
-              <h2
-                className="mt-2 text-2xl font-bold"
-                style={{
-                  fontFamily: "var(--font-el-messiri), serif",
-                }}
-              >
-                الموافقة والتوقيع الإلكتروني
-              </h2>
-
-              <div className="mt-6 space-y-4">
-                <AgreementCheck
-                  checked={agreementAccepted}
-                  onChange={setAgreementAccepted}
-                  text="قرأت وفهمت اتفاقية الشريك والشروط التجارية الموضحة أعلاه، وأوافق عليها بالنسخة الحالية."
-                />
-
-                <AgreementCheck
-                  checked={authorityConfirmed}
-                  onChange={setAuthorityConfirmed}
-                  text="أؤكد أن لدي الصلاحية النظامية للموافقة على هذه الاتفاقية والتعاقد نيابةً عن المنشأة."
-                />
-              </div>
-
-              {status === "READY" && (
-                <button
-                  type="button"
-                  disabled={!canSign}
-                  onClick={sendOtp}
-                  className="mt-6 w-full rounded-2xl bg-[#0D3B34] px-6 py-4 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-35"
-                >
-                  متابعة للتوقيع الإلكتروني
-                </button>
-              )}
-
-              {status === "OTP_SENT" && (
-                <div className="mt-6 rounded-[24px] border border-[#D4AF37]/25 bg-[#FFF9EA] p-5">
-                  <p className="text-sm font-bold">
-                    تحقق من هوية المفوض
-                  </p>
-
-                  <p className="mt-2 text-xs leading-6 text-[#0D3B34]/55">
-                    تم إرسال رمز تحقق تجريبي إلى رقم الجوال الموثق:
-                  </p>
-
-                  <p
-                    className="mt-1 text-sm font-bold"
-                    dir="ltr"
-                  >
-                    {partner.representativePhone}
-                  </p>
-
-                  <div className="mt-5">
-                    <label className="text-xs font-semibold text-[#0D3B34]/65">
-                      رمز التحقق
-                    </label>
-
-                    <input
-                      value={otp}
-                      onChange={(event) =>
-                        setOtp(
-                          event.target.value
-                            .replace(/\D/g, "")
-                            .slice(0, 6)
-                        )
-                      }
-                      placeholder="••••••"
-                      dir="ltr"
-                      className="mt-2 h-14 w-full rounded-2xl border border-[#0D3B34]/10 bg-white px-4 text-center text-xl font-bold tracking-[0.35em] outline-none focus:border-[#D4AF37]"
-                    />
-                  </div>
-
                   <button
                     type="button"
-                    disabled={otp.length !== 6}
-                    onClick={signAgreement}
-                    className="mt-4 w-full rounded-2xl bg-[#D4AF37] px-6 py-4 text-sm font-bold text-[#0D3B34] transition disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={() =>
+                      toggleSection(section.id)
+                    }
+                    className="flex w-full items-center justify-between gap-4 p-5 text-right"
                   >
-                    أوافق وأوقّع إلكترونيًا
+                    <span className="font-bold">
+                      {section.title}
+                    </span>
+                    <span className="text-xl">
+                      {open ? "−" : "+"}
+                    </span>
                   </button>
 
-                  <p className="mt-3 text-center text-[10px] text-[#0D3B34]/40">
-                    النموذج الحالي تجريبي — استخدم أي 6 أرقام.
-                  </p>
-                </div>
-              )}
-            </div>
+                  {open && (
+                    <div className="border-t border-[#0D3B34]/7 px-5 py-5">
+                      <ul className="space-y-3 text-sm leading-7 text-[#5F7771]">
+                        {section.content.map(
+                          (paragraph) => (
+                            <li
+                              key={paragraph}
+                              className="flex gap-3"
+                            >
+                              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#B99124]" />
+                              <span>
+                                {paragraph}
+                              </span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </section>
 
-          {/* SIDEBAR */}
-          <aside className="space-y-5">
-            <div className="rounded-[28px] border border-[#0D3B34]/8 bg-white/72 p-6 backdrop-blur-xl">
-              <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">
-                PARTNER
+          <aside className="h-fit rounded-[30px] border border-[#DDD9CC] bg-white p-6 lg:sticky lg:top-6">
+            <p className="text-xs font-bold tracking-[0.18em] text-[#B99124]">
+              ELECTRONIC ACCEPTANCE
+            </p>
+            <h3 className="mt-2 text-xl font-bold">
+              القبول الإلكتروني
+            </h3>
+
+            <p className="mt-3 text-sm leading-7 text-[#6D827D]">
+              يتم تسجيل هوية المستخدم ووقت القبول
+              وبيانات الجلسة في سجل التدقيق. لا يتم
+              إرسال رسالة SMS إضافية لهذه الخطوة.
+            </p>
+
+            <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl bg-[#F7F5EE] p-4">
+              <input
+                type="checkbox"
+                checked={agreementAccepted}
+                onChange={(event) =>
+                  setAgreementAccepted(
+                    event.target.checked
+                  )
+                }
+                className="mt-1"
+              />
+              <span className="text-sm leading-6">
+                قرأت الاتفاقية والشروط التجارية
+                وأوافق عليها.
+              </span>
+            </label>
+
+            <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl bg-[#F7F5EE] p-4">
+              <input
+                type="checkbox"
+                checked={authorityConfirmed}
+                onChange={(event) =>
+                  setAuthorityConfirmed(
+                    event.target.checked
+                  )
+                }
+                className="mt-1"
+              />
+              <span className="text-sm leading-6">
+                أؤكد أنني مخول بقبول الاتفاقية نيابة
+                عن الشريك.
+              </span>
+            </label>
+
+            {error && (
+              <p className="mt-4 rounded-2xl bg-[#FFF0EE] p-3 text-xs font-semibold text-[#A33A32]">
+                {error}
               </p>
+            )}
 
-              <h3 className="mt-2 text-xl font-bold">
-                {partner.tradeName}
-              </h3>
+            <button
+              type="button"
+              disabled={
+                !agreementAccepted ||
+                !authorityConfirmed ||
+                accepting
+              }
+              onClick={acceptAgreement}
+              className="mt-5 w-full rounded-2xl bg-[#D4AF37] px-5 py-4 text-sm font-bold text-[#0D3B34] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {accepting
+                ? "جارٍ تسجيل القبول..."
+                : "قبول الاتفاقية إلكترونياً"}
+            </button>
 
-              <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">
-                {partner.legalName}
-              </p>
-
-              <div className="mt-6 space-y-4">
-                <InfoRow
-                  label="رقم الطلب"
-                  value={partner.applicationNumber}
-                />
-
-                <InfoRow
-                  label="الرقم الموحد"
-                  value={partner.unifiedNumber}
-                />
-
-                <InfoRow
-                  label="السجل التجاري"
-                  value={partner.crNumber}
-                />
-
-                <InfoRow
-                  label="المفوض"
-                  value={partner.representative}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-[28px] bg-[#0D3B34] p-6 text-white">
-              <p className="text-[10px] font-bold tracking-[0.18em] text-[#E7C24B]">
-                AGREEMENT RECORD
-              </p>
-
-              <h3 className="mt-2 text-lg font-bold">
-                سجل الموافقة
-              </h3>
-
-              <div className="mt-5 space-y-4">
-                <DarkInfo
-                  label="نسخة الاتفاقية"
-                  value={commercialTerms.agreementVersion}
-                />
-
-                <DarkInfo
-                  label="البريد الموثق"
-                  value={partner.representativeEmail}
-                />
-
-                <DarkInfo
-                  label="الجوال الموثق"
-                  value={partner.representativePhone}
-                />
-
-                <DarkInfo
-                  label="حالة التوقيع"
-                  value={
-                    status === "OTP_SENT"
-                      ? "بانتظار رمز التحقق"
-                      : "لم يتم التوقيع بعد"
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#D4AF37]/22 bg-[#FFF9E8] p-6">
-              <p className="text-sm font-bold">
-                بعد توقيع الاتفاقية
-              </p>
-
-              <p className="mt-2 text-xs leading-6 text-[#0D3B34]/58">
-                تنتقل حالة الطلب إلى «بانتظار الاعتماد النهائي». بعد
-                اعتماد Arees Loop يتم فتح لوحة الشريك وإتاحة إضافة
-                الخدمات والتجارب.
-              </p>
-            </div>
+            <p className="mt-4 text-[11px] leading-6 text-[#7B8D89]">
+              لن يتم تفعيل حساب الشريك بمجرد القبول؛
+              يلزم الاعتماد النهائي من Arees Loop.
+            </p>
           </aside>
         </div>
       </div>
@@ -679,88 +574,33 @@ export default function PartnerAgreementPage() {
   );
 }
 
-function CommercialCard({
-  label,
-  value,
-  important = false,
+function StateCard({
+  title,
+  description,
 }: {
-  label: string;
-  value: string;
-  important?: boolean;
+  title: string;
+  description: string;
 }) {
   return (
-    <div
-      className={`rounded-[22px] border p-5 ${
-        important
-          ? "border-[#D4AF37]/35 bg-[#0D3B34] text-white"
-          : "border-[#0D3B34]/8 bg-white/75"
-      }`}
+    <main
+      dir="rtl"
+      className="flex min-h-screen items-center justify-center bg-[#F7F4EA] px-5 text-[#0D3B34]"
     >
-      <p
-        className={`text-[10px] ${
-          important
-            ? "text-white/50"
-            : "text-[#0D3B34]/45"
-        }`}
-      >
-        {label}
-      </p>
-
-      <p
-        className={`mt-2 text-xl font-bold ${
-          important ? "text-[#F1C94C]" : "text-[#0D3B34]"
-        }`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function MiniInfo({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-[#0D3B34]/7 bg-white/60 px-4 py-3">
-      <p className="text-[10px] text-[#0D3B34]/40">
-        {label}
-      </p>
-
-      <p className="mt-1 text-xs font-bold">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function AgreementCheck({
-  checked,
-  onChange,
-  text,
-}: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  text: string;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-[22px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) =>
-          onChange(event.target.checked)
-        }
-        className="mt-1 h-4 w-4 accent-[#0D3B34]"
-      />
-
-      <span className="text-sm leading-7 text-[#0D3B34]/70">
-        {text}
-      </span>
-    </label>
+      <div className="w-full max-w-xl rounded-[32px] border border-[#DDD9CC] bg-white p-8 text-center">
+        <h1 className="text-2xl font-bold">
+          {title}
+        </h1>
+        <p className="mt-3 text-sm leading-7 text-[#71837E]">
+          {description}
+        </p>
+        <Link
+          href="/partner/status"
+          className="mt-6 inline-flex rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white"
+        >
+          متابعة حالة الطلب
+        </Link>
+      </div>
+    </main>
   );
 }
 
@@ -772,19 +612,18 @@ function InfoRow({
   value: string;
 }) {
   return (
-    <div className="border-b border-[#0D3B34]/7 pb-4 last:border-0 last:pb-0">
-      <p className="text-[10px] text-[#0D3B34]/42">
+    <div className="border-b border-[#0D3B34]/8 py-3 first:pt-0 last:border-0 last:pb-0">
+      <p className="text-xs text-[#84938F]">
         {label}
       </p>
-
-      <p className="mt-1 break-words text-sm font-semibold text-[#0D3B34]/75">
+      <p className="mt-1 font-semibold">
         {value}
       </p>
     </div>
   );
 }
 
-function DarkInfo({
+function TermCard({
   label,
   value,
 }: {
@@ -792,53 +631,12 @@ function DarkInfo({
   value: string;
 }) {
   return (
-    <div className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
-      <p className="text-[10px] text-white/40">
+    <div className="rounded-2xl bg-white/8 p-4">
+      <p className="text-[11px] text-white/50">
         {label}
       </p>
-
-      <p className="mt-1 break-words text-xs font-semibold text-white/75">
+      <p className="mt-1 font-bold text-[#F0D16F]">
         {value}
-      </p>
-    </div>
-  );
-}
-
-function StatusCard({
-  number,
-  label,
-  completed = false,
-  active = false,
-}: {
-  number: string;
-  label: string;
-  completed?: boolean;
-  active?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-[20px] border p-4 ${
-        completed
-          ? "border-[#267247]/20 bg-[#EAF5EE]"
-          : active
-          ? "border-[#D4AF37]/35 bg-[#FFF8E4]"
-          : "border-[#0D3B34]/7 bg-[#F8F7F3]"
-      }`}
-    >
-      <p
-        className={`text-[10px] font-bold ${
-          completed
-            ? "text-[#267247]"
-            : active
-            ? "text-[#B99124]"
-            : "text-[#0D3B34]/35"
-        }`}
-      >
-        {completed ? "✓" : number}
-      </p>
-
-      <p className="mt-2 text-xs font-bold">
-        {label}
       </p>
     </div>
   );

@@ -18,8 +18,6 @@ type PartnerStatus =
 
   | "NEEDS_INFO"
 
-  | "PRE_APPROVED"
-
   | "AWAITING_PARTNER_ACCEPTANCE"
 
   | "PARTNER_ACCEPTED"
@@ -140,13 +138,14 @@ function normalizeStatus(status?: string | null): PartnerStatus {
   switch (status) {
     case "SUBMITTED":
     case "UNDER_REVIEW":
-    case "PRE_APPROVED":
     case "ACTIVE":
     case "REJECTED":
       return status;
     case "NEEDS_COMPLETION":
     case "NEEDS_INFO":
       return "NEEDS_INFO";
+    case "PRE_APPROVED":
+      return "UNDER_REVIEW";
     case "WAITING_AGREEMENT":
     case "AWAITING_PARTNER_ACCEPTANCE":
       return "AWAITING_PARTNER_ACCEPTANCE";
@@ -248,14 +247,6 @@ const statusConfig: Record<
 
   },
 
-  PRE_APPROVED: {
-
-    label: "موافقة مبدئية",
-
-    className: "bg-[#E8F2FF] text-[#265D91]",
-
-  },
-
   AWAITING_PARTNER_ACCEPTANCE: {
 
     label: "بانتظار موافقة الشريك",
@@ -311,6 +302,7 @@ export default function AdminPartnersPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [adminActionLoading, setAdminActionLoading] = useState(false);\n  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const [search, setSearch] = useState("");
 
@@ -466,17 +458,78 @@ export default function AdminPartnersPage() {
 
 
 
-  const sendCommercialTerms = () => {
+  const runAdminDecision = async (
+    action:
+      | "REQUEST_COMPLETION"
+      | "SEND_AGREEMENT"
+      | "REJECT"
+      | "ACTIVATE",
+    options?: {
+      notes?: string;
+      commissionRate?: number;
+    }
+  ) => {
+    if (!selectedPartner || adminActionLoading) return;
 
-    updateSelected({
+    setAdminActionLoading(true);
 
-      status: "AWAITING_PARTNER_ACCEPTANCE",
+    try {
+      const response = await fetch(
+        `/api/admin/partners/${selectedPartner.id}/decision`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action,
+            notes: options?.notes,
+            commissionRate:
+              options?.commissionRate,
+          }),
+        }
+      );
 
-    });
+      const payload = await response.json();
 
+      if (!response.ok || !payload.success) {
+        throw new Error(
+          payload.message || "تعذر تنفيذ الإجراء."
+        );
+      }
+
+      const mappedStatus = normalizeStatus(
+        payload.data?.status
+      );
+
+      updateSelected({
+        status: mappedStatus,
+        completionRequest:
+          payload.data?.completionNotes || undefined,
+        commission:
+          Number(payload.data?.commissionRate) ||
+          selectedPartner.commission,
+      });
+
+      return payload;
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "تعذر تنفيذ الإجراء."
+      );
+      return null;
+    } finally {
+      setAdminActionLoading(false);
+    }
   };
 
-
+  const sendCommercialTerms = async () => {
+    await runAdminDecision("SEND_AGREEMENT", {
+      commissionRate:
+        selectedPartner?.commission || 10,
+    });
+  };
 
   const requestMoreInfo = () => {
 
@@ -490,13 +543,18 @@ export default function AdminPartnersPage() {
 
 
 
-  const confirmRequestMoreInfo = () => {
+  const confirmRequestMoreInfo = async () => {
 
     const note = completionNote.trim();
 
     if (!note) return;
 
-    updateSelected({ status: "NEEDS_INFO", completionRequest: note });
+    const result = await runAdminDecision(
+      "REQUEST_COMPLETION",
+      { notes: note }
+    );
+
+    if (!result) return;
 
     setShowCompletionModal(false);
 
@@ -588,26 +646,22 @@ export default function AdminPartnersPage() {
 
 
 
-  const preApprove = () => {
+  const rejectPartner = async () => {
+    if (!selectedPartner) return;
 
-    updateSelected({
+    const reason = window.prompt(
+      "اكتب سبب رفض طلب الشريك:"
+    )?.trim();
 
-      status: "PRE_APPROVED",
+    if (!reason) return;
 
+    await runAdminDecision("REJECT", {
+      notes: reason,
     });
-
   };
 
-
-
-  const finalApprove = () => {
-
-    updateSelected({
-
-      status: "ACTIVE",
-
-    });
-
+  const finalApprove = async () => {
+    await runAdminDecision("ACTIVATE");
   };
 
 
@@ -683,7 +737,7 @@ export default function AdminPartnersPage() {
 
             <Image
 
-              src="/Logo/arees-loop-logo.png"
+              src="/Logo/arees-loop-brand.png"
 
               alt="Arees Loop"
 
@@ -691,7 +745,7 @@ export default function AdminPartnersPage() {
 
               height={54}
 
-              className="h-auto w-[105px] object-contain"
+              className="h-auto w-[78px] object-contain"
 
               priority
 
@@ -753,10 +807,37 @@ export default function AdminPartnersPage() {
 
 
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0D3B34] text-sm font-bold text-[#D4AF37]">
-
-              م
-
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+                className="flex items-center gap-3 rounded-2xl border border-[#D4AF37]/20 bg-white/80 px-3 py-2 text-right shadow-sm transition hover:bg-white"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#171717] text-sm font-bold text-[#D4AF37]">A</div>
+                <div className="hidden sm:block">
+                  <p className="text-xs font-bold text-[#171717]">Arees Admin</p>
+                  <p className="mt-0.5 text-[10px] text-[#171717]/45">admin@areesloop.com</p>
+                </div>
+                <span className="text-xs text-[#B99124]">⌄</span>
+              </button>
+              {accountMenuOpen && (
+                <div className="absolute left-0 top-[calc(100%+10px)] w-56 overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#FFFDF8] p-2 shadow-xl">
+                  <div className="border-b border-[#171717]/7 px-3 py-2 sm:hidden">
+                    <p className="text-xs font-bold text-[#171717]">Arees Admin</p>
+                    <p className="mt-1 text-[10px] text-[#171717]/45">admin@areesloop.com</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+                      window.location.href = "/admin/login";
+                    }}
+                    className="mt-1 w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#8A2F2F] transition hover:bg-[#8A2F2F]/5"
+                  >
+                    تسجيل الخروج
+                  </button>
+                </div>
+              )}
             </div>
 
           </div>
@@ -956,8 +1037,6 @@ export default function AdminPartnersPage() {
                 <option value="UNDER_REVIEW">تحت التدقيق</option>
 
                 <option value="NEEDS_INFO">مطلوب استكمال</option>
-
-                <option value="PRE_APPROVED">موافقة مبدئية</option>
 
                 <option value="AWAITING_PARTNER_ACCEPTANCE">
 
@@ -1341,6 +1420,40 @@ export default function AdminPartnersPage() {
 
 
 
+              {/* ADMIN REVIEW ASSISTANT */}
+              <div className="rounded-[26px] border border-[#D4AF37]/25 bg-[#FFFDF8] p-5 shadow-sm md:p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">INTERNAL REVIEW ASSISTANT</p>
+                    <h3 className="mt-1 text-xl font-bold text-[#171717]">مساعد المراجعة</h3>
+                    <p className="mt-2 text-xs leading-6 text-[#171717]/55">مساحة داخلية للإدارة فقط. لا تظهر هذه الملاحظات أو نتيجة المراجعة للشريك.</p>
+                  </div>
+                  <span className="w-fit rounded-full bg-[#171717] px-3 py-1.5 text-[10px] font-bold text-[#D4AF37]">داخلي فقط</span>
+                </div>
+
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-2xl border border-[#171717]/8 bg-[#F5F1E8] p-4">
+                    <p className="text-xs font-bold text-[#171717]">ملاحظات المراجعة</p>
+                    <p className="mt-3 text-xs leading-7 text-[#171717]/55">
+                      تظهر هنا نتيجة الفحص الداخلي للمستندات والبيانات، والنواقص أو التعارضات التي تحتاج مراجعة الإدارة.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-[#D4AF37]/20 bg-white p-4">
+                    <p className="text-xs font-bold text-[#171717]">الرد المقترح للشريك</p>
+                    <textarea
+                      rows={5}
+                      defaultValue={selectedPartner.completionRequest ?? ""}
+                      placeholder="سيظهر هنا النص المقترح، ويمكن للإدارة تعديله قبل الإرسال..."
+                      className="mt-3 w-full resize-none rounded-xl border border-[#171717]/10 bg-[#FFFDF8] px-3 py-3 text-xs leading-6 text-[#171717] outline-none focus:border-[#D4AF37]/60"
+                    />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" className="rounded-xl border border-[#171717]/10 bg-white px-3 py-2 text-[11px] font-bold text-[#171717]">اعتماد النص كما هو</button>
+                      <button type="button" onClick={requestMoreInfo} className="rounded-xl bg-[#171717] px-3 py-2 text-[11px] font-bold text-[#D4AF37]">تعديل وإرسال للشريك</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* COMMERCIAL TERMS */}
 
               <div className="rounded-[26px] border border-[#D4AF37]/22 bg-gradient-to-br from-[#FFFDF7] to-[#F8F2DF] p-5 md:p-6">
@@ -1603,9 +1716,7 @@ export default function AdminPartnersPage() {
 
                 <p className="mt-2 text-xs leading-6 text-white/55">
 
-                  بيانات الطلبات محمّلة من قاعدة البيانات الحقيقية. إجراءات الاعتماد أدناه
-
-                  ما زالت محلية في الواجهة إلى حين ربط مسارات التحديث الإدارية.
+                  قرارات الإدارة مرتبطة مباشرة بقاعدة البيانات وإشعارات الشريك. تقرير AI يساعد في التدقيق ولا يتخذ قرار الاعتماد النهائي.
 
                 </p>
 
@@ -1627,11 +1738,11 @@ export default function AdminPartnersPage() {
 
                   <ActionButton
 
-                    onClick={preApprove}
+                    onClick={sendCommercialTerms}
 
-                    label="موافقة مبدئية"
+                    label="إرسال الاتفاقية"
 
-                    secondary
+                    gold
 
                   />
 
@@ -1639,11 +1750,11 @@ export default function AdminPartnersPage() {
 
                   <ActionButton
 
-                    onClick={sendCommercialTerms}
+                    onClick={rejectPartner}
 
-                    label="إرسال الشروط والعقد"
+                    label="رفض الطلب"
 
-                    gold
+                    secondary
 
                   />
 
@@ -1658,6 +1769,12 @@ export default function AdminPartnersPage() {
                   />
 
                 </div>
+
+                {adminActionLoading && (
+                  <p className="mt-3 text-xs text-white/55">
+                    جارٍ تنفيذ الإجراء وتحديث الطلب...
+                  </p>
+                )}
 
 
 

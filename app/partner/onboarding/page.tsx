@@ -26,6 +26,18 @@ type DocumentItem = {
   coveredCategories: string[];
 };
 
+type AiReviewClientResult = {
+  outcome: "READY" | "NEEDS_COMPLETION" | "MANUAL_REVIEW";
+  summary: string;
+  partnerMessage: string;
+  issues: Array<{
+    field: string;
+    severity: "ERROR" | "WARNING";
+    message: string;
+    requestedAction: string;
+  }>;
+};
+
 type FormData = {
   firstName: string;
   lastName: string;
@@ -255,6 +267,20 @@ export default function PartnerOnboardingPage() {
   const [data, setData] =
     useState<FormData>(initialData);
 
+  const [uploadedFiles, setUploadedFiles] = useState<{
+    authorization: File | null;
+    nationalAddress: File | null;
+    ibanCertificate: File | null;
+    vatCertificate: File | null;
+    documents: Record<number, File>;
+  }>({
+    authorization: null,
+    nationalAddress: null,
+    ibanCertificate: null,
+    vatCertificate: null,
+    documents: {},
+  });
+
   const [documents, setDocuments] =
     useState<DocumentItem[]>([
       {
@@ -291,6 +317,273 @@ export default function PartnerOnboardingPage() {
   const [contactPhoneOtpLoading, setContactPhoneOtpLoading] =
     useState(false);
   const [contactPhoneOtpError, setContactPhoneOtpError] = useState("");
+  const [aiReviewResult, setAiReviewResult] =
+    useState<AiReviewClientResult | null>(null);
+  const [applicationId, setApplicationId] = useState("");
+  const [applicationStatus, setApplicationStatus] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadExistingApplication() {
+      try {
+        const response = await fetch(
+          "/api/partner/application",
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const application = payload?.application;
+
+        if (!application || cancelled) return;
+
+        setApplicationId(String(application.id || ""));
+        setApplicationStatus(
+          String(application.status || "")
+        );
+
+        const existingDocuments = Array.isArray(
+          application.documents
+        )
+          ? application.documents
+          : [];
+
+        const existingCategories = Array.isArray(
+          application.categories
+        )
+          ? application.categories
+              .map((item: { name?: string }) =>
+                String(item?.name || "").trim()
+              )
+              .filter(Boolean)
+          : [];
+
+        const addressParts = String(
+          application.address || ""
+        )
+          .split(" - ")
+          .map((item) => item.trim());
+
+        const existingFileName = (
+          type: string
+        ) =>
+          String(
+            existingDocuments.find(
+              (item: { type?: string }) =>
+                item?.type === type
+            )?.fileName || ""
+          );
+
+        const mappedPartnerType: PartnerType =
+          application.partnerType === "BUSINESS"
+            ? "business"
+            : application.partnerType === "GOVERNMENT_NONPROFIT"
+              ? "government"
+              : application.partnerType === "INDIVIDUAL"
+                ? "individual"
+                : "";
+
+        const mappedApplicantRole: ApplicantRole =
+          application.applicantRole === "OWNER"
+            ? "owner"
+            : application.applicantRole === "REPRESENTATIVE"
+              ? "representative"
+              : "";
+
+        setData((current) => ({
+          ...current,
+          partnerType: mappedPartnerType,
+          applicantRole: mappedApplicantRole,
+          jobTitle:
+            String(application.applicantJobTitle || ""),
+          authorizationFile:
+            existingFileName("AUTHORIZATION"),
+
+          tradeName:
+            String(application.tradeNameAr || ""),
+          legalName:
+            String(application.legalNameAr || ""),
+          unifiedNumber:
+            String(application.unifiedNumber || ""),
+          registrationNumber:
+            String(application.commercialRegister || ""),
+          proofType:
+            String(application.proofType || ""),
+          description:
+            String(application.descriptionAr || ""),
+
+          country:
+            String(
+              application.country ||
+                "المملكة العربية السعودية"
+            ),
+          city: String(application.city || ""),
+          district: addressParts[0] || "",
+          street: addressParts[1] || "",
+          shortNationalAddress:
+            addressParts.find((item) =>
+              /^[A-Z]{4}\d{4}$/i.test(item)
+            ) || "",
+          nationalAddressFile:
+            existingFileName("BUSINESS_PROOF"),
+          website:
+            String(application.websiteUrl || ""),
+          businessPhone:
+            String(application.businessPhone || ""),
+          businessEmail:
+            String(application.businessEmail || ""),
+
+          categories: existingCategories,
+
+          vatRegistered:
+            Boolean(application.vatRegistered),
+          vatNumber:
+            String(application.vatNumber || ""),
+          vatCertificate:
+            existingFileName("VAT_CERTIFICATE"),
+
+          receivesPayments:
+            Boolean(application.receivesPayments),
+          iban: String(application.iban || ""),
+          beneficiaryName:
+            String(application.beneficiaryName || ""),
+          ibanCertificate:
+            existingFileName("IBAN_CERTIFICATE"),
+
+          contactName:
+            String(application.mainContactName || ""),
+          contactPhone:
+            String(application.mainContactPhone || ""),
+          contactEmail:
+            String(application.mainContactEmail || ""),
+
+          operates24h:
+            Boolean(application.operates24h),
+          operatingHours:
+            String(application.operatingHours || ""),
+
+          publicName:
+            String(application.publicName || ""),
+          declaration: false,
+          termsAccepted: false,
+        }));
+
+        if (
+          Array.isArray(application.licenses) &&
+          application.licenses.length > 0
+        ) {
+          setDocuments(
+            application.licenses.map(
+              (
+                license: {
+                  type?: string;
+                  issuer?: string;
+                  licenseNumber?: string;
+                  issueDate?: string | null;
+                  expiryDate?: string | null;
+                },
+                index: number
+              ) => ({
+                id: index + 1,
+                type: String(license.type || ""),
+                number: String(
+                  license.licenseNumber || ""
+                ),
+                issuer: String(license.issuer || ""),
+                issueDate: license.issueDate
+                  ? String(license.issueDate).slice(0, 10)
+                  : "",
+                expiryDate: license.expiryDate
+                  ? String(license.expiryDate).slice(0, 10)
+                  : "",
+                fileName:
+                  existingDocuments.length > 0
+                    ? "مرفوع مسبقاً"
+                    : "",
+                coveredCategories: [],
+              })
+            )
+          );
+        }
+
+        const normalizedExistingContact =
+          normalizeSaudiMobileForCheck(
+            String(application.mainContactPhone || "")
+          );
+
+        if (
+          application.mainContactPhoneVerifiedAt &&
+          normalizedExistingContact
+        ) {
+          setContactPhoneVerified(true);
+          setContactPhoneVerifiedValue(
+            normalizedExistingContact
+          );
+        }
+
+        if (
+          application.status === "NEEDS_COMPLETION" &&
+          application.completionNotes
+        ) {
+          setAiReviewResult({
+            outcome: "NEEDS_COMPLETION",
+            summary: "يوجد استكمال مطلوب على الطلب.",
+            partnerMessage:
+              String(application.completionNotes),
+            issues: [],
+          });
+        } else if (
+          typeof application.reviewNotes === "string" &&
+          application.reviewNotes.trim()
+        ) {
+          try {
+            const parsed = JSON.parse(
+              application.reviewNotes
+            ) as AiReviewClientResult;
+
+            if (
+              parsed &&
+              (parsed.outcome === "READY" ||
+                parsed.outcome === "NEEDS_COMPLETION" ||
+                parsed.outcome === "MANUAL_REVIEW")
+            ) {
+              setAiReviewResult(parsed);
+            }
+          } catch {
+            // reviewNotes may contain an admin note rather than an AI JSON report.
+          }
+        }
+
+        const resumeRequested =
+          new URLSearchParams(
+            window.location.search
+          ).get("resume") === "1";
+
+        setCurrentStep(
+          application.status === "NEEDS_COMPLETION" &&
+            resumeRequested
+            ? "business"
+            : "done"
+        );
+      } catch (error) {
+        console.error(
+          "Unable to load existing partner application:",
+          error
+        );
+      }
+    }
+
+    void loadExistingApplication();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeIndex = useMemo(
     () =>
@@ -1049,15 +1342,17 @@ export default function PartnerOnboardingPage() {
       note: string;
     }[] = [];
 
-    const accountOk = Boolean(
-      data.firstName.trim() &&
-        data.lastName.trim() &&
-        data.email.trim() &&
-        data.phone.trim() &&
-        data.password.trim() &&
-        emailVerified &&
-        data.partnerType
-    );
+    const accountOk =
+      applicationStatus === "NEEDS_COMPLETION" ||
+      Boolean(
+        data.firstName.trim() &&
+          data.lastName.trim() &&
+          data.email.trim() &&
+          data.phone.trim() &&
+          data.password.trim() &&
+          emailVerified &&
+          data.partnerType
+      );
 
     checks.push({
       label: "بيانات الحساب",
@@ -1206,6 +1501,7 @@ export default function PartnerOnboardingPage() {
     smsVerificationEnabled,
     contactPhoneVerified,
     contactPhoneVerifiedValue,
+    applicationStatus,
   ]);
 
   const canSubmit =
@@ -1221,7 +1517,10 @@ export default function PartnerOnboardingPage() {
 
   try {
     const response = await fetch("/api/partner/application", {
-      method: "POST",
+      method:
+        applicationStatus === "NEEDS_COMPLETION"
+          ? "PATCH"
+          : "POST",
       headers: {
         "Content-Type": "application/json",
       },
@@ -1289,6 +1588,145 @@ export default function PartnerOnboardingPage() {
         result.message || "تعذر إرسال طلب الشراكة."
       );
       return;
+    }
+
+    if (result?.application?.id) {
+      setApplicationId(String(result.application.id));
+    }
+
+    if (result?.application?.status) {
+      setApplicationStatus(
+        String(result.application.status)
+      );
+    }
+
+    const filesToUpload: Array<{
+      file: File;
+      type: string;
+      label: string;
+    }> = [];
+
+    if (uploadedFiles.authorization) {
+      filesToUpload.push({
+        file: uploadedFiles.authorization,
+        type: "AUTHORIZATION",
+        label: "تفويض ممثل المنشأة",
+      });
+    }
+
+    if (uploadedFiles.nationalAddress) {
+      filesToUpload.push({
+        file: uploadedFiles.nationalAddress,
+        type: "BUSINESS_PROOF",
+        label: "إثبات العنوان الوطني",
+      });
+    }
+
+    if (uploadedFiles.ibanCertificate) {
+      filesToUpload.push({
+        file: uploadedFiles.ibanCertificate,
+        type: "IBAN_CERTIFICATE",
+        label: "شهادة IBAN / خطاب البنك",
+      });
+    }
+
+    if (uploadedFiles.vatCertificate) {
+      filesToUpload.push({
+        file: uploadedFiles.vatCertificate,
+        type: "VAT_CERTIFICATE",
+        label: "شهادة التسجيل الضريبي",
+      });
+    }
+
+    for (const document of documents) {
+      const file = uploadedFiles.documents[document.id];
+
+      if (file) {
+        const documentLabel = document.type.trim();
+        const normalizedLabel = documentLabel.toLowerCase();
+
+        let uploadType = "OTHER";
+
+        if (
+          normalizedLabel.includes("سجل تجاري") ||
+          normalizedLabel.includes("السجل التجاري") ||
+          normalizedLabel.includes("commercial register") ||
+          normalizedLabel.includes("commercial registration")
+        ) {
+          uploadType = "COMMERCIAL_REGISTER";
+        } else if (
+          normalizedLabel.includes("إثبات منشأة") ||
+          normalizedLabel.includes("وثيقة المنشأة")
+        ) {
+          uploadType = "BUSINESS_PROOF";
+        }
+
+        filesToUpload.push({
+          file,
+          type: uploadType,
+          label: documentLabel || "مستند / ترخيص",
+        });
+      }
+    }
+
+    for (const item of filesToUpload) {
+      const uploadData = new FormData();
+
+      uploadData.append("file", item.file);
+      uploadData.append("type", item.type);
+      uploadData.append("label", item.label);
+
+      const uploadResponse = await fetch(
+        "/api/partner/documents/upload",
+        {
+          method: "POST",
+          body: uploadData,
+        }
+      );
+
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        console.error(
+          "Partner document upload failed:",
+          uploadResult
+        );
+
+        window.alert(
+          uploadResult.message ||
+            "تم إنشاء طلب الشراكة، لكن تعذر رفع أحد المستندات."
+        );
+
+        return;
+      }
+    }
+
+    const reviewResponse = await fetch(
+      "/api/partner/application/review",
+      {
+        method: "POST",
+      }
+    );
+
+    const reviewPayload = await reviewResponse.json();
+
+    if (reviewPayload?.review) {
+      setAiReviewResult(
+        reviewPayload.review as AiReviewClientResult
+      );
+    }
+
+    if (reviewPayload?.application?.status) {
+      setApplicationStatus(
+        String(reviewPayload.application.status)
+      );
+    }
+
+    if (!reviewResponse.ok) {
+      console.error(
+        "Partner AI review failed:",
+        reviewPayload
+      );
     }
 
     setCurrentStep("done");
@@ -1739,12 +2177,14 @@ export default function PartnerOnboardingPage() {
                         onChange={(
                           e
                         ) =>
-                          update(
-                            "authorizationFile",
-                            e.target
-                              .files?.[0]
-                              ?.name || ""
-                          )
+                          {
+                            const file = e.target.files?.[0] ?? null;
+                            update("authorizationFile", file?.name || "");
+                            setUploadedFiles((current) => ({
+                              ...current,
+                              authorization: file,
+                            }));
+                          }
                         }
                         className={`${inputClass} ${validationErrors.authorizationFile ? errorInputClass : ""}`}
                       />
@@ -1940,7 +2380,14 @@ export default function PartnerOnboardingPage() {
                   <input
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) => update("nationalAddressFile", e.target.files?.[0]?.name || "")}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      update("nationalAddressFile", file?.name || "");
+                      setUploadedFiles((current) => ({
+                        ...current,
+                        nationalAddress: file,
+                      }));
+                    }}
                     className={`${inputClass} ${validationErrors.nationalAddressFile ? errorInputClass : ""}`}
                   />
                 </Field>
@@ -2326,14 +2773,30 @@ export default function PartnerOnboardingPage() {
                           onChange={(
                             e
                           ) =>
-                            updateDocument(
-                              document.id,
-                              "fileName",
-                              e.target
-                                .files?.[0]
-                                ?.name ||
-                                ""
-                            )
+                            {
+                              const file = e.target.files?.[0] ?? null;
+                              updateDocument(
+                                document.id,
+                                "fileName",
+                                file?.name || ""
+                              );
+                              setUploadedFiles((current) => {
+                                const nextDocuments = {
+                                  ...current.documents,
+                                };
+
+                                if (file) {
+                                  nextDocuments[document.id] = file;
+                                } else {
+                                  delete nextDocuments[document.id];
+                                }
+
+                                return {
+                                  ...current,
+                                  documents: nextDocuments,
+                                };
+                              });
+                            }
                           }
                           className={
                             inputClass
@@ -2653,12 +3116,14 @@ export default function PartnerOnboardingPage() {
                       type="file"
                       accept=".pdf,.png,.jpg,.jpeg"
                       onChange={(e) =>
-                        update(
-                          "ibanCertificate",
-                          e.target
-                            .files?.[0]
-                            ?.name || ""
-                        )
+                        {
+                          const file = e.target.files?.[0] ?? null;
+                          update("ibanCertificate", file?.name || "");
+                          setUploadedFiles((current) => ({
+                            ...current,
+                            ibanCertificate: file,
+                          }));
+                        }
                       }
                       className={
                         inputClass
@@ -2711,12 +3176,14 @@ export default function PartnerOnboardingPage() {
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
                     onChange={(e) =>
-                      update(
-                        "vatCertificate",
-                        e.target
-                          .files?.[0]
-                          ?.name || ""
-                      )
+                      {
+                        const file = e.target.files?.[0] ?? null;
+                        update("vatCertificate", file?.name || "");
+                        setUploadedFiles((current) => ({
+                          ...current,
+                          vatCertificate: file,
+                        }));
+                      }
                     }
                     className={
                       inputClass
@@ -3103,7 +3570,7 @@ export default function PartnerOnboardingPage() {
             </div>
 
             <p className="mt-7 text-[10px] font-bold tracking-[0.22em] text-[#B99124]">
-              APPLICATION SUBMITTED
+              AI REVIEW COMPLETED
             </p>
 
             <h1
@@ -3113,19 +3580,19 @@ export default function PartnerOnboardingPage() {
                   "var(--font-el-messiri), serif",
               }}
             >
-              تم استلام طلب الاعتماد
+              {aiReviewResult?.outcome === "NEEDS_COMPLETION"
+                ? "تمت المراجعة ويحتاج الطلب استكمال"
+                : aiReviewResult?.outcome === "MANUAL_REVIEW"
+                  ? "تم تحويل الطلب للمراجعة الإدارية"
+                  : aiReviewResult?.outcome === "READY"
+                    ? "اكتملت المراجعة الآلية"
+                    : "تم استلام طلب الاعتماد"}
             </h1>
 
             <p className="mx-auto mt-4 max-w-xl text-sm leading-8 text-[#0D3B34]/60">
-              تم إرسال طلب انضمام{" "}
-              <strong>
-                {data.tradeName ||
-                  data.publicName ||
-                  "الشريك"}
-              </strong>{" "}
-              إلى Arees Loop للمراجعة.
-              لا يعتبر حساب الشريك
-              مفعلاً في هذه المرحلة.
+              {aiReviewResult?.partnerMessage ||
+                "تم حفظ الطلب والمستندات وإرسالها للمراجعة."}
+              {" "}لا يعتبر حساب الشريك مفعلاً حتى اكتمال الاعتماد النهائي من Arees Loop.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-4">
@@ -3137,17 +3604,18 @@ export default function PartnerOnboardingPage() {
 
               <MiniStatus
                 number="02"
-                label="مراجعة أريس"
+                label="مراجعة AI"
+                active={Boolean(aiReviewResult)}
               />
 
               <MiniStatus
                 number="03"
-                label="العقد"
+                label="مراجعة أريس"
               />
 
               <MiniStatus
                 number="04"
-                label="التفعيل"
+                label="العقد والتفعيل"
               />
             </div>
 
@@ -3157,24 +3625,23 @@ export default function PartnerOnboardingPage() {
               </p>
 
               <p className="mt-2 text-xs leading-7 text-[#0D3B34]/60">
-                تحت المراجعة ← مطلوب
-                استكمال عند وجود ملاحظات
-                ← مؤهل للتعاقد ← العقد
-                الإلكتروني ← توقيع الشريك
-                ← اعتماد أريس ← شريك مفعّل.
+                تم الاستلام ← مراجعة الذكاء الاصطناعي
+                ← استكمال عند وجود ملاحظات
+                ← مراجعة أريس ← الاتفاقية الإلكترونية
+                ← قبول الشريك ← اعتماد أريس والتفعيل.
               </p>
             </div>
 
             <div className="mt-5 rounded-[22px] bg-[#F6F3EC] p-5">
               <p className="text-xs text-[#0D3B34]/45">
-                رقم الطلب التجريبي
+                رقم الطلب
               </p>
 
               <p
                 className="mt-2 font-bold tracking-[0.12em]"
                 dir="ltr"
               >
-                AL-P-2026-00001
+                {applicationId || "—"}
               </p>
             </div>
 
@@ -3558,6 +4025,10 @@ function MiniStatus({
     </div>
   );
 }
+
+
+
+
 
 
 
