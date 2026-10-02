@@ -7,6 +7,7 @@ import {
 type VerificationTokenType =
   | "EMAIL_VERIFICATION"
   | "PHONE_VERIFICATION"
+  | "PARTNER_CONTACT_PHONE_VERIFICATION"
   | "PASSWORD_RESET";
 
 type CreateVerificationTokenInput = {
