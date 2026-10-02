@@ -26,6 +26,18 @@ type DocumentItem = {
   coveredCategories: string[];
 };
 
+type AiReviewClientResult = {
+  outcome: "READY" | "NEEDS_COMPLETION" | "MANUAL_REVIEW";
+  summary: string;
+  partnerMessage: string;
+  issues: Array<{
+    field: string;
+    severity: "ERROR" | "WARNING";
+    message: string;
+    requestedAction: string;
+  }>;
+};
+
 type FormData = {
   firstName: string;
   lastName: string;
@@ -305,6 +317,8 @@ export default function PartnerOnboardingPage() {
   const [contactPhoneOtpLoading, setContactPhoneOtpLoading] =
     useState(false);
   const [contactPhoneOtpError, setContactPhoneOtpError] = useState("");
+  const [aiReviewResult, setAiReviewResult] =
+    useState<AiReviewClientResult | null>(null);
 
   const activeIndex = useMemo(
     () =>
@@ -1404,6 +1418,28 @@ export default function PartnerOnboardingPage() {
 
         return;
       }
+    }
+
+    const reviewResponse = await fetch(
+      "/api/partner/application/review",
+      {
+        method: "POST",
+      }
+    );
+
+    const reviewPayload = await reviewResponse.json();
+
+    if (reviewPayload?.review) {
+      setAiReviewResult(
+        reviewPayload.review as AiReviewClientResult
+      );
+    }
+
+    if (!reviewResponse.ok) {
+      console.error(
+        "Partner AI review failed:",
+        reviewPayload
+      );
     }
 
     setCurrentStep("done");
