@@ -36,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               return <Link key={item.label} href={item.href} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-semibold transition ${active?"bg-[#F5E5B8] text-[#171717]":"text-[#171717]/75 hover:bg-[#F8F1DF]"}`}>
                 <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg ${active?"bg-[#B68A21] text-white":"text-[#171717]"}`}>{item.icon}</span>
                 <span className="flex-1">{item.label}</span>
-                {item.badge && <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#D19A14] px-1.5 text-[11px] font-bold text-white shadow-sm">{item.badge}</span>}
+                {item.badge && <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#D19A14] px-1.5 text-[12px] font-bold text-white shadow-sm ring-1 ring-[#C68E0C]/10">{item.badge}</span>}
               </Link>
             })}
           </nav>
