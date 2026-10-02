@@ -18,7 +18,7 @@ export default function AdminUsersPage(){
   <div className="mx-auto max-w-[1500px]">
    <div className="flex items-center justify-between gap-4">
     <div><p className="text-xs font-bold tracking-[.18em] text-[#B68A21]">ADMIN ACCESS</p><h1 className="mt-2 text-3xl font-bold">المستخدمين والصلاحيات</h1><p className="mt-2 text-sm text-black/50">إدارة حسابات فريق الإدارة والتحكم في صلاحيات الوصول.</p></div>
-    <button onClick={()=>setOpen(true)} className="rounded-xl bg-[#B68A21] px-6 py-3 text-sm font-bold text-white shadow-md ring-1 ring-[#9B7418] hover:bg-[#9B7418]">+ إضافة مستخدم</button>
+    <button onClick={()=>setOpen(true)} className="rounded-xl border border-[#B68A21] !bg-[#C99A1B] px-6 py-3 text-sm font-extrabold !text-[#073F35] shadow-[0_6px_18px_rgba(182,138,33,.25)] transition hover:!bg-[#B68A21] hover:shadow-[0_8px_22px_rgba(182,138,33,.35)]">+ إضافة مستخدم</button>
    </div>
    <section className="mt-8 max-w-5xl overflow-hidden rounded-[22px] border border-black/5 bg-white shadow-[0_10px_30px_rgba(70,60,40,.06)]">
     <div className="grid grid-cols-[1.4fr_1.5fr_.8fr_.8fr_.5fr] gap-3 border-b border-black/5 bg-[#FFFCF6] px-6 py-4 text-xs font-bold text-black/45"><span>المستخدم</span><span>البريد الإلكتروني</span><span>الدور</span><span>الحالة</span><span>إجراءات</span></div>
