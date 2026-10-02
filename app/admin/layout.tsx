@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div dir="rtl" className="min-h-screen bg-[#FCFAF5] text-[#171717]" style={{fontFamily:"var(--font-ibm-plex-arabic), sans-serif"}}>
       <div className="flex min-h-screen flex-row">
-        <aside className="hidden w-[265px] shrink-0 border-r border-white/90 bg-white/72 shadow-[12px_0_34px_rgba(70,60,40,.08),inset_-1px_0_0_rgba(255,255,255,.9)] backdrop-blur-2xl lg:flex lg:flex-col">
+        <aside className="hidden w-[265px] shrink-0 border-r border-white/90 bg-white shadow-[10px_0_28px_rgba(70,60,40,.07)] lg:flex lg:flex-col">
           <div className="flex h-[108px] items-center justify-center border-b border-[#171717]/5">
             <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={120} height={65} className="h-[62px] w-auto object-contain" priority />
           </div>
