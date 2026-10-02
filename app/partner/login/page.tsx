@@ -74,14 +74,14 @@ export default function PartnerLoginPage() {
           alt=""
           fill
           priority
-          className="object-cover object-center opacity-55"
+          className="object-cover object-center opacity-42"
         />
-        <div className="absolute inset-0 bg-gradient-to-l from-[#0D3B34]/20 via-[#F7F2E7]/35 to-[#F7F2E7]/85" />
+        <div className="absolute inset-0 bg-gradient-to-l from-[#F7F2E7]/72 via-[#F7F2E7]/68 to-[#F7F2E7]/90" />
       </div>
 
-      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1320px] items-center gap-10 px-5 py-10 lg:grid-cols-[1.05fr_.95fr] lg:px-10">
-        <section className="order-2 lg:order-1">
-          <div className="mx-auto max-w-[520px] rounded-[30px] border border-white/70 bg-white/55 p-6 shadow-[0_28px_80px_rgba(13,59,52,.10)] backdrop-blur-xl sm:p-8">
+      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1360px] items-center gap-12 px-6 py-14 md:grid-cols-[1fr_1.08fr] md:px-10 lg:gap-20 lg:px-14">
+        <section className="order-2 md:order-1">
+          <div className="mx-auto max-w-[500px] rounded-[30px] border border-white/80 bg-white/72 p-6 shadow-[0_28px_80px_rgba(13,59,52,.10)] backdrop-blur-xl sm:p-8">
             <div className="mb-6">
               <span className="inline-flex rounded-full border border-[#D4AF37]/35 bg-[#FFF8E4]/80 px-4 py-2 text-[11px] font-bold text-[#9A7415]">
                 بوابة شركاء Arees Loop
@@ -168,35 +168,35 @@ export default function PartnerLoginPage() {
           </div>
         </section>
 
-        <section className="order-1 flex justify-center lg:order-2">
-          <div className="max-w-[570px] text-center lg:text-right">
+        <section className="order-1 flex justify-center md:order-2">
+          <div className="max-w-[590px] text-center md:text-right">
             <Image
               src="/Logo/arees-loop-brand.png"
               alt="Arees Loop"
-              width={600}
-              height={600}
+              width={420}
+              height={420}
               priority
-              className="mx-auto h-auto w-[210px] lg:mx-0 lg:w-[245px]"
+              className="mx-auto h-auto w-[145px] md:mx-0 md:w-[165px] lg:w-[175px]"
             />
 
-            <p className="mt-5 text-xs font-bold tracking-[.18em] text-[#B18418]">
+            <p className="mt-4 text-[11px] font-bold tracking-[.20em] text-[#9A7415]">
               PARTNER PORTAL
             </p>
-            <h1 className="mt-3 text-4xl font-bold leading-tight lg:text-5xl">
+            <h1 className="mt-3 text-3xl font-extrabold leading-tight md:text-4xl lg:text-[42px]">
               مرحباً بك، شريك أريس
             </h1>
-            <p className="mt-5 max-w-[540px] text-base font-medium leading-8 text-[#0D3B34]/75 lg:text-lg">
+            <p className="mt-4 max-w-[560px] text-[15px] font-semibold leading-7 text-[#0D3B34] lg:text-base">
               سوّق تجاربك وخدماتك لآلاف العملاء المهتمين، واستهدف العملاء الحقيقيين
               الباحثين عنها في الوقت والمكان المناسبين.
             </p>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+            <div className="mt-6 grid grid-cols-3 gap-3">
               <Value title="وصول أذكى" text="للعملاء المهتمين" />
               <Value title="إدارة أسهل" text="للتجارب والحجوزات" />
               <Value title="نمو مستمر" text="مع منظومة Arees Loop" />
             </div>
 
-            <p className="mt-7 text-sm font-bold text-[#9A7415]">
+            <p className="mt-6 text-sm font-extrabold text-[#7A5A0B]">
               تجربتك تستحق أن تصل لمن يبحث عنها.
             </p>
           </div>
@@ -211,9 +211,9 @@ const inputClass =
 
 function Value({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[18px] border border-white/65 bg-white/35 px-4 py-4 backdrop-blur-md">
-      <p className="text-sm font-bold">{title}</p>
-      <p className="mt-1 text-[11px] text-[#0D3B34]/60">{text}</p>
+    <div className="rounded-[18px] border border-[#0D3B34]/12 bg-white/62 px-3 py-4 shadow-sm backdrop-blur-md">
+      <p className="text-sm font-extrabold text-[#0D3B34]">{title}</p>
+      <p className="mt-1 text-[11px] font-semibold text-[#0D3B34]/75">{text}</p>
     </div>
   );
 }
