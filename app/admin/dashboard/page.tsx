@@ -64,4 +64,4 @@ export default function AdminDashboardPage(){
   </div>
  </main>
 }
-function Stat({label,value,icon,emphasis=false}:{label:string;value:string;icon:string;emphasis?:boolean}){return <div className={`flex items-center justify-between rounded-[18px] border bg-white/80 p-5 shadow-sm ${emphasis?"border-[#D7B75D]/55":"border-[#171717]/8"}`}><div><p className="text-xs text-[#171717]/55">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FBF5E6] text-2xl font-bold text-[#D39B16]">{icon}</div></div>}
+function Stat({label,value,icon,emphasis=false}:{label:string;value:string;icon:string;emphasis?:boolean}){return <div className={`flex items-center justify-between rounded-[18px] border bg-white/80 p-5 shadow-sm ${emphasis?"border-[#D7B75D]/55":"border-[#171717]/8"}`}><div><p className="text-sm font-semibold text-[#555]">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div><div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FBF5E6] text-[32px] font-bold text-[#D39B16]">{icon}</div></div>}
