@@ -261,6 +261,20 @@ export async function POST(
       );
     }
 
+    if (
+      portal === "admin" &&
+      !["ADMIN", "SUPER_ADMIN"].includes(user.role)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "ADMIN_ACCOUNT_REQUIRED",
+          message: "This account is not authorized for the Arees Loop administration portal.",
+        },
+        { status: 403 },
+      );
+    }
+
     if (portal === "partner") {
       const partnerMembership =
         await prisma.partnerMember.findFirst({
