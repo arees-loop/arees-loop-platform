@@ -909,11 +909,11 @@ export async function POST(request: NextRequest) {
 
 
 
-          status: "UNDER_REVIEW",
+          status: "SUBMITTED",
 
           submittedAt: new Date(),
 
-          reviewedAt: new Date(),
+          reviewedAt: null,
 
 
 
@@ -1001,7 +1001,7 @@ export async function POST(request: NextRequest) {
 
           afterData: {
 
-            status: "UNDER_REVIEW",
+            status: "SUBMITTED",
 
             legalNameAr,
 
@@ -1027,7 +1027,7 @@ export async function POST(request: NextRequest) {
 
         success: true,
 
-        message: "تم استلام طلب الشراكة وتحويله إلى التدقيق.",
+        message: "تم استلام طلب الشراكة، وسيبدأ الفحص الآلي بعد رفع المستندات.",
 
         application: {
 
