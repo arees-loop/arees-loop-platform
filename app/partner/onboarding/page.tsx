@@ -1332,15 +1332,17 @@ export default function PartnerOnboardingPage() {
       note: string;
     }[] = [];
 
-    const accountOk = Boolean(
-      data.firstName.trim() &&
-        data.lastName.trim() &&
-        data.email.trim() &&
-        data.phone.trim() &&
-        data.password.trim() &&
-        emailVerified &&
-        data.partnerType
-    );
+    const accountOk =
+      applicationStatus === "NEEDS_COMPLETION" ||
+      Boolean(
+        data.firstName.trim() &&
+          data.lastName.trim() &&
+          data.email.trim() &&
+          data.phone.trim() &&
+          data.password.trim() &&
+          emailVerified &&
+          data.partnerType
+      );
 
     checks.push({
       label: "بيانات الحساب",
@@ -1489,6 +1491,7 @@ export default function PartnerOnboardingPage() {
     smsVerificationEnabled,
     contactPhoneVerified,
     contactPhoneVerifiedValue,
+    applicationStatus,
   ]);
 
   const canSubmit =
@@ -1504,7 +1507,10 @@ export default function PartnerOnboardingPage() {
 
   try {
     const response = await fetch("/api/partner/application", {
-      method: "POST",
+      method:
+        applicationStatus === "NEEDS_COMPLETION"
+          ? "PATCH"
+          : "POST",
       headers: {
         "Content-Type": "application/json",
       },
