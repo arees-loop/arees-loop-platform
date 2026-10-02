@@ -13,7 +13,22 @@ const permissions=[
 ];
 
 export default function AdminUsersPage(){
- const [open,setOpen]=useState(false);\n const [name,setName]=useState("");\n const [email,setEmail]=useState("");\n const [selected,setSelected]=useState<string[]>([]);\n const [sending,setSending]=useState(false);\n const [notice,setNotice]=useState("");\n const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS"];\n async function sendInvite(){\n  setNotice(""); setSending(true);\n  try{\n   const res=await fetch("/api/admin/users/invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email,permissions:selected})});\n   const data=await res.json(); setNotice(data.message||"تعذر إرسال الدعوة.");\n   if(res.ok&&data.success){setName("");setEmail("");setSelected([]);}\n  }catch{setNotice("تعذر الاتصال بالخادم.");}\n  finally{setSending(false);}\n }
+ const [open,setOpen]=useState(false);
+ const [name,setName]=useState("");
+ const [email,setEmail]=useState("");
+ const [selected,setSelected]=useState<string[]>([]);
+ const [sending,setSending]=useState(false);
+ const [notice,setNotice]=useState("");
+ const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS"];
+ async function sendInvite(){
+  setNotice(""); setSending(true);
+  try{
+   const res=await fetch("/api/admin/users/invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email,permissions:selected})});
+   const data=await res.json(); setNotice(data.message||"تعذر إرسال الدعوة.");
+   if(res.ok&&data.success){setName("");setEmail("");setSelected([]);}
+  }catch{setNotice("تعذر الاتصال بالخادم.");}
+  finally{setSending(false);}
+ }
  return <main dir="rtl" className="min-h-screen bg-[#FCFAF5] px-6 py-10 text-[#171717] md:px-10 xl:px-12">
   <div className="mx-auto max-w-[1500px]">
    <div className="flex items-center justify-between gap-4">
