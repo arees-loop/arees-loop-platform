@@ -103,6 +103,11 @@ export async function POST(
         ? body.password
         : "";
 
+    const portal =
+      typeof body.portal === "string"
+        ? body.portal.trim().toLowerCase()
+        : "";
+
     if (!identifier) {
       return NextResponse.json(
         {
@@ -251,6 +256,20 @@ export async function POST(
             "ACCOUNT_DISABLED",
           message:
             "This account is disabled.",
+        },
+        { status: 403 },
+      );
+    }
+
+    if (
+      portal === "partner" &&
+      !["PARTNER_OWNER", "PARTNER_ADMIN", "PARTNER_STAFF"].includes(user.role)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "PARTNER_ACCOUNT_REQUIRED",
+          message: "This account is not registered as an Arees Loop partner.",
         },
         { status: 403 },
       );
