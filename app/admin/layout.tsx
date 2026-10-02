@@ -24,8 +24,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#FBF8F1] text-[#171717]" style={{fontFamily:"var(--font-ibm-plex-arabic), sans-serif"}}>
-      <div className="flex min-h-screen flex-row-reverse">
-        <aside className="hidden w-[245px] shrink-0 border-r border-[#171717]/8 bg-[#FFFDF9] lg:flex lg:flex-col">
+      <div className="flex min-h-screen flex-row">
+        <aside className="hidden w-[265px] shrink-0 border-r border-[#E7E0D3] bg-[#FFFEFB] lg:flex lg:flex-col">
           <div className="flex h-[108px] items-center justify-center border-b border-[#171717]/5">
             <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={120} height={65} className="h-[62px] w-auto object-contain" priority />
           </div>
@@ -33,10 +33,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {nav.map((item) => {
               const base=item.href.split("?")[0];
               const active = pathname === base && !item.href.includes("?");
-              return <Link key={item.label} href={item.href} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-semibold transition ${active?"bg-gradient-to-l from-[#F7E7B8] to-[#F1D998] text-[#171717]":"text-[#171717]/75 hover:bg-[#F8F1DF]"}`}>
+              return <Link key={item.label} href={item.href} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-semibold transition ${active?"bg-[#F5E5B8] text-[#171717]":"text-[#171717]/75 hover:bg-[#F8F1DF]"}`}>
                 <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg ${active?"bg-[#B68A21] text-white":"text-[#171717]"}`}>{item.icon}</span>
                 <span className="flex-1">{item.label}</span>
-                {item.badge && <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#C89416] px-1 text-[11px] font-bold text-white">{item.badge}</span>}
+                {item.badge && <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#D19A14] px-1.5 text-[11px] font-bold text-white shadow-sm">{item.badge}</span>}
               </Link>
             })}
           </nav>
