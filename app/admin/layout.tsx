@@ -9,7 +9,7 @@ const nav = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂" },
   { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", badge: "1" },
   { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "♧" },
-  { href: "/admin/dashboard?section=users", label: "المستخدمين", icon: "♙" },
+  { href: "/admin/users", label: "المستخدمين", icon: "♙" },
   { href: "/admin/dashboard?section=content", label: "المحتوى والتجارب", icon: "▤" },
   { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦" },
   { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣" },
