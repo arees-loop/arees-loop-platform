@@ -299,6 +299,12 @@ export default function AdminPartnersPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [adminActionLoading, setAdminActionLoading] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const showToast = (type: "success" | "error", message: string) => {
+    setToast({ type, message });
+    window.setTimeout(() => setToast(null), 4200);
+  };
 
   const [search, setSearch] = useState("");
 
@@ -507,12 +513,19 @@ export default function AdminPartnersPage() {
           selectedPartner.commission,
       });
 
+      const successMessages = {
+        REQUEST_COMPLETION: "تم إرسال طلب الاستكمال للشريك بنجاح.",
+        SEND_AGREEMENT: "تم إرسال الاتفاقية للشريك بنجاح.",
+        REJECT: "تم رفض طلب الشريك وتسجيل القرار بنجاح.",
+        ACTIVATE: "تم اعتماد وتفعيل الشريك بنجاح.",
+      } as const;
+      showToast("success", successMessages[action]);
+
       return payload;
     } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : "تعذر تنفيذ الإجراء."
+      showToast(
+        "error",
+        error instanceof Error ? error.message : "تعذر تنفيذ الإجراء. حاول مرة أخرى."
       );
       return null;
     } finally {
@@ -709,7 +722,7 @@ export default function AdminPartnersPage() {
 
     >
 
-      {/* SMART BACKGROUND */}
+      {toast && (\n        <div className="pointer-events-none fixed left-1/2 top-6 z-[100] -translate-x-1/2 px-4">\n          <div role="status" className={`flex min-w-[290px] items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-sm font-bold shadow-[0_16px_45px_rgba(13,59,52,.18)] backdrop-blur-xl ${toast.type === "success" ? "border-[#B99124]/35 bg-[#0D3B34] text-white" : "border-red-200 bg-[#FFF4F2] text-[#A3443E]"}`}>\n            <span>{toast.type === "success" ? "✓" : "✕"}</span>\n            <span>{toast.message}</span>\n          </div>\n        </div>\n      )}\n\n      {/* SMART BACKGROUND */}
 
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
 
