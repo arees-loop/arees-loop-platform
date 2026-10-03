@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function AdminInvitePage(){
- const params=useSearchParams();
- const token=useMemo(()=>params.get("token")||"",[params]);
+ const [token,setToken]=useState("");
+ useEffect(()=>{setToken(new URLSearchParams(window.location.search).get("token")||"");},[]);
  const [password,setPassword]=useState("");
  const [confirm,setConfirm]=useState("");
  const [loading,setLoading]=useState(false);
