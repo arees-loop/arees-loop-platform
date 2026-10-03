@@ -90,11 +90,30 @@ function Metric({label,value}:{label:string;value:number}){return <div><p classN
 function HotelInventory(){
   return <Card eyebrow="HOTEL INVENTORY" title="الإتاحة والأسعار" note="أدخل ما هو متاح للبيع خلال فترة محددة. يمكنك إضافة فترات ووحدات أخرى بعد اعتماد الفندق.">
     <div className="rounded-2xl bg-[#0D3B34] p-5 text-white"><p className="text-sm font-bold text-[#F1D263]">مثال سريع</p><p className="mt-2 text-xs leading-6 text-white/65">30 سريراً متاحاً من 10 إلى 15 أكتوبر بسعر 110 ر.س للسرير/الليلة. عند تأكيد الحجز تخصم الكمية تلقائياً من الإتاحة.</p></div>
-    <div className="grid gap-4 md:grid-cols-2"><Field label="نوع الوحدة"><select className="input"><option>سرير</option><option>غرفة مفردة</option><option>غرفة مزدوجة</option><option>غرفة ثلاثية</option><option>غرفة رباعية</option><option>جناح</option><option>شقة</option></select></Field><Field label="الكمية المتاحة"><input type="number" min="0" className="input" placeholder="30"/></Field></div>
+    <div className="rounded-2xl border border-[#0D3B34]/8 bg-white p-5">
+      <p className="text-sm font-bold">توزيع الغرف المتاحة للمجموعات</p>
+      <p className="mt-1 text-xs leading-6 text-[#0D3B34]/45">أدخل الكمية المتاحة لكل نوع. الحجز الواحد يمكن أن يجمع أكثر من نوع غرفة.</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <Field label="ثنائية"><input type="number" min="0" className="input" placeholder="10"/></Field>
+        <Field label="ثلاثية"><input type="number" min="0" className="input" placeholder="8"/></Field>
+        <Field label="رباعية"><input type="number" min="0" className="input" placeholder="5"/></Field>
+        <Field label="أسرّة منفردة"><input type="number" min="0" className="input" placeholder="30"/></Field>
+      </div>
+    </div>
+    <div className="grid gap-4 md:grid-cols-2"><Field label="نوع وحدة إضافية"><select className="input"><option>لا يوجد</option><option>غرفة مفردة</option><option>جناح</option><option>شقة</option><option>نوع آخر</option></select></Field><Field label="الكمية المتاحة للوحدة الإضافية"><input type="number" min="0" className="input" placeholder="0"/></Field></div>
     <div className="grid gap-4 md:grid-cols-2"><Field label="متاح من"><input type="date" className="input"/></Field><Field label="متاح إلى"><input type="date" className="input"/></Field></div>
-    <div className="grid gap-4 md:grid-cols-2"><Field label="السعر"><input type="number" min="0" className="input" placeholder="110"/></Field><Field label="وحدة التسعير"><select className="input"><option>للسرير / الليلة</option><option>للغرفة / الليلة</option><option>للوحدة / الليلة</option></select></Field></div>
+    <div className="rounded-2xl bg-[#F8F6EF] p-5">
+      <p className="text-sm font-bold">السعر الصافي المتفق عليه مع أريس (Net Rate)</p>
+      <p className="mt-1 text-xs leading-6 text-[#0D3B34]/45">يمكن أن يختلف السعر حسب نوع الغرفة. سعر البيع للعميل تديره أريس وفق اتفاقية الفندق.</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <Field label="الثنائية / ليلة"><input type="number" min="0" className="input" placeholder="220"/></Field>
+        <Field label="الثلاثية / ليلة"><input type="number" min="0" className="input" placeholder="260"/></Field>
+        <Field label="الرباعية / ليلة"><input type="number" min="0" className="input" placeholder="300"/></Field>
+        <Field label="السرير / ليلة"><input type="number" min="0" className="input" placeholder="110"/></Field>
+      </div>
+    </div>
     <div className="grid gap-4 md:grid-cols-2"><Field label="الإشغال الأقصى"><input type="number" min="1" className="input" placeholder="عدد الأشخاص"/></Field><Field label="الوجبات"><select className="input"><option>بدون وجبات</option><option>إفطار</option><option>نصف إقامة</option><option>إقامة كاملة</option></select></Field></div>
     <Field label="سياسة الإلغاء والاسترداد"><textarea className="input min-h-24" placeholder="اكتب سياسة هذه الإتاحة بوضوح..."/></Field>
-    <p className="text-xs leading-6 text-[#0D3B34]/45">هذه واجهة إعداد أولية. الربط الفعلي للمخزون والحجوزات سيمنع تجاوز الكمية المتاحة ويحدّث الرصيد بعد كل حجز مؤكد.</p>
+    <p className="text-xs leading-6 text-[#0D3B34]/45">عند حجز مجموعة، يمكن للحجز الواحد احتواء ثنائية + ثلاثية + رباعية معاً. النظام سيجمع الإشغال والسعر ويتحقق من توفر كل نوع طوال فترة الإقامة، ثم يخصم المخزون بعد تأكيد الحجز.</p>
   </Card>
 }
