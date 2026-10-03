@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type AdminUser={id:string;email:string;firstName:string|null;lastName:string|null;role:string;status:string;adminPermissions:unknown};
+type AdminUser={id:string;email:string;firstName:string|null;lastName:string|null;role:string;status:string;adminPermissions:unknown;profileImageUrl?:string|null};
 
 const permissions=[
  ["طلبات الشركاء","عرض طلبات الانضمام، مراجعة بيانات الشريك وطلب الاستكمال."],
@@ -23,9 +23,21 @@ export default function AdminUsersPage(){
  const [notice,setNotice]=useState("");
  const [users,setUsers]=useState<AdminUser[]>([]);
  const [actionUserId,setActionUserId]=useState<string|null>(null);
+ const [actionNotice,setActionNotice]=useState("");
  async function loadUsers(){try{const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json();if(r.ok&&d.success)setUsers(d.data||[]);}catch{}}
  useEffect(()=>{void loadUsers();},[]);
  const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS"];
+ async function setUserStatus(userId:string,action:"ACTIVATE"|"DISABLE"){
+  setActionNotice("");
+  const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,action})});
+  const d=await r.json(); setActionNotice(d.message||"تعذر تنفيذ الإجراء.");
+  if(r.ok&&d.success){await loadUsers();setActionUserId(null);}
+ }
+ async function uploadProfileImage(userId:string,file:File){
+  setActionNotice(""); const form=new FormData(); form.append("userId",userId); form.append("file",file);
+  const r=await fetch("/api/admin/users/profile-image",{method:"POST",body:form}); const d=await r.json(); setActionNotice(d.message||"تعذر رفع الصورة.");
+  if(r.ok&&d.success) await loadUsers();
+ }
  async function sendInvite(){
   setNotice(""); setSending(true);
   try{
@@ -56,7 +68,7 @@ export default function AdminUsersPage(){
       const active=user.status==="ACTIVE";
       const initials=fullName.split(" ").filter(Boolean).map(x=>x[0]).slice(0,2).join("").toUpperCase();
       return <div key={user.id} className="group relative grid gap-4 px-7 py-5 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.006] hover:rounded-[18px] hover:bg-[#FFFDF7] hover:shadow-[0_14px_38px_rgba(182,138,33,.24),0_0_30px_rgba(214,177,78,.20)] md:grid-cols-[1.25fr_1.55fr_.8fr_.8fr_1.15fr_.3fr] md:items-center">
-       <div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7BE78]/55 bg-gradient-to-br from-[#FFF9EA] to-[#F1E5C8] text-xs font-black text-[#0D4A40] shadow-sm">{initials}</div><div><b className="block text-sm text-[#103F38]">{fullName}</b><span className="mt-0.5 block text-[10px] text-black/30">{user.role==="SUPER_ADMIN"?"الإدارة الرئيسية":"فريق الإدارة"}</span></div></div>
+       <div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#D7BE78]/55 bg-gradient-to-br from-[#FFF9EA] to-[#F1E5C8] text-xs font-black text-[#0D4A40] shadow-sm">{user.profileImageUrl?<img src={user.profileImageUrl} alt={fullName} className="h-full w-full object-cover"/>:<span>{initials}</span>}</div><div><b className="block text-sm text-[#103F38]">{fullName}</b><span className="mt-0.5 block text-[10px] text-black/30">{user.role==="SUPER_ADMIN"?"الإدارة الرئيسية":"فريق الإدارة"}</span></div></div>
        <span className="text-sm text-black/60">{user.email}</span>
        <span><i className="not-italic rounded-full border border-[#D5B65B]/30 bg-[#FBF5E6] px-3 py-1.5 text-[11px] font-extrabold text-[#8D6B16]">{user.role==="SUPER_ADMIN"?"Super Admin":"Admin"}</i></span>
        <span><i className={`inline-flex items-center gap-1.5 not-italic rounded-full px-3 py-1.5 text-[11px] font-bold ${active?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}><i className={`h-1.5 w-1.5 rounded-full ${active?"bg-emerald-500":"bg-amber-500"}`}></i>{active?"نشط":"تم إرسال الدعوة"}</i></span>
@@ -68,10 +80,11 @@ export default function AdminUsersPage(){
           <div className="px-3 py-2 text-[11px] font-bold text-[#8D6B16]">Super Admin</div>
           <button disabled className="w-full cursor-not-allowed rounded-xl px-3 py-2.5 text-right text-xs text-black/35">كامل الصلاحيات — محمي</button>
          </>:<>
+          <label className="block w-full cursor-pointer rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تغيير الصورة الشخصية<input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)void uploadProfileImage(user.id,file)}}/></label>
           <button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تعديل الصلاحيات</button>
           {!active&&<button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">إعادة إرسال الدعوة</button>}
           <div className="my-1 border-t border-black/[.06]"/>
-          <button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-red-600 hover:bg-red-50">تعطيل المستخدم</button>
+          {active?<button onClick={()=>void setUserStatus(user.id,"DISABLE")} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-red-600 hover:bg-red-50">تعطيل المستخدم</button>:<button onClick={()=>void setUserStatus(user.id,"ACTIVATE")} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-emerald-700 hover:bg-emerald-50">تنشيط المستخدم</button>}
          </>}
         </div>}
        </div>
@@ -80,6 +93,7 @@ export default function AdminUsersPage(){
      {users.length===0&&<div className="px-7 py-12 text-center text-sm text-black/35">لا يوجد مستخدمين إداريين لعرضهم.</div>}
     </div>
    </section>
+   {actionNotice&&<div className="mt-4 rounded-xl border border-[#D8C79D]/40 bg-white px-5 py-3 text-xs font-bold text-[#103F38]">{actionNotice}</div>}
    <div className="mt-4 rounded-xl bg-[#F7F0E2] px-5 py-4 text-xs text-black/55">الـ Super Admin يملك كامل الصلاحيات. الأدمن العادي تظهر له فقط الأقسام الممنوحة له.</div>
   </div>
   {open&&<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/25 p-4 backdrop-blur-sm" onClick={()=>setOpen(false)}>
