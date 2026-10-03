@@ -361,9 +361,11 @@ export async function POST(
         partner.tradeNameAr ||
         partner.legalNameAr;
 
+      const portalUrl = new URL("/partner/status", request.url).toString();
+
       const subject =
         action === "REQUEST_COMPLETION"
-          ? "مطلوب استكمال طلب الشراكة — Arees Loop"
+          ? "يوجد تحديث على طلب انضمامكم إلى Arees Loop"
           : action === "SEND_AGREEMENT"
             ? "اتفاقية الشريك جاهزة للمراجعة — Arees Loop"
             : action === "ACTIVATE"
@@ -372,7 +374,7 @@ export async function POST(
 
       const bodyText =
         action === "REQUEST_COMPLETION"
-          ? `نحتاج استكمال بعض البيانات أو المستندات: ${notes ?? ""}`
+          ? "يوجد تحديث جديد على طلب انضمام منشأتكم إلى منصة Arees Loop. يرجى الدخول إلى لوحة الشريك لمراجعة التحديث واستكمال المطلوب."
           : action === "SEND_AGREEMENT"
             ? "اكتملت مراجعة الطلب، والاتفاقية الإلكترونية جاهزة الآن للمراجعة والقبول."
             : action === "ACTIVATE"
@@ -388,6 +390,9 @@ export async function POST(
             <p>مرحباً <strong>${escapeHtml(displayName)}</strong>،</p>
             <p>${escapeHtml(bodyText)}</p>
             <p><strong>رقم الطلب:</strong> ${escapeHtml(partner.id)}</p>
+            ${action === "REQUEST_COMPLETION"
+              ? `<p style="margin:28px 0"><a href="${escapeHtml(portalUrl)}" style="display:inline-block;background:#0D3B34;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:700">الدخول إلى لوحة الشريك</a></p>`
+              : ""}
             ${
               action === "SEND_AGREEMENT"
                 ? '<p>يمكنكم فتح بوابة الشريك ومراجعة الاتفاقية الإلكترونية.</p>'
