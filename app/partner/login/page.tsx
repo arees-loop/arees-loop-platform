@@ -185,7 +185,7 @@ export default function PartnerLoginPage() {
             <h1 className="mt-3 text-3xl font-extrabold leading-tight text-[#B88716] drop-shadow-[0_1px_3px_rgba(255,255,255,.9)] md:text-4xl lg:text-[42px]">
               مرحباً بك، شريك أريس
             </h1>
-            <p className="mt-4 max-w-[560px] text-[15px] font-bold leading-7 text-[#9A7415] drop-shadow-[0_1px_2px_rgba(255,255,255,.9)] lg:text-base">
+            <p className="mt-4 max-w-[560px] text-[15px] font-bold leading-7 text-[#0D4B3E] drop-shadow-[0_1px_2px_rgba(255,255,255,.9)] lg:text-base">
               سوّق تجاربك وخدماتك لآلاف العملاء المهتمين، واستهدف العملاء الحقيقيين
               الباحثين عنها في الوقت والمكان المناسبين.
             </p>
@@ -196,7 +196,7 @@ export default function PartnerLoginPage() {
               <Value title="نمو مستمر" text="مع منظومة Arees Loop" />
             </div>
 
-            <p className="mt-6 text-sm font-extrabold text-[#B88716] drop-shadow-[0_1px_2px_rgba(255,255,255,.9)]">
+            <p className="mt-6 text-sm font-extrabold text-[#0D4B3E] drop-shadow-[0_1px_2px_rgba(255,255,255,.9)]">
               تجربتك تستحق أن تصل لمن يبحث عنها.
             </p>
           </div>
@@ -211,7 +211,7 @@ const inputClass =
 
 function Value({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[18px] border border-white/35 bg-[#0D3B34]/38 px-3 py-4 shadow-[0_8px_24px_rgba(0,0,0,.18)] backdrop-blur-md">
+    <div className="group cursor-default rounded-[18px] border border-white/35 bg-[#0D3B34]/70 px-3 py-4 shadow-[0_8px_24px_rgba(0,0,0,.18)] backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.04] hover:border-[#D4AF37]/80 hover:bg-[#C99616] hover:shadow-[0_18px_42px_rgba(212,175,55,.48)]">
       <p className="text-sm font-extrabold text-white drop-shadow-[0_1px_5px_rgba(0,0,0,.65)]">{title}</p>
       <p className="mt-1 text-[11px] font-semibold text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,.55)]">{text}</p>
     </div>
