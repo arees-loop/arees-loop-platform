@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 type PriceMode = "INCLUDED" | "ADDED";
+type ServiceType = "EXPERIENCE" | "PROGRAM" | "HOTEL" | "TOUR" | "EVENT" | "GUIDE" | "TRANSPORT" | "TICKET" | "OTHER";
 
 export default function NewPartnerServicePage() {
   const [step, setStep] = useState(1);
+  const [serviceType, setServiceType] = useState<ServiceType>("EXPERIENCE");
   const [priceMode, setPriceMode] = useState<PriceMode>("INCLUDED");
   const [price, setPrice] = useState(100);
   const commissionRate = 10;
@@ -35,7 +37,8 @@ export default function NewPartnerServicePage() {
         </div>
 
         {step===1 && <Card eyebrow="STEP 01" title="ما نوع الخدمة التي ترغب بإضافتها؟" note="اختر النوع أولاً، وسنظهر لك الحقول المناسبة للخدمة.">
-          <Field label="نوع الخدمة"><select className="input"><option>تجربة أو نشاط</option><option>برنامج سياحي</option><option>فندق / إقامة</option><option>جولة سياحية</option><option>فعالية</option><option>مرشد سياحي</option><option>نقل سياحي</option><option>وجهة / تذكرة دخول</option><option>خدمة أخرى معتمدة</option></select></Field>
+          <Field label="نوع الخدمة"><select value={serviceType} onChange={e=>setServiceType(e.target.value as ServiceType)} className="input"><option value="EXPERIENCE">تجربة أو نشاط</option><option value="PROGRAM">برنامج سياحي</option><option value="HOTEL">فندق / إقامة</option><option value="TOUR">جولة سياحية</option><option value="EVENT">فعالية</option><option value="GUIDE">مرشد سياحي</option><option value="TRANSPORT">نقل سياحي</option><option value="TICKET">وجهة / تذكرة دخول</option><option value="OTHER">خدمة أخرى معتمدة</option></select></Field>
+          {serviceType==="HOTEL" && <div className="rounded-[24px] border border-[#D4AF37]/25 bg-[#FFF8E5] p-5"><p className="text-sm font-bold">الإقامة لها نظام إتاحة مستقل</p><p className="mt-2 text-xs leading-6 text-[#0D3B34]/55">سجّل الفندق وبياناته الأساسية مرة واحدة. بعد الاعتماد ستدير أنواع الوحدات والأسعار والكميات المتاحة حسب التاريخ من شاشة الإتاحة، بدلاً من إنشاء خدمة جديدة لكل فترة.</p></div>}
           <Field label="اسم الخدمة"><input className="input" placeholder="مثال: جولة المدينة التاريخية أو إقامة فندقية"/></Field>
           <Field label="وصف مختصر"><textarea className="input min-h-28" placeholder="صف الخدمة كما سيشاهدها العميل..."/></Field>
           <div className="grid gap-4 md:grid-cols-2"><Field label="المدينة"><input className="input" placeholder="المدينة المنورة"/></Field><Field label="الموقع"><input className="input" placeholder="اسم نقطة التجمع أو الموقع"/></Field></div>
@@ -52,7 +55,9 @@ export default function NewPartnerServicePage() {
           <p className="text-xs leading-6 text-[#0D3B34]/45">سيظهر للعميل اسم الجهة المنفذة ورقم الترخيص بصورة تعريفية هادئة، بدون رقم هاتف أو بريد إلكتروني أو رابط تواصل مباشر.</p>
         </Card>}
 
-        {step===3 && <Card eyebrow="STEP 03" title="السعر والسياسات" note="اختيار بسيط، ونوضح لك النتيجة قبل النشر.">
+        {step===3 && serviceType==="HOTEL" && <HotelInventory />}
+
+        {step===3 && serviceType!=="HOTEL" && <Card eyebrow="STEP 03" title="السعر والسياسات" note="اختيار بسيط، ونوضح لك النتيجة قبل النشر.">
           <Field label="سعر الخدمة"><div className="relative"><input type="number" value={price} onChange={e=>setPrice(Number(e.target.value)||0)} className="input pl-16"/><span className="absolute left-4 top-3.5 text-xs font-bold">ر.س</span></div></Field>
           <div className="grid gap-3 md:grid-cols-2">
             <Choice active={priceMode==="INCLUDED"} onClick={()=>setPriceMode("INCLUDED")} title="السعر شامل مقابل أريس" text="العميل يرى السعر الذي أدخلته، ويخصم المقابل وفق الاتفاقية من التسوية."/>
@@ -64,7 +69,7 @@ export default function NewPartnerServicePage() {
         </Card>}
 
         {step===4 && <Card eyebrow="STEP 04" title="جاهزة للمراجعة" note="راجع أهم النقاط قبل إرسالها إلى Arees Loop.">
-          <div className="grid gap-3 md:grid-cols-2">{["نوع الخدمة واسمها ووصفها مكتملة","الجهة المنفذة مسحوبة من ملف المنشأة","بيانات الترخيص مضافة","السعر وطريقته واضحان","سياسة الإلغاء والاسترداد محددة","الضمان المسترد محدد إن وجد"].map(x=><div key={x} className="rounded-2xl bg-[#F8F6EF] p-4 text-sm">✓ {x}</div>)}</div>
+          <div className="grid gap-3 md:grid-cols-2">{serviceType==="HOTEL" ? ["بيانات الفندق الأساسية مكتملة","الجهة المنفذة مسحوبة من ملف المنشأة","بيانات الترخيص مضافة","نوع الوحدة والإتاحة محددان","فترة الإتاحة والسعر محددان","سياسة الإلغاء والاسترداد محددة"] : ["نوع الخدمة واسمها ووصفها مكتملة","الجهة المنفذة مسحوبة من ملف المنشأة","بيانات الترخيص مضافة","السعر وطريقته واضحان","سياسة الإلغاء والاسترداد محددة","الضمان المسترد محدد إن وجد"].map(x=><div key={x} className="rounded-2xl bg-[#F8F6EF] p-4 text-sm">✓ {x}</div>)}</div>
           <div className="rounded-2xl border border-[#0D3B34]/8 bg-white p-4 text-xs leading-6 text-[#0D3B34]/55">بعد الإرسال ستكون حالة الخدمة <b className="text-[#0D3B34]">تحت المراجعة</b>. لن تظهر للعملاء قبل اعتمادها.</div>
         </Card>}
 
@@ -81,3 +86,15 @@ function Card({eyebrow,title,note,children}:{eyebrow:string;title:string;note:st
 function Field({label,children}:{label:string;children:React.ReactNode}){return <label className="block"><span className="mb-2 block text-xs font-bold">{label}</span>{children}</label>}
 function Choice({active,onClick,title,text}:{active:boolean;onClick:()=>void;title:string;text:string}){return <button type="button" onClick={onClick} className={`rounded-[22px] border p-5 text-right transition ${active?"border-[#D4AF37] bg-[#FFF8E5]":"border-[#0D3B34]/8 bg-white"}`}><p className="text-sm font-bold">{active?"✓ ":""}{title}</p><p className="mt-2 text-xs leading-6 text-[#0D3B34]/50">{text}</p></button>}
 function Metric({label,value}:{label:string;value:number}){return <div><p className="text-[10px] text-white/45">{label}</p><p className="mt-1 text-xl font-bold text-[#F1D263]">{value.toFixed(2)} <span className="text-[10px]">ر.س</span></p></div>}
+
+function HotelInventory(){
+  return <Card eyebrow="HOTEL INVENTORY" title="الإتاحة والأسعار" note="أدخل ما هو متاح للبيع خلال فترة محددة. يمكنك إضافة فترات ووحدات أخرى بعد اعتماد الفندق.">
+    <div className="rounded-2xl bg-[#0D3B34] p-5 text-white"><p className="text-sm font-bold text-[#F1D263]">مثال سريع</p><p className="mt-2 text-xs leading-6 text-white/65">30 سريراً متاحاً من 10 إلى 15 أكتوبر بسعر 110 ر.س للسرير/الليلة. عند تأكيد الحجز تخصم الكمية تلقائياً من الإتاحة.</p></div>
+    <div className="grid gap-4 md:grid-cols-2"><Field label="نوع الوحدة"><select className="input"><option>سرير</option><option>غرفة مفردة</option><option>غرفة مزدوجة</option><option>غرفة ثلاثية</option><option>غرفة رباعية</option><option>جناح</option><option>شقة</option></select></Field><Field label="الكمية المتاحة"><input type="number" min="0" className="input" placeholder="30"/></Field></div>
+    <div className="grid gap-4 md:grid-cols-2"><Field label="متاح من"><input type="date" className="input"/></Field><Field label="متاح إلى"><input type="date" className="input"/></Field></div>
+    <div className="grid gap-4 md:grid-cols-2"><Field label="السعر"><input type="number" min="0" className="input" placeholder="110"/></Field><Field label="وحدة التسعير"><select className="input"><option>للسرير / الليلة</option><option>للغرفة / الليلة</option><option>للوحدة / الليلة</option></select></Field></div>
+    <div className="grid gap-4 md:grid-cols-2"><Field label="الإشغال الأقصى"><input type="number" min="1" className="input" placeholder="عدد الأشخاص"/></Field><Field label="الوجبات"><select className="input"><option>بدون وجبات</option><option>إفطار</option><option>نصف إقامة</option><option>إقامة كاملة</option></select></Field></div>
+    <Field label="سياسة الإلغاء والاسترداد"><textarea className="input min-h-24" placeholder="اكتب سياسة هذه الإتاحة بوضوح..."/></Field>
+    <p className="text-xs leading-6 text-[#0D3B34]/45">هذه واجهة إعداد أولية. الربط الفعلي للمخزون والحجوزات سيمنع تجاوز الكمية المتاحة ويحدّث الرصيد بعد كل حجز مؤكد.</p>
+  </Card>
+}
