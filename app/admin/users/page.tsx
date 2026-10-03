@@ -22,6 +22,7 @@ export default function AdminUsersPage(){
  const [sending,setSending]=useState(false);
  const [notice,setNotice]=useState("");
  const [users,setUsers]=useState<AdminUser[]>([]);
+ const [actionUserId,setActionUserId]=useState<string|null>(null);
  async function loadUsers(){try{const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json();if(r.ok&&d.success)setUsers(d.data||[]);}catch{}}
  useEffect(()=>{void loadUsers();},[]);
  const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS"];
@@ -60,7 +61,20 @@ export default function AdminUsersPage(){
        <span><i className="not-italic rounded-full border border-[#D5B65B]/30 bg-[#FBF5E6] px-3 py-1.5 text-[11px] font-extrabold text-[#8D6B16]">{user.role==="SUPER_ADMIN"?"Super Admin":"Admin"}</i></span>
        <span><i className={`inline-flex items-center gap-1.5 not-italic rounded-full px-3 py-1.5 text-[11px] font-bold ${active?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}><i className={`h-1.5 w-1.5 rounded-full ${active?"bg-emerald-500":"bg-amber-500"}`}></i>{active?"نشط":"تم إرسال الدعوة"}</i></span>
        <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة")).join(" • "):perms+" صلاحيات"}</span>
-       <button aria-label="إجراءات المستخدم" className="flex h-8 w-8 items-center justify-center rounded-full text-lg font-bold text-[#0D4A40] transition-all hover:bg-white hover:shadow-[0_5px_18px_rgba(182,138,33,.22)]">•••</button>
+       <div className="relative">
+        <button onClick={()=>setActionUserId(v=>v===user.id?null:user.id)} aria-label="اتخاذ إجراء" title="اتخاذ إجراء" className="flex h-9 items-center justify-center gap-1 rounded-full border border-transparent px-3 text-xs font-extrabold text-[#0D4A40] transition-all hover:border-[#D5B65B]/45 hover:bg-white hover:shadow-[0_5px_18px_rgba(182,138,33,.22)]">•••<span className="hidden xl:inline">اتخاذ إجراء</span></button>
+        {actionUserId===user.id&&<div className="absolute left-0 top-11 z-50 w-52 overflow-hidden rounded-2xl border border-[#D8C79D]/50 bg-white/95 p-1.5 text-right shadow-[0_18px_45px_rgba(50,40,20,.16)] backdrop-blur-xl">
+         {user.role==="SUPER_ADMIN"?<>
+          <div className="px-3 py-2 text-[11px] font-bold text-[#8D6B16]">Super Admin</div>
+          <button disabled className="w-full cursor-not-allowed rounded-xl px-3 py-2.5 text-right text-xs text-black/35">كامل الصلاحيات — محمي</button>
+         </>:<>
+          <button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تعديل الصلاحيات</button>
+          {!active&&<button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">إعادة إرسال الدعوة</button>}
+          <div className="my-1 border-t border-black/[.06]"/>
+          <button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-red-600 hover:bg-red-50">تعطيل المستخدم</button>
+         </>}
+        </div>}
+       </div>
       </div>
      })}
      {users.length===0&&<div className="px-7 py-12 text-center text-sm text-black/35">لا يوجد مستخدمين إداريين لعرضهم.</div>}
