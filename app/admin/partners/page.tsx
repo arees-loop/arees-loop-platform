@@ -2,10 +2,6 @@
 
 
 
-import Image from "next/image";
-
-import Link from "next/link";
-
 import { useEffect, useMemo, useState } from "react";
 
 
@@ -303,7 +299,6 @@ export default function AdminPartnersPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [adminActionLoading, setAdminActionLoading] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const [search, setSearch] = useState("");
 
@@ -725,127 +720,6 @@ export default function AdminPartnersPage() {
         <div className="absolute bottom-[-160px] right-[30%] h-[420px] w-[420px] rounded-full bg-[#B99124]/7 blur-[120px]" />
 
       </div>
-
-
-
-      {/* HEADER */}
-
-      <header className="sticky top-0 z-50 border-b border-[#0D3B34]/8 bg-[#F8F5EE]/88 backdrop-blur-2xl">
-
-        <div className="mx-auto flex max-w-[1580px] items-center justify-between px-6 py-4 lg:px-10">
-
-          <div className="flex items-center gap-4">
-
-            <Image
-
-              src="/Logo/arees-loop-brand.png"
-
-              alt="Arees Loop"
-
-              width={116}
-
-              height={54}
-
-              className="h-auto w-[78px] object-contain"
-
-              priority
-
-            />
-
-
-
-            <div className="hidden h-9 w-px bg-[#0D3B34]/10 md:block" />
-
-
-
-            <div className="hidden md:block">
-
-              <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">
-
-                AREES LOOP ADMIN
-
-              </p>
-
-              <p className="mt-1 text-sm font-semibold text-[#0D3B34]/70">
-
-                إدارة واعتماد الشركاء
-
-              </p>
-
-            </div>
-
-          </div>
-
-
-
-          <div className="flex items-center gap-3">
-
-            <Link
-
-              href="/admin/dashboard"
-
-              className="rounded-full bg-[#0D3B34] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#124A41]"
-
-            >
-
-              لوحة الإدارة والمؤشرات
-
-            </Link>
-
-
-
-            <Link
-
-              href="/"
-
-              className="rounded-full border border-[#0D3B34]/10 bg-white/70 px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/70 transition hover:bg-white"
-
-            >
-
-              عرض المنصة
-
-            </Link>
-
-
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setAccountMenuOpen((open) => !open)}
-                className="flex items-center gap-3 rounded-2xl border border-[#D4AF37]/20 bg-white/80 px-3 py-2 text-right shadow-sm transition hover:bg-white"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#171717] text-sm font-bold text-[#D4AF37]">A</div>
-                <div className="hidden sm:block">
-                  <p className="text-xs font-bold text-[#171717]">Arees Admin</p>
-                  <p className="mt-0.5 text-[10px] text-[#171717]/45">admin@areesloop.com</p>
-                </div>
-                <span className="text-xs text-[#B99124]">⌄</span>
-              </button>
-              {accountMenuOpen && (
-                <div className="absolute left-0 top-[calc(100%+10px)] w-56 overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-[#FFFDF8] p-2 shadow-xl">
-                  <div className="border-b border-[#171717]/7 px-3 py-2 sm:hidden">
-                    <p className="text-xs font-bold text-[#171717]">Arees Admin</p>
-                    <p className="mt-1 text-[10px] text-[#171717]/45">admin@areesloop.com</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-                      window.location.href = "/admin/login";
-                    }}
-                    className="mt-1 w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#8A2F2F] transition hover:bg-[#8A2F2F]/5"
-                  >
-                    تسجيل الخروج
-                  </button>
-                </div>
-              )}
-            </div>
-
-          </div>
-
-        </div>
-
-      </header>
 
 
 
