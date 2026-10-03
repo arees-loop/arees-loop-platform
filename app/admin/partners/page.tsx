@@ -316,6 +316,8 @@ export default function AdminPartnersPage() {
 
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
+  const [showAgreementPreview, setShowAgreementPreview] = useState(false);
+
   const [completionNote, setCompletionNote] = useState("");
 
   const [showManualPartnerModal, setShowManualPartnerModal] = useState(false);
@@ -534,10 +536,11 @@ export default function AdminPartnersPage() {
   };
 
   const sendCommercialTerms = async () => {
-    await runAdminDecision("SEND_AGREEMENT", {
+    const result = await runAdminDecision("SEND_AGREEMENT", {
       commissionRate:
         selectedPartner?.commission || 10,
     });
+    if (result) setShowAgreementPreview(false);
   };
 
   const requestMoreInfo = () => {
@@ -1146,7 +1149,7 @@ export default function AdminPartnersPage() {
 
                   <p className="text-[10px] font-semibold text-[#0D3B34]/45">
 
-                    العمولة الحالية
+                    المقابل التجاري الحالي
 
                   </p>
 
@@ -1376,7 +1379,7 @@ export default function AdminPartnersPage() {
 
                 <div className="grid gap-4 md:grid-cols-2">
 
-                  <Field label="عمولة Arees Loop">
+                  <Field label="المقابل التجاري لأريس">
 
                     <div className="relative">
 
@@ -1560,7 +1563,7 @@ export default function AdminPartnersPage() {
 
                     <p className="mt-1 font-bold">
 
-                      إصدار نيابة عن المورد
+                      وفق النموذج المالي المعتمد لدى أريس
 
                     </p>
 
@@ -1626,9 +1629,9 @@ export default function AdminPartnersPage() {
 
                   <ActionButton
 
-                    onClick={sendCommercialTerms}
+                    onClick={() => setShowAgreementPreview(true)}
 
-                    label="إرسال الاتفاقية"
+                    label="مراجعة وإرسال الاتفاقية"
 
                     gold
 
@@ -1758,7 +1761,7 @@ export default function AdminPartnersPage() {
 
                   <AuditRow
 
-                    title={`العمولة الحالية ${selectedPartner.commission}%`}
+                    title={`المقابل التجاري الحالي ${selectedPartner.commission}%`}
 
                     meta="Commercial Terms"
 
@@ -1777,6 +1780,50 @@ export default function AdminPartnersPage() {
       </div>
 
 
+
+      {showAgreementPreview && selectedPartner && (
+        <ModalShell
+          title="مراجعة الاتفاقية قبل الإرسال"
+          subtitle={selectedPartner.tradeName}
+          onClose={() => setShowAgreementPreview(false)}
+        >
+          <div className="rounded-[24px] bg-[#0D3B34] p-5 text-white">
+            <p className="text-[10px] font-bold tracking-[0.18em] text-[#E5BE45]">COMMERCIAL TERMS</p>
+            <h4 className="mt-2 text-xl font-bold">الشروط التجارية المعتمدة لهذا الشريك</h4>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-[11px] text-white/55">المقابل التجاري لأريس</p>
+                <p className="mt-1 text-2xl font-bold text-[#F1D263]">{selectedPartner.commission}%</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-[11px] text-white/55">دورة التسوية</p>
+                <p className="mt-1 font-bold">{selectedPartner.settlementCycle}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-[11px] text-white/55">رسوم الدفع الإلكتروني</p>
+                <p className="mt-1 text-sm font-bold">{selectedPartner.paymentFeeRule}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-[11px] text-white/55">رسوم التحويل لكل تسوية</p>
+                <p className="mt-1 font-bold">{money(selectedPartner.settlementFee)} ريال</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[22px] border border-[#D4AF37]/20 bg-[#FFF9EA] p-5 text-xs leading-7 text-[#0D3B34]/75">
+            <p className="font-bold text-[#0D3B34]">قبل الإرسال</p>
+            <p className="mt-2">سيتم تثبيت نسبة المقابل التجاري داخل نسخة الاتفاقية المرسلة للشريك. أما اختيار أن يكون السعر شاملاً لمقابل أريس أو يضاف إليه فيتم لكل تجربة عند إنشائها.</p>
+            <p className="mt-2">الشريك هو الجهة المنظمة أو المنفذة الفعلية للتجربة أو البرنامج، وتظهر هويته وبيانات ترخيصه للعميل. أريس تقوم بالتسويق والحجز ضمن نطاق ترخيصها.</p>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={() => setShowAgreementPreview(false)} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">رجوع وتعديل</button>
+            <button type="button" onClick={sendCommercialTerms} disabled={adminActionLoading} className="rounded-2xl bg-[#D4AF37] px-4 py-3 text-xs font-bold text-[#0D3B34] disabled:opacity-40">
+              {adminActionLoading ? "جارٍ الإرسال..." : "إرسال للتوقيع الإلكتروني"}
+            </button>
+          </div>
+        </ModalShell>
+      )}
 
       {showCompletionModal && (
 
