@@ -24,7 +24,7 @@ export default function NewPartnerServicePage() {
     <main dir="rtl" className="min-h-screen bg-[#F7F4EA] text-[#0D3B34]">
       <header className="border-b border-[#0D3B34]/8 bg-[#FBF9F3]/95">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5 md:px-8">
-          <div><p className="text-[10px] font-bold tracking-[.2em] text-[#B99124]">NEW SERVICE</p><h1 className="mt-1 text-lg font-bold">إضافة تجربة أو برنامج</h1></div>
+          <div><p className="text-[10px] font-bold tracking-[.2em] text-[#B99124]">NEW SERVICE</p><h1 className="mt-1 text-lg font-bold">إضافة خدمة</h1></div>
           <Link href="/partner/services" className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2 text-xs font-bold">حفظ والخروج</Link>
         </div>
       </header>
@@ -34,26 +34,29 @@ export default function NewPartnerServicePage() {
           {["الأساسيات","المنفذ والترخيص","السعر والسياسات","المراجعة"].map((x,i)=><button key={x} onClick={()=>setStep(i+1)} className={`rounded-2xl px-3 py-3 text-xs font-bold ${step===i+1?"bg-[#0D3B34] text-white":"bg-white text-[#0D3B34]/50"}`}>{i+1}. {x}</button>)}
         </div>
 
-        {step===1 && <Card eyebrow="STEP 01" title="ما الذي ستقدمه للعميل؟" note="ابدأ بالمعلومات الأساسية فقط.">
-          <Field label="نوع الخدمة"><select className="input"><option>تجربة أو نشاط</option><option>برنامج سياحي</option><option>فعالية</option><option>وجهة أو موقع سياحي</option></select></Field>
-          <Field label="اسم التجربة أو البرنامج"><input className="input" placeholder="مثال: جولة المدينة التاريخية"/></Field>
-          <Field label="وصف مختصر"><textarea className="input min-h-28" placeholder="صف التجربة كما سيشاهدها العميل..."/></Field>
+        {step===1 && <Card eyebrow="STEP 01" title="ما نوع الخدمة التي ترغب بإضافتها؟" note="اختر النوع أولاً، وسنظهر لك الحقول المناسبة للخدمة.">
+          <Field label="نوع الخدمة"><select className="input"><option>تجربة أو نشاط</option><option>برنامج سياحي</option><option>فندق / إقامة</option><option>جولة سياحية</option><option>فعالية</option><option>مرشد سياحي</option><option>نقل سياحي</option><option>وجهة / تذكرة دخول</option><option>خدمة أخرى معتمدة</option></select></Field>
+          <Field label="اسم الخدمة"><input className="input" placeholder="مثال: جولة المدينة التاريخية أو إقامة فندقية"/></Field>
+          <Field label="وصف مختصر"><textarea className="input min-h-28" placeholder="صف الخدمة كما سيشاهدها العميل..."/></Field>
           <div className="grid gap-4 md:grid-cols-2"><Field label="المدينة"><input className="input" placeholder="المدينة المنورة"/></Field><Field label="الموقع"><input className="input" placeholder="اسم نقطة التجمع أو الموقع"/></Field></div>
         </Card>}
 
-        {step===2 && <Card eyebrow="STEP 02" title="من سينفذ التجربة؟" note="هذه البيانات مهمة وتظهر للعميل بوضوح.">
+        {step===2 && <Card eyebrow="STEP 02" title="من الجهة المنفذة للخدمة؟" note="تُسحب بيانات المنشأة تلقائياً، وتختار فقط الترخيص المعتمد المناسب لهذه الخدمة.">
           <div className="rounded-2xl border border-[#D4AF37]/25 bg-[#FFF8E5] p-4 text-xs leading-6"><b>مهم:</b> الشريك هو الجهة المنظمة أو المنفذة الفعلية. Arees Loop منصة للتسويق والحجز ضمن نطاق ترخيصها، ولا تظهر أريس كمنفذ للخدمة.</div>
-          <Field label="اسم الجهة المنظمة / المنفذة"><input className="input" placeholder="الاسم التجاري أو القانوني للجهة"/></Field>
-          <div className="grid gap-4 md:grid-cols-2"><Field label="نوع الترخيص"><input className="input" placeholder="مثال: تنظيم الرحلات السياحية"/></Field><Field label="رقم الترخيص"><input className="input" placeholder="رقم الترخيص"/></Field></div>
-          <Field label="جهة إصدار الترخيص"><input className="input" placeholder="الجهة المرخصة"/></Field>
-          <p className="text-xs text-[#0D3B34]/45">لاحقاً سنربط هذه الحقول بتراخيص منشأتك المحفوظة حتى تختار الترخيص بدلاً من كتابته كل مرة.</p>
+          <div className="rounded-2xl bg-[#F8F6EF] p-5">
+            <p className="text-[10px] font-bold text-[#0D3B34]/40">الجهة المنظمة / المنفذة</p>
+            <p className="mt-2 text-sm font-bold">تُسحب تلقائياً من ملف منشأتك المعتمد</p>
+            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/45">لا يمكن تعديل اسم الجهة من داخل الخدمة.</p>
+          </div>
+          <Field label="الترخيص المستخدم لهذه الخدمة"><select className="input"><option>اختر من تراخيص منشأتك المعتمدة</option></select></Field>
+          <p className="text-xs leading-6 text-[#0D3B34]/45">سيظهر للعميل اسم الجهة المنفذة ورقم الترخيص بصورة تعريفية هادئة، بدون رقم هاتف أو بريد إلكتروني أو رابط تواصل مباشر.</p>
         </Card>}
 
         {step===3 && <Card eyebrow="STEP 03" title="السعر والسياسات" note="اختيار بسيط، ونوضح لك النتيجة قبل النشر.">
-          <Field label="سعر التجربة / البرنامج"><div className="relative"><input type="number" value={price} onChange={e=>setPrice(Number(e.target.value)||0)} className="input pl-16"/><span className="absolute left-4 top-3.5 text-xs font-bold">ر.س</span></div></Field>
+          <Field label="سعر الخدمة"><div className="relative"><input type="number" value={price} onChange={e=>setPrice(Number(e.target.value)||0)} className="input pl-16"/><span className="absolute left-4 top-3.5 text-xs font-bold">ر.س</span></div></Field>
           <div className="grid gap-3 md:grid-cols-2">
             <Choice active={priceMode==="INCLUDED"} onClick={()=>setPriceMode("INCLUDED")} title="السعر شامل مقابل أريس" text="العميل يرى السعر الذي أدخلته، ويخصم المقابل وفق الاتفاقية من التسوية."/>
-            <Choice active={priceMode==="ADDED"} onClick={()=>setPriceMode("ADDED")} title="إضافة مقابل أريس على السعر" text="سعر التجربة لك، ويضاف مقابل أريس وضريبته إلى السعر النهائي للعميل."/>
+            <Choice active={priceMode==="ADDED"} onClick={()=>setPriceMode("ADDED")} title="إضافة مقابل أريس على السعر" text="سعر الخدمة لك، ويضاف مقابل أريس وضريبته إلى السعر النهائي للعميل."/>
           </div>
           <div className="rounded-[24px] bg-[#0D3B34] p-5 text-white"><p className="text-xs text-white/50">معاينة السعر</p><div className="mt-4 grid gap-4 sm:grid-cols-3"><Metric label="سعر العميل" value={preview.customer}/><Metric label="أساس مقابل أريس" value={preview.areesBase}/><Metric label="ضريبة المقابل 15%" value={preview.areesVat}/></div><p className="mt-4 text-[11px] leading-6 text-white/45">المعاينة إرشادية قبل رسوم وسيلة الدفع أو أي تعديلات أخرى واجبة التطبيق.</p></div>
           <Field label="سياسة الإلغاء والاسترداد"><textarea className="input min-h-24" placeholder="اكتب الشروط بوضوح..."/></Field>
@@ -61,7 +64,7 @@ export default function NewPartnerServicePage() {
         </Card>}
 
         {step===4 && <Card eyebrow="STEP 04" title="جاهزة للمراجعة" note="راجع أهم النقاط قبل إرسالها إلى Arees Loop.">
-          <div className="grid gap-3 md:grid-cols-2">{["اسم ووصف الخدمة مكتملان","المنظم أو المنفذ محدد","بيانات الترخيص مضافة","السعر وطريقته واضحان","سياسة الإلغاء والاسترداد محددة","الضمان المسترد محدد إن وجد"].map(x=><div key={x} className="rounded-2xl bg-[#F8F6EF] p-4 text-sm">✓ {x}</div>)}</div>
+          <div className="grid gap-3 md:grid-cols-2">{["نوع الخدمة واسمها ووصفها مكتملة","الجهة المنفذة مسحوبة من ملف المنشأة","بيانات الترخيص مضافة","السعر وطريقته واضحان","سياسة الإلغاء والاسترداد محددة","الضمان المسترد محدد إن وجد"].map(x=><div key={x} className="rounded-2xl bg-[#F8F6EF] p-4 text-sm">✓ {x}</div>)}</div>
           <div className="rounded-2xl border border-[#0D3B34]/8 bg-white p-4 text-xs leading-6 text-[#0D3B34]/55">بعد الإرسال ستكون حالة الخدمة <b className="text-[#0D3B34]">تحت المراجعة</b>. لن تظهر للعملاء قبل اعتمادها.</div>
         </Card>}
 
