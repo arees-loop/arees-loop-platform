@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message:
-            "حالة الطلب الحالية لا تسمح بإعادة تشغيل المراجعة الآلية.",
+            "حالة الطلب الحالية لا تسمح بإعادة إرسال الطلب للمراجعة.",
         },
         { status: 409 },
       );
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message:
-            "يجب رفع مستند واحد على الأقل قبل بدء المراجعة الآلية.",
+            "يجب رفع مستند واحد على الأقل قبل إرسال الطلب للمراجعة.",
         },
         { status: 400 },
       );
@@ -134,10 +134,8 @@ export async function POST(request: NextRequest) {
 
     const responseMessage =
       workflow.status === "NEEDS_COMPLETION"
-        ? "اكتملت المراجعة الآلية ويوجد استكمال مطلوب."
-        : workflow.aiReview?.outcome === "MANUAL_REVIEW"
-          ? "اكتملت المراجعة الآلية وتم تحويل الطلب لمراجعة بشرية."
-          : "اكتملت المراجعة الآلية وتم تحويل الطلب للمراجعة الإدارية.";
+        ? "تمت مراجعة الطلب ويوجد استكمال مطلوب."
+        : "تم استلام الطلب وتحويله للمراجعة الإدارية.";
 
     return NextResponse.json(
       {
@@ -157,7 +155,7 @@ export async function POST(request: NextRequest) {
           : {
               outcome: "MANUAL_REVIEW",
               summary:
-                "تعذر إكمال المراجعة الآلية وتم تحويل الطلب للمراجعة الإدارية.",
+                "تم استلام الطلب وتحويله للمراجعة الإدارية.",
               partnerMessage:
                 "تم استلام طلبكم وتحويله للمراجعة الإدارية.",
               issues: [],
@@ -178,7 +176,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message:
-          "تعذر تشغيل المراجعة الآلية حالياً. تم حفظ الطلب ويمكن إعادة المحاولة.",
+          "تعذر إرسال الطلب للمراجعة حالياً. تم حفظ الطلب ويمكن إعادة المحاولة.",
       },
       { status: 500 },
     );
