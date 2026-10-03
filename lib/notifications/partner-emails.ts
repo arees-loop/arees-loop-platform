@@ -18,7 +18,7 @@ type PartnerApplicationNotice = {
 
 const STATUS_LABELS: Record<string, string> = {
   SUBMITTED: "تم استلام الطلب",
-  UNDER_REVIEW: "تمت المراجعة الآلية وتحويل الطلب للإدارة",
+  UNDER_REVIEW: "قيد مراجعة أريس",
   NEEDS_COMPLETION: "مطلوب استكمال",
   NEEDS_INFO: "مطلوب استكمال",
   WAITING_AGREEMENT: "بانتظار موافقة الشريك على الاتفاقية",
@@ -101,7 +101,9 @@ function partnerIssuesBlock(review?: PartnerAiReviewResult | null) {
 
 function adminReviewBlock(review?: PartnerAiReviewResult | null) {
   if (!review) {
-    return `<p><strong>تقرير الذكاء الاصطناعي:</strong> غير متاح.</p>`;
+    return `<div style="margin:18px 0;padding:16px 18px;background:#f4f6f5;border-radius:12px">
+      <p><strong>المراجعة الداخلية:</strong> تعذر إنشاء تقرير آلي لهذه الجولة، ويحتاج الطلب إلى مراجعة إدارية مباشرة.</p>
+    </div>`;
   }
 
   const issues = review.issues.length
@@ -136,7 +138,7 @@ function adminReviewBlock(review?: PartnerAiReviewResult | null) {
 
   return `
     <div style="margin:18px 0;padding:16px 18px;background:#f4f6f5;border-radius:12px">
-      <p><strong>نتيجة AI:</strong> ${escapeHtml(
+      <p><strong>نتيجة المراجعة الداخلية:</strong> ${escapeHtml(
         OUTCOME_LABELS[review.outcome] ?? review.outcome,
       )}</p>
       <p><strong>الملخص:</strong> ${escapeHtml(review.summary)}</p>
@@ -160,28 +162,34 @@ export async function notifyPartnerApplicationSubmitted(
   const displayName =
     input.tradeNameAr?.trim() || input.legalNameAr;
 
-  const partnerSubject =
-    input.aiReview?.outcome === "NEEDS_COMPLETION"
-      ? "مطلوب استكمال طلب الشراكة — Arees Loop"
-      : "تمت مراجعة طلب الشراكة — Arees Loop";
+  const partnerNeedsCompletion =
+    input.status === "NEEDS_COMPLETION" ||
+    input.aiReview?.outcome === "NEEDS_COMPLETION";
+
+  const partnerSubject = partnerNeedsCompletion
+    ? "يوجد تحديث على طلب انضمامكم إلى Arees Loop"
+    : "تم استلام طلب الشراكة بنجاح — Arees Loop";
 
   const partnerResult = await sendEmail({
     to: input.partnerEmail,
     subject: partnerSubject,
     html: shell(
-      input.aiReview?.outcome === "NEEDS_COMPLETION"
-        ? "نحتاج استكمال طلب الشراكة"
-        : "اكتملت المراجعة الآلية لطلب الشراكة",
+      partnerNeedsCompletion
+        ? "يوجد تحديث على طلب الشراكة"
+        : "تم استلام طلب الشراكة بنجاح",
       `<p>مرحباً <strong>${escapeHtml(displayName)}</strong>،</p>
+       <p>${
+         partnerNeedsCompletion
+           ? "يوجد تحديث جديد على طلب انضمام منشأتكم إلى منصة Arees Loop. يرجى الدخول إلى لوحة الشريك لمراجعة التحديث واستكمال المطلوب."
+           : "تم استلام طلب انضمام منشأتكم إلى منصة Arees Loop، وهو الآن قيد المراجعة لدى فريق أريس."
+       }</p>
        <p><strong>رقم الطلب:</strong> ${escapeHtml(input.partnerId)}</p>
-       ${statusBlock(input)}
        ${
-         input.aiReview
-           ? `<p>${escapeHtml(input.aiReview.partnerMessage)}</p>`
-           : ""
+         partnerNeedsCompletion
+           ? partnerIssuesBlock(input.aiReview)
+           : "<p>لا يلزم منكم أي إجراء في الوقت الحالي. سنقوم بإشعاركم عبر البريد الإلكتروني عند وجود أي تحديث أو عند الحاجة إلى استكمال بيانات أو مستندات.</p>"
        }
-       ${partnerIssuesBlock(input.aiReview)}
-       <p>سيصلكم أي تحديث لاحق على الطلب عبر البريد الإلكتروني.</p>`,
+       <p>يمكنكم متابعة حالة الطلب من لوحة الشريك.</p>`,
     ),
   });
 
