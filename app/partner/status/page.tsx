@@ -339,7 +339,7 @@ export default function PartnerStatusPage() {
                         <Link href="/partner/agreement" className="mt-4 inline-flex rounded-xl bg-[#0D463D] px-4 py-2.5 text-xs font-bold text-white">مراجعة وتوقيع الاتفاقية</Link>
                       )}
                       {step.key === "accepted" && (completed || current) && (
-                        <Link href="/partner/agreement" className="mt-3 inline-flex rounded-xl border border-[#0D463D]/15 px-4 py-2 text-xs font-bold text-[#0D463D]">عرض الاتفاقية المقبولة</Link>
+                        <Link href="/partner/agreement" className="mt-3 inline-flex rounded-xl border border-[#0D463D]/15 px-4 py-2 text-xs font-bold text-[#0D463D]">عرض العقد</Link>
                       )}
                     </div>
                   </div>
