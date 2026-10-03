@@ -131,6 +131,8 @@ export default function PartnerStatusPage() {
   const [application, setApplication] = useState<PartnerApplication | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [user, setUser] = useState<{ firstName?: string | null; lastName?: string | null; email?: string | null; profileImageUrl?: string | null } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -156,6 +158,13 @@ export default function PartnerStatusPage() {
         if (active) setLoading(false);
       }
     }
+
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((result) => {
+        if (active && result?.success) setUser(result.data?.user ?? null);
+      })
+      .catch(() => null);
 
     loadApplication();
     return () => {
@@ -213,12 +222,48 @@ export default function PartnerStatusPage() {
     >
       <header className="border-b border-[#0D463D]/10 bg-[#FAF8F1]">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0D463D] text-lg font-bold text-[#D4A72C]">∞</div>
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.25em] text-[#B88716]">AREES LOOP PARTNER</p>
-              <h1 className="mt-1 text-sm font-semibold text-[#0D463D]">بوابة الشركاء</h1>
-            </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setAccountOpen((value) => !value)}
+              className="flex cursor-pointer items-center gap-3 rounded-2xl px-2 py-1.5 text-right transition hover:bg-[#0D463D]/5"
+            >
+              {user?.profileImageUrl ? (
+                <img src={user.profileImageUrl} alt="" className="h-12 w-12 rounded-2xl object-cover ring-1 ring-[#D4A72C]/35" />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0D463D] text-lg font-bold text-[#D4A72C]">∞</div>
+              )}
+              <div className="hidden sm:block">
+                <p className="text-[10px] font-bold tracking-[0.2em] text-[#B88716]">AREES LOOP PARTNER</p>
+                <p className="mt-0.5 text-sm font-bold text-[#0D463D]">
+                  {[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "حساب الشريك"}
+                </p>
+                <p className="max-w-[220px] truncate text-[11px] text-[#71837E]" dir="ltr">{user?.email || ""}</p>
+              </div>
+              <span className={`text-xs text-[#8B9A96] transition-transform ${accountOpen ? "rotate-180" : ""}`}>▼</span>
+            </button>
+
+            {accountOpen && (
+              <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-64 overflow-hidden rounded-2xl border border-[#DDD9CC] bg-white p-2 shadow-[0_18px_50px_rgba(13,70,61,.16)]">
+                <div className="border-b border-[#0D463D]/8 px-3 py-3">
+                  <p className="font-bold text-[#0D463D]">{[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "حساب الشريك"}</p>
+                  <p className="mt-1 truncate text-xs text-[#71837E]" dir="ltr">{user?.email || ""}</p>
+                </div>
+                <Link href="/profile" className="mt-1 flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm font-bold text-[#0D463D] transition hover:bg-[#F5F1E5]">
+                  <span>الملف الشخصي</span><span>←</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    window.location.href = "/partner/login";
+                  }}
+                  className="flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm font-bold text-[#A3443E] transition hover:bg-[#FFF0ED]"
+                >
+                  <span>تسجيل الخروج</span><span>←</span>
+                </button>
+              </div>
+            )}
           </div>
           <div className="rounded-full border border-[#0D463D]/10 bg-white px-4 py-2 text-xs">
             رقم الطلب:{" "}
