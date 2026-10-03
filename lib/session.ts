@@ -107,6 +107,8 @@ export async function getCurrentSession() {
           emailVerifiedAt: true,
           phoneVerifiedAt: true,
           visitorType: true,
+          adminPermissions: true,
+          profileImageUrl: true,
           interests: {
             select: {
               code: true,
