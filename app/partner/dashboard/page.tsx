@@ -392,7 +392,7 @@ export default function PartnerDashboardPage() {
 
               <div className="flex flex-wrap gap-3">
                 <Link
-                  href="/partner/services"
+                  href="/partner/services/new"
                   className="rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white"
                 >
                   + إضافة خدمة
@@ -768,7 +768,7 @@ export default function PartnerDashboardPage() {
 
                   <div className="mt-4 grid gap-2">
                     <QuickLink
-                      href="/partner/services"
+                      href="/partner/services/new"
                       label="إضافة خدمة جديدة"
                     />
 
