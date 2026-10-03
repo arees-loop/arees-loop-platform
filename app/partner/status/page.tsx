@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 
 type StatusKey =
   | "received"
-  | "ai"
   | "review"
   | "agreement"
   | "accepted"
@@ -43,14 +42,9 @@ const steps: Step[] = [
     description: "تم حفظ بيانات طلب الشراكة والمستندات المرفوعة.",
   },
   {
-    key: "ai",
-    title: "مراجعة الطلب",
-    description: "يقوم فريق أريس بمراجعة طلبك والبيانات والمستندات المرفقة.",
-  },
-  {
     key: "review",
-    title: "مراجعة أريس",
-    description: "يستكمل فريق أريس مراجعة الطلب قبل الانتقال إلى الاتفاقية.",
+    title: "مراجعة الطلب",
+    description: "يقوم فريق أريس بمراجعة بيانات الطلب والمستندات المرفقة، وسيتم إشعارك عند وجود أي تحديث أو استكمال مطلوب.",
   },
   {
     key: "agreement",
@@ -79,7 +73,6 @@ function statusToStep(status: string): StatusKey {
     case "DRAFT":
       return "received";
     case "SUBMITTED":
-      return "ai";
     case "UNDER_REVIEW":
     case "NEEDS_COMPLETION":
     case "PRE_APPROVED":
@@ -357,7 +350,7 @@ export default function PartnerStatusPage() {
 
             <section className="rounded-[30px] bg-[#ECE9DE] p-6">
               <p className="text-xs font-semibold text-[#7D8D89]">الخطوة التالية</p>
-              <h3 className="mt-2 text-lg font-bold">مراجعة أريس ثم الاتفاقية</h3>
+              <h3 className="mt-2 text-lg font-bold">مراجعة الطلب ثم الاتفاقية</h3>
               <p className="mt-2 text-sm leading-7 text-[#71837E]">
                 بعد اكتمال المراجعة الإدارية، تنتقل للاتفاقية الإلكترونية التي توضح العمولة والرسوم والشروط التجارية قبل قبول الشريك.
               </p>
