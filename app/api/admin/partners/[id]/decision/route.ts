@@ -365,6 +365,7 @@ export async function POST(
       const portalUrl = `${appOrigin}/partner/status`;
       const agreementUrl = `${appOrigin}/partner/agreement`;
       const dashboardUrl = `${appOrigin}/partner/dashboard`;
+      const guideUrl = `${appOrigin}/partner/guide`;
 
       const subject =
         action === "REQUEST_COMPLETION"
@@ -396,7 +397,7 @@ export async function POST(
             ${action === "REQUEST_COMPLETION"
               ? `<p style="margin:28px 0"><a href="${escapeHtml(portalUrl)}" style="display:inline-block;background:#0D3B34;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:700">الدخول إلى لوحة الشريك</a></p>`
               : action === "ACTIVATE"
-                ? `<p style="margin:28px 0"><a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;background:#D4AF37;color:#0D3B34;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700">الدخول إلى لوحة الشريك</a></p><p style="font-size:13px;color:#6b7280">يمكنكم الآن إضافة التجارب والبرامج، وتخضع كل خدمة جديدة للمراجعة قبل النشر.</p>`
+                ? `<p style="margin:28px 0"><a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;background:#D4AF37;color:#0D3B34;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700">الدخول إلى لوحة الشريك</a></p><p style="font-size:13px;color:#6b7280">يمكنكم الآن إضافة التجارب والبرامج، وتخضع كل خدمة جديدة للمراجعة قبل النشر.</p><p><a href="${escapeHtml(guideUrl)}" style="color:#0D3B34;font-weight:700">فتح دليل الشريك المبسط</a></p><p style="font-size:12px;color:#6b7280">الدعم الفني: info@areesloop.com</p>`
                 : ""}
             ${
               action === "SEND_AGREEMENT"
