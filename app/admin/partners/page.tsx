@@ -725,7 +725,16 @@ export default function AdminPartnersPage() {
 
     >
 
-      {toast && (\n        <div className="pointer-events-none fixed left-1/2 top-6 z-[100] -translate-x-1/2 px-4">\n          <div role="status" className={`flex min-w-[290px] items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-sm font-bold shadow-[0_16px_45px_rgba(13,59,52,.18)] backdrop-blur-xl ${toast.type === "success" ? "border-[#B99124]/35 bg-[#0D3B34] text-white" : "border-red-200 bg-[#FFF4F2] text-[#A3443E]"}`}>\n            <span>{toast.type === "success" ? "✓" : "✕"}</span>\n            <span>{toast.message}</span>\n          </div>\n        </div>\n      )}\n\n      {/* SMART BACKGROUND */}
+      {toast && (
+        <div className="pointer-events-none fixed left-1/2 top-6 z-[100] -translate-x-1/2 px-4">
+          <div role="status" className={`flex min-w-[290px] items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-sm font-bold shadow-[0_16px_45px_rgba(13,59,52,.18)] backdrop-blur-xl ${toast.type === "success" ? "border-[#B99124]/35 bg-[#0D3B34] text-white" : "border-red-200 bg-[#FFF4F2] text-[#A3443E]"}`}>
+            <span>{toast.type === "success" ? "✓" : "✕"}</span>
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* SMART BACKGROUND */}
 
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
 
