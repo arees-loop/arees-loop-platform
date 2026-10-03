@@ -2191,7 +2191,7 @@ export default function PartnerOnboardingPage() {
                     </Field><ValidationError message={validationErrors.authorizationFile} /></div>
 
                     <AiHint
-                      title="فحص المستند بالذكاء الاصطناعي"
+                      title="فحص المستند"
                       text="سيتم فحص وضوح المستند واسم المنشأة واسم الممثل وفترة الصلاحية مبدئياً. الاعتماد النهائي يتم بواسطة فريق أريس."
                     />
                   </div>
@@ -3570,7 +3570,7 @@ export default function PartnerOnboardingPage() {
             </div>
 
             <p className="mt-7 text-[10px] font-bold tracking-[0.22em] text-[#B99124]">
-              AI REVIEW COMPLETED
+              APPLICATION RECEIVED
             </p>
 
             <h1
@@ -3604,7 +3604,7 @@ export default function PartnerOnboardingPage() {
 
               <MiniStatus
                 number="02"
-                label="مراجعة AI"
+                label="مراجعة أريس"
                 active={Boolean(aiReviewResult)}
               />
 
@@ -3625,7 +3625,7 @@ export default function PartnerOnboardingPage() {
               </p>
 
               <p className="mt-2 text-xs leading-7 text-[#0D3B34]/60">
-                تم الاستلام ← مراجعة الذكاء الاصطناعي
+                تم الاستلام ← مراجعة أريس
                 ← استكمال عند وجود ملاحظات
                 ← مراجعة أريس ← الاتفاقية الإلكترونية
                 ← قبول الشريك ← اعتماد أريس والتفعيل.
