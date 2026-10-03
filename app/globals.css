@@ -258,3 +258,51 @@ h6,
 .arees-body {
   font-family: var(--font-ibm-plex-arabic), Arial, sans-serif;
 }
+
+/* ========================================
+   AREES LOOP CLICKABLE ACTIONS
+   Clear affordance for navigation/actions
+======================================== */
+a[href],
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+a[href],
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+a[href]:hover,
+button:not(:disabled):hover,
+[role="button"]:not([aria-disabled="true"]):hover {
+  border-color: rgba(13, 59, 52, 0.55);
+}
+
+.arees-action,
+.arees-primary-action {
+  cursor: pointer;
+}
+
+.arees-action:hover,
+.arees-primary-action:hover {
+  background: var(--arees-green) !important;
+  border-color: var(--arees-green) !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 24px rgba(13, 59, 52, 0.22),
+    0 0 0 3px rgba(212, 175, 55, 0.14);
+}
+
+.arees-action:active,
+.arees-primary-action:active {
+  transform: translateY(0) scale(0.98);
+}
