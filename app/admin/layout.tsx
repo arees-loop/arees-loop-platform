@@ -3,18 +3,27 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type AdminIdentity = {
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+  adminPermissions: unknown;
+  profileImageUrl: string | null;
+};
 
 const nav = [
-  { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂" },
-  { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", badge: "1" },
-  { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "♧" },
-  { href: "/admin/users", label: "المستخدمين", icon: "♙" },
-  { href: "/admin/dashboard?section=content", label: "المحتوى والتجارب", icon: "▤" },
-  { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦" },
-  { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣" },
-  { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥" },
-  { href: "/admin/dashboard?section=settings", label: "إعدادات المنصة", icon: "⚙" },
+  { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
+  { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", badge: "1", permission: "PARTNER_REQUESTS" },
+  { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "♧", permission: "ACTIVE_PARTNERS" },
+  { href: "/admin/users", label: "المستخدمين", icon: "♙", superOnly: true, permission: null },
+  { href: "/admin/dashboard?section=content", label: "المحتوى والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
+  { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
+  { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
+  { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
+  { href: "/admin/dashboard?section=settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
 ];
 
 export default function AdminLayout({
@@ -24,8 +33,27 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [admin, setAdmin] = useState<AdminIdentity | null>(null);
 
-  if (pathname === "/admin/login") return <>{children}</>;
+  useEffect(() => {
+    if (pathname === "/admin/login" || pathname === "/admin/invite") return;
+    void fetch("/api/admin/me", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setAdmin(d.data); })
+      .catch(() => {});
+  }, [pathname]);
+
+  if (pathname === "/admin/login" || pathname === "/admin/invite") return <>{children}</>;
+
+  const isSuperAdmin = admin?.role === "SUPER_ADMIN";
+  const grantedPermissions = Array.isArray(admin?.adminPermissions)
+    ? admin.adminPermissions.map(String)
+    : [];
+  const visibleNav = nav.filter((item) =>
+    isSuperAdmin || (!item.superOnly && (!item.permission || grantedPermissions.includes(item.permission)))
+  );
+  const fullName = [admin?.firstName, admin?.lastName].filter(Boolean).join(" ") || (isSuperAdmin ? "Arees Admin" : "Admin");
+  const initials = fullName.split(" ").filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "A";
 
   return (
     <div
@@ -71,7 +99,7 @@ export default function AdminLayout({
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1.5 px-4 py-5">
-            {nav.map((item) => {
+            {visibleNav.map((item) => {
               const base = item.href.split("?")[0];
               const active =
                 pathname === base && !item.href.includes("?");
@@ -198,16 +226,18 @@ export default function AdminLayout({
                       shadow-[0_5px_14px_rgba(181,138,37,.25)]
                     "
                   >
-                    A
+                    {admin?.profileImageUrl ? (
+                      <img src={admin.profileImageUrl} alt={fullName} className="h-full w-full rounded-full object-cover" />
+                    ) : initials}
                   </div>
 
                   <div className="hidden text-right sm:block">
                     <p className="text-[12px] font-bold text-[#171717]">
-                      Arees Admin
+                      {fullName}
                     </p>
 
                     <p className="mt-0.5 text-[10px] text-[#171717]/45">
-                      admin@areesloop.com
+                      {admin?.email || ""}
                     </p>
                   </div>
 
