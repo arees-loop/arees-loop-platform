@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const token = randomBytes(32).toString("base64url");
     const tokenHash = createHash("sha256").update(token).digest("hex");
     await prisma.verificationToken.create({data:{userId:user.id,type:"ADMIN_INVITATION",tokenHash,target:email,expiresAt:new Date(Date.now()+86400000)}});
-    const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/,"") || new URL(request.url).origin;
+    const origin = new URL(request.url).origin;
     const inviteUrl = origin + "/admin/invite?token=" + encodeURIComponent(token);
     const delivery = await sendEmail({to:email,subject:"دعوة للانضمام إلى إدارة Arees Loop",html:'<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8;color:#171717"><h2 style="color:#0D3B34">مرحباً '+firstName+'</h2><p>تمت دعوتك للانضمام إلى فريق إدارة Arees Loop.</p><p>أنشئ كلمة المرور وفعّل الحساب من الرابط التالي، وهو صالح لمدة 24 ساعة.</p><p><a href="'+inviteUrl+'" style="display:inline-block;background:#0D3B34;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none">تفعيل الحساب</a></p></div>'});
     if (!delivery.sent) return NextResponse.json({success:false,message:"تم إنشاء الدعوة لكن تعذر إرسال البريد. تحقق من إعدادات البريد ثم أعد المحاولة."},{status:502});
