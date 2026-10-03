@@ -170,6 +170,8 @@ export async function notifyPartnerApplicationSubmitted(
     ? "يوجد تحديث على طلب انضمامكم إلى Arees Loop"
     : "تم استلام طلب الشراكة بنجاح — Arees Loop";
 
+  const partnerPortalUrl = `${process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://www.areesloop.com"}/partner/status`;
+
   const partnerResult = await sendEmail({
     to: input.partnerEmail,
     subject: partnerSubject,
@@ -180,16 +182,19 @@ export async function notifyPartnerApplicationSubmitted(
       `<p>مرحباً <strong>${escapeHtml(displayName)}</strong>،</p>
        <p>${
          partnerNeedsCompletion
-           ? "يوجد تحديث جديد على طلب انضمام منشأتكم إلى منصة Arees Loop. يرجى الدخول إلى لوحة الشريك لمراجعة التحديث واستكمال المطلوب."
-           : "تم استلام طلب انضمام منشأتكم إلى منصة Arees Loop، وهو الآن قيد المراجعة لدى فريق أريس."
+           ? "يوجد تحديث جديد على طلب انضمام منشأتكم إلى منصة Arees Loop. يرجى مراجعة التحديث واستكمال المطلوب من خلال لوحة الشريك."
+           : input.previousStatus === "NEEDS_COMPLETION"
+             ? "تم استلام تحديثات طلب الشراكة والمستندات المرفوعة بنجاح. سيقوم فريق أريس بمراجعة الطلب والرد عليكم عند اكتمال المراجعة."
+             : "تم استلام طلب انضمام منشأتكم إلى منصة Arees Loop بنجاح. سيقوم فريق أريس بمراجعة الطلب والرد عليكم عند اكتمال المراجعة."
        }</p>
        <p><strong>رقم الطلب:</strong> ${escapeHtml(input.partnerId)}</p>
        ${
          partnerNeedsCompletion
            ? partnerIssuesBlock(input.aiReview)
-           : "<p>لا يلزم منكم أي إجراء في الوقت الحالي. سنقوم بإشعاركم عبر البريد الإلكتروني عند وجود أي تحديث أو عند الحاجة إلى استكمال بيانات أو مستندات.</p>"
+           : "<p>لا يلزم منكم أي إجراء في الوقت الحالي.</p>"
        }
-       <p>يمكنكم متابعة حالة الطلب من لوحة الشريك.</p>`,
+       <p style="margin:26px 0"><a href="${escapeHtml(partnerPortalUrl)}" style="display:inline-block;background:#0D4B3E;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:700">مراجعة حالة الطلب</a></p>
+       <p style="font-size:13px;color:#6b7280">يمكنكم استخدام الزر أعلاه للدخول إلى بوابة الشريك ومتابعة حالة الطلب.</p>`,
     ),
   });
 
@@ -202,9 +207,7 @@ export async function notifyPartnerApplicationSubmitted(
         }
       : await sendEmail({
           to: adminEmails,
-          subject: `مراجعة طلب شريك — ${partnerStatusLabel(
-            input.status,
-          )} — ${displayName}`,
+          subject: `طلب مراجعة طلب شريك — ${displayName}`,
           html: shell(
             "تقرير مراجعة طلب شريك",
             `<p><strong>الاسم القانوني:</strong> ${escapeHtml(
@@ -218,7 +221,7 @@ export async function notifyPartnerApplicationSubmitted(
              )}</p>
              ${statusBlock(input)}
              ${adminReviewBlock(input.aiReview)}
-             <p><strong>تنبيه:</strong> التقرير الآلي أداة مساعدة، والقرار الإداري النهائي يبقى لدى فريق Arees Loop.</p>`,
+             <p><strong>تنبيه داخلي:</strong> نتائج المراجعة أداة مساعدة للإدارة، والقرار النهائي يبقى لدى فريق Arees Loop.</p>`,
           ),
         });
 
