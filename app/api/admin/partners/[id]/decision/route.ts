@@ -361,13 +361,13 @@ export async function POST(
         partner.tradeNameAr ||
         partner.legalNameAr;
 
-      const portalUrl = new URL("/partner/status", request.url).toString();
+      const appOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || new URL(request.url).origin;\n      const portalUrl = `${appOrigin}/partner/status`;\n      const agreementUrl = `${appOrigin}/partner/agreement`;
 
       const subject =
         action === "REQUEST_COMPLETION"
           ? "يوجد تحديث على طلب انضمامكم إلى Arees Loop"
           : action === "SEND_AGREEMENT"
-            ? "اتفاقية الشريك جاهزة للمراجعة — Arees Loop"
+            ? "تم إرسال اتفاقية الشراكة للتوقيع الإلكتروني — Arees Loop"
             : action === "ACTIVATE"
               ? "تم اعتماد وتفعيل حساب الشريك — Arees Loop"
               : "تحديث طلب الشراكة — Arees Loop";
@@ -376,7 +376,7 @@ export async function POST(
         action === "REQUEST_COMPLETION"
           ? "يوجد تحديث جديد على طلب انضمام منشأتكم إلى منصة Arees Loop. يرجى الدخول إلى لوحة الشريك لمراجعة التحديث واستكمال المطلوب."
           : action === "SEND_AGREEMENT"
-            ? "اكتملت مراجعة الطلب، والاتفاقية الإلكترونية جاهزة الآن للمراجعة والقبول."
+            ? "اكتملت مراجعة طلبكم وتم إرسال اتفاقية الشراكة للتوقيع الإلكتروني. يرجى مراجعة الاتفاقية والشروط التجارية ثم قبولها إلكترونياً."
             : action === "ACTIVATE"
               ? "تم اعتماد وتفعيل حساب الشريك بنجاح."
               : `تم تحديث حالة طلب الشراكة. سبب الرفض: ${notes ?? ""}`;
@@ -395,7 +395,7 @@ export async function POST(
               : ""}
             ${
               action === "SEND_AGREEMENT"
-                ? '<p>يمكنكم فتح بوابة الشريك ومراجعة الاتفاقية الإلكترونية.</p>'
+                ? `<p style="margin:28px 0"><a href="${escapeHtml(agreementUrl)}" style="display:inline-block;background:#D4AF37;color:#0D3B34;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700">مراجعة وتوقيع الاتفاقية</a></p><p style="font-size:13px;color:#6b7280">بعد قبول الاتفاقية إلكترونياً، ينتقل طلبكم إلى مرحلة الاعتماد النهائي لدى Arees Loop.</p>`
                 : ""
             }
           </div>
