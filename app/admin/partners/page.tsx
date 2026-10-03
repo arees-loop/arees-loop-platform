@@ -302,7 +302,8 @@ export default function AdminPartnersPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [adminActionLoading, setAdminActionLoading] = useState(false);\n  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const [search, setSearch] = useState("");
 
