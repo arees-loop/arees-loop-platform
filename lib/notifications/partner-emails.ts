@@ -170,7 +170,10 @@ export async function notifyPartnerApplicationSubmitted(
     ? "يوجد تحديث على طلب انضمامكم إلى Arees Loop"
     : "تم استلام طلب الشراكة بنجاح — Arees Loop";
 
-  const appOrigin = process.env.VERCEL_URL\n    ? `https://${process.env.VERCEL_URL}`\n    : process.env.NEXT_PUBLIC_APP_URL?.replace(/\\\/$/, "") || "https://www.areesloop.com";\n  const partnerPortalUrl = `${appOrigin}/partner/status`;
+  const appOrigin = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://www.areesloop.com";
+  const partnerPortalUrl = `${appOrigin}/partner/status`;
 
   const partnerResult = await sendEmail({
     to: input.partnerEmail,
