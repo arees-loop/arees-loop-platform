@@ -69,6 +69,7 @@ export async function GET() {
           emailVerifiedAt: session.user.emailVerifiedAt,
           phoneVerifiedAt: session.user.phoneVerifiedAt,
           visitorType: session.user.visitorType,
+          profileImageUrl: session.user.profileImageUrl,
           interests: session.user.interests.map(
             (item) => item.code,
           ),
