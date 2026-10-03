@@ -260,6 +260,12 @@ export async function reviewPartnerApplicationWithAi(
     throw new Error("GEMINI_API_KEY_NOT_CONFIGURED");
   }
 
+  console.info("Partner AI review started", {
+    partnerId: partner.id,
+    documentCount: partner.documents.length,
+    model,
+  });
+
   const ruleIssues = deterministicIssues({
     partnerType: partner.partnerType,
     applicantRole: partner.applicantRole,
@@ -390,7 +396,17 @@ ${JSON.stringify(ruleIssues)}
     }
 
     try {
+      console.info("Partner AI document load started", {
+        partnerId: partner.id,
+        documentId: document.id,
+        mimeType: document.mimeType,
+      });
       const bytes = await readPrivateBlob(document.fileUrl);
+      console.info("Partner AI document load completed", {
+        partnerId: partner.id,
+        documentId: document.id,
+        byteLength: bytes.byteLength,
+      });
 
       if (inlineBytes + bytes.byteLength > MAX_AI_INLINE_BYTES) {
         omittedDocuments.push(document.id);
@@ -435,6 +451,13 @@ ${JSON.stringify(ruleIssues)}
   let response: Response;
 
   try {
+    console.info("Partner AI Gemini request started", {
+      partnerId: partner.id,
+      model,
+      includedDocumentCount: partner.documents.length - omittedDocuments.length,
+      omittedDocumentCount: omittedDocuments.length,
+      inlineBytes,
+    });
     response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
       {
@@ -462,6 +485,15 @@ ${JSON.stringify(ruleIssues)}
   }
 
   const payload = (await response.json()) as GeminiResponse;
+
+  console.info("Partner AI Gemini response received", {
+    partnerId: partner.id,
+    model,
+    status: response.status,
+    ok: response.ok,
+    hasCandidate: Boolean(payload.candidates?.[0]),
+    errorMessage: payload.error?.message ?? null,
+  });
 
   if (!response.ok) {
     throw new Error(
@@ -528,6 +560,13 @@ ${JSON.stringify(ruleIssues)}
     reviewedAt,
   };
 
+  console.info("Partner AI result parsed", {
+    partnerId: partner.id,
+    outcome: result.outcome,
+    issueCount: result.issues.length,
+    documentResultCount: result.documentResults.length,
+  });
+
   await prisma.$transaction(async (tx) => {
     const nextStatus =
       result.outcome === "NEEDS_COMPLETION"
@@ -581,6 +620,12 @@ ${JSON.stringify(ruleIssues)}
         },
       },
     });
+  });
+
+  console.info("Partner AI review persisted", {
+    partnerId: partner.id,
+    outcome: result.outcome,
+    reviewedAt: result.reviewedAt,
   });
 
   return result;
