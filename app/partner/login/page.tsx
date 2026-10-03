@@ -179,13 +179,13 @@ export default function PartnerLoginPage() {
               className="mx-auto h-auto w-[145px] md:mr-0 md:ml-auto md:w-[165px] lg:w-[175px]"
             />
 
-            <p className="mt-4 text-[11px] font-extrabold tracking-[.20em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,.75)]">
+            <p className="mt-4 text-[11px] font-extrabold tracking-[.20em] text-[#B88716] drop-shadow-[0_1px_3px_rgba(255,255,255,.9)]">
               PARTNER PORTAL
             </p>
-            <h1 className="mt-3 text-3xl font-extrabold leading-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,.80)] md:text-4xl lg:text-[42px]">
+            <h1 className="mt-3 text-3xl font-extrabold leading-tight text-[#B88716] drop-shadow-[0_1px_3px_rgba(255,255,255,.9)] md:text-4xl lg:text-[42px]">
               مرحباً بك، شريك أريس
             </h1>
-            <p className="mt-4 max-w-[560px] text-[15px] font-bold leading-7 text-white drop-shadow-[0_2px_9px_rgba(0,0,0,.78)] lg:text-base">
+            <p className="mt-4 max-w-[560px] text-[15px] font-bold leading-7 text-[#9A7415] drop-shadow-[0_1px_2px_rgba(255,255,255,.9)] lg:text-base">
               سوّق تجاربك وخدماتك لآلاف العملاء المهتمين، واستهدف العملاء الحقيقيين
               الباحثين عنها في الوقت والمكان المناسبين.
             </p>
@@ -196,7 +196,7 @@ export default function PartnerLoginPage() {
               <Value title="نمو مستمر" text="مع منظومة Arees Loop" />
             </div>
 
-            <p className="mt-6 text-sm font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,.78)]">
+            <p className="mt-6 text-sm font-extrabold text-[#B88716] drop-shadow-[0_1px_2px_rgba(255,255,255,.9)]">
               تجربتك تستحق أن تصل لمن يبحث عنها.
             </p>
           </div>
