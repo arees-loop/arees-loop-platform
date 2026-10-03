@@ -267,7 +267,7 @@ export default function PartnerStatusPage() {
           </div>
           <div className="rounded-full border border-[#0D463D]/10 bg-white px-4 py-2 text-xs">
             رقم الطلب:{" "}
-            <span className="font-bold" dir="ltr">{application.id}</span>
+            <span className="font-bold" dir="ltr">{publicApplicationCode(application.id, application.submittedAt || application.updatedAt)}</span>
           </div>
         </div>
       </header>
@@ -335,6 +335,12 @@ export default function PartnerStatusPage() {
                         )}
                       </div>
                       <p className={`mt-1 text-sm leading-6 ${pending ? "text-[#ADB7B4]" : "text-[#728985]"}`}>{step.description}</p>
+                      {current && step.key === "agreement" && (
+                        <Link href="/partner/agreement" className="mt-4 inline-flex rounded-xl bg-[#0D463D] px-4 py-2.5 text-xs font-bold text-white">مراجعة وتوقيع الاتفاقية</Link>
+                      )}
+                      {step.key === "accepted" && (completed || current) && (
+                        <Link href="/partner/agreement" className="mt-3 inline-flex rounded-xl border border-[#0D463D]/15 px-4 py-2 text-xs font-bold text-[#0D463D]">عرض الاتفاقية المقبولة</Link>
+                      )}
                     </div>
                   </div>
                 );
@@ -405,6 +411,15 @@ export default function PartnerStatusPage() {
       </div>
     </main>
   );
+}
+
+function publicApplicationCode(id: string, dateValue: string) {
+  const date = new Date(dateValue);
+  const yy = String(date.getFullYear()).slice(-2);
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const tail = id.replace(/[^a-z0-9]/gi, "").slice(-4).toUpperCase().padStart(4, "0");
+  return `AL-${yy}${mm}${dd}-${tail}`;
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
