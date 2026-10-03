@@ -229,7 +229,7 @@ export default function PartnerDashboardPage() {
   return (
     <main
       dir="rtl"
-      className="min-h-screen bg-[#F7F4EA] text-[#0D3B34]"
+      className="min-h-screen bg-[#EAF3EF] text-[#0D3B34]"
       style={{
         fontFamily: "var(--font-ibm-plex-arabic), sans-serif",
       }}
@@ -237,7 +237,7 @@ export default function PartnerDashboardPage() {
       {/* SMART BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -right-40 top-20 h-[520px] w-[520px] rounded-full bg-[#0D3B34]/6 blur-[120px]" />
-        <div className="absolute -left-32 top-[38%] h-[420px] w-[420px] rounded-full bg-[#D4AF37]/10 blur-[120px]" />
+        <div className="absolute -left-32 top-[38%] h-[420px] w-[420px] rounded-full bg-[#2E6B5A]/10 blur-[120px]" />
         <div className="absolute bottom-[-150px] right-[30%] h-[420px] w-[420px] rounded-full bg-[#B99124]/6 blur-[120px]" />
       </div>
 
