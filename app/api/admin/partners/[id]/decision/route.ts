@@ -361,7 +361,9 @@ export async function POST(
         partner.tradeNameAr ||
         partner.legalNameAr;
 
-      const appOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || new URL(request.url).origin;\n      const portalUrl = `${appOrigin}/partner/status`;\n      const agreementUrl = `${appOrigin}/partner/agreement`;
+      const appOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || new URL(request.url).origin;
+      const portalUrl = `${appOrigin}/partner/status`;
+      const agreementUrl = `${appOrigin}/partner/agreement`;
 
       const subject =
         action === "REQUEST_COMPLETION"
