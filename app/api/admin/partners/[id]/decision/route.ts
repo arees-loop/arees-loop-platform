@@ -364,6 +364,7 @@ export async function POST(
       const appOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || new URL(request.url).origin;
       const portalUrl = `${appOrigin}/partner/status`;
       const agreementUrl = `${appOrigin}/partner/agreement`;
+      const dashboardUrl = `${appOrigin}/partner/dashboard`;
 
       const subject =
         action === "REQUEST_COMPLETION"
@@ -371,7 +372,7 @@ export async function POST(
           : action === "SEND_AGREEMENT"
             ? "تم إرسال اتفاقية الشراكة للتوقيع الإلكتروني — Arees Loop"
             : action === "ACTIVATE"
-              ? "تم اعتماد وتفعيل حساب الشريك — Arees Loop"
+              ? "مبروك، تم اعتماد وتفعيل حسابكم — Arees Loop"
               : "تحديث طلب الشراكة — Arees Loop";
 
       const bodyText =
@@ -380,7 +381,7 @@ export async function POST(
           : action === "SEND_AGREEMENT"
             ? "اكتملت مراجعة طلبكم وتم إرسال اتفاقية الشراكة للتوقيع الإلكتروني. يرجى مراجعة الاتفاقية والشروط التجارية ثم قبولها إلكترونياً."
             : action === "ACTIVATE"
-              ? "تم اعتماد وتفعيل حساب الشريك بنجاح."
+              ? "مبروك، تم اعتماد وتفعيل حسابكم كشريك في Arees Loop. يمكنكم الآن الدخول إلى لوحة الشريك والبدء في إضافة التجارب والبرامج لإرسالها للمراجعة قبل النشر."
               : `تم تحديث حالة طلب الشراكة. سبب الرفض: ${notes ?? ""}`;
 
       notification = await sendEmail({
@@ -394,7 +395,9 @@ export async function POST(
             <p><strong>رقم الطلب:</strong> ${escapeHtml(partner.id)}</p>
             ${action === "REQUEST_COMPLETION"
               ? `<p style="margin:28px 0"><a href="${escapeHtml(portalUrl)}" style="display:inline-block;background:#0D3B34;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:700">الدخول إلى لوحة الشريك</a></p>`
-              : ""}
+              : action === "ACTIVATE"
+                ? `<p style="margin:28px 0"><a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;background:#D4AF37;color:#0D3B34;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700">الدخول إلى لوحة الشريك</a></p><p style="font-size:13px;color:#6b7280">يمكنكم الآن إضافة التجارب والبرامج، وتخضع كل خدمة جديدة للمراجعة قبل النشر.</p>`
+                : ""}
             ${
               action === "SEND_AGREEMENT"
                 ? `<p style="margin:28px 0"><a href="${escapeHtml(agreementUrl)}" style="display:inline-block;background:#D4AF37;color:#0D3B34;text-decoration:none;padding:13px 24px;border-radius:12px;font-weight:700">مراجعة وتوقيع الاتفاقية</a></p><p style="font-size:13px;color:#6b7280">بعد قبول الاتفاقية إلكترونياً، ينتقل طلبكم إلى مرحلة الاعتماد النهائي لدى Arees Loop.</p>`
