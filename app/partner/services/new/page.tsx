@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 
 type PriceMode = "INCLUDED" | "ADDED";
 type ServiceType = "EXPERIENCE" | "PROGRAM" | "HOTEL" | "TOUR" | "EVENT" | "GUIDE" | "TRANSPORT" | "TICKET" | "OTHER";
@@ -34,6 +34,24 @@ export default function NewPartnerServicePage() {
   useEffect(()=>{if(permittedTypes.length&&!permittedTypes.includes(serviceType)) setServiceType(permittedTypes[0]);},[permittedTypes,serviceType]);
   const verifiedLicenses=(application?.licenses||[]).filter(x=>x.status==="VERIFIED");
   const [priceMode, setPriceMode] = useState<PriceMode>("INCLUDED");
+  const [location, setLocation] = useState<{lat:number;lng:number}|null>(null);
+  const [locationError, setLocationError] = useState("");
+  const [images, setImages] = useState<Array<{file:File;url:string}>>([]);
+  const addImages=(e:ChangeEvent<HTMLInputElement>)=>{
+    const files=Array.from(e.target.files||[]).filter(f=>f.type.startsWith("image/"));
+    if(files.length) setImages(prev=>[...prev,...files.map(file=>({file,url:URL.createObjectURL(file)}))]);
+    e.target.value="";
+  };
+  const removeImage=(index:number)=>setImages(prev=>{URL.revokeObjectURL(prev[index]?.url||"");return prev.filter((_,i)=>i!==index)});
+  const useCurrentLocation=()=>{
+    setLocationError("");
+    if(!navigator.geolocation){setLocationError("المتصفح لا يدعم تحديد الموقع.");return;}
+    navigator.geolocation.getCurrentPosition(
+      p=>setLocation({lat:p.coords.latitude,lng:p.coords.longitude}),
+      ()=>setLocationError("تعذر تحديد الموقع. تأكد من السماح للموقع في المتصفح."),
+      {enableHighAccuracy:true,timeout:12000}
+    );
+  };
   const [price, setPrice] = useState(100);
   const commissionRate = 10;
 
@@ -66,7 +84,32 @@ export default function NewPartnerServicePage() {
           {serviceType==="HOTEL" && <div className="rounded-[24px] border border-[#D4AF37]/25 bg-[#FFF8E5] p-5"><p className="text-sm font-bold">الإقامة لها نظام إتاحة مستقل</p><p className="mt-2 text-xs leading-6 text-[#0D3B34]/55">سجّل الفندق وبياناته الأساسية مرة واحدة. بعد الاعتماد ستدير أنواع الوحدات والأسعار والكميات المتاحة حسب التاريخ من شاشة الإتاحة، بدلاً من إنشاء خدمة جديدة لكل فترة.</p></div>}
           <Field label="اسم الخدمة"><input className="input" placeholder="مثال: جولة المدينة التاريخية أو إقامة فندقية"/></Field>
           <Field label="وصف مختصر"><textarea className="input min-h-28" placeholder="صف الخدمة كما سيشاهدها العميل..."/></Field>
-          <div className="grid gap-4 md:grid-cols-2"><Field label="المدينة"><input className="input" placeholder="المدينة المنورة"/></Field><Field label="الموقع"><input className="input" placeholder="اسم نقطة التجمع أو الموقع"/></Field></div>
+          <div className="grid gap-4 md:grid-cols-2"><Field label="المدينة"><input className="input" placeholder="المدينة المنورة"/></Field><Field label="اسم الموقع / نقطة التجمع"><input className="input" placeholder="مثال: بوابة ٣، متحف، فندق..."/></Field></div>
+          <div className="rounded-[24px] border border-[#0D3B34]/8 bg-[#F8F6EF] p-5">
+            <p className="text-[10px] font-bold tracking-[.16em] text-[#B99124]">LOCATION</p>
+            <p className="mt-2 text-sm font-bold">موقع تنفيذ الخدمة</p>
+            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">ثبّت الإحداثيات الدقيقة للخدمة. البحث بالخريطة سيضاف عند ربط مزود الخرائط، أما تحديد موقعك الحالي فيعمل مباشرة من المتصفح.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" onClick={useCurrentLocation} className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white">استخدام موقعي الحالي</button>
+              {location&&<button type="button" onClick={()=>setLocation(null)} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">مسح الموقع</button>}
+            </div>
+            {location&&<div className="mt-4 rounded-2xl bg-white p-4 text-xs"><b>تم تثبيت الموقع ✓</b><p className="mt-1 text-[#0D3B34]/50" dir="ltr">{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</p></div>}
+            {locationError&&<p className="mt-3 text-xs font-bold text-red-600">{locationError}</p>}
+          </div>
+          <div className="rounded-[24px] border border-[#0D3B34]/8 bg-white p-5">
+            <p className="text-[10px] font-bold tracking-[.16em] text-[#B99124]">MEDIA</p>
+            <p className="mt-2 text-sm font-bold">صور الخدمة</p>
+            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">أضف أكثر من صورة. الصورة الأولى هي الرئيسية، ويمكنك حذف الصور أو جعل أي صورة هي الرئيسية.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {images.map((img,i)=><div key={img.url} className="relative w-32 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-[#F8F6EF]">
+                <img src={img.url} alt={img.file.name} className="h-24 w-full object-cover"/>
+                <div className="p-2"><p className="truncate text-[10px]">{img.file.name}</p>{i===0?<span className="text-[10px] font-bold text-[#B99124]">الصورة الرئيسية</span>:<button type="button" onClick={()=>setImages(prev=>[prev[i],...prev.filter((_,x)=>x!==i)])} className="text-[10px] font-bold">اجعلها الرئيسية</button>}</div>
+                <button type="button" aria-label="حذف الصورة" onClick={()=>removeImage(i)} className="absolute left-1 top-1 h-7 w-7 rounded-full bg-white/90 text-xs font-bold">×</button>
+              </div>)}
+              <label className="flex h-32 w-32 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#B99124]/50 bg-[#FFF8E5] text-center text-xs font-bold text-[#0D3B34]">+ إضافة صورة<input type="file" accept="image/*" multiple onChange={addImages} className="hidden"/></label>
+            </div>
+            {images.length>0&&<p className="mt-3 text-xs text-[#0D3B34]/50">تم اختيار {images.length} {images.length===1?"صورة":"صور"}</p>}
+          </div>
         </Card>}
 
         {step===2 && <Card eyebrow="STEP 02" title="من الجهة المنفذة للخدمة؟" note="تُسحب بيانات المنشأة تلقائياً، وتختار فقط الترخيص المعتمد المناسب لهذه الخدمة.">
