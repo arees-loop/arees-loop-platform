@@ -311,7 +311,7 @@ export default function PartnerDashboardPage() {
 
             <NavItem
               href="/partner/agreement"
-              label="الاتفاقية والإعدادات"
+              label="الاتفاقيات والعقود"
               icon="✓"
             />
           </nav>
