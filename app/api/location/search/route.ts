@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       `?key=${encodeURIComponent(apiKey)}` +
       `&language=ar-SA` +
       `&countrySet=SA` +
-      `&limit=1`;
+      `&limit=6`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -66,28 +66,22 @@ export async function GET(request: NextRequest) {
     }
 
     const data = (await response.json()) as TomTomGeocodeResponse;
-    const result = data.results?.[0];
-    const lat = result?.position?.lat;
-    const lng = result?.position?.lon;
-
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      return NextResponse.json(
-        { error: "Destination not found" },
-        { status: 404 }
-      );
+    const results = (data.results ?? []).filter((item) =>
+      Number.isFinite(item.position?.lat) && Number.isFinite(item.position?.lon)
+    );
+    if (!results.length) {
+      return NextResponse.json({ error: "Destination not found" }, { status: 404 });
     }
-
-    const name =
-      result?.address?.municipality ||
-      result?.address?.municipalitySubdivision ||
-      result?.address?.freeformAddress ||
-      query;
-
-    return NextResponse.json({
-      name,
-      address: result?.address?.freeformAddress ?? name,
-      location: { lat, lng },
+    const suggestions = results.map((result) => {
+      const name = result.address?.municipalitySubdivision || result.address?.municipality || result.address?.freeformAddress || query;
+      return {
+        name,
+        address: result.address?.freeformAddress ?? name,
+        city: result.address?.municipality ?? "",
+        location: { lat: result.position!.lat!, lng: result.position!.lon! },
+      };
     });
+    return NextResponse.json({ ...suggestions[0], suggestions });
   } catch (error) {
     console.error("Destination search error:", error);
 
