@@ -298,6 +298,14 @@ export default function PartnerAgreementPage() {
     partner.status === "ACTIVE";
 
   if (accepted) {
+    if (partner.status === "ACTIVE") {
+      window.location.replace("/partner/contracts/current");
+      return (
+        <main dir="rtl" className="flex min-h-screen items-center justify-center bg-[#EAF3EF] text-[#0D3B34]">
+          جاري فتح العقد النهائي...
+        </main>
+      );
+    }
     return (
       <main
         dir="rtl"
