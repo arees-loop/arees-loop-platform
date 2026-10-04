@@ -141,78 +141,13 @@ const initialServices: Service[] = [
 ];
 
 const categories: Record<string, string[]> = {
-  "وكالات سفر وسياحة": [
-    "حجوزات السفر",
-    "حجوزات الطيران",
-    "حجوزات الفنادق",
-    "خدمات التأشيرات",
-  ],
-  "خدمات سفر وسياحة (عام)": [
-    "خدمات حجز",
-    "خدمات استقبال",
-    "خدمات مساندة للمسافر",
-  ],
-  "تنظيم الرحلات السياحية": [
-    "جولات يومية",
-    "برامج سياحية",
-    "رحلات داخلية",
-    "رحلات جماعية",
-  ],
-  "حجز وحدات الضيافة": [
-    "فنادق",
-    "شقق مخدومة",
-    "منتجعات",
-    "نزل",
-  ],
-  "مرشد سياحي": [
-    "مرشد موقع",
-    "مرشد مسار",
-    "مرشد متخصص",
-  ],
-  "مزود تجربة أو نشاط": [
-    "تجربة ثقافية",
-    "تجربة تراثية",
-    "تجربة مغامرات",
-    "نشاط ترفيهي",
-    "تجربة طعام",
-  ],
-  "وجهة أو موقع سياحي": [
-    "متحف",
-    "مركز زوار",
-    "موقع تراثي",
-    "معلم سياحي",
-    "وجهة ترفيهية",
-  ],
-  "خدمات نقل": [
-    "نقل أفراد",
-    "نقل مجموعات",
-    "تنقل بين المدن",
-    "خدمة سائق",
-  ],
-  "إيواء سياحي": [
-    "فندق",
-    "منتجع",
-    "شقق مخدومة",
-    "نزل",
-  ],
-  "مطعم أو مقهى": [
-    "مطعم",
-    "مقهى",
-    "تجربة طعام",
-  ],
-  "فعاليات وترفيه": [
-    "فعالية",
-    "مهرجان",
-    "عرض ترفيهي",
-    "نشاط عائلي",
-  ],
-  "متجر أو نشاط للزائر": [
-    "هدايا",
-    "منتجات محلية",
-    "تجزئة",
-  ],
+  "سياحة وتجارب": ["تجربة تاريخية","تجربة ثقافية","تجربة تراثية","جولة سياحية","برنامج سياحي","مغامرات"],
+  "إقامة وإعاشة": ["فندق","منتجع","شقة فندقية","نزل","إعاشة"],
+  "فعاليات وترفيه": ["فعالية","مهرجان","عرض ترفيهي","نشاط عائلي"],
+  "مطاعم وتجارب طعام": ["مطعم","مقهى","تجربة طعام"],
+  "نقل وتنقل": ["نقل أفراد","نقل مجموعات","تنقل بين المدن","خدمة سائق"],
+  "تذاكر ووجهات": ["متحف","موقع تراثي","معلم سياحي","مركز زوار","تذكرة دخول"],
 };
-
 
 
 const money = (value: number) =>
@@ -243,7 +178,11 @@ export default function PartnerServicesPage() {
     latitude: null as number | null,
     longitude: null as number | null,
     basePrice: "",
-    vatRate: "15",
+    vatRate: "included",
+    locationUrl: "",
+    hasMeetingPoint: false,
+    meetingPointName: "",
+    meetingPointUrl: "",
     capacity: "",
     descriptionAr: "",
     descriptionEn: "",
@@ -291,8 +230,7 @@ export default function PartnerServicesPage() {
     Number(form.basePrice) > 0 &&
     Number(form.capacity) > 0 &&
     form.cancellationPolicy.trim() &&
-    form.latitude !== null &&
-    form.longitude !== null
+    form.locationName.trim()
   );
 
   const filteredServices = useMemo(() => {
@@ -327,9 +265,7 @@ export default function PartnerServicesPage() {
 
   const calculatedFinalPrice = useMemo(() => {
     const base = Number(form.basePrice) || 0;
-    const vat = Number(form.vatRate) || 0;
-
-    return base + base * (vat / 100);
+    return form.vatRate === "excluded" ? base * 1.15 : base;
   }, [form.basePrice, form.vatRate]);
 
   const resetForm = () => {
@@ -346,7 +282,11 @@ export default function PartnerServicesPage() {
       latitude: null,
       longitude: null,
       basePrice: "",
-      vatRate: "15",
+      vatRate: "included",
+      locationUrl: "",
+      hasMeetingPoint: false,
+      meetingPointName: "",
+      meetingPointUrl: "",
       capacity: "",
       descriptionAr: "",
       descriptionEn: "",
@@ -850,59 +790,19 @@ export default function PartnerServicesPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="نوع الخدمة">
-                    <select
-                      value={form.category}
-                      onChange={(e) =>
-                        setForm((current) => ({
-                          ...current,
-                          category: e.target.value,
-                          subCategory: "",
-                        }))
-                      }
-                      className={inputClass}
-                    >
-                      <option value="">اختر نوع الخدمة</option>
-
-                      {Object.keys(categories).map((category) => (
-                        <option key={category}>{category}</option>
-                      ))}
+                  <Field label="التصنيف">
+                    <select value={form.category} onChange={(e)=>setForm((current)=>({...current,category:e.target.value,subCategory:""}))} className={inputClass}>
+                      <option value="">اختر التصنيف</option>
+                      {Object.keys(categories).map((category)=><option key={category}>{category}</option>)}
                     </select>
                   </Field>
-
-                  <Field label="التصنيف (اختياري)">
+                  <Field label="التصنيف الفرعي (اختياري)">
                     <select value={form.subCategory} onChange={(e)=>setForm((current)=>({...current,subCategory:e.target.value}))} className={inputClass}>
                       <option value="">بدون تصنيف فرعي</option>
-                      {(categories[form.category] || []).map((item) => <option key={item}>{item}</option>)}
+                      {(categories[form.category]||[]).map((item)=><option key={item}>{item}</option>)}
                     </select>
                   </Field>
-                </div>
-
-                <Field label="الترخيص المرتبط بالخدمة">
-                  <select
-                    value={form.license}
-                    onChange={(e) =>
-                      setForm((current) => ({
-                        ...current,
-                        license: e.target.value,
-                      }))
-                    }
-                    className={inputClass}
-                  >
-                    <option value="">
-                      اختر ترخيصًا معتمدًا
-                    </option>
-
-                    {["ترخيص المنشأة المعتمد"].map((license) => (
-                      <option key={license}>{license}</option>
-                    ))}
-                  </select>
-                </Field>
-
-                <div className="rounded-[18px] border border-[#D4AF37]/20 bg-[#FFF9E8] p-4 text-xs leading-6 text-[#0D3B34]/65">
-                  اختر نوع الخدمة وأرسلها للمراجعة. تتحقق إدارة Arees Loop من النشاط والترخيص قبل اعتماد الخدمة ونشرها.
-                </div>
-              </FormSection>
+                </div></FormSection>
 
               {/* DESCRIPTION */}
               <FormSection
@@ -944,18 +844,25 @@ export default function PartnerServicesPage() {
                 eyebrow="LOCATION ENGINE"
                 title="الموقع ونقطة التنفيذ"
               >
-                <ServiceLocationPicker
-                  value={{
-                    city: form.city,
-                    locationName: form.locationName,
-                    formattedAddress: form.formattedAddress,
-                    placeId: form.placeId,
-                    latitude: form.latitude,
-                    longitude: form.longitude,
-                  }}
-                  onChange={updateLocation}
-                />
-
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="الموقع / العنوان">
+                    <input value={form.locationName} onChange={(e)=>setForm((x)=>({...x,locationName:e.target.value,formattedAddress:e.target.value}))} className={inputClass} placeholder="مثال: قباء، المدينة المنورة" />
+                  </Field>
+                  <Field label="رابط الموقع (اختياري)">
+                    <input value={form.locationUrl} onChange={(e)=>setForm((x)=>({...x,locationUrl:e.target.value}))} className={inputClass} dir="ltr" placeholder="الصق رابط Google Maps" />
+                  </Field>
+                </div>
+                <div className="rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
+                  <p className="text-sm font-bold">هل توجد نقطة تجمع؟</p>
+                  <div className="mt-3 flex gap-2">
+                    <button type="button" onClick={()=>setForm((x)=>({...x,hasMeetingPoint:true}))} className={`rounded-xl px-5 py-2 text-sm font-bold ${form.hasMeetingPoint?"bg-[#0D3B34] text-white":"border bg-white"}`}>نعم</button>
+                    <button type="button" onClick={()=>setForm((x)=>({...x,hasMeetingPoint:false,meetingPointName:"",meetingPointUrl:""}))} className={`rounded-xl px-5 py-2 text-sm font-bold ${!form.hasMeetingPoint?"bg-[#0D3B34] text-white":"border bg-white"}`}>لا</button>
+                  </div>
+                  {form.hasMeetingPoint && <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <Field label="اسم نقطة التجمع"><input value={form.meetingPointName} onChange={(e)=>setForm((x)=>({...x,meetingPointName:e.target.value}))} className={inputClass}/></Field>
+                    <Field label="رابط نقطة التجمع (اختياري)"><input value={form.meetingPointUrl} onChange={(e)=>setForm((x)=>({...x,meetingPointUrl:e.target.value}))} className={inputClass} dir="ltr"/></Field>
+                  </div>}
+                </div>
                 <Field label="تعليمات الوصول بعد الحجز">
                   <textarea
                     value={form.meetingInstructions}
@@ -985,7 +892,7 @@ export default function PartnerServicesPage() {
                 title="السعر والضريبة"
               >
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Field label="السعر قبل الضريبة">
+                  <Field label="السعر">
                     <input
                       type="number"
                       min="0"
@@ -1001,7 +908,7 @@ export default function PartnerServicesPage() {
                     />
                   </Field>
 
-                  <Field label="VAT">
+                  <Field label="طريقة احتساب الضريبة">
                     <select
                       value={form.vatRate}
                       onChange={(e) =>
@@ -1012,8 +919,8 @@ export default function PartnerServicesPage() {
                       }
                       className={inputClass}
                     >
-                      <option value="15">15%</option>
-                      <option value="0">0%</option>
+                      <option value="included">السعر شامل الضريبة</option>
+                      <option value="excluded">السعر غير شامل الضريبة (+15%)</option>
                     </select>
                   </Field>
 
@@ -1030,11 +937,8 @@ export default function PartnerServicesPage() {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <InfoBox
-                    label="قيمة الضريبة"
-                    value={`${money(
-                      calculatedFinalPrice -
-                        (Number(form.basePrice) || 0)
-                    )} ر.س`}
+                    label="الضريبة"
+                    value={form.vatRate === "included" ? "مشمولة في السعر" : `${money((Number(form.basePrice)||0)*0.15)} ر.س`}
                   />
 
                   <InfoBox
@@ -1044,8 +948,7 @@ export default function PartnerServicesPage() {
                 </div>
 
                 <div className="rounded-[18px] border border-[#0D3B34]/8 bg-white p-4 text-xs leading-6 text-[#0D3B34]/60">
-                  المورد يدخل السعر قبل الضريبة فقط، والمنصة تحسب VAT
-                  والسعر النهائي تلقائيًا لمنع اختلاف الأرقام.
+                  إذا كان السعر شامل الضريبة يظهر كما أدخله الشريك. وإذا كان غير شامل، تضيف المنصة 15% تلقائيًا إلى السعر النهائي.
                 </div>
               </FormSection>
 
@@ -1081,7 +984,7 @@ export default function PartnerServicesPage() {
                 eyebrow="MEDIA"
                 title="صور الخدمة"
               >
-                <Field label="رفع الصور">
+                <Field label="إضافة صور">
                   <input
                     type="file"
                     multiple
@@ -1089,9 +992,7 @@ export default function PartnerServicesPage() {
                     onChange={(e) =>
                       setForm((current) => ({
                         ...current,
-                        images: Array.from(e.target.files || []).map(
-                          (file) => file.name
-                        ),
+                        images: [...current.images, ...Array.from(e.target.files || []).map((file) => file.name)].filter((name,index,array)=>array.indexOf(name)===index),
                       }))
                     }
                     className={inputClass}
@@ -1111,6 +1012,7 @@ export default function PartnerServicesPage() {
                           className="rounded-full bg-white px-3 py-1.5 text-[10px] text-[#0D3B34]/60"
                         >
                           {image}
+                          <button type="button" onClick={()=>setForm((x)=>({...x,images:x.images.filter((n)=>n!==image)}))} className="mr-2 font-bold text-red-600">×</button>
                         </span>
                       ))}
                     </div>
@@ -1153,17 +1055,6 @@ export default function PartnerServicesPage() {
                     : "الحفظ كمسودة لا ينشر الخدمة. إرسالها للمراجعة يحولها إلى «تحت المراجعة» حتى تعتمدها إدارة Arees Loop."}
                 </p>
 
-                {form.latitude === null || form.longitude === null ? (
-                  <div className="mt-4 rounded-[16px] border border-[#E6C24D]/25 bg-[#E6C24D]/10 px-4 py-3 text-xs text-[#F4D96C]">
-                    لم يتم تحديد موقع الخدمة بعد. يمكنك حفظها كمسودة،
-                    لكن يفضل تحديد الموقع قبل إرسالها للمراجعة.
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-[16px] border border-[#67B789]/20 bg-[#67B789]/10 px-4 py-3 text-xs text-[#A9E4BF]">
-                    ✓ تم ربط الخدمة بموقع جغرافي صالح.
-                  </div>
-                )}
-
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
@@ -1178,7 +1069,7 @@ export default function PartnerServicesPage() {
                     onClick={submitForReview}
                     disabled={!canSubmitForReview}
                     className="rounded-2xl bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#0D3B34] transition disabled:cursor-not-allowed disabled:opacity-35"
-                    title={!canSubmitForReview ? "أكمل البيانات الإلزامية وحدد الموقع قبل الإرسال" : undefined}
+                    title={!canSubmitForReview ? "أكمل البيانات الإلزامية قبل الإرسال" : undefined}
                   >
                     إرسال للمراجعة
                   </button>
