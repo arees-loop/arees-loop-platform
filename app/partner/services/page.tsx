@@ -186,6 +186,8 @@ export default function PartnerServicesPage() {
     cancellationPolicy: "",
     meetingInstructions: "",
     images: [] as string[],
+    imagePreviews: [] as { name: string; url: string }[],
+    primaryImage: "",
     bookingMode: "direct",
     availableDays: [] as string[],
     startDate: "",
@@ -232,8 +234,7 @@ export default function PartnerServicesPage() {
     form.descriptionAr.trim() &&
     Number(form.basePrice) > 0 &&
     Number(form.capacity) > 0 &&
-    form.cancellationPolicy.trim() &&
-    form.locationName.trim()
+    form.cancellationPolicy.trim()
   );
 
   const filteredServices = useMemo(() => {
@@ -296,6 +297,8 @@ export default function PartnerServicesPage() {
       cancellationPolicy: "",
       meetingInstructions: "",
       images: [],
+      imagePreviews: [],
+      primaryImage: "",
       bookingMode: "direct",
       availableDays: [],
       startDate: "",
@@ -338,6 +341,8 @@ export default function PartnerServicesPage() {
       cancellationPolicy: "",
       meetingInstructions: "",
       images: [],
+      imagePreviews: [],
+      primaryImage: "",
       bookingMode: "direct",
       availableDays: [],
       startDate: "",
@@ -856,49 +861,22 @@ export default function PartnerServicesPage() {
               </FormSection>
 
               {/* LOCATION */}
-              <FormSection
-                eyebrow="LOCATION ENGINE"
-                title="الموقع ونقطة التنفيذ"
-              >
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="الموقع / العنوان">
-                    <input value={form.locationName} onChange={(e)=>setForm((x)=>({...x,locationName:e.target.value,formattedAddress:e.target.value}))} className={inputClass} placeholder="مثال: قباء، المدينة المنورة" />
-                  </Field>
-                  <Field label="رابط الموقع (اختياري)">
-                    <input value={form.locationUrl} onChange={(e)=>setForm((x)=>({...x,locationUrl:e.target.value}))} className={inputClass} dir="ltr" placeholder="الصق رابط Google Maps" />
-                  </Field>
-                </div>
+              <FormSection eyebrow="LOCATION" title="نقطة التجمع">
                 <div className="rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
                   <p className="text-sm font-bold">هل توجد نقطة تجمع؟</p>
                   <div className="mt-3 flex gap-2">
                     <button type="button" onClick={()=>setForm((x)=>({...x,hasMeetingPoint:true}))} className={`rounded-xl px-5 py-2 text-sm font-bold ${form.hasMeetingPoint?"bg-[#0D3B34] text-white":"border bg-white"}`}>نعم</button>
-                    <button type="button" onClick={()=>setForm((x)=>({...x,hasMeetingPoint:false,meetingPointName:"",meetingPointUrl:""}))} className={`rounded-xl px-5 py-2 text-sm font-bold ${!form.hasMeetingPoint?"bg-[#0D3B34] text-white":"border bg-white"}`}>لا</button>
+                    <button type="button" onClick={()=>setForm((x)=>({...x,hasMeetingPoint:false,meetingPointName:"",meetingPointUrl:"",meetingInstructions:"",locationName:"",formattedAddress:"",locationUrl:""}))} className={`rounded-xl px-5 py-2 text-sm font-bold ${!form.hasMeetingPoint?"bg-[#0D3B34] text-white":"border bg-white"}`}>لا</button>
                   </div>
-                  {form.hasMeetingPoint && <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    <Field label="اسم نقطة التجمع"><input value={form.meetingPointName} onChange={(e)=>setForm((x)=>({...x,meetingPointName:e.target.value}))} className={inputClass}/></Field>
-                    <Field label="رابط نقطة التجمع (اختياري)"><input value={form.meetingPointUrl} onChange={(e)=>setForm((x)=>({...x,meetingPointUrl:e.target.value}))} className={inputClass} dir="ltr"/></Field>
-                  </div>}
-                </div>
-                <Field label="تعليمات الوصول بعد الحجز">
-                  <textarea
-                    value={form.meetingInstructions}
-                    onChange={(e) =>
-                      setForm((current) => ({
-                        ...current,
-                        meetingInstructions: e.target.value,
-                      }))
-                    }
-                    rows={3}
-                    className={`${inputClass} h-auto py-4`}
-                    placeholder="مثال: الدخول من البوابة الشمالية والتوجه إلى نقطة الاستقبال..."
-                  />
-                </Field>
-
-                <div className="rounded-[18px] bg-[#EEF3F0] p-4 text-xs leading-6 text-[#0D3B34]/65">
-                  بيانات التواصل المباشر للمورد لا تظهر في صفحة الخدمة.
-                  العميل يحصل فقط على معلومات التنفيذ اللازمة للحجز،
-                  بينما تستخدم المنصة الإحداثيات للاكتشاف القريب
-                  والاتجاهات والتحقق من الزيارة لاحقًا.
+                  {form.hasMeetingPoint && (
+                    <div className="mt-4 space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="عنوان / اسم نقطة التجمع"><input value={form.meetingPointName} onChange={(e)=>setForm((x)=>({...x,meetingPointName:e.target.value,locationName:e.target.value,formattedAddress:e.target.value}))} className={inputClass} placeholder="مثال: بوابة المتحف الرئيسية"/></Field>
+                        <Field label="رابط الموقع (اختياري)"><input value={form.meetingPointUrl} onChange={(e)=>setForm((x)=>({...x,meetingPointUrl:e.target.value,locationUrl:e.target.value}))} className={inputClass} dir="ltr" placeholder="الصق رابط Google Maps"/></Field>
+                      </div>
+                      <Field label="تعليمات الوصول (اختياري)"><textarea value={form.meetingInstructions} onChange={(e)=>setForm((x)=>({...x,meetingInstructions:e.target.value}))} rows={3} className={`${inputClass} h-auto py-4`} placeholder="مثال: الدخول من البوابة الشمالية..."/></Field>
+                    </div>
+                  )}
                 </div>
               </FormSection>
 
@@ -1005,42 +983,48 @@ export default function PartnerServicesPage() {
               </FormSection>
 
               {/* IMAGES */}
-              <FormSection
-                eyebrow="MEDIA"
-                title="صور الخدمة"
-              >
-                <Field label="إضافة صور">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".png,.jpg,.jpeg,.webp"
-                    onChange={(e) =>
-                      setForm((current) => ({
+              <FormSection eyebrow="MEDIA" title="صور الخدمة">
+                <label className="flex cursor-pointer items-center justify-center rounded-[18px] border border-dashed border-[#B88A13]/45 bg-white px-5 py-5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF9E8]">
+                  + إضافة صور
+                  <input type="file" multiple accept="image/png,image/jpeg,image/webp" className="hidden"
+                    onChange={(e)=>{
+                      const files=Array.from(e.target.files||[]);
+                      if(!files.length) return;
+                      const previews=files.map((file)=>({name:file.name,url:URL.createObjectURL(file)}));
+                      setForm((current)=>({
                         ...current,
-                        images: [...current.images, ...Array.from(e.target.files || []).map((file) => file.name)].filter((name,index,array)=>array.indexOf(name)===index),
-                      }))
-                    }
-                    className={inputClass}
+                        images:[...current.images,...files.map((file)=>file.name)],
+                        imagePreviews:[...current.imagePreviews,...previews],
+                        primaryImage:current.primaryImage || files[0].name,
+                      }));
+                      e.currentTarget.value="";
+                    }}
                   />
-                </Field>
-
-                {form.images.length > 0 && (
-                  <div className="rounded-[18px] bg-[#EEF3F0] p-4">
-                    <p className="text-xs font-bold">
-                      تم اختيار {form.images.length} صور
-                    </p>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {form.images.map((image) => (
-                        <span
-                          key={image}
-                          className="rounded-full bg-white px-3 py-1.5 text-[10px] text-[#0D3B34]/60"
-                        >
-                          {image}
-                          <button type="button" onClick={()=>setForm((x)=>({...x,images:x.images.filter((n)=>n!==image)}))} className="mr-2 font-bold text-red-600">×</button>
-                        </span>
+                </label>
+                {form.imagePreviews.length > 0 && (
+                  <div>
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-xs font-bold">تم اختيار {form.imagePreviews.length} صور</p>
+                      <p className="text-[10px] text-[#0D3B34]/50">اختر الصورة الرئيسية التي تظهر أولاً للعميل</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                      {form.imagePreviews.map((image,index)=>(
+                        <div key={image.name+`-${index}`} className={`relative overflow-hidden rounded-[18px] border-2 bg-white ${form.primaryImage===image.name?"border-[#D4AF37]":"border-transparent"}`}>
+                          <img src={image.url} alt="" className="aspect-[4/3] w-full object-cover"/>
+                          {form.primaryImage===image.name && <span className="absolute right-2 top-2 rounded-full bg-[#D4AF37] px-2 py-1 text-[9px] font-bold text-[#0D3B34]">الرئيسية</span>}
+                          <div className="flex items-center gap-1 p-2">
+                            {form.primaryImage!==image.name && <button type="button" onClick={()=>setForm((x)=>({...x,primaryImage:image.name}))} className="flex-1 rounded-lg bg-[#EEF3F0] px-2 py-1.5 text-[10px] font-bold">تعيين كرئيسية</button>}
+                            <button type="button" onClick={()=>setForm((x)=>{
+                              URL.revokeObjectURL(image.url);
+                              const nextPreviews=x.imagePreviews.filter((_,i)=>i!==index);
+                              const nextImages=x.images.filter((_,i)=>i!==index);
+                              return {...x,imagePreviews:nextPreviews,images:nextImages,primaryImage:x.primaryImage===image.name?(nextImages[0]||""):x.primaryImage};
+                            })} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600">حذف</button>
+                          </div>
+                        </div>
                       ))}
                     </div>
+                    <p className="mt-3 text-[10px] leading-5 text-[#0D3B34]/50">في صفحة العميل تظهر الصورة الرئيسية أولاً، وبقية الصور ضمن معرض يمكن التنقل فيه يمينًا ويسارًا.</p>
                   </div>
                 )}
               </FormSection>
