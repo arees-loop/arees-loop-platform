@@ -310,7 +310,7 @@ export default function PartnerDashboardPage() {
             />
 
             <NavItem
-              href="/partner/agreement"
+              href="/partner/contracts/current"
               label="الاتفاقيات والعقود"
               icon="✓"
             />
