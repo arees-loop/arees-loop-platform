@@ -37,7 +37,13 @@ export default function PartnerShell({children}:{children:ReactNode}) {
             <div className="flex items-center gap-2"><Link href="/" className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold">العودة للمنصة</Link><button type="button" onClick={()=>setOpen(v=>!v)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0D3B34] text-white" title={open?"إخفاء القائمة":"إظهار القائمة"}>{open?"⇥":"⇤"}</button></div>
           </div>
         </header>
-        <div className="min-w-0">{children}</div>
+        <div className="partner-shell-content min-w-0">{children}</div>
+        <style jsx global>{`
+          .partner-shell-content > main > .relative.z-10.flex.min-h-screen > aside { display:none !important; }
+          .partner-shell-content > main > .relative.z-10.flex.min-h-screen { display:block !important; min-height:auto !important; }
+          .partner-shell-content > main > .relative.z-10.flex.min-h-screen > .min-w-0.flex-1 > header { display:none !important; }
+          .partner-shell-content > main { min-height:calc(100vh - 65px) !important; }
+        `}</style>
       </div>
     </div>
   </div>;
