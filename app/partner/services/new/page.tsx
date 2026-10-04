@@ -66,10 +66,11 @@ export default function NewPartnerServicePage() {
 
   return (
     <main dir="rtl" className="min-h-screen bg-[#F7F4EA] text-[#0D3B34]">
-      <header className="border-b border-[#0D3B34]/8 bg-[#FBF9F3]/95">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5 md:px-8">
-          <div><p className="text-[10px] font-bold tracking-[.2em] text-[#B99124]">NEW SERVICE</p><h1 className="mt-1 text-lg font-bold">إضافة خدمة</h1></div>
-          <Link href="/partner/services" className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2 text-xs font-bold">حفظ والخروج</Link>
+      <header className="sticky top-0 z-50 border-b border-[#0D3B34]/8 bg-[#FBF9F3]/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4 md:px-8">
+          <div><p className="text-[10px] font-bold tracking-[.2em] text-[#B99124]">AREES LOOP PARTNER</p><h1 className="mt-1 text-lg font-bold">إضافة خدمة جديدة</h1></div>
+          <div className="hidden rounded-full bg-[#0D3B34] px-5 py-2.5 text-[10px] font-bold tracking-[.14em] text-[#E6C24D] sm:block">بوابة الشريك</div>
+          <Link href="/partner/services" className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-bold">العودة للخدمات</Link>
         </div>
       </header>
 
