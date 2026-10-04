@@ -883,17 +883,25 @@ export default function PartnerServicesPage() {
               </FormSection>
 
               {/* LOCATION */}
-              <FormSection eyebrow="LOCATION" title="نقطة التجمع">
-                <div className="rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
+              <FormSection eyebrow="LOCATION" title="موقع تنفيذ الخدمة">
+                <div className="mb-4 rounded-[18px] border border-[#D4AF37]/25 bg-[#FFF8E5] p-4 text-xs leading-6 text-[#0D3B34]/70">
+                  <b className="text-[#0D3B34]">الموقع أساسي في Arees Loop.</b> حدّد المدينة وموقع تنفيذ الخدمة ليتمكن النظام من معرفة التجارب القريبة من العميل. نقطة التجمع معلومة إضافية وليست بديلاً عن موقع الخدمة.
+                </div>
+                <div className="mb-4 grid gap-4 md:grid-cols-2">
+                  <Field label="المدينة *"><input value={form.city} onChange={(e)=>setForm((x)=>({...x,city:e.target.value}))} className={inputClass} placeholder="مثال: العلا"/></Field>
+                  <Field label="اسم موقع تنفيذ الخدمة *"><input value={form.locationName} onChange={(e)=>setForm((x)=>({...x,locationName:e.target.value}))} className={inputClass} placeholder="مثال: جبل الفيل، البلدة القديمة"/></Field>
+                </div>
+                <Field label="العنوان التفصيلي / الحي"><input value={form.formattedAddress} onChange={(e)=>setForm((x)=>({...x,formattedAddress:e.target.value}))} className={inputClass} placeholder="اكتب الحي أو العنوان الوطني/المختصر إن توفر"/></Field>
+                <div className="mt-4 rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
                   <p className="text-sm font-bold">هل توجد نقطة تجمع؟</p>
                   <div className="mt-3 flex gap-2">
                     <button type="button" onClick={()=>setForm((x)=>({...x,hasMeetingPoint:true}))} className={`rounded-xl px-5 py-2 text-sm font-bold ${form.hasMeetingPoint?"bg-[#0D3B34] text-white":"border bg-white"}`}>نعم</button>
-                    <button type="button" onClick={()=>setForm((x)=>({...x,hasMeetingPoint:false,meetingPointName:"",meetingPointUrl:"",meetingInstructions:"",locationName:"",formattedAddress:"",locationUrl:""}))} className={`rounded-xl px-5 py-2 text-sm font-bold ${!form.hasMeetingPoint?"bg-[#0D3B34] text-white":"border bg-white"}`}>لا</button>
+                    <button type="button" onClick={()=>setForm((x)=>({...x,hasMeetingPoint:false,meetingPointName:"",meetingPointUrl:"",meetingInstructions:""}))} className={`rounded-xl px-5 py-2 text-sm font-bold ${!form.hasMeetingPoint?"bg-[#0D3B34] text-white":"border bg-white"}`}>لا</button>
                   </div>
                   {form.hasMeetingPoint && (
                     <div className="mt-4 space-y-4">
                       <div className="grid gap-4 md:grid-cols-2">
-                        <Field label="عنوان / اسم نقطة التجمع"><input value={form.meetingPointName} onChange={(e)=>setForm((x)=>({...x,meetingPointName:e.target.value,locationName:e.target.value,formattedAddress:e.target.value}))} className={inputClass} placeholder="مثال: بوابة المتحف الرئيسية"/></Field>
+                        <Field label="عنوان / اسم نقطة التجمع"><input value={form.meetingPointName} onChange={(e)=>setForm((x)=>({...x,meetingPointName:e.target.value}))} className={inputClass} placeholder="مثال: بوابة المتحف الرئيسية"/></Field>
                         <Field label="رابط الموقع (اختياري)"><input value={form.meetingPointUrl} onChange={(e)=>setForm((x)=>({...x,meetingPointUrl:e.target.value,locationUrl:e.target.value}))} className={inputClass} dir="ltr" placeholder="الصق رابط Google Maps"/></Field>
                       </div>
                       <Field label="تعليمات الوصول (اختياري)"><textarea value={form.meetingInstructions} onChange={(e)=>setForm((x)=>({...x,meetingInstructions:e.target.value}))} rows={3} className={`${inputClass} h-auto py-4`} placeholder="مثال: الدخول من البوابة الشمالية..."/></Field>
