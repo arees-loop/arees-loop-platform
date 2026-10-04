@@ -149,6 +149,11 @@ export default function PartnerStatusPage() {
           throw new Error(result.message || "تعذر تحميل حالة الطلب.");
         }
 
+        if (result.application?.status === "ACTIVE") {
+          window.location.replace("/partner/dashboard");
+          return;
+        }
+
         if (active) setApplication(result.application ?? null);
       } catch (err) {
         if (active) {
