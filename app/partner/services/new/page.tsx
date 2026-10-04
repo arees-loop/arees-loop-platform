@@ -1,14 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type PriceMode = "INCLUDED" | "ADDED";
 type ServiceType = "EXPERIENCE" | "PROGRAM" | "HOTEL" | "TOUR" | "EVENT" | "GUIDE" | "TRANSPORT" | "TICKET" | "OTHER";
+type ApprovedLicense = { id:string; type:string; issuer:string; licenseNumber:string; status:string };
+type PartnerApplication = { status:string; categories:Array<{name:string}>; licenses:ApprovedLicense[] };
+const SERVICE_LABELS:Record<ServiceType,string>={EXPERIENCE:"تجربة أو نشاط",PROGRAM:"برنامج سياحي",HOTEL:"فندق / إقامة",TOUR:"جولة سياحية",EVENT:"فعالية",GUIDE:"مرشد سياحي",TRANSPORT:"نقل سياحي",TICKET:"وجهة / تذكرة دخول",OTHER:"خدمة أخرى معتمدة"};
+function allowedTypes(app:PartnerApplication|null):ServiceType[]{
+  if(!app||app.status!=="ACTIVE") return [];
+  const text=[...(app.categories||[]).map(x=>x.name),...(app.licenses||[]).filter(x=>x.status==="VERIFIED").flatMap(x=>[x.type,x.issuer])].join(" ").toLowerCase();
+  const set=new Set<ServiceType>();
+  const has=(...words:string[])=>words.some(w=>text.includes(w.toLowerCase()));
+  if(has("فندق","إيواء","ضيافة","hotel","accommodation","hospitality")) set.add("HOTEL");
+  if(has("مرشد","guide")) set.add("GUIDE");
+  if(has("نقل","transport")) set.add("TRANSPORT");
+  if(has("فعالية","ترفيه","event","entertainment")) set.add("EVENT");
+  if(has("وجهة","تذكرة","موقع سياحي","attraction","ticket")) set.add("TICKET");
+  if(has("تجربة","نشاط","experience","activity")) set.add("EXPERIENCE");
+  if(has("تنظيم الرحلات","منظم رحلات","tour operator","برنامج سياحي")) {set.add("PROGRAM");set.add("TOUR");}
+  if(has("وكالة سفر","وكالات سفر","سفر وسياحة","travel agency")) {set.add("TOUR");set.add("TICKET");}
+  return [...set];
+}
 
 export default function NewPartnerServicePage() {
   const [step, setStep] = useState(1);
   const [serviceType, setServiceType] = useState<ServiceType>("EXPERIENCE");
+  const [application,setApplication]=useState<PartnerApplication|null>(null);
+  const [loadingEntitlements,setLoadingEntitlements]=useState(true);
+  useEffect(()=>{fetch("/api/partner/application",{cache:"no-store"}).then(r=>r.json()).then(j=>setApplication(j.application||null)).finally(()=>setLoadingEntitlements(false));},[]);
+  const permittedTypes=useMemo(()=>allowedTypes(application),[application]);
+  useEffect(()=>{if(permittedTypes.length&&!permittedTypes.includes(serviceType)) setServiceType(permittedTypes[0]);},[permittedTypes,serviceType]);
+  const verifiedLicenses=(application?.licenses||[]).filter(x=>x.status==="VERIFIED");
   const [priceMode, setPriceMode] = useState<PriceMode>("INCLUDED");
   const [price, setPrice] = useState(100);
   const commissionRate = 10;
@@ -37,7 +61,8 @@ export default function NewPartnerServicePage() {
         </div>
 
         {step===1 && <Card eyebrow="STEP 01" title="ما نوع الخدمة التي ترغب بإضافتها؟" note="اختر النوع أولاً، وسنظهر لك الحقول المناسبة للخدمة.">
-          <Field label="نوع الخدمة"><select value={serviceType} onChange={e=>setServiceType(e.target.value as ServiceType)} className="input"><option value="EXPERIENCE">تجربة أو نشاط</option><option value="PROGRAM">برنامج سياحي</option><option value="HOTEL">فندق / إقامة</option><option value="TOUR">جولة سياحية</option><option value="EVENT">فعالية</option><option value="GUIDE">مرشد سياحي</option><option value="TRANSPORT">نقل سياحي</option><option value="TICKET">وجهة / تذكرة دخول</option><option value="OTHER">خدمة أخرى معتمدة</option></select></Field>
+          <Field label="نوع الخدمة"><select value={serviceType} disabled={loadingEntitlements||permittedTypes.length===0} onChange={e=>setServiceType(e.target.value as ServiceType)} className="input">{permittedTypes.map(type=><option key={type} value={type}>{SERVICE_LABELS[type]}</option>)}</select></Field>
+          {!loadingEntitlements&&permittedTypes.length===0&&<div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs leading-6"><b>لا يوجد نشاط متاح لإضافة خدمة حالياً.</b><br/>تظهر هنا فقط أنواع الخدمات المطابقة للأنشطة والتراخيص المعتمدة لمنشأتك. لإضافة نشاط جديد يلزم تقديم طلب إضافة نشاط/ترخيص واعتماده أولاً.</div>}
           {serviceType==="HOTEL" && <div className="rounded-[24px] border border-[#D4AF37]/25 bg-[#FFF8E5] p-5"><p className="text-sm font-bold">الإقامة لها نظام إتاحة مستقل</p><p className="mt-2 text-xs leading-6 text-[#0D3B34]/55">سجّل الفندق وبياناته الأساسية مرة واحدة. بعد الاعتماد ستدير أنواع الوحدات والأسعار والكميات المتاحة حسب التاريخ من شاشة الإتاحة، بدلاً من إنشاء خدمة جديدة لكل فترة.</p></div>}
           <Field label="اسم الخدمة"><input className="input" placeholder="مثال: جولة المدينة التاريخية أو إقامة فندقية"/></Field>
           <Field label="وصف مختصر"><textarea className="input min-h-28" placeholder="صف الخدمة كما سيشاهدها العميل..."/></Field>
@@ -51,7 +76,7 @@ export default function NewPartnerServicePage() {
             <p className="mt-2 text-sm font-bold">تُسحب تلقائياً من ملف منشأتك المعتمد</p>
             <p className="mt-1 text-xs leading-6 text-[#0D3B34]/45">لا يمكن تعديل اسم الجهة من داخل الخدمة.</p>
           </div>
-          <Field label="الترخيص المستخدم لهذه الخدمة"><select className="input"><option>اختر من تراخيص منشأتك المعتمدة</option></select></Field>
+          <Field label="الترخيص المستخدم لهذه الخدمة"><select className="input" disabled={verifiedLicenses.length===0}><option value="">اختر من تراخيص منشأتك المعتمدة</option>{verifiedLicenses.map(l=><option key={l.id} value={l.id}>{l.type} — {l.licenseNumber}</option>)}</select></Field>
           <p className="text-xs leading-6 text-[#0D3B34]/45">سيظهر للعميل اسم الجهة المنفذة ورقم الترخيص بصورة تعريفية هادئة، بدون رقم هاتف أو بريد إلكتروني أو رابط تواصل مباشر.</p>
         </Card>}
 
