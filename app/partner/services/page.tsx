@@ -224,6 +224,8 @@ const money = (value: number) =>
 export default function PartnerServicesPage() {
   const [services, setServices] = useState<Service[]>(initialServices);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | ServiceStatus>("ALL");
   const [showForm, setShowForm] = useState(false);
@@ -454,7 +456,7 @@ export default function PartnerServicesPage() {
 
       <div className="relative z-10 flex min-h-screen">
         {/* SIDEBAR */}
-        <aside className="hidden w-[270px] shrink-0 border-l border-[#0D3B34]/8 bg-[#F9F7F0]/92 px-4 py-5 backdrop-blur-xl xl:block">
+        <aside className={`hidden shrink-0 border-l border-[#0D3B34]/8 bg-[#F9F7F0]/92 backdrop-blur-xl transition-all duration-300 xl:block ${sidebarOpen ? "w-[270px] px-4 py-5" : "w-0 overflow-hidden p-0 border-l-0"}`}>
           <div className="mb-7 px-3">
             <p className="text-[10px] font-bold tracking-[0.22em] text-[#B99124]">
               AREES LOOP PARTNER
@@ -528,32 +530,22 @@ export default function PartnerServicesPage() {
 
         {/* CONTENT */}
         <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-40 border-b border-[#0D3B34]/8 bg-[#F9F7F0]/90 backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-8">
-              <div>
-                <p className="text-[10px] text-[#0D3B34]/45">
-                  تجارب المدينة
-                </p>
-
-                <p className="mt-1 text-sm font-bold">
-                  إدارة الخدمات
-                </p>
+          <header className="sticky top-0 z-40 border-b border-[#0D3B34]/8 bg-[#F9F7F0]/94 backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-3 px-5 py-3 md:px-8">
+              <div className="relative">
+                <button type="button" onClick={()=>setAccountMenuOpen(v=>!v)} className="flex items-center gap-3 rounded-2xl px-2 py-1.5 text-right hover:bg-white/70">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0D3B34] font-bold text-[#D4AF37]">ت</div>
+                  <div className="hidden sm:block"><p className="text-sm font-bold">تجارب المدينة</p><p className="text-[10px] text-[#0D3B34]/45">partner@areesloop.com</p></div><span className="text-xs">⌄</span>
+                </button>
+                {accountMenuOpen && <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-[#0D3B34]/10 bg-white p-2 shadow-lg">
+                  <Link href="/partner/profile" className="block rounded-xl px-4 py-3 text-xs font-bold hover:bg-[#F7F4EA]">الملف الشخصي</Link>
+                  <Link href="/partner/logout" className="block rounded-xl px-4 py-3 text-xs font-bold text-red-700 hover:bg-red-50">تسجيل الخروج</Link>
+                </div>}
               </div>
-
+              <div className="hidden rounded-full bg-[#0D3B34] px-5 py-2.5 text-[10px] font-bold tracking-[.14em] text-[#E6C24D] md:block">AREES LOOP <span className="text-white/55">| إصدار تجريبي</span></div>
               <div className="flex items-center gap-2">
-                <Link
-                  href="/admin/dashboard"
-                  className="rounded-full bg-[#0D3B34] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#124A41]"
-                >
-                  لوحة الإدارة والمؤشرات
-                </Link>
-
-                <Link
-                  href="/partner/dashboard"
-                  className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold text-[#0D3B34]/65"
-                >
-                  لوحة الشريك
-                </Link>
+                <Link href="/" className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold">العودة للمنصة</Link>
+                <button type="button" onClick={()=>setSidebarOpen(v=>!v)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0D3B34] text-white" title={sidebarOpen?"إخفاء القائمة":"إظهار القائمة"}>{sidebarOpen?"⇥":"⇤"}</button>
               </div>
             </div>
           </header>
@@ -581,10 +573,7 @@ export default function PartnerServicesPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={()=>setViewMode("grid")} className={`h-14 rounded-2xl px-4 text-xs font-bold ${viewMode==="grid"?"bg-[#0D3B34] text-white":"border border-[#0D3B34]/10 bg-white"}`}>▦ بطاقات</button>
-                <button type="button" onClick={()=>setViewMode("list")} className={`h-14 rounded-2xl px-4 text-xs font-bold ${viewMode==="list"?"bg-[#0D3B34] text-white":"border border-[#0D3B34]/10 bg-white"}`}>☷ قائمة</button>
-              </div>
+
             </section>
 
             {/* SUMMARY */}
@@ -638,13 +627,11 @@ export default function PartnerServicesPage() {
                   <option value="SUSPENDED">موقوفة</option>
                 </select>
 
-                <button
-                  type="button"
-                  onClick={openNewServiceForm}
-                  className="h-14 rounded-2xl bg-[#0D3B34] px-6 text-sm font-bold text-white transition hover:bg-[#124A41]"
-                >
-                  إضافة خدمة
-                </button>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={openNewServiceForm} className="h-14 rounded-2xl bg-[#0D3B34] px-6 text-sm font-bold text-white transition hover:bg-[#124A41]">إضافة خدمة</button>
+                  <button type="button" onClick={()=>setViewMode("grid")} className={`h-14 rounded-2xl px-4 text-xs font-bold ${viewMode==="grid"?"bg-[#0D3B34] text-white":"border border-[#0D3B34]/10 bg-white"}`}>▦ بطاقات</button>
+                  <button type="button" onClick={()=>setViewMode("list")} className={`h-14 rounded-2xl px-4 text-xs font-bold ${viewMode==="list"?"bg-[#0D3B34] text-white":"border border-[#0D3B34]/10 bg-white"}`}>☷ قائمة</button>
+                </div>
               </div>
             </section>
 
