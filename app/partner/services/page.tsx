@@ -643,10 +643,10 @@ export default function PartnerServicesPage() {
                 return (
                   <div
                     key={service.id}
-                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-hidden rounded-[18px] border border-[#0D3B34]/8 bg-white/90 backdrop-blur-xl md:flex md:min-h-[104px]"}
+                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-hidden rounded-[16px] border border-[#0D3B34]/8 bg-white/90 backdrop-blur-xl md:flex md:h-[86px]"}
                   >
                     {/* IMAGE PLACEHOLDER */}
-                    <div className={viewMode === "grid" ? "relative flex h-[140px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[96px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-auto md:w-[118px] md:shrink-0"}>
+                    <div className={viewMode === "grid" ? "relative flex h-[140px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[82px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-[86px] md:w-[92px] md:shrink-0"}>
                       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-[#0D3B34]/10" />
                       <div className="absolute bottom-[-40px] left-5 h-32 w-32 rounded-full border border-[#D4AF37]/25" />
 
@@ -667,7 +667,7 @@ export default function PartnerServicesPage() {
                       </span>
                     </div>
 
-                    <div className={viewMode==="grid" ? "p-4" : "flex-1 p-3 md:grid md:grid-cols-[1.35fr_.8fr_.7fr_auto] md:items-center md:gap-4"}>
+                    <div className={viewMode==="grid" ? "p-4" : "flex-1 p-2 md:grid md:grid-cols-[1.25fr_.65fr_.8fr_auto] md:items-center md:gap-3"}>
                       <p className="text-[10px] font-semibold text-[#B99124]">
                         {service.category}
                       </p>
@@ -717,7 +717,7 @@ export default function PartnerServicesPage() {
                         </p>
                       </div>
 
-                      <div className={viewMode==="grid" ? "mt-4 flex gap-2" : "mt-2 flex gap-2 md:mt-0"}>
+                      <div className={viewMode==="grid" ? "mt-4 flex gap-2" : "mt-1 flex gap-1 md:mt-0"}>
                         <button
                           type="button"
                           onClick={() => openEditServiceForm(service)}
