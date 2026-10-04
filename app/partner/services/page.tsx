@@ -238,18 +238,7 @@ export default function PartnerServicesPage() {
     () => application?.status === "ACTIVE" ? (application.licenses || []).filter((license) => license.status === "VERIFIED") : [],
     [application]
   );
-  const canSubmitForReview = Boolean(
-    form.nameAr.trim() &&
-    form.category &&
-    form.subCategory &&
-    form.license &&
-    form.descriptionAr.trim() &&
-    Number(form.basePrice) > 0 &&
-    Number(form.capacity) > 0 &&
-    form.cancellationPolicy.trim() &&
-    form.latitude !== null &&
-    form.longitude !== null
-  );
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | ServiceStatus
@@ -279,6 +268,19 @@ export default function PartnerServicesPage() {
     meetingInstructions: "",
     images: [] as string[],
   });
+
+  const canSubmitForReview = Boolean(
+    form.nameAr.trim() &&
+    form.category &&
+    form.subCategory &&
+    form.license &&
+    form.descriptionAr.trim() &&
+    Number(form.basePrice) > 0 &&
+    Number(form.capacity) > 0 &&
+    form.cancellationPolicy.trim() &&
+    form.latitude !== null &&
+    form.longitude !== null
+  );
 
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
