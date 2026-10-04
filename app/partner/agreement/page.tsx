@@ -359,7 +359,7 @@ export default function PartnerAgreementPage() {
 
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
-                href="/partner/status"
+                href={partner?.status === "ACTIVE" ? "/partner/dashboard" : "/partner/status"}
                 className="rounded-2xl bg-[#0D3B34] px-6 py-3.5 text-sm font-bold text-white"
               >
                 متابعة حالة الطلب
@@ -411,7 +411,7 @@ export default function PartnerAgreementPage() {
             </h1>
           </div>
           <Link
-            href="/partner/status"
+            href={partner?.status === "ACTIVE" ? "/partner/dashboard" : "/partner/status"}
             className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2 text-xs font-semibold"
           >
             حالة الطلب
@@ -606,7 +606,7 @@ function StateCard({
           {description}
         </p>
         <Link
-          href="/partner/status"
+          href={partner?.status === "ACTIVE" ? "/partner/dashboard" : "/partner/status"}
           className="mt-6 inline-flex rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white"
         >
           متابعة حالة الطلب
