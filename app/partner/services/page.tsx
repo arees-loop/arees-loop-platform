@@ -160,6 +160,8 @@ export default function PartnerServicesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | ServiceStatus>("ALL");
   const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
   const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
   const [form, setForm] = useState({
     nameAr: "",
@@ -405,22 +407,43 @@ export default function PartnerServicesPage() {
     closeServiceForm();
   };
 
-  const submitForReview = () => {
-    const existing = editingServiceId
-      ? services.find((service) => service.id === editingServiceId)
-      : undefined;
-
-    const savedService = buildServiceFromForm("UNDER_REVIEW", existing);
-
-    setServices((current) =>
-      existing
-        ? current.map((service) =>
-            service.id === existing.id ? savedService : service
-          )
-        : [savedService, ...current]
-    );
-
-    closeServiceForm();
+  const submitForReview = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitMessage("");
+    try {
+      const response = await fetch("/api/partner/services", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nameAr: form.nameAr, nameEn: form.nameEn, category: form.category,
+          subCategory: form.subCategory, descriptionAr: form.descriptionAr,
+          descriptionEn: form.descriptionEn, basePrice: form.basePrice,
+          vatMode: form.vatRate, capacity: form.capacity, city: form.city,
+          hasMeetingPoint: form.hasMeetingPoint, meetingPointName: form.meetingPointName,
+          meetingPointUrl: form.meetingPointUrl, meetingInstructions: form.meetingInstructions,
+          cancellationPolicy: form.cancellationPolicy, bookingMode: form.bookingMode,
+          availableDays: form.availableDays, startDate: form.startDate, endDate: form.endDate,
+          startTime: form.startTime, endTime: form.endTime
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw new Error(data?.message || "تعذر حفظ الخدمة.");
+      setSubmitMessage(data.message || "تم إرسال الخدمة للمراجعة.");
+      const refreshed = await fetch("/api/partner/operations", { credentials:"include", cache:"no-store" }).then(r=>r.json());
+      if (refreshed?.success) setServices((refreshed.services ?? []).map((service:any)=>({
+        id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",
+        subCategory:service.subCategory??"غير محدد",license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",
+        city:service.city??"",locationName:service.locationName??"",formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",
+        latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),vatRate:Number(service.vatRate??0),
+        finalPrice:Number(service.finalPrice??0),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),
+        status:service.status,imageCount:Array.isArray(service.images)?service.images.length:0
+      })));
+      closeServiceForm();
+    } catch (error:any) {
+      setSubmitMessage(error?.message || "تعذر حفظ الخدمة.");
+    } finally { setSubmitting(false); }
   };
 
   const updateLocation = (location: LocationValue) => {
@@ -1059,7 +1082,7 @@ export default function PartnerServicesPage() {
                 </p>
 
                 <h3 className="mt-2 text-lg font-bold">
-                  {editingServiceId ? "حفظ تعديلات الخدمة" : "حفظ أو إرسال للمراجعة"}
+                  {editingServiceId ? "حفظ تعديلات الخدمة" : "حفظ أو {submitting ? "جاري الحفظ والإرسال..." : "إرسال للمراجعة"}"}
                 </h3>
 
                 <p className="mt-2 text-xs leading-6 text-white/50">
