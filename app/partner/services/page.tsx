@@ -16,7 +16,7 @@ type ServiceStatus =
   | "SUSPENDED";
 
 type Service = {
-  id: number;
+  id: string | number;
   nameAr: string;
   nameEn: string;
   category: string;
@@ -222,14 +222,14 @@ const money = (value: number) =>
   }).format(value);
 
 export default function PartnerServicesPage() {
-  const [services, setServices] = useState<Service[]>(initialServices);
+  const [services, setServices] = useState<Service[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | ServiceStatus>("ALL");
   const [showForm, setShowForm] = useState(false);
-  const [editingServiceId, setEditingServiceId] = useState<number | null>(null);
+  const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
   const [form, setForm] = useState({
     nameAr: "",
     nameEn: "",
@@ -251,6 +251,38 @@ export default function PartnerServicesPage() {
     meetingInstructions: "",
     images: [] as string[],
   });
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/partner/operations", { credentials: "include", cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!alive || !data?.success) return;
+        setServices((data.services ?? []).map((service: any) => ({
+          id: service.id,
+          nameAr: service.nameAr ?? "",
+          nameEn: service.nameEn ?? "",
+          category: service.category ?? "غير محدد",
+          subCategory: service.subCategory ?? "غير محدد",
+          license: service.license ? `${service.license.type} - ${service.license.licenseNumber}` : "غير مرتبط",
+          city: service.city ?? "",
+          locationName: service.locationName ?? "",
+          formattedAddress: service.formattedAddress ?? "",
+          placeId: service.placeId ?? "",
+          latitude: service.latitude,
+          longitude: service.longitude,
+          basePrice: Number(service.basePrice ?? 0),
+          vatRate: Number(service.vatRate ?? 0),
+          finalPrice: Number(service.finalPrice ?? 0),
+          capacity: Number(service.capacity ?? 0),
+          bookings: Number(service.bookingCount ?? 0),
+          status: service.status,
+          imageCount: service.images?.length ?? 0,
+        })));
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   const canSubmitForReview = Boolean(
     form.nameAr.trim() &&
