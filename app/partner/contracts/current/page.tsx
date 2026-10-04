@@ -63,7 +63,7 @@ export default function PartnerContractPage() {
     </div>
     <style>{`@media print { @page { size: A4; margin: 12mm; } article { width: 100%; } section, header, footer, .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; } h1,h2,h3 { break-after: avoid; page-break-after: avoid; } }`}</style><article className="mx-auto max-w-5xl bg-white p-8 shadow-sm print:max-w-none print:p-0 print:shadow-none md:p-12">
       <header className="border-b-2 border-[#B99124] pb-7 text-center">
-        <p className="text-xs font-bold tracking-[.22em] text-[#B99124]">AREES</p>
+        <img src="/Logo/arees-integrated-solutions-logo.png" alt="شركة أريس الحلول المتكاملة المحدودة" className="mx-auto h-24 w-auto object-contain print:h-20" />
         <h1 className="mt-3 text-3xl font-bold text-[#0D3B34]">عقد شراكة وتسويق إلكتروني</h1>
         <p className="mt-2 text-lg font-semibold">Electronic Partnership & Marketing Contract</p>
         <p className="mt-3 text-xs text-gray-500">Contract ID: <span dir="ltr">{agreement.id}</span> · Version {agreement.version}</p>
