@@ -37,6 +37,12 @@ type Service = {
   imageCount: number;
 };
 
+type PartnerApplication = {
+  status: string;
+  categories: Array<{ name: string }>;
+  licenses: Array<{ id: string; type: string; issuer: string; licenseNumber: string; status: string }>;
+};
+
 type LocationValue = {
   city: string;
   locationName: string;
@@ -207,11 +213,7 @@ const categories: Record<string, string[]> = {
   ],
 };
 
-const verifiedLicenses = [
-  "ترخيص وزارة السياحة - 73104550",
-  "ترخيص تنظيم الرحلات - TR-209844",
-  "ترخيص النشاط - ACT-55821",
-];
+
 
 const money = (value: number) =>
   new Intl.NumberFormat("ar-SA", {
@@ -221,6 +223,33 @@ const money = (value: number) =>
 
 export default function PartnerServicesPage() {
   const [services, setServices] = useState<Service[]>(initialServices);
+  const [application, setApplication] = useState<PartnerApplication | null>(null);
+  useEffect(() => {
+    fetch("/api/partner/application", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => setApplication(data.application || null))
+      .catch(() => setApplication(null));
+  }, []);
+  const approvedCategories = useMemo(
+    () => application?.status === "ACTIVE" ? (application.categories || []).map((item) => item.name).filter((name) => Boolean(categories[name])) : [],
+    [application]
+  );
+  const approvedLicenses = useMemo(
+    () => application?.status === "ACTIVE" ? (application.licenses || []).filter((license) => license.status === "VERIFIED") : [],
+    [application]
+  );
+  const canSubmitForReview = Boolean(
+    form.nameAr.trim() &&
+    form.category &&
+    form.subCategory &&
+    form.license &&
+    form.descriptionAr.trim() &&
+    Number(form.basePrice) > 0 &&
+    Number(form.capacity) > 0 &&
+    form.cancellationPolicy.trim() &&
+    form.latitude !== null &&
+    form.longitude !== null
+  );
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | ServiceStatus
@@ -573,9 +602,9 @@ export default function PartnerServicesPage() {
               <button
                 type="button"
                 onClick={openNewServiceForm}
-                className="rounded-2xl bg-[#0D3B34] px-6 py-3.5 text-sm font-bold text-white"
+                className="h-14 rounded-2xl bg-[#0D3B34] px-6 text-sm font-bold text-white transition hover:bg-[#124A41]"
               >
-                + إضافة خدمة جديدة
+                + إضافة خدمة
               </button>
             </section>
 
@@ -633,7 +662,7 @@ export default function PartnerServicesPage() {
                 <button
                   type="button"
                   onClick={openNewServiceForm}
-                  className="h-14 rounded-2xl border border-[#D4AF37]/35 bg-[#FFF8E4] px-5 text-xs font-bold text-[#8B6812]"
+                  className="h-14 rounded-2xl bg-[#0D3B34] px-6 text-sm font-bold text-white transition hover:bg-[#124A41]"
                 >
                   إضافة خدمة
                 </button>
@@ -854,7 +883,7 @@ export default function PartnerServicesPage() {
                     >
                       <option value="">اختر النشاط</option>
 
-                      {Object.keys(categories).map((category) => (
+                      {approvedCategories.map((category) => (
                         <option key={category}>{category}</option>
                       ))}
                     </select>
@@ -895,15 +924,15 @@ export default function PartnerServicesPage() {
                       اختر ترخيصًا معتمدًا
                     </option>
 
-                    {verifiedLicenses.map((license) => (
-                      <option key={license}>{license}</option>
-                    ))}
+                    {approvedLicenses.map((license) => {
+                      const label = `${license.type} - ${license.licenseNumber}`;
+                      return <option key={license.id} value={label}>{label}</option>;
+                    })}
                   </select>
                 </Field>
 
                 <div className="rounded-[18px] border border-[#D4AF37]/20 bg-[#FFF9E8] p-4 text-xs leading-6 text-[#0D3B34]/65">
-                  في الإنتاج، ستظهر هنا فقط التراخيص المعتمدة التي تغطي
-                  النشاط المختار.
+                  تظهر هنا فقط الأنشطة والتراخيص المعتمدة لمنشأتك. لا يمكن إنشاء خدمة خارج نطاق النشاط المعتمد.
                 </div>
               </FormSection>
 
@@ -1179,7 +1208,9 @@ export default function PartnerServicesPage() {
                   <button
                     type="button"
                     onClick={submitForReview}
-                    className="rounded-2xl bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#0D3B34]"
+                    disabled={!canSubmitForReview}
+                    className="rounded-2xl bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#0D3B34] transition disabled:cursor-not-allowed disabled:opacity-35"
+                    title={!canSubmitForReview ? "أكمل البيانات الإلزامية وحدد الموقع قبل الإرسال" : undefined}
                   >
                     إرسال للمراجعة
                   </button>
