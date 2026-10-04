@@ -233,6 +233,10 @@ export default function PartnerServicesPage() {
     form.nameAr.trim() &&
     form.category &&
     form.descriptionAr.trim() &&
+    form.city.trim() &&
+    form.locationName.trim() &&
+    Number.isFinite(form.latitude) &&
+    Number.isFinite(form.longitude) &&
     Number(form.basePrice) > 0 &&
     Number(form.capacity) > 0 &&
     form.cancellationPolicy.trim()
@@ -421,6 +425,8 @@ export default function PartnerServicesPage() {
           subCategory: form.subCategory, descriptionAr: form.descriptionAr,
           descriptionEn: form.descriptionEn, basePrice: form.basePrice,
           vatMode: form.vatRate, capacity: form.capacity, city: form.city,
+          locationName: form.locationName, formattedAddress: form.formattedAddress,
+          placeId: form.placeId, latitude: form.latitude, longitude: form.longitude,
           hasMeetingPoint: form.hasMeetingPoint, meetingPointName: form.meetingPointName,
           meetingPointUrl: form.meetingPointUrl, meetingInstructions: form.meetingInstructions,
           cancellationPolicy: form.cancellationPolicy, bookingMode: form.bookingMode,
@@ -430,7 +436,7 @@ export default function PartnerServicesPage() {
       });
       const data = await response.json();
       if (!response.ok || !data?.success) throw new Error(data?.message || "تعذر حفظ الخدمة.");
-      setSubmitMessage(data.message || "تم إرسال الخدمة للمراجعة.");
+      setSubmitMessage("تم إرسال الخدمة إلى إدارة Arees Loop للمراجعة والموافقة بنجاح.");
       const refreshed = await fetch("/api/partner/operations", { credentials:"include", cache:"no-store" }).then(r=>r.json());
       if (refreshed?.success) setServices((refreshed.services ?? []).map((service:any)=>({
         id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",
