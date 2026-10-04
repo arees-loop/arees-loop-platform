@@ -223,30 +223,7 @@ const money = (value: number) =>
 
 export default function PartnerServicesPage() {
   const [services, setServices] = useState<Service[]>(initialServices);
-  const [application, setApplication] = useState<PartnerApplication | null>(null);
-  useEffect(() => {
-    fetch("/api/partner/application", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((data) => setApplication(data.application || null))
-      .catch(() => setApplication(null));
-  }, []);
-  const approvedCategories = useMemo(
-    () => application?.status === "ACTIVE" ? (application.categories || []).map((item) => item.name).filter((name) => Boolean(categories[name])) : [],
-    [application]
-  );
-  const approvedLicenses = useMemo(
-    () => application?.status === "ACTIVE" ? (application.licenses || []).filter((license) => license.status === "VERIFIED") : [],
-    [application]
-  );
-
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "ALL" | ServiceStatus
-  >("ALL");
-
-  const [showForm, setShowForm] = useState(false);
-  const [editingServiceId, setEditingServiceId] = useState<number | null>(null);
-
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [form, setForm] = useState({
     nameAr: "",
     nameEn: "",
@@ -273,7 +250,6 @@ export default function PartnerServicesPage() {
     form.nameAr.trim() &&
     form.category &&
     form.subCategory &&
-    form.license &&
     form.descriptionAr.trim() &&
     Number(form.basePrice) > 0 &&
     Number(form.capacity) > 0 &&
@@ -601,13 +577,10 @@ export default function PartnerServicesPage() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={openNewServiceForm}
-                className="h-14 rounded-2xl bg-[#0D3B34] px-6 text-sm font-bold text-white transition hover:bg-[#124A41]"
-              >
-                + إضافة خدمة
-              </button>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={()=>setViewMode("grid")} className={`h-14 rounded-2xl px-4 text-xs font-bold ${viewMode==="grid"?"bg-[#0D3B34] text-white":"border border-[#0D3B34]/10 bg-white"}`}>▦ بطاقات</button>
+                <button type="button" onClick={()=>setViewMode("list")} className={`h-14 rounded-2xl px-4 text-xs font-bold ${viewMode==="list"?"bg-[#0D3B34] text-white":"border border-[#0D3B34]/10 bg-white"}`}>☷ قائمة</button>
+              </div>
             </section>
 
             {/* SUMMARY */}
@@ -703,7 +676,7 @@ export default function PartnerServicesPage() {
                       </span>
                     </div>
 
-                    <div className="p-5">
+                    <div className={viewMode==="grid" ? "p-5" : "flex-1 p-5"}>
                       <p className="text-[10px] font-semibold text-[#B99124]">
                         {service.category}
                       </p>
@@ -885,7 +858,7 @@ export default function PartnerServicesPage() {
                     >
                       <option value="">اختر النشاط</option>
 
-                      {approvedCategories.map((category) => (
+                      {Object.keys(categories).map((category) => (
                         <option key={category}>{category}</option>
                       ))}
                     </select>
@@ -926,15 +899,14 @@ export default function PartnerServicesPage() {
                       اختر ترخيصًا معتمدًا
                     </option>
 
-                    {approvedLicenses.map((license) => {
-                      const label = `${license.type} - ${license.licenseNumber}`;
-                      return <option key={license.id} value={label}>{label}</option>;
-                    })}
+                    {["ترخيص المنشأة المعتمد"].map((license) => (
+                      <option key={license}>{license}</option>
+                    ))}
                   </select>
                 </Field>
 
                 <div className="rounded-[18px] border border-[#D4AF37]/20 bg-[#FFF9E8] p-4 text-xs leading-6 text-[#0D3B34]/65">
-                  تظهر هنا فقط الأنشطة والتراخيص المعتمدة لمنشأتك. لا يمكن إنشاء خدمة خارج نطاق النشاط المعتمد.
+                  اختر نوع الخدمة وأرسلها للمراجعة. تتحقق إدارة Arees Loop من النشاط والترخيص قبل اعتماد الخدمة ونشرها.
                 </div>
               </FormSection>
 
