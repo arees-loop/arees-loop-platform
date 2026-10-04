@@ -112,6 +112,8 @@ export async function GET() {
         termsSnapshot: agreement.termsSnapshot,
         sentAt: agreement.sentAt,
         acceptedAt: agreement.acceptedAt,
+        acceptedByName: agreement.acceptedByName,
+        acceptedByEmail: agreement.acceptedByEmail,
         status: agreement.status,
       },
     });
