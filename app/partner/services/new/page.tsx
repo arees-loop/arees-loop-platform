@@ -36,6 +36,19 @@ export default function NewPartnerServicePage() {
   const [priceMode, setPriceMode] = useState<PriceMode>("INCLUDED");
   const [location, setLocation] = useState<{lat:number;lng:number}|null>(null);
   const [locationError, setLocationError] = useState("");
+  const [nameAr,setNameAr]=useState("");
+  const [descriptionAr,setDescriptionAr]=useState("");
+  const [city,setCity]=useState("");
+  const [locationName,setLocationName]=useState("");
+  const [formattedAddress,setFormattedAddress]=useState("");
+  const [placeId,setPlaceId]=useState("");
+  const [locationQuery,setLocationQuery]=useState("");
+  const [searchingLocation,setSearchingLocation]=useState(false);
+  const [licenseId,setLicenseId]=useState("");
+  const [cancellationPolicy,setCancellationPolicy]=useState("");
+  const [submitting,setSubmitting]=useState(false);
+  const [submitMessage,setSubmitMessage]=useState("");
+  const [submitError,setSubmitError]=useState("");
   const [images, setImages] = useState<Array<{file:File;url:string}>>([]);
   const addImages=(e:ChangeEvent<HTMLInputElement>)=>{
     const files=Array.from(e.target.files||[]).filter(f=>f.type.startsWith("image/"));
@@ -43,14 +56,47 @@ export default function NewPartnerServicePage() {
     e.target.value="";
   };
   const removeImage=(index:number)=>setImages(prev=>{URL.revokeObjectURL(prev[index]?.url||"");return prev.filter((_,i)=>i!==index)});
+  const reverseLocation=async(lat:number,lng:number)=>{
+    try{
+      const r=await fetch(`/api/location/reverse-geocode?lat=${lat}&lng=${lng}`,{cache:"no-store"});
+      const j=await r.json();
+      if(r.ok){setFormattedAddress(j.address||"");setPlaceId(j.placeId||"");if(!locationName&&j.address)setLocationName(j.address);}
+    }catch{}
+  };
   const useCurrentLocation=()=>{
     setLocationError("");
     if(!navigator.geolocation){setLocationError("المتصفح لا يدعم تحديد الموقع.");return;}
     navigator.geolocation.getCurrentPosition(
-      p=>setLocation({lat:p.coords.latitude,lng:p.coords.longitude}),
+      p=>{const next={lat:p.coords.latitude,lng:p.coords.longitude};setLocation(next);void reverseLocation(next.lat,next.lng);},
       ()=>setLocationError("تعذر تحديد الموقع. تأكد من السماح للموقع في المتصفح."),
       {enableHighAccuracy:true,timeout:12000}
     );
+  };
+  const searchLocation=async()=>{
+    if(!locationQuery.trim()) return;
+    setSearchingLocation(true);setLocationError("");
+    try{
+      const r=await fetch(`/api/location/search?query=${encodeURIComponent(locationQuery.trim())}`,{cache:"no-store"});
+      const j=await r.json();
+      if(!r.ok) throw new Error();
+      setLocation(j.location);setFormattedAddress(j.address||"");setLocationName(j.name||locationQuery.trim());
+    }catch{setLocationError("لم نعثر على الموقع. جرّب اسم المكان مع المدينة أو الحي.");}
+    finally{setSearchingLocation(false);}
+  };
+  const submitService=async()=>{
+    setSubmitError("");setSubmitMessage("");
+    if(!nameAr.trim()||!city.trim()||!locationName.trim()||!location){setSubmitError("أكمل اسم الخدمة والمدينة وحدد موقع تنفيذ الخدمة بدقة.");return;}
+    setSubmitting(true);
+    try{
+      const r=await fetch("/api/partner/services",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        nameAr,descriptionAr,category:serviceType,city,locationName,formattedAddress,placeId,
+        latitude:location.lat,longitude:location.lng,licenseId,basePrice:price,vatMode:"included",cancellationPolicy
+      })});
+      const j=await r.json();
+      if(!r.ok) throw new Error(j.message||"تعذر إرسال الخدمة.");
+      setSubmitMessage("تم إرسال الخدمة إلى إدارة Arees Loop للمراجعة والموافقة بنجاح.");
+    }catch(e){setSubmitError(e instanceof Error?e.message:"تعذر إرسال الخدمة. حاول مرة أخرى.");}
+    finally{setSubmitting(false);}
   };
   const [price, setPrice] = useState(100);
   const commissionRate = 10;
@@ -83,18 +129,19 @@ export default function NewPartnerServicePage() {
           <Field label="نوع الخدمة"><select value={serviceType} disabled={loadingEntitlements||permittedTypes.length===0} onChange={e=>setServiceType(e.target.value as ServiceType)} className="input">{permittedTypes.map(type=><option key={type} value={type}>{SERVICE_LABELS[type]}</option>)}</select></Field>
           {!loadingEntitlements&&permittedTypes.length===0&&<div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs leading-6"><b>لا يوجد نشاط متاح لإضافة خدمة حالياً.</b><br/>تظهر هنا فقط أنواع الخدمات المطابقة للأنشطة والتراخيص المعتمدة لمنشأتك. لإضافة نشاط جديد يلزم تقديم طلب إضافة نشاط/ترخيص واعتماده أولاً.</div>}
           {serviceType==="HOTEL" && <div className="rounded-[24px] border border-[#D4AF37]/25 bg-[#FFF8E5] p-5"><p className="text-sm font-bold">الإقامة لها نظام إتاحة مستقل</p><p className="mt-2 text-xs leading-6 text-[#0D3B34]/55">سجّل الفندق وبياناته الأساسية مرة واحدة. بعد الاعتماد ستدير أنواع الوحدات والأسعار والكميات المتاحة حسب التاريخ من شاشة الإتاحة، بدلاً من إنشاء خدمة جديدة لكل فترة.</p></div>}
-          <Field label="اسم الخدمة"><input className="input" placeholder="مثال: جولة المدينة التاريخية أو إقامة فندقية"/></Field>
-          <Field label="وصف مختصر"><textarea className="input min-h-28" placeholder="صف الخدمة كما سيشاهدها العميل..."/></Field>
-          <div className="grid gap-4 md:grid-cols-2"><Field label="المدينة"><input className="input" placeholder="المدينة المنورة"/></Field><Field label="اسم الموقع / نقطة التجمع"><input className="input" placeholder="مثال: بوابة ٣، متحف، فندق..."/></Field></div>
+          <Field label="اسم الخدمة"><input value={nameAr} onChange={e=>setNameAr(e.target.value)} className="input" placeholder="مثال: جولة المدينة التاريخية أو إقامة فندقية"/></Field>
+          <Field label="وصف مختصر"><textarea value={descriptionAr} onChange={e=>setDescriptionAr(e.target.value)} className="input min-h-28" placeholder="صف الخدمة كما سيشاهدها العميل..."/></Field>
+          <div className="grid gap-4 md:grid-cols-2"><Field label="المدينة *"><input value={city} onChange={e=>setCity(e.target.value)} className="input" placeholder="المدينة المنورة"/></Field><Field label="اسم الموقع / نقطة التجمع *"><input value={locationName} onChange={e=>setLocationName(e.target.value)} className="input" placeholder="مثال: بوابة ٣، متحف، فندق..."/></Field></div>
           <div className="rounded-[24px] border border-[#0D3B34]/8 bg-[#F8F6EF] p-5">
             <p className="text-[10px] font-bold tracking-[.16em] text-[#B99124]">LOCATION</p>
             <p className="mt-2 text-sm font-bold">موقع تنفيذ الخدمة</p>
-            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">ثبّت الإحداثيات الدقيقة للخدمة. البحث بالخريطة سيضاف عند ربط مزود الخرائط، أما تحديد موقعك الحالي فيعمل مباشرة من المتصفح.</p>
+            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">ابحث باسم المكان أو العنوان/الحي، أو استخدم موقعك الحالي. الإحداثيات هي المرجع الأساسي لـ Arees Loop لحساب القرب.</p>
+            <div className="mt-4 flex gap-2"><input value={locationQuery} onChange={e=>setLocationQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void searchLocation();}}} className="input" placeholder="مثال: جبل الفيل العلا أو اسم الحي"/><button type="button" disabled={searchingLocation} onClick={searchLocation} className="shrink-0 rounded-2xl border border-[#0D3B34]/10 bg-white px-4 text-xs font-bold disabled:opacity-50">{searchingLocation?"جاري البحث...":"بحث عن الموقع"}</button></div>
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" onClick={useCurrentLocation} className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white">استخدام موقعي الحالي</button>
               {location&&<button type="button" onClick={()=>setLocation(null)} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">مسح الموقع</button>}
             </div>
-            {location&&<div className="mt-4 rounded-2xl bg-white p-4 text-xs"><b>تم تثبيت الموقع ✓</b><p className="mt-1 text-[#0D3B34]/50" dir="ltr">{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</p></div>}
+            {location&&<div className="mt-4 rounded-2xl bg-white p-4 text-xs"><b>تم تثبيت الموقع ✓</b>{formattedAddress&&<p className="mt-1 text-[#0D3B34]/60">{formattedAddress}</p>}<p className="mt-1 text-[#0D3B34]/50" dir="ltr">{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</p></div>}
             {locationError&&<p className="mt-3 text-xs font-bold text-red-600">{locationError}</p>}
           </div>
           <div className="rounded-[24px] border border-[#0D3B34]/8 bg-white p-5">
@@ -120,7 +167,7 @@ export default function NewPartnerServicePage() {
             <p className="mt-2 text-sm font-bold">تُسحب تلقائياً من ملف منشأتك المعتمد</p>
             <p className="mt-1 text-xs leading-6 text-[#0D3B34]/45">لا يمكن تعديل اسم الجهة من داخل الخدمة.</p>
           </div>
-          <Field label="الترخيص المستخدم لهذه الخدمة"><select className="input" disabled={verifiedLicenses.length===0}><option value="">اختر من تراخيص منشأتك المعتمدة</option>{verifiedLicenses.map(l=><option key={l.id} value={l.id}>{l.type} — {l.licenseNumber}</option>)}</select></Field>
+          <Field label="الترخيص المستخدم لهذه الخدمة"><select value={licenseId} onChange={e=>setLicenseId(e.target.value)} className="input" disabled={verifiedLicenses.length===0}><option value="">اختر من تراخيص منشأتك المعتمدة</option>{verifiedLicenses.map(l=><option key={l.id} value={l.id}>{l.type} — {l.licenseNumber}</option>)}</select></Field>
           <p className="text-xs leading-6 text-[#0D3B34]/45">سيظهر للعميل اسم الجهة المنفذة ورقم الترخيص بصورة تعريفية هادئة، بدون رقم هاتف أو بريد إلكتروني أو رابط تواصل مباشر.</p>
         </Card>}
 
@@ -133,18 +180,20 @@ export default function NewPartnerServicePage() {
             <Choice active={priceMode==="ADDED"} onClick={()=>setPriceMode("ADDED")} title="إضافة مقابل أريس على السعر" text="سعر الخدمة لك، ويضاف مقابل أريس وضريبته إلى السعر النهائي للعميل."/>
           </div>
           <div className="rounded-[24px] bg-[#0D3B34] p-5 text-white"><p className="text-xs text-white/50">معاينة السعر</p><div className="mt-4 grid gap-4 sm:grid-cols-3"><Metric label="سعر العميل" value={preview.customer}/><Metric label="أساس مقابل أريس" value={preview.areesBase}/><Metric label="ضريبة المقابل 15%" value={preview.areesVat}/></div><p className="mt-4 text-[11px] leading-6 text-white/45">المعاينة إرشادية قبل رسوم وسيلة الدفع أو أي تعديلات أخرى واجبة التطبيق.</p></div>
-          <Field label="سياسة الإلغاء والاسترداد"><textarea className="input min-h-24" placeholder="اكتب الشروط بوضوح..."/></Field>
+          <Field label="سياسة الإلغاء والاسترداد"><textarea value={cancellationPolicy} onChange={e=>setCancellationPolicy(e.target.value)} className="input min-h-24" placeholder="اكتب الشروط بوضوح..."/></Field>
           <Field label="هل يوجد ضمان / تأمين مسترد؟"><select className="input"><option>لا يوجد</option><option>نعم، يوجد ضمان مسترد</option></select></Field>
         </Card>}
 
         {step===4 && <Card eyebrow="STEP 04" title="جاهزة للمراجعة" note="راجع أهم النقاط قبل إرسالها إلى Arees Loop.">
           <div className="grid gap-3 md:grid-cols-2">{serviceType==="HOTEL" ? ["بيانات الفندق الأساسية مكتملة","الجهة المنفذة مسحوبة من ملف المنشأة","بيانات الترخيص مضافة","نوع الوحدة والإتاحة محددان","فترة الإتاحة والسعر محددان","سياسة الإلغاء والاسترداد محددة"] : ["نوع الخدمة واسمها ووصفها مكتملة","الجهة المنفذة مسحوبة من ملف المنشأة","بيانات الترخيص مضافة","السعر وطريقته واضحان","سياسة الإلغاء والاسترداد محددة","الضمان المسترد محدد إن وجد"].map(x=><div key={x} className="rounded-2xl bg-[#F8F6EF] p-4 text-sm">✓ {x}</div>)}</div>
           <div className="rounded-2xl border border-[#0D3B34]/8 bg-white p-4 text-xs leading-6 text-[#0D3B34]/55">بعد الإرسال ستكون حالة الخدمة <b className="text-[#0D3B34]">تحت المراجعة</b>. لن تظهر للعملاء قبل اعتمادها.</div>
+          {submitMessage&&<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800">{submitMessage}</div>}
+          {submitError&&<div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{submitError}</div>}
         </Card>}
 
         <div className="mt-6 flex items-center justify-between">
           <button disabled={step===1} onClick={()=>setStep(Math.max(1,step-1))} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-sm font-bold disabled:opacity-30">السابق</button>
-          {step<4?<button onClick={()=>setStep(step+1)} className="rounded-2xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white">التالي</button>:<button className="rounded-2xl bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#0D3B34]">إرسال للمراجعة</button>}
+          {step<4?<button onClick={()=>setStep(step+1)} className="rounded-2xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white">التالي</button>:<button disabled={submitting||!!submitMessage} onClick={submitService} className="rounded-2xl bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#0D3B34] disabled:opacity-50">{submitting?"جاري الإرسال...":submitMessage?"تم الإرسال ✓":"إرسال للمراجعة"}</button>}
         </div>
       </div>
       <style jsx global>{`.input{width:100%;border:1px solid rgba(13,59,52,.1);background:#fff;border-radius:16px;padding:13px 16px;font-size:14px;outline:none}.input:focus{border-color:rgba(185,145,36,.65)}`}</style>
