@@ -25,6 +25,7 @@ type ContractPayload = {
     acceptedAt: string | null;
     acceptedByName?: string | null;
     acceptedByEmail?: string | null;
+    termsSnapshot?: Record<string,unknown>;
     status: string;
   };
 };
@@ -52,7 +53,7 @@ export default function PartnerContractPage() {
   if(!data) return <main dir="rtl" className="flex min-h-screen items-center justify-center bg-[#EAF3EF] text-[#0D3B34]">جاري تجهيز العقد...</main>;
 
   const {partner,agreement}=data;
-  const snapshot=(agreement as AgreementData & {termsSnapshot?: Record<string,unknown>}).termsSnapshot||{};
+  const snapshot=agreement.termsSnapshot||{};
   const commission=agreement.commissionRate||String(snapshot.commissionRate||"—");
   const transferFee=String(snapshot.transferFee||"1.00");
   const acceptedAt=agreement.acceptedAt?new Intl.DateTimeFormat("ar-SA",{dateStyle:"long",timeStyle:"short"}).format(new Date(agreement.acceptedAt)):"—";
