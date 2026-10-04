@@ -92,6 +92,12 @@ export async function GET() {
         status: membership.partner.status,
         legalNameAr: membership.partner.legalNameAr,
         tradeNameAr: membership.partner.tradeNameAr,
+        legalNameEn: membership.partner.legalNameEn,
+        tradeNameEn: membership.partner.tradeNameEn,
+        address: membership.partner.address,
+        formattedAddress: membership.partner.formattedAddress,
+        city: membership.partner.city,
+        country: membership.partner.country,
         unifiedNumber: membership.partner.unifiedNumber,
         commercialRegister:
           membership.partner.commercialRegister,
