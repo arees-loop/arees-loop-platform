@@ -140,14 +140,11 @@ const initialServices: Service[] = [
   },
 ];
 
-const categories: Record<string, string[]> = {
-  "سياحة وتجارب": ["تجربة تاريخية","تجربة ثقافية","تجربة تراثية","جولة سياحية","برنامج سياحي","مغامرات"],
-  "إقامة وإعاشة": ["فندق","منتجع","شقة فندقية","نزل","إعاشة"],
-  "فعاليات وترفيه": ["فعالية","مهرجان","عرض ترفيهي","نشاط عائلي"],
-  "مطاعم وتجارب طعام": ["مطعم","مقهى","تجربة طعام"],
-  "نقل وتنقل": ["نقل أفراد","نقل مجموعات","تنقل بين المدن","خدمة سائق"],
-  "تذاكر ووجهات": ["متحف","موقع تراثي","معلم سياحي","مركز زوار","تذكرة دخول"],
-};
+const mainCategories = [
+  "فنادق وإقامة","شقق مخدومة","شاليهات واستراحات وفلل","برامج سياحية",
+  "نقل سياحي","حجوزات وتذاكر","مطاعم وكافيهات","تجارب ثرية",
+  "تقنية وخدمات سياحية","معارض وفعاليات"
+];
 
 
 const money = (value: number) =>
@@ -189,6 +186,12 @@ export default function PartnerServicesPage() {
     cancellationPolicy: "",
     meetingInstructions: "",
     images: [] as string[],
+    bookingMode: "direct",
+    availableDays: [] as string[],
+    startDate: "",
+    endDate: "",
+    startTime: "",
+    endTime: "",
   });
 
   useEffect(() => {
@@ -293,6 +296,12 @@ export default function PartnerServicesPage() {
       cancellationPolicy: "",
       meetingInstructions: "",
       images: [],
+      bookingMode: "direct",
+      availableDays: [],
+      startDate: "",
+      endDate: "",
+      startTime: "",
+      endTime: "",
     });
   };
 
@@ -329,6 +338,12 @@ export default function PartnerServicesPage() {
       cancellationPolicy: "",
       meetingInstructions: "",
       images: [],
+      bookingMode: "direct",
+      availableDays: [],
+      startDate: "",
+      endDate: "",
+      startTime: "",
+      endTime: "",
     });
     setShowForm(true);
   };
@@ -797,14 +812,11 @@ export default function PartnerServicesPage() {
                   <Field label="التصنيف">
                     <select value={form.category} onChange={(e)=>setForm((current)=>({...current,category:e.target.value,subCategory:""}))} className={inputClass}>
                       <option value="">اختر التصنيف</option>
-                      {Object.keys(categories).map((category)=><option key={category}>{category}</option>)}
+                      {mainCategories.map((category)=><option key={category}>{category}</option>)}
                     </select>
                   </Field>
                   <Field label="التصنيف الفرعي (اختياري)">
-                    <select value={form.subCategory} onChange={(e)=>setForm((current)=>({...current,subCategory:e.target.value}))} className={inputClass}>
-                      <option value="">بدون تصنيف فرعي</option>
-                      {(categories[form.category]||[]).map((item)=><option key={item}>{item}</option>)}
-                    </select>
+                    <input value={form.subCategory} onChange={(e)=>setForm((current)=>({...current,subCategory:e.target.value}))} className={inputClass} placeholder="اكتب تصنيفك، مثال: تجربة تاريخية" />
                   </Field>
                 </div></FormSection>
 
@@ -956,31 +968,40 @@ export default function PartnerServicesPage() {
                 </div>
               </FormSection>
 
-              {/* CAPACITY */}
-              <FormSection
-                eyebrow="AVAILABILITY"
-                title="السعة والتوفر"
-              >
-                <Field label="السعة القصوى المتاحة">
-                  <input
-                    type="number"
-                    min="1"
-                    value={form.capacity}
-                    onChange={(e) =>
-                      setForm((current) => ({
-                        ...current,
-                        capacity: e.target.value,
-                      }))
-                    }
-                    className={inputClass}
-                  />
-                </Field>
-
-                <div className="grid gap-3 md:grid-cols-3">
-                  <AvailabilityBox title="الأيام" value="يحدد لاحقًا" />
-                  <AvailabilityBox title="المواعيد" value="يحدد لاحقًا" />
-                  <AvailabilityBox title="المخزون" value="حسب السعة" />
+              {/* BOOKING & AVAILABILITY */}
+              <FormSection eyebrow="BOOKING" title="الحجز والتوفر">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="طريقة الحجز">
+                    <select value={form.bookingMode} onChange={(e)=>setForm((x)=>({...x,bookingMode:e.target.value}))} className={inputClass}>
+                      <option value="direct">حجز مباشر — بدون اختيار موعد</option>
+                      <option value="scheduled">حجز بموعد / تاريخ</option>
+                    </select>
+                  </Field>
+                  <Field label="السعة القصوى المتاحة">
+                    <input type="number" min="1" value={form.capacity} onChange={(e)=>setForm((x)=>({...x,capacity:e.target.value}))} className={inputClass}/>
+                  </Field>
                 </div>
+                {form.bookingMode === "scheduled" && (
+                  <div className="rounded-[22px] border border-[#0D3B34]/10 bg-white p-5">
+                    <p className="text-sm font-bold text-[#0D3B34]">المواعيد المتاحة</p>
+                    <p className="mt-1 text-xs text-[#0D3B34]/50">حدد الفترة والأيام والأوقات التي يستطيع العميل الحجز فيها.</p>
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <Field label="من تاريخ"><input type="date" value={form.startDate} onChange={(e)=>setForm((x)=>({...x,startDate:e.target.value}))} className={inputClass}/></Field>
+                      <Field label="إلى تاريخ"><input type="date" value={form.endDate} onChange={(e)=>setForm((x)=>({...x,endDate:e.target.value}))} className={inputClass}/></Field>
+                      <Field label="من الساعة"><input type="time" value={form.startTime} onChange={(e)=>setForm((x)=>({...x,startTime:e.target.value}))} className={inputClass}/></Field>
+                      <Field label="إلى الساعة"><input type="time" value={form.endTime} onChange={(e)=>setForm((x)=>({...x,endTime:e.target.value}))} className={inputClass}/></Field>
+                    </div>
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs font-semibold text-[#0D3B34]/65">الأيام المتاحة</p>
+                      <div className="flex flex-wrap gap-2">
+                        {["السبت","الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة"].map((day)=>{
+                          const active=form.availableDays.includes(day);
+                          return <button key={day} type="button" onClick={()=>setForm((x)=>({...x,availableDays:active?x.availableDays.filter((d)=>d!==day):[...x.availableDays,day]}))} className={`rounded-xl px-4 py-2 text-xs font-bold ${active?"bg-[#0D3B34] text-white":"border border-[#0D3B34]/10 bg-[#F8F7F2] text-[#0D3B34]"}`}>{day}</button>
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </FormSection>
 
               {/* IMAGES */}
