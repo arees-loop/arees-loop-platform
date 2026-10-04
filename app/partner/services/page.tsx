@@ -464,6 +464,39 @@ export default function PartnerServicesPage() {
     }));
   };
 
+  const [locationQuery, setLocationQuery] = useState("");
+  const [locationBusy, setLocationBusy] = useState(false);
+  const [locationMessage, setLocationMessage] = useState("");
+
+  const searchServiceLocation = async () => {
+    if (!locationQuery.trim()) return;
+    setLocationBusy(true); setLocationMessage("");
+    try {
+      const r = await fetch(`/api/location/search?query=${encodeURIComponent(locationQuery.trim())}`, { cache: "no-store" });
+      const data = await r.json();
+      if (!r.ok || !data?.location) throw new Error();
+      setForm((x)=>({...x,locationName:data.name||locationQuery.trim(),formattedAddress:data.address||"",latitude:data.location.lat,longitude:data.location.lng}));
+      setLocationMessage("تم تحديد الموقع ✓");
+    } catch { setLocationMessage("تعذر العثور على الموقع. جرّب اسم المكان مع المدينة."); }
+    finally { setLocationBusy(false); }
+  };
+
+  const useCurrentServiceLocation = () => {
+    setLocationMessage("");
+    if (!navigator.geolocation) { setLocationMessage("المتصفح لا يدعم تحديد الموقع."); return; }
+    setLocationBusy(true);
+    navigator.geolocation.getCurrentPosition(async (p)=>{
+      const lat=p.coords.latitude,lng=p.coords.longitude;
+      setForm((x)=>({...x,latitude:lat,longitude:lng}));
+      try {
+        const r=await fetch(`/api/location/reverse-geocode?lat=${lat}&lng=${lng}`,{cache:"no-store"});
+        const data=await r.json();
+        if(r.ok) setForm((x)=>({...x,latitude:lat,longitude:lng,formattedAddress:data.address||x.formattedAddress,locationName:x.locationName||data.address||"موقعي الحالي",placeId:data.placeId||x.placeId}));
+      } catch {}
+      setLocationMessage("تم تحديد موقعك الحالي ✓"); setLocationBusy(false);
+    },()=>{setLocationMessage("تعذر تحديد موقعك. اسمح للموقع من إعدادات المتصفح.");setLocationBusy(false);},{enableHighAccuracy:true,timeout:12000});
+  };
+
   return (
     <main
       dir="rtl"
@@ -898,6 +931,16 @@ export default function PartnerServicesPage() {
                   <Field label="اسم موقع تنفيذ الخدمة *"><input value={form.locationName} onChange={(e)=>setForm((x)=>({...x,locationName:e.target.value}))} className={inputClass} placeholder="مثال: جبل الفيل، البلدة القديمة"/></Field>
                 </div>
                 <Field label="العنوان التفصيلي / الحي"><input value={form.formattedAddress} onChange={(e)=>setForm((x)=>({...x,formattedAddress:e.target.value}))} className={inputClass} placeholder="اكتب الحي أو العنوان الوطني/المختصر إن توفر"/></Field>
+                <div className="mt-4 rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
+                  <p className="mb-2 text-xs font-bold">تحديد الموقع على الخريطة *</p>
+                  <div className="flex flex-col gap-2 md:flex-row">
+                    <input value={locationQuery} onChange={(e)=>setLocationQuery(e.target.value)} onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();void searchServiceLocation();}}} className={inputClass} placeholder="ابحث باسم المكان، الحي أو العنوان"/>
+                    <button type="button" onClick={searchServiceLocation} disabled={locationBusy} className="shrink-0 rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">بحث</button>
+                    <button type="button" onClick={useCurrentServiceLocation} disabled={locationBusy} className="shrink-0 rounded-2xl border border-[#0D3B34]/15 bg-white px-5 py-3 text-sm font-bold disabled:opacity-50">استخدام موقعي الحالي</button>
+                  </div>
+                  {locationMessage&&<p className="mt-3 text-xs font-bold">{locationMessage}</p>}
+                  {Number.isFinite(form.latitude)&&Number.isFinite(form.longitude)&&<div className="mt-3 rounded-xl bg-[#F8F5ED] p-3 text-xs"><b>الموقع مثبت ✓</b><p className="mt-1" dir="ltr">{form.latitude?.toFixed(6)}, {form.longitude?.toFixed(6)}</p></div>}
+                </div>
                 <div className="mt-4 rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
                   <p className="text-sm font-bold">هل توجد نقطة تجمع؟</p>
                   <div className="mt-3 flex gap-2">
