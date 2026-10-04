@@ -636,17 +636,17 @@ export default function PartnerServicesPage() {
             </section>
 
             {/* SERVICES GRID */}
-            <section className={viewMode === "grid" ? "mt-6 grid gap-5 lg:grid-cols-2 2xl:grid-cols-3" : "mt-6 space-y-3"}>
+            <section className={viewMode === "grid" ? "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "mt-6 space-y-2"}>
               {filteredServices.map((service) => {
                 const status = statusConfig[service.status];
 
                 return (
                   <div
                     key={service.id}
-                    className={viewMode === "grid" ? "overflow-hidden rounded-[28px] border border-white/80 bg-white/72 backdrop-blur-xl" : "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl md:flex md:min-h-[190px]"}
+                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-hidden rounded-[18px] border border-[#0D3B34]/8 bg-white/90 backdrop-blur-xl md:flex md:min-h-[104px]"}
                   >
                     {/* IMAGE PLACEHOLDER */}
-                    <div className={viewMode === "grid" ? "relative flex h-[180px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[130px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-auto md:w-[190px] md:shrink-0"}>
+                    <div className={viewMode === "grid" ? "relative flex h-[140px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[96px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-auto md:w-[118px] md:shrink-0"}>
                       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-[#0D3B34]/10" />
                       <div className="absolute bottom-[-40px] left-5 h-32 w-32 rounded-full border border-[#D4AF37]/25" />
 
@@ -667,7 +667,7 @@ export default function PartnerServicesPage() {
                       </span>
                     </div>
 
-                    <div className={viewMode==="grid" ? "p-5" : "flex-1 p-5"}>
+                    <div className={viewMode==="grid" ? "p-4" : "flex-1 p-3 md:grid md:grid-cols-[1.35fr_.8fr_.7fr_auto] md:items-center md:gap-4"}>
                       <p className="text-[10px] font-semibold text-[#B99124]">
                         {service.category}
                       </p>
@@ -680,29 +680,13 @@ export default function PartnerServicesPage() {
                         {service.nameEn}
                       </p>
 
-                      <div className="mt-5 grid grid-cols-2 gap-3">
-                        <InfoBox
-                          label="السعر"
-                          value={`${money(service.finalPrice)} ر.س`}
-                        />
-
-                        <InfoBox
-                          label="الحجوزات"
-                          value={String(service.bookings)}
-                        />
-
-                        <InfoBox
-                          label="السعة"
-                          value={`${service.capacity} زائر`}
-                        />
-
-                        <InfoBox
-                          label="الضريبة"
-                          value={`${service.vatRate}%`}
-                        />
+                      <div className={viewMode==="grid" ? "mt-4 grid grid-cols-2 gap-2" : "mt-2 grid grid-cols-2 gap-2 md:mt-0"}>
+                        <InfoBox label="السعر" value={`${money(service.finalPrice)} ر.س`} />
+                        <InfoBox label="الحجوزات" value={String(service.bookings)} />
+                        {viewMode==="grid" && <><InfoBox label="السعة" value={`${service.capacity} زائر`} /><InfoBox label="الضريبة" value={`${service.vatRate}%`} /></>}
                       </div>
 
-                      <div className="mt-4 rounded-2xl bg-[#F7F6F1] p-4">
+                      <div className={viewMode==="grid" ? "mt-3 rounded-2xl bg-[#F7F6F1] p-3" : "mt-2 rounded-xl bg-[#F7F6F1] p-2 md:mt-0"}>
                         <p className="text-[10px] text-[#0D3B34]/40">
                           الموقع
                         </p>
@@ -723,7 +707,7 @@ export default function PartnerServicesPage() {
                           )}
                       </div>
 
-                      <div className="mt-3 rounded-2xl bg-[#F7F6F1] p-4">
+                      <div className={viewMode==="grid" ? "mt-3 rounded-2xl bg-[#F7F6F1] p-3" : "hidden"}>
                         <p className="text-[10px] text-[#0D3B34]/40">
                           الترخيص المرتبط
                         </p>
@@ -733,7 +717,7 @@ export default function PartnerServicesPage() {
                         </p>
                       </div>
 
-                      <div className="mt-5 flex gap-2">
+                      <div className={viewMode==="grid" ? "mt-4 flex gap-2" : "mt-2 flex gap-2 md:mt-0"}>
                         <button
                           type="button"
                           onClick={() => openEditServiceForm(service)}
