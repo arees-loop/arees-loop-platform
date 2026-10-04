@@ -287,7 +287,6 @@ export default function PartnerServicesPage() {
   const canSubmitForReview = Boolean(
     form.nameAr.trim() &&
     form.category &&
-    form.subCategory &&
     form.descriptionAr.trim() &&
     Number(form.basePrice) > 0 &&
     Number(form.capacity) > 0 &&
@@ -784,10 +783,10 @@ export default function PartnerServicesPage() {
         </div>
       </div>
 
-      {/* ADD SERVICE DRAWER */}
+      {/* ADD / EDIT SERVICE INLINE */}
       {showForm && (
-        <div className="fixed inset-0 z-[100] bg-[#071E1A]/45 backdrop-blur-sm">
-          <div className="absolute inset-y-0 left-0 w-full max-w-[820px] overflow-y-auto bg-[#F8F5ED] shadow-2xl">
+        <div className="border-t border-[#0D3B34]/8 bg-[#F8F5ED] px-5 py-8 md:px-8">
+          <div className="mx-auto w-full max-w-[1200px] overflow-hidden rounded-[28px] border border-white/80 bg-[#F8F5ED] shadow-sm">
             <div className="sticky top-0 z-10 border-b border-[#0D3B34]/8 bg-[#F8F5ED]/95 px-6 py-5 backdrop-blur-xl">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -851,7 +850,7 @@ export default function PartnerServicesPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="النشاط">
+                  <Field label="نوع الخدمة">
                     <select
                       value={form.category}
                       onChange={(e) =>
@@ -863,7 +862,7 @@ export default function PartnerServicesPage() {
                       }
                       className={inputClass}
                     >
-                      <option value="">اختر النشاط</option>
+                      <option value="">اختر نوع الخدمة</option>
 
                       {Object.keys(categories).map((category) => (
                         <option key={category}>{category}</option>
@@ -871,22 +870,10 @@ export default function PartnerServicesPage() {
                     </select>
                   </Field>
 
-                  <Field label="التصنيف الفرعي">
-                    <select
-                      value={form.subCategory}
-                      onChange={(e) =>
-                        setForm((current) => ({
-                          ...current,
-                          subCategory: e.target.value,
-                        }))
-                      }
-                      className={inputClass}
-                    >
-                      <option value="">اختر</option>
-
-                      {(categories[form.category] || []).map((item) => (
-                        <option key={item}>{item}</option>
-                      ))}
+                  <Field label="التصنيف (اختياري)">
+                    <select value={form.subCategory} onChange={(e)=>setForm((current)=>({...current,subCategory:e.target.value}))} className={inputClass}>
+                      <option value="">بدون تصنيف فرعي</option>
+                      {(categories[form.category] || []).map((item) => <option key={item}>{item}</option>)}
                     </select>
                   </Field>
                 </div>
