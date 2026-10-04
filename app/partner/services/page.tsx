@@ -1082,7 +1082,7 @@ export default function PartnerServicesPage() {
                 </p>
 
                 <h3 className="mt-2 text-lg font-bold">
-                  {editingServiceId ? "حفظ تعديلات الخدمة" : "حفظ أو {submitting ? "جاري الحفظ والإرسال..." : "إرسال للمراجعة"}"}
+                  {editingServiceId ? "حفظ تعديلات الخدمة" : "حفظ وإرسال للمراجعة"}
                 </h3>
 
                 <p className="mt-2 text-xs leading-6 text-white/50">
