@@ -224,6 +224,10 @@ const money = (value: number) =>
 export default function PartnerServicesPage() {
   const [services, setServices] = useState<Service[]>(initialServices);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | ServiceStatus>("ALL");
+  const [showForm, setShowForm] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState<number | null>(null);
   const [form, setForm] = useState({
     nameAr: "",
     nameEn: "",
