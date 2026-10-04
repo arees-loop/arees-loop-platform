@@ -467,6 +467,7 @@ export default function PartnerServicesPage() {
   const [locationQuery, setLocationQuery] = useState("");
   const [locationBusy, setLocationBusy] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
+  const [locationSuggestions, setLocationSuggestions] = useState<Array<{name:string;address:string;city:string;location:{lat:number;lng:number}}>>([]);
 
   const searchServiceLocation = async () => {
     if (!locationQuery.trim()) return;
@@ -475,8 +476,9 @@ export default function PartnerServicesPage() {
       const r = await fetch(`/api/location/search?query=${encodeURIComponent(locationQuery.trim())}`, { cache: "no-store" });
       const data = await r.json();
       if (!r.ok || !data?.location) throw new Error();
-      setForm((x)=>({...x,locationName:data.name||locationQuery.trim(),formattedAddress:data.address||"",latitude:data.location.lat,longitude:data.location.lng}));
-      setLocationMessage("تم تحديد الموقع ✓");
+      const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [data];
+      setLocationSuggestions(suggestions);
+      setLocationMessage(suggestions.length ? "اختر الموقع الصحيح من النتائج أدناه." : "لم نجد نتائج.");
     } catch { setLocationMessage("تعذر العثور على الموقع. جرّب اسم المكان مع المدينة."); }
     finally { setLocationBusy(false); }
   };
@@ -939,6 +941,7 @@ export default function PartnerServicesPage() {
                     <button type="button" onClick={useCurrentServiceLocation} disabled={locationBusy} className="shrink-0 rounded-2xl border border-[#0D3B34]/15 bg-white px-5 py-3 text-sm font-bold disabled:opacity-50">استخدام موقعي الحالي</button>
                   </div>
                   {locationMessage&&<p className="mt-3 text-xs font-bold">{locationMessage}</p>}
+                  {locationSuggestions.length>0&&<div className="mt-3 overflow-hidden rounded-xl border border-[#0D3B34]/10 bg-white">{locationSuggestions.map((s,i)=><button key={i} type="button" onClick={()=>{setForm((x)=>({...x,city:s.city||x.city,locationName:s.name,formattedAddress:s.address,latitude:s.location.lat,longitude:s.location.lng}));setLocationQuery(s.address);setLocationSuggestions([]);setLocationMessage("تم اختيار وتثبيت الموقع ✓");}} className="block w-full border-b border-[#0D3B34]/8 px-4 py-3 text-right last:border-0 hover:bg-[#F8F5ED]"><b className="block text-sm">{s.name}</b><span className="mt-1 block text-xs text-[#0D3B34]/55">{s.address}</span></button>)}</div>}
                   {Number.isFinite(form.latitude)&&Number.isFinite(form.longitude)&&<div className="mt-3 rounded-xl bg-[#F8F5ED] p-3 text-xs"><b>الموقع مثبت ✓</b><p className="mt-1" dir="ltr">{form.latitude?.toFixed(6)}, {form.longitude?.toFixed(6)}</p></div>}
                 </div>
                 <div className="mt-4 rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
