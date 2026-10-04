@@ -9,6 +9,10 @@ type ContractPayload = {
     legalNameEn?: string | null;
     tradeNameAr?: string | null;
     tradeNameEn?: string | null;
+    address?: string | null;
+    formattedAddress?: string | null;
+    city?: string | null;
+    country?: string | null;
     unifiedNumber?: string | null;
     commercialRegister?: string | null;
     mainContactName?: string | null;
@@ -63,7 +67,7 @@ export default function PartnerContractPage() {
 
       <section className="mt-7 grid gap-5 md:grid-cols-2">
         <div className="rounded-2xl border p-5" dir="rtl"><h2 className="font-bold text-[#0D3B34]">الطرف الأول | First Party</h2><p className="mt-3 font-bold">شركة أريس الحلول المتكاملة المحدودة</p><p className="text-sm">AREES AL-HELLOUL AL-MUTAKAMLA CO.LTD</p><p className="mt-2 text-sm text-gray-600">السجل التجاري: 4650264140</p><p className="text-sm text-gray-600">الرقم الضريبي: 311897578200003</p><p className="text-sm text-gray-600">ترخيص السياحة: 73104550</p><p className="text-sm text-gray-600">المدينة المنورة، المملكة العربية السعودية</p></div>
-        <div className="rounded-2xl border p-5" dir="rtl"><h2 className="font-bold text-[#0D3B34]">الطرف الثاني | Second Party</h2><p className="mt-3 font-bold">{partner.tradeNameAr||partner.legalNameAr}</p>{partner.tradeNameAr&&<p className="text-sm">{partner.legalNameAr}</p>}<p className="mt-2 text-sm text-gray-600">السجل التجاري: {partner.commercialRegister||"—"}</p><p className="text-sm text-gray-600">الرقم الموحد: {partner.unifiedNumber||"—"}</p><p className="text-sm text-gray-600">المفوض: {agreement.acceptedByName||partner.mainContactName||"—"}</p></div>
+        <div className="rounded-2xl border p-5" dir="rtl"><h2 className="font-bold text-[#0D3B34]">الطرف الثاني | Second Party</h2><p className="mt-3 font-bold">{partner.tradeNameAr||partner.legalNameAr}</p>{partner.tradeNameAr&&<p className="text-sm">{partner.legalNameAr}</p>}<p className="mt-2 text-sm text-gray-600">السجل التجاري: {partner.commercialRegister||"—"}</p><p className="text-sm text-gray-600">العنوان: {partner.formattedAddress||partner.address||[partner.city,partner.country].filter(Boolean).join("، ")||"—"}</p><p className="text-sm text-gray-600">الرقم الموحد: {partner.unifiedNumber||"—"}</p><p className="text-sm text-gray-600">المفوض: {agreement.acceptedByName||partner.mainContactName||"—"}</p></div>
       </section>
 
       <section className="mt-7 space-y-5">{clauses.map(([title,ar,en])=><div key={title} className="break-inside-avoid border-b pb-5"><h2 className="font-bold text-[#0D3B34]">{title}</h2><p dir="rtl" className="mt-2 text-sm leading-7">{ar}</p><p dir="ltr" className="mt-2 text-sm leading-7 text-gray-600">{en}</p></div>)}</section>
