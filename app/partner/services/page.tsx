@@ -141,9 +141,8 @@ const initialServices: Service[] = [
 ];
 
 const mainCategories = [
-  "فنادق وإقامة","شقق مخدومة","شاليهات واستراحات وفلل","برامج سياحية",
-  "نقل سياحي","حجوزات وتذاكر","مطاعم وكافيهات","تجارب ثرية",
-  "تقنية وخدمات سياحية","معارض وفعاليات"
+  "برامج سياحية","نقل سياحي","حجوزات وتذاكر","مطاعم وكافيهات",
+  "تجارب ثرية","مواقع أثرية","حرف يدوية","تقنية وخدمات سياحية","معارض وفعاليات"
 ];
 
 
@@ -984,12 +983,17 @@ export default function PartnerServicesPage() {
 
               {/* IMAGES */}
               <FormSection eyebrow="MEDIA" title="صور الخدمة">
+                <div className="mb-3 text-xs leading-5 text-[#0D3B34]/55">
+                  الصور الموصى بها: <strong>1080 × 1080 بكسل (1:1)</strong> · الحد الأقصى <strong>2 MB للصورة</strong> · حتى <strong>10 صور</strong> · JPG / PNG / WebP
+                </div>
                 <label className="flex cursor-pointer items-center justify-center rounded-[18px] border border-dashed border-[#B88A13]/45 bg-white px-5 py-5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF9E8]">
                   + إضافة صور
                   <input type="file" multiple accept="image/png,image/jpeg,image/webp" className="hidden"
                     onChange={(e)=>{
-                      const files=Array.from(e.target.files||[]);
-                      if(!files.length) return;
+                      const selected=Array.from(e.target.files||[]);
+                      const remaining=Math.max(0,10-form.imagePreviews.length);
+                      const files=selected.filter((file)=>file.size<=2*1024*1024).slice(0,remaining);
+                      if(!files.length) { e.currentTarget.value=""; return; }
                       const previews=files.map((file)=>({name:file.name,url:URL.createObjectURL(file)}));
                       setForm((current)=>({
                         ...current,
