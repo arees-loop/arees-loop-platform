@@ -23,24 +23,33 @@ export async function POST(request:Request){
     const vatRate=15;
     const finalPrice=vatIncluded?basePrice:basePrice*1.15;
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
+    const latitude=Number(body.latitude);
+    const longitude=Number(body.longitude);
+    if(!body.city?.trim()||!body.locationName?.trim()||!Number.isFinite(latitude)||!Number.isFinite(longitude)){
+      return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة قبل الإرسال."},{status:400});
+    }
     const service=await prisma.service.create({
       data:{
         partnerId:membership.partnerId,
+        licenseId:body.licenseId?.trim()||null,
         nameAr:body.nameAr.trim(),
         nameEn:body.nameEn?.trim()||null,
         category:body.category.trim(),
         subCategory:body.subCategory?.trim()||null,
         descriptionAr:body.descriptionAr?.trim()||null,
         descriptionEn:body.descriptionEn?.trim()||null,
-        city:body.city?.trim()||null,
-        locationName:body.hasMeetingPoint?(body.meetingPointName?.trim()||null):null,
-        formattedAddress:body.hasMeetingPoint?(body.meetingPointName?.trim()||null):null,
+        city:body.city.trim(),
+        locationName:body.locationName.trim(),
+        formattedAddress:body.formattedAddress?.trim()||body.locationName.trim(),
+        placeId:body.placeId?.trim()||null,
+        latitude,
+        longitude,
         basePrice,
         vatRate,
         finalPrice,
         capacity:Number(body.capacity||0)||null,
         cancellationPolicy:body.cancellationPolicy?.trim()||null,
-        meetingInstructions:body.hasMeetingPoint?(body.meetingInstructions?.trim()||null):null,
+        meetingInstructions:body.meetingInstructions?.trim()||null,
         status:"UNDER_REVIEW"
       },
       include:{images:true}
