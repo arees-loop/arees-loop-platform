@@ -58,7 +58,19 @@ export default function PartnerLoginPage() {
         return;
       }
 
-      window.location.href = "/partner/status";
+      try {
+        const applicationResponse = await fetch("/api/partner/application", {
+          method: "GET",
+          cache: "no-store",
+          credentials: "include",
+        });
+        const applicationData = await applicationResponse.json().catch(() => null);
+        window.location.href = applicationData?.application?.status === "ACTIVE"
+          ? "/partner/dashboard"
+          : "/partner/status";
+      } catch {
+        window.location.href = "/partner/status";
+      }
     } catch {
       setError("تعذر الاتصال بالخادم. حاول مرة أخرى.");
     } finally {
