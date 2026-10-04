@@ -636,17 +636,17 @@ export default function PartnerServicesPage() {
             </section>
 
             {/* SERVICES GRID */}
-            <section className="mt-6 grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+            <section className={viewMode === "grid" ? "mt-6 grid gap-5 lg:grid-cols-2 2xl:grid-cols-3" : "mt-6 space-y-3"}>
               {filteredServices.map((service) => {
                 const status = statusConfig[service.status];
 
                 return (
                   <div
                     key={service.id}
-                    className="overflow-hidden rounded-[28px] border border-white/80 bg-white/72 backdrop-blur-xl"
+                    className={viewMode === "grid" ? "overflow-hidden rounded-[28px] border border-white/80 bg-white/72 backdrop-blur-xl" : "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl md:flex md:min-h-[190px]"}
                   >
                     {/* IMAGE PLACEHOLDER */}
-                    <div className="relative flex h-[180px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]">
+                    <div className={viewMode === "grid" ? "relative flex h-[180px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[130px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-auto md:w-[190px] md:shrink-0"}>
                       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-[#0D3B34]/10" />
                       <div className="absolute bottom-[-40px] left-5 h-32 w-32 rounded-full border border-[#D4AF37]/25" />
 
