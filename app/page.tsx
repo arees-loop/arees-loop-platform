@@ -1570,7 +1570,7 @@ export default function Home() {
               <div>
                 <h3 className="text-[11px] font-black text-[#0D3B34]">اكتشف</h3>
                 <div className="mt-1.5 space-y-1 text-[11px] text-[#0D3B34]/50">
-                  <Link href="/discover" className="block transition hover:text-[#D4AF37]">التجارب</Link>
+                  <Link href="/services" className="block transition hover:text-[#D4AF37]">الخدمات والتجارب</Link>
                   <Link href="/discover" className="block transition hover:text-[#D4AF37]">المعالم</Link>
                   <Link href="/discover" className="block transition hover:text-[#D4AF37]">الفعاليات</Link>
                 </div>
