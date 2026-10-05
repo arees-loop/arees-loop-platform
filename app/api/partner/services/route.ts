@@ -51,6 +51,9 @@ export async function POST(request:Request){
         capacity:Number(body.capacity||0)||null,
         cancellationPolicy:body.cancellationPolicy?.trim()||null,
         meetingInstructions:body.meetingInstructions?.trim()||null,
+        organizerType:body.organizerType==="OTHER"?"OTHER":"SELF", organizerName:body.organizerName?.trim()||null,
+        organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null, organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,
+        programApprovalNumber:body.programApprovalNumber?.trim()||null,
         status:"UNDER_REVIEW",
         images:{ create:(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((image:any)=>typeof image?.url==="string" && image.url.startsWith("https://")).map((image:any,index:number)=>({ url:image.url, altText:image.altText?.trim()||body.nameAr.trim(), sortOrder:Number.isFinite(Number(image.sortOrder))?Number(image.sortOrder):index })) }
       },
