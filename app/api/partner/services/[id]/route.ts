@@ -14,7 +14,7 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
     const body=await request.json(); const basePrice=Number(body.basePrice||0); const latitude=Number(body.latitude); const longitude=Number(body.longitude);
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     if(!body.city?.trim()||!body.locationName?.trim()||!Number.isFinite(latitude)||!Number.isFinite(longitude)) return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة."},{status:400});
-    const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&x.url.startsWith("https://"));
+    const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
     const status=body.submitForReview ? "UNDER_REVIEW" : current.status;
     const service=await prisma.$transaction(async(tx)=>{
       await tx.serviceImage.deleteMany({where:{serviceId:id}});
