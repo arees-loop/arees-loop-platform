@@ -13,7 +13,8 @@ type ServiceStatus =
   | "DRAFT"
   | "UNDER_REVIEW"
   | "PUBLISHED"
-  | "SUSPENDED";
+  | "SUSPENDED"
+  | "REJECTED";
 
 type Service = {
   id: string | number;
@@ -70,6 +71,10 @@ const statusConfig: Record<
   },
   SUSPENDED: {
     label: "موقوفة",
+    className: "bg-[#FFE9E7] text-[#A3443E]",
+  },
+  REJECTED: {
+    label: "مرفوضة",
     className: "bg-[#FFE9E7] text-[#A3443E]",
   },
 };
@@ -628,6 +633,7 @@ export default function PartnerServicesPage() {
                   <option value="UNDER_REVIEW">تحت المراجعة</option>
                   <option value="DRAFT">مسودة</option>
                   <option value="SUSPENDED">موقوفة</option>
+                  <option value="REJECTED">مرفوضة</option>
                 </select>
 
                 <div className="flex items-center gap-2">
