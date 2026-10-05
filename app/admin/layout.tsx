@@ -19,7 +19,7 @@ const nav = [
   { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", badge: "1", permission: "PARTNER_REQUESTS" },
   { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "♧", permission: "ACTIVE_PARTNERS" },
   { href: "/admin/users", label: "المستخدمين", icon: "♙", superOnly: true, permission: null },
-  { href: "/admin/dashboard?section=content", label: "المحتوى والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
+  { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
   { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
   { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
   { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
