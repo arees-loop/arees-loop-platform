@@ -11,6 +11,7 @@ type Service = {
   partnerName: string; bookingCount: number; updatedAt: string;
   license?: { type?: string | null; issuer?: string | null; licenseNumber?: string | null; status?: string | null } | null;
   images?: Array<{ id: string; url: string }>;
+  organizerType?: string|null; organizerName?: string|null; organizerLicenseNumber?: string|null; organizerLicenseIssuer?: string|null; programApprovalNumber?: string|null;
 };
 
 const labels: Record<string,string> = {
@@ -94,7 +95,8 @@ export default function AdminServicesPage() {
               ["الحالة",labels[selected.status]||selected.status],["التصنيف",selected.category],["التصنيف الفرعي",selected.subCategory||"—"],
               ["السعر النهائي",`${selected.finalPrice} ريال`],["السعة",String(selected.capacity??"—")],["المدينة",selected.city||"—"],
               ["الموقع",selected.locationName||selected.formattedAddress||"—"],["رقم الترخيص",selected.license?.licenseNumber||"غير مرتبط"],
-              ["الحجوزات",String(selected.bookingCount)]
+              ["🏢 مقدم الخدمة",selected.partnerName],["🪪 منظم البرنامج",selected.organizerType==="OTHER"?(selected.organizerName||"—"):"مقدم الخدمة نفسه"],
+              ["ترخيص المنظم",selected.organizerType==="OTHER"?(selected.organizerLicenseNumber||"—"):(selected.license?.licenseNumber||"غير مرتبط")],["🔢 رقم اعتماد البرنامج",selected.programApprovalNumber||"غير مدخل"],["الحجوزات",String(selected.bookingCount)]
             ].map(([l,v])=><div key={l} className="rounded-2xl bg-white p-4"><p className="text-[10px] opacity-45">{l}</p><p className="mt-1 text-sm font-bold">{v}</p></div>)}
           </div>
           <div className="mt-4 rounded-2xl bg-white p-4"><p className="text-xs font-bold">الوصف العربي</p><p className="mt-2 whitespace-pre-wrap text-sm leading-7 opacity-70">{selected.descriptionAr||"—"}</p></div>
