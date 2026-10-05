@@ -23,7 +23,9 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
         descriptionAr:body.descriptionAr?.trim()||null,descriptionEn:body.descriptionEn?.trim()||null,city:body.city.trim(),locationName:body.locationName.trim(),
         formattedAddress:body.formattedAddress?.trim()||body.locationName.trim(),placeId:body.placeId?.trim()||null,latitude,longitude,basePrice,
         vatRate:15,finalPrice:body.vatMode==="included"?basePrice:basePrice*1.15,capacity:Number(body.capacity||0)||null,
-        cancellationPolicy:body.cancellationPolicy?.trim()||null,meetingInstructions:body.meetingInstructions?.trim()||null,status,
+        cancellationPolicy:body.cancellationPolicy?.trim()||null,meetingInstructions:body.meetingInstructions?.trim()||null,
+        organizerType:body.organizerType==="OTHER"?"OTHER":"SELF",organizerName:body.organizerName?.trim()||null,organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null,
+        organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,programApprovalNumber:body.programApprovalNumber?.trim()||null,status,
         images:{create:images.map((x:any,index:number)=>({url:x.url,altText:x.altText?.trim()||body.nameAr.trim(),sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}
       },include:{images:true}});
     });
