@@ -107,6 +107,7 @@ export default function PartnerServicesPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
   const [submitMessage, setSubmitMessage] = useState("");
   const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
   const [editingOriginalService, setEditingOriginalService] = useState<Service | null>(null);
@@ -269,6 +270,7 @@ export default function PartnerServicesPage() {
     setEditingServiceId(null);
     setEditingOriginalService(null);
     resetForm();
+    setPendingImageFiles([]);
     setShowForm(true);
   };
 
@@ -309,6 +311,7 @@ export default function PartnerServicesPage() {
       startTime: "",
       endTime: "",
     });
+    setPendingImageFiles([]);
     setShowForm(true);
   };
 
@@ -316,6 +319,7 @@ export default function PartnerServicesPage() {
     setShowForm(false);
     setEditingServiceId(null);
     resetForm();
+    setPendingImageFiles([]);
   };
 
   const buildServiceFromForm = (
@@ -384,6 +388,7 @@ export default function PartnerServicesPage() {
   const saveDraft = async () => {
     if(!editingServiceId){ setSubmitMessage("استخدم «إرسال للمراجعة» لإنشاء الخدمة الجديدة."); return; }
     if(uploadingImages){ setSubmitMessage("انتظر لحظة حتى يكتمل رفع الصور ثم احفظ التعديلات."); return; }
+    if(form.imagePreviews.length > form.images.length){ setSubmitMessage("لم يكتمل حفظ الصور بعد. أعد رفع الصورة ثم انتظر اكتمال الرفع قبل الحفظ."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
       const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges),submitForReview:editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges})});
@@ -395,6 +400,8 @@ export default function PartnerServicesPage() {
   };
 
   const submitForReview = async () => {
+    if(uploadingImages){ setSubmitMessage("انتظر لحظة حتى يكتمل رفع الصور."); return; }
+    if(form.imagePreviews.length > form.images.length){ setSubmitMessage("لم يكتمل حفظ الصور. أعد رفعها قبل الإرسال للمراجعة."); return; }
     if (submitting) return;
     setSubmitting(true);
     setSubmitMessage("");
@@ -1084,6 +1091,7 @@ export default function PartnerServicesPage() {
                         imagePreviews:[...current.imagePreviews,...previews],
                         primaryImage:current.primaryImage || files[0].name,
                       }));
+                      setPendingImageFiles((current)=>[...current,...files]);
                       setUploadingImages(true);
                       void Promise.all(files.map(async(file)=>{
                         const data=new FormData(); data.append("file",file);
@@ -1091,7 +1099,7 @@ export default function PartnerServicesPage() {
                         const result=await response.json();
                         if(!response.ok||!result?.success) throw new Error(result?.message||"تعذر رفع الصورة.");
                         return {name:file.name,url:result.url as string};
-                      })).then((uploaded)=>setForm((current)=>({...current,images:[...current.images,...uploaded]}))).catch((error)=>setSubmitMessage(error?.message||"تعذر رفع الصورة.")).finally(()=>setUploadingImages(false));
+                      })).then((uploaded)=>{ setForm((current)=>({...current,images:[...current.images,...uploaded]})); setPendingImageFiles([]); }).catch((error)=>{ setForm((current)=>({...current,imagePreviews:current.imagePreviews.filter((p)=>!previews.some((x)=>x.url===p.url))})); setPendingImageFiles([]); setSubmitMessage(error?.message||"تعذر رفع الصورة. لم يتم حفظها."); }).finally(()=>setUploadingImages(false));
                       e.currentTarget.value="";
                     }}
                   />
