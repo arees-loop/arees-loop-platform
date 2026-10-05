@@ -180,18 +180,18 @@ export default function PartnerServicesPage() {
     return () => { alive = false; };
   }, []);
 
-  const canSubmitForReview = Boolean(
-    form.nameAr.trim() &&
-    form.category &&
-    form.descriptionAr.trim() &&
-    form.city.trim() &&
-    form.locationName.trim() &&
-    Number.isFinite(form.latitude) &&
-    Number.isFinite(form.longitude) &&
-    Number(form.basePrice) > 0 &&
-    Number(form.capacity) > 0 &&
-    form.cancellationPolicy.trim()
-  );
+  const missingRequiredFields = () => {
+    const missing:string[] = [];
+    if(!form.nameAr.trim()) missing.push("اسم الخدمة");
+    if(!form.category) missing.push("التصنيف");
+    if(!form.descriptionAr.trim()) missing.push("الوصف العربي");
+    if(!form.city.trim()) missing.push("المدينة");
+    if(!form.locationName.trim() || !Number.isFinite(form.latitude) || !Number.isFinite(form.longitude)) missing.push("موقع التنفيذ");
+    if(!(Number(form.basePrice)>0)) missing.push("السعر");
+    if(!(Number(form.capacity)>0)) missing.push("السعة");
+    if(!form.cancellationPolicy.trim()) missing.push("سياسة الإلغاء");
+    return missing;
+  };
 
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
@@ -399,6 +399,8 @@ export default function PartnerServicesPage() {
   };
 
   const submitForReview = async () => {
+    const missing=missingRequiredFields();
+    if(missing.length){ setSubmitMessage(`أكمل الحقول الإلزامية التالية: ${missing.join("، ")}`); return; }
     if(uploadingImages){ setSubmitMessage("انتظر لحظة حتى يكتمل رفع الصور."); return; }
     if(form.imagePreviews.length > form.images.length){ setSubmitMessage("لم يكتمل حفظ الصور. أعد رفعها قبل الإرسال للمراجعة."); return; }
     if (submitting) return;
@@ -1179,25 +1181,18 @@ export default function PartnerServicesPage() {
                     : "الحفظ كمسودة لا ينشر الخدمة. إرسالها للمراجعة يحولها إلى «تحت المراجعة» حتى تعتمدها إدارة Arees Loop."}
                 </p>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={saveDraft}
-                    disabled={submitting || uploadingImages}
-                    className="rounded-2xl border border-white/15 bg-white/8 px-5 py-3.5 text-sm font-bold text-white transition disabled:cursor-wait disabled:opacity-60"
-                  >
-                    {uploadingImages ? "جارٍ رفع الصور..." : submitting ? "جارٍ الحفظ..." : (editingServiceId ? "حفظ التعديلات" : "حفظ كمسودة")}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={submitForReview}
-                    disabled={!canSubmitForReview}
-                    className="rounded-2xl bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#0D3B34] transition disabled:cursor-not-allowed disabled:opacity-35"
-                    title={!canSubmitForReview ? "أكمل البيانات الإلزامية قبل الإرسال" : undefined}
-                  >
-                    إرسال للمراجعة
-                  </button>
+                <div className="mt-5">
+                  {editingServiceId ? (
+                    <button type="button" onClick={saveDraft} disabled={submitting || uploadingImages}
+                      className="w-full rounded-2xl bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#0D3B34] transition disabled:cursor-wait disabled:opacity-60">
+                      {uploadingImages ? "جارٍ رفع الصور..." : submitting ? "جارٍ حفظ التعديلات..." : "حفظ التعديلات"}
+                    </button>
+                  ) : (
+                    <button type="button" onClick={submitForReview} disabled={submitting || uploadingImages}
+                      className="w-full rounded-2xl bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#0D3B34] transition disabled:cursor-wait disabled:opacity-60">
+                      {uploadingImages ? "جارٍ رفع الصور..." : submitting ? "جارٍ الإرسال للمراجعة..." : "إرسال للمراجعة"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
