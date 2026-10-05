@@ -387,8 +387,7 @@ export default function PartnerServicesPage() {
 
   const saveDraft = async () => {
     if(!editingServiceId){ setSubmitMessage("استخدم «إرسال للمراجعة» لإنشاء الخدمة الجديدة."); return; }
-    if(uploadingImages){ setSubmitMessage("انتظر لحظة حتى يكتمل رفع الصور ثم احفظ التعديلات."); return; }
-    if(form.imagePreviews.length > form.images.length){ setSubmitMessage("لم يكتمل حفظ الصور بعد. أعد رفع الصورة ثم انتظر اكتمال الرفع قبل الحفظ."); return; }
+    if(uploadingImages){ setSubmitMessage("جارٍ رفع الصورة، سيتم تفعيل الحفظ فور اكتمال الرفع."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
       const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges),submitForReview:editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges})});
@@ -1185,7 +1184,7 @@ export default function PartnerServicesPage() {
                     type="button"
                     onClick={saveDraft}
                     disabled={submitting || uploadingImages}
-                    className="rounded-2xl border border-white/15 bg-white/8 px-5 py-3.5 text-sm font-bold text-white"
+                    className="rounded-2xl border border-white/15 bg-white/8 px-5 py-3.5 text-sm font-bold text-white transition disabled:cursor-wait disabled:opacity-60"
                   >
                     {uploadingImages ? "جارٍ رفع الصور..." : submitting ? "جارٍ الحفظ..." : (editingServiceId ? "حفظ التعديلات" : "حفظ كمسودة")}
                   </button>
