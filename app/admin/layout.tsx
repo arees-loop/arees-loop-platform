@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type AdminIdentity = {
@@ -16,8 +16,8 @@ type AdminIdentity = {
 
 const nav = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
-  { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", badge: "1", permission: "PARTNER_REQUESTS" },
-  { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "♧", permission: "ACTIVE_PARTNERS" },
+  { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
+  { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
   { href: "/admin/users", label: "المستخدمين", icon: "♙", superOnly: true, permission: null },
   { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
   { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
@@ -32,6 +32,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
 
@@ -101,8 +102,9 @@ export default function AdminLayout({
           <nav className="flex-1 space-y-1.5 px-4 py-5">
             {visibleNav.map((item) => {
               const base = item.href.split("?")[0];
-              const active =
-                pathname === base && !item.href.includes("?");
+              const active = item.href.includes("?")
+                ? pathname === base && searchParams.get("view") === "active"
+                : pathname === base && !(base === "/admin/partners" && searchParams.get("view") === "active");
 
               return (
                 <Link
