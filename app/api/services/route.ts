@@ -30,52 +30,38 @@ function parseOptionalNumber(value: unknown) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!process.env.DATABASE_URL) {
-    return databaseNotConfigured();
-  }
+  if (!process.env.DATABASE_URL) return databaseNotConfigured();
 
   try {
     const { prisma } = await import("@/lib/prisma");
-
     const { searchParams } = new URL(request.url);
-
     const partnerId = searchParams.get("partnerId");
 
-    if (!partnerId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "PARTNER_ID_REQUIRED",
-          message: "partnerId is required.",
-        },
-        { status: 400 },
-      );
-    }
-
     const services = await prisma.service.findMany({
-      where: {
-        partnerId,
-      },
-      orderBy: {
-        createdAt: "desc",
+      where: partnerId ? { partnerId } : { status: "PUBLISHED" },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        partner: { select: { legalNameAr: true, tradeNameAr: true } },
+        images: { orderBy: { sortOrder: "asc" } },
       },
     });
 
     return NextResponse.json({
       success: true,
-      data: services,
+      data: services.map((service) => ({
+        ...service,
+        basePrice: Number(service.basePrice),
+        vatRate: Number(service.vatRate),
+        finalPrice: Number(service.finalPrice),
+        latitude: service.latitude == null ? null : Number(service.latitude),
+        longitude: service.longitude == null ? null : Number(service.longitude),
+        partnerName: service.partner.tradeNameAr || service.partner.legalNameAr,
+        images: service.images.map((image) => image.url),
+      })),
     });
   } catch (error) {
     console.error("GET /api/services error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "SERVICES_FETCH_FAILED",
-        message: "Unable to load services.",
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, error: "SERVICES_FETCH_FAILED", message: "Unable to load services." }, { status: 500 });
   }
 }
 
