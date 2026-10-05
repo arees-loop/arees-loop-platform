@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 type AdminIdentity = {
   email: string;
@@ -28,11 +28,11 @@ const nav: NavItem[] = [
   { href: "/admin/dashboard?section=settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
 ];
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<>{children}</>}><AdminLayoutShell>{children}</AdminLayoutShell></Suspense>;
+}
+
+function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
