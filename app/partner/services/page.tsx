@@ -718,10 +718,10 @@ export default function PartnerServicesPage() {
                 return (
                   <div
                     key={service.id}
-                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-visible rounded-[16px] border border-[#0D3B34]/8 bg-white/90 backdrop-blur-xl md:flex md:min-h-[118px]"}
+                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-visible rounded-[16px] border border-[#0D3B34]/8 bg-white/90 backdrop-blur-xl md:flex md:min-h-[92px]"}
                   >
                     {/* IMAGE PLACEHOLDER */}
-                    <div className={viewMode === "grid" ? "relative flex h-[140px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[82px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:min-h-[118px] md:w-[150px] md:shrink-0"}>
+                    <div className={viewMode === "grid" ? "relative flex h-[140px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[82px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:min-h-[92px] md:w-[112px] md:shrink-0"}>
                       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-[#0D3B34]/10" />
                       <div className="absolute bottom-[-40px] left-5 h-32 w-32 rounded-full border border-[#D4AF37]/25" />
 
@@ -737,7 +737,7 @@ export default function PartnerServicesPage() {
 
                       {viewMode==="grid" && <span className={`absolute right-4 top-4 rounded-full px-3 py-1.5 text-[10px] font-bold ${status.className}`}>{status.label}</span>}                    </div>
 
-                    <div className={viewMode==="grid" ? "p-4" : "flex-1 p-2 md:grid md:grid-cols-[1.2fr_.8fr_.8fr_.8fr_auto] md:items-center md:gap-3"}>
+                    <div className={viewMode==="grid" ? "p-4" : "flex-1 p-2 md:grid md:grid-cols-[1.45fr_1fr_.8fr_.8fr_auto] md:items-center md:gap-3"}>
                       <p className="text-[10px] font-semibold text-[#B99124]">
                         {service.category}
                       </p>
@@ -785,20 +785,20 @@ export default function PartnerServicesPage() {
                         <p className="mt-1 text-xs font-semibold text-[#0D3B34]/70">
                           {service.license}
                         </p>
+                        {viewMode==="list" && <span className={`mt-2 inline-block rounded-full px-3 py-1.5 text-[10px] font-bold ${status.className}`}>{status.label}</span>}
                       </div>
 
-                      {viewMode==="list" && <div className="mt-1 flex items-center gap-2 md:mt-0 md:justify-self-end">
-                        <span className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${status.className}`}>{status.label}</span>
-                        <div className="relative">
-                          <button type="button" aria-label="إجراءات الخدمة" onClick={()=>setActionMenuId(actionMenuId===service.id?null:service.id)} className="h-10 w-10 rounded-xl border border-[#0D3B34]/10 bg-white text-lg font-bold">⋮</button>
-                          {actionMenuId===service.id && <div className="absolute left-0 top-12 z-30 w-40 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white p-1 shadow-xl">
-                            <button type="button" onClick={()=>{setActionMenuId(null);openEditServiceForm(service);window.scrollTo({top:0,behavior:"smooth"});}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">✎ تعديل</button>
-                            <Link href={`/services/${service.id}`} className="block w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">◉ معاينة</Link>
-                            {(service.status==="PUBLISHED"||service.status==="SUSPENDED") && <button type="button" onClick={()=>void togglePublication(service)} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">{service.status==="PUBLISHED"?"◌ إخفاء من النشر":"● نشر الخدمة"}</button>}
-                            <button type="button" onClick={()=>{setActionMenuId(null);void requestDeleteService(service);}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold text-red-700 hover:bg-red-50">⌫ حذف</button>
-                          </div>}
-                        </div>
+                      {viewMode==="list" && <div className="relative justify-self-start">
+                        <button type="button" aria-label="إجراءات الخدمة" onClick={()=>setActionMenuId(actionMenuId===service.id?null:service.id)} className="h-10 w-10 rounded-xl border border-[#0D3B34]/10 bg-white text-lg font-bold">⋮</button>
+                        {actionMenuId===service.id && <div className="absolute left-0 top-12 z-30 w-40 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white p-1 shadow-xl">
+                          <button type="button" onClick={()=>{setActionMenuId(null);openEditServiceForm(service);window.scrollTo({top:0,behavior:"smooth"});}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">✎ تعديل</button>
+                          <Link href={`/services/${service.id}`} className="block w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">◉ معاينة</Link>
+                          {(service.status==="PUBLISHED"||service.status==="SUSPENDED") && <button type="button" onClick={()=>void togglePublication(service)} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">{service.status==="PUBLISHED"?"◌ إخفاء من النشر":"● نشر الخدمة"}</button>}
+                          <button type="button" onClick={()=>{setActionMenuId(null);void requestDeleteService(service);}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold text-red-700 hover:bg-red-50">⌫ حذف</button>
+                        </div>}
                       </div>}
+
+                      
                     </div>
                   </div>
                 );
