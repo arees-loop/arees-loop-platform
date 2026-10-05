@@ -14,7 +14,9 @@ type AdminIdentity = {
   profileImageUrl: string | null;
 };
 
-const nav = [
+type NavItem = { href: string; label: string; icon: string; permission: string | null; superOnly?: boolean; badge?: string | number };
+
+const nav: NavItem[] = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
   { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
   { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
