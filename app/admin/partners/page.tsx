@@ -1825,7 +1825,7 @@ export default function AdminPartnersPage() {
         </ModalShell>
       )}
 
-      {showCompletionModal && (
+      {showCompletionModal && selectedPartner && (
 
         <ModalShell title="طلب استكمال من الشريك" subtitle={`الطلب: ${selectedPartner.tradeName}`} onClose={() => setShowCompletionModal(false)}>
 
