@@ -1,0 +1,100 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentSession } from "@/lib/session";
+import { sendEmail } from "@/lib/notifications/email";
+
+function isAdmin(role?: string) {
+  return role === "ADMIN" || role === "SUPER_ADMIN";
+}
+
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const session = await getCurrentSession();
+  if (!session || !isAdmin(session.user.role)) {
+    return NextResponse.json({ success: false, message: "غير مصرح." }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+  const body = await request.json().catch(() => ({}));
+  const action = String(body?.action || "");
+  const reason = String(body?.reason || "").trim();
+
+  const service = await prisma.service.findUnique({
+    where: { id },
+    include: {
+      partner: {
+        include: {
+          members: {
+            where: { isActive: true },
+            include: { user: { select: { email: true, firstName: true } } },
+          },
+        },
+      },
+    },
+  });
+
+  if (!service) {
+    return NextResponse.json({ success: false, message: "الخدمة غير موجودة." }, { status: 404 });
+  }
+
+  if (action === "APPROVE") {
+    const updated = await prisma.service.update({
+      where: { id },
+      data: { status: "PUBLISHED" },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "SERVICE_APPROVED_PUBLISHED",
+        entityType: "Service",
+        entityId: id,
+        beforeData: { status: service.status },
+        afterData: { status: "PUBLISHED" },
+      },
+    });
+
+    const recipients = [...new Set(service.partner.members.map((m) => m.user.email).filter(Boolean))];
+    if (recipients.length) {
+      await sendEmail({
+        to: recipients,
+        subject: "تم اعتماد ونشر خدمتك على Arees Loop",
+        html: `
+          <div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8">
+            <h2>تم اعتماد الخدمة بنجاح</h2>
+            <p>تمت الموافقة على خدمة <strong>${service.nameAr}</strong> وأصبحت منشورة للعملاء على Arees Loop.</p>
+            <p>يمكنكم في أي لحظة إخفاء نشر الخدمة مؤقتاً في حالة رغبتكم في ذلك من لوحة تحكم الشريك، ثم إظهارها مجدداً عند توفرها.</p>
+            <p>فريق Arees Loop</p>
+          </div>
+        `,
+      });
+    }
+
+    return NextResponse.json({ success: true, data: { ...updated, finalPrice: Number(updated.finalPrice) } });
+  }
+
+  if (action === "REJECT") {
+    if (!reason) {
+      return NextResponse.json({ success: false, message: "سبب الرفض مطلوب." }, { status: 400 });
+    }
+    const updated = await prisma.service.update({
+      where: { id },
+      data: { status: "REJECTED" },
+    });
+    await prisma.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "SERVICE_REJECTED",
+        entityType: "Service",
+        entityId: id,
+        beforeData: { status: service.status },
+        afterData: { status: "REJECTED", reason },
+      },
+    });
+    return NextResponse.json({ success: true, data: { ...updated, finalPrice: Number(updated.finalPrice) } });
+  }
+
+  return NextResponse.json({ success: false, message: "إجراء غير صالح." }, { status: 400 });
+}
