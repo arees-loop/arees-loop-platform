@@ -23,6 +23,7 @@ export default function AdminServicesPage() {
   const [loading,setLoading]=useState(true);
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
+  const [viewMode,setViewMode]=useState<"CARDS"|"LIST">("CARDS");
 
   const load=async()=>{
     setLoading(true);
@@ -72,10 +73,11 @@ export default function AdminServicesPage() {
         )}
       </div>
 
-      {message&&<div className="mb-5 rounded-2xl border border-[#D4AF37]/25 bg-white/80 p-4 text-sm font-bold">{message}</div>}
+      {message&&<div role="status" className="mb-5 rounded-2xl border border-[#D4AF37]/25 bg-white/90 p-4 text-sm font-bold shadow-sm">✓ {message}</div>}
+      {!selected&&<div className="mb-5 flex justify-end"><div className="flex rounded-xl bg-[#0D3B34]/5 p-1"><button onClick={()=>setViewMode("CARDS")} className={`rounded-lg px-4 py-2 text-xs font-bold ${viewMode==="CARDS"?"bg-white shadow-sm":""}`}>بطاقات</button><button onClick={()=>setViewMode("LIST")} className={`rounded-lg px-4 py-2 text-xs font-bold ${viewMode==="LIST"?"bg-white shadow-sm":""}`}>قائمة</button></div></div>}
       {loading?<div className="rounded-3xl bg-white/70 p-8 text-center">جاري تحميل الخدمات الحقيقية من قاعدة البيانات...</div>:
       !items.length?<div className="rounded-3xl bg-white/70 p-8 text-center">لا توجد خدمات أو تجارب حالياً.</div>:
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className={viewMode==="CARDS"?"grid gap-4 md:grid-cols-2 xl:grid-cols-3":"space-y-3"}>
         {items.map(s=><button key={s.id} onClick={()=>setSelected(s)} className="rounded-[24px] border border-white/80 bg-white/75 p-5 text-right transition hover:-translate-y-0.5 hover:shadow-lg">
           <div className="flex items-center justify-between gap-3"><span className="rounded-full bg-[#FFF3D2] px-3 py-1 text-[11px] font-bold">{labels[s.status]||s.status}</span><span className="text-[11px] text-[#B99124]">{s.category}</span></div>
           <h2 className="mt-4 text-lg font-bold">{s.nameAr}</h2>
@@ -84,9 +86,9 @@ export default function AdminServicesPage() {
         </button>)}
       </div>}
 
-      {selected&&<div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#082D27]/45 p-4 backdrop-blur-sm" onMouseDown={e=>{if(e.target===e.currentTarget)setSelected(null)}}>
-        <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[28px] bg-[#F8F5EE] p-6 shadow-2xl">
-          <div className="flex items-start justify-between"><div><p className="text-xs font-bold text-[#B99124]">{selected.partnerName}</p><h2 className="mt-1 text-2xl font-bold">{selected.nameAr}</h2><p className="text-sm opacity-50">{selected.nameEn}</p></div><button onClick={()=>setSelected(null)} className="h-10 w-10 rounded-full bg-white">×</button></div>
+      {selected&&<section className="mt-6 overflow-hidden rounded-[30px] border border-white/80 bg-white/72 p-6 shadow-sm md:p-8">
+        <div className="w-full">
+          <div className="flex items-start justify-between"><div><p className="text-xs font-bold text-[#B99124]">{selected.partnerName}</p><h2 className="mt-1 text-2xl font-bold">{selected.nameAr}</h2><p className="text-sm opacity-50">{selected.nameEn}</p></div><button onClick={()=>setSelected(null)} className="rounded-xl border border-[#0D3B34]/10 bg-white px-4 py-2 text-xs font-bold">← العودة للبطاقات</button></div>
           <div className="mt-6 grid gap-3 md:grid-cols-2">
             {[
               ["الحالة",labels[selected.status]||selected.status],["التصنيف",selected.category],["التصنيف الفرعي",selected.subCategory||"—"],
@@ -102,7 +104,7 @@ export default function AdminServicesPage() {
             <button disabled={busy} onClick={()=>void decide("APPROVE")} className="rounded-2xl bg-[#0D3B34] px-5 py-3 font-bold text-white disabled:opacity-40">{busy?"جارٍ الاعتماد...":"اعتماد ونشر للعملاء"}</button>
           </div>}
         </div>
-      </div>}
+      </section>}
     </div>
   </main>;
 }
