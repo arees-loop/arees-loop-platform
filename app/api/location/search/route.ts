@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 type TomTomGeocodeResult = {
+  poi?: { name?: string };
   position?: {
     lat?: number;
     lon?: number;
@@ -40,11 +41,12 @@ export async function GET(request: NextRequest) {
     }
 
     const url =
-      `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(query)}.json` +
+      `https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json` +
       `?key=${encodeURIComponent(apiKey)}` +
       `&language=ar-SA` +
       `&countrySet=SA` +
-      `&limit=6`;
+      `&limit=8` +
+      `&typeahead=true`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -73,7 +75,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Destination not found" }, { status: 404 });
     }
     const suggestions = results.map((result) => {
-      const name = result.address?.municipalitySubdivision || result.address?.municipality || result.address?.freeformAddress || query;
+      const name = result.poi?.name || result.address?.municipalitySubdivision || result.address?.municipality || result.address?.freeformAddress || query;
       return {
         name,
         address: result.address?.freeformAddress ?? name,
