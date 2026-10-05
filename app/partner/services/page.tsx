@@ -361,7 +361,7 @@ export default function PartnerServicesPage() {
     try{
       const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(servicePayload(false))});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر حفظ التعديلات.");
-      await refreshServices(); setSubmitMessage(data.message||"تم حفظ التعديلات بنجاح."); closeServiceForm();
+      await refreshServices(); closeServiceForm(); setSubmitMessage("تم حفظ التغييرات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
     }catch(error:any){setSubmitMessage(error?.message||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
   };
 
@@ -768,7 +768,7 @@ export default function PartnerServicesPage() {
                           <button type="button" aria-label="إجراءات الخدمة" onClick={()=>setActionMenuId(actionMenuId===service.id?null:service.id)} className="h-10 w-10 rounded-xl border border-[#0D3B34]/10 bg-white text-lg font-bold">⋮</button>
                           {actionMenuId===service.id && <div className="absolute left-0 bottom-12 z-30 w-40 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white p-1 shadow-xl">
                             <button type="button" onClick={()=>{setActionMenuId(null);openEditServiceForm(service);window.scrollTo({top:0,behavior:"smooth"});}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">✎ تعديل</button>
-                            <Link href={`/experience/${service.id}`} className="block w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">◉ معاينة</Link>
+                            <Link href={`/services/${service.id}`} className="block w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">◉ معاينة</Link>
                             {(service.status==="PUBLISHED"||service.status==="SUSPENDED") && <button type="button" onClick={()=>void togglePublication(service)} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">{service.status==="PUBLISHED"?"◌ إخفاء من النشر":"● نشر الخدمة"}</button>}
                             <button type="button" onClick={()=>{setActionMenuId(null);void requestDeleteService(service);}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold text-red-700 hover:bg-red-50">⌫ حذف</button>
                           </div>}
@@ -792,6 +792,12 @@ export default function PartnerServicesPage() {
           </div>
         </div>
       </div>
+
+      {submitMessage && !showForm && (
+        <div className="fixed left-1/2 top-5 z-[100] -translate-x-1/2 rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-sm font-bold text-[#0D3B34] shadow-xl">
+          {submitMessage}
+        </div>
+      )}
 
       {/* ADD / EDIT SERVICE INLINE */}
       {showForm && (
