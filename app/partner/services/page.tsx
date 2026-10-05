@@ -718,7 +718,7 @@ export default function PartnerServicesPage() {
                 return (
                   <div
                     key={service.id}
-                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-visible rounded-[14px] border border-[#0D3B34]/8 bg-white/95 backdrop-blur-xl md:grid md:grid-cols-[76px_2fr_.8fr_.8fr_1fr_auto] md:items-center md:min-h-[76px]"}
+                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-visible rounded-[14px] border border-[#0D3B34]/8 bg-white/95 backdrop-blur-xl md:grid md:grid-cols-[76px_2fr_.8fr_.8fr_1.15fr_auto] md:items-center md:min-h-[76px]"}
                   >
                     {/* IMAGE PLACEHOLDER */}
                     <div className={viewMode === "grid" ? "relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[76px] items-center justify-center overflow-hidden rounded-r-[14px] bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-[76px] md:w-[76px]"}>
@@ -764,7 +764,7 @@ export default function PartnerServicesPage() {
 
                       {viewMode==="list" && <div className="min-w-0 px-2"><p className="text-[9px] text-[#0D3B34]/40">الموقع</p><p className="mt-1 truncate text-xs font-semibold text-[#0D3B34]/70">{service.locationName}</p></div>}
 
-                      <div className={viewMode==="grid" ? "hidden" : "min-w-0 px-2"}>
+                      <div className={viewMode==="grid" ? "hidden" : "min-w-0 px-2 md:translate-x-4"}>
                         <p className="text-[10px] text-[#0D3B34]/40">
                           الترخيص المرتبط
                         </p>
@@ -775,7 +775,7 @@ export default function PartnerServicesPage() {
                         {viewMode==="list" && <span className={`mt-1 inline-block rounded-full px-2 py-1 text-[9px] font-bold ${status.className}`}>{status.label}</span>}
                       </div>
 
-                      {viewMode==="list" && <div className="relative justify-self-end px-3">
+                      {viewMode==="list" && <div className="relative justify-self-start px-2">
                         <button type="button" aria-label="إجراءات الخدمة" onClick={()=>setActionMenuId(actionMenuId===service.id?null:service.id)} className="h-10 w-10 rounded-xl border border-[#0D3B34]/10 bg-white text-lg font-bold">⋮</button>
                         {actionMenuId===service.id && <div className="absolute left-0 top-12 z-30 w-40 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white p-1 shadow-xl">
                           <button type="button" onClick={()=>{setActionMenuId(null);openEditServiceForm(service);window.scrollTo({top:0,behavior:"smooth"});}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">✎ تعديل</button>
