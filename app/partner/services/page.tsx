@@ -41,6 +41,7 @@ type Service = {
   cancellationPolicy?: string;
   meetingInstructions?: string;
   images?: { url:string; altText?:string|null; sortOrder?:number }[];
+  organizerType?: string; organizerName?: string; organizerLicenseNumber?: string; organizerLicenseIssuer?: string; programApprovalNumber?: string;
 };
 
 type PartnerApplication = {
@@ -131,6 +132,7 @@ export default function PartnerServicesPage() {
     descriptionEn: "",
     cancellationPolicy: "",
     meetingInstructions: "",
+    organizerType: "SELF", organizerName: "", organizerLicenseNumber: "", organizerLicenseIssuer: "", programApprovalNumber: "",
     images: [] as { name: string; url: string }[],
     imagePreviews: [] as { name: string; url: string }[],
     primaryImage: "",
@@ -247,6 +249,7 @@ export default function PartnerServicesPage() {
       descriptionEn: "",
       cancellationPolicy: "",
       meetingInstructions: "",
+      organizerType: "SELF", organizerName: "", organizerLicenseNumber: "", organizerLicenseIssuer: "", programApprovalNumber: "",
       images: [],
       imagePreviews: [],
       primaryImage: "",
@@ -291,6 +294,7 @@ export default function PartnerServicesPage() {
       descriptionEn: service.descriptionEn ?? "",
       cancellationPolicy: service.cancellationPolicy ?? "",
       meetingInstructions: service.meetingInstructions ?? "",
+      organizerType: service.organizerType ?? "SELF", organizerName: service.organizerName ?? "", organizerLicenseNumber: service.organizerLicenseNumber ?? "", organizerLicenseIssuer: service.organizerLicenseIssuer ?? "", programApprovalNumber: service.programApprovalNumber ?? "",
       images: (service.images ?? []).map((image,index)=>({name:image.altText || `صورة ${index+1}`,url:image.url})),
       imagePreviews: (service.images ?? []).map((image,index)=>({name:image.altText || `صورة ${index+1}`,url:image.url})),
       primaryImage: service.images?.[0]?.altText || (service.images?.length ? "صورة 1" : ""),
@@ -340,6 +344,7 @@ export default function PartnerServicesPage() {
     nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:form.descriptionAr,descriptionEn:form.descriptionEn,
     basePrice:form.basePrice,vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
     placeId:form.placeId,latitude:form.latitude,longitude:form.longitude,meetingInstructions:form.meetingInstructions,cancellationPolicy:form.cancellationPolicy,
+    organizerType:form.organizerType,organizerName:form.organizerName,organizerLicenseNumber:form.organizerLicenseNumber,organizerLicenseIssuer:form.organizerLicenseIssuer,programApprovalNumber:form.programApprovalNumber,
     images:form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})),submitForReview
   });
 
@@ -351,7 +356,7 @@ export default function PartnerServicesPage() {
       formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),
       vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
       imageCount:Array.isArray(service.images)?service.images.length:0,descriptionAr:service.descriptionAr??"",descriptionEn:service.descriptionEn??"",
-      cancellationPolicy:service.cancellationPolicy??"",meetingInstructions:service.meetingInstructions??"",images:service.images??[]
+      cancellationPolicy:service.cancellationPolicy??"",meetingInstructions:service.meetingInstructions??"",organizerType:service.organizerType??"SELF",organizerName:service.organizerName??"",organizerLicenseNumber:service.organizerLicenseNumber??"",organizerLicenseIssuer:service.organizerLicenseIssuer??"",programApprovalNumber:service.programApprovalNumber??"",images:service.images??[]
     })));
   };
 
@@ -383,7 +388,7 @@ export default function PartnerServicesPage() {
           placeId: form.placeId, latitude: form.latitude, longitude: form.longitude,
           hasMeetingPoint: form.hasMeetingPoint, meetingPointName: form.meetingPointName,
           meetingPointUrl: form.meetingPointUrl, meetingInstructions: form.meetingInstructions,
-          cancellationPolicy: form.cancellationPolicy, bookingMode: form.bookingMode,
+          cancellationPolicy: form.cancellationPolicy, organizerType:form.organizerType, organizerName:form.organizerName, organizerLicenseNumber:form.organizerLicenseNumber, organizerLicenseIssuer:form.organizerLicenseIssuer, programApprovalNumber:form.programApprovalNumber, bookingMode: form.bookingMode,
           availableDays: form.availableDays, startDate: form.startDate, endDate: form.endDate,
           startTime: form.startTime, endTime: form.endTime,
           images: form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})), submitForReview: Boolean(editingServiceId)
@@ -1109,6 +1114,19 @@ export default function PartnerServicesPage() {
                     <p className="mt-3 text-[10px] leading-5 text-[#0D3B34]/50">في صفحة العميل تظهر الصورة الرئيسية أولاً، وبقية الصور ضمن معرض يمكن التنقل فيه يمينًا ويسارًا.</p>
                   </div>
                 )}
+              </FormSection>
+
+              <FormSection eyebrow="ORGANIZER & APPROVAL" title="بيانات التنظيم والاعتماد">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div><label className="mb-2 block text-xs font-bold">🪪 منظم البرنامج</label><select value={form.organizerType} onChange={(e)=>setForm(x=>({...x,organizerType:e.target.value}))} className={inputClass}><option value="SELF">مقدم الخدمة نفسه</option><option value="OTHER">جهة منظمة أخرى</option></select></div>
+                  <div><label className="mb-2 block text-xs font-bold">🔢 رقم اعتماد البرنامج <span className="font-normal opacity-50">— للإدارة فقط</span></label><input value={form.programApprovalNumber} onChange={(e)=>setForm(x=>({...x,programApprovalNumber:e.target.value}))} className={inputClass} placeholder="رقم الاعتماد إن وجد" /></div>
+                  {form.organizerType==="OTHER" && <>
+                    <div><label className="mb-2 block text-xs font-bold">اسم الجهة المنظمة</label><input value={form.organizerName} onChange={(e)=>setForm(x=>({...x,organizerName:e.target.value}))} className={inputClass} placeholder="اسم الجهة المنظمة" /></div>
+                    <div><label className="mb-2 block text-xs font-bold">رقم ترخيص الجهة المنظمة</label><input value={form.organizerLicenseNumber} onChange={(e)=>setForm(x=>({...x,organizerLicenseNumber:e.target.value}))} className={inputClass} placeholder="رقم الترخيص" /></div>
+                    <div className="md:col-span-2"><label className="mb-2 block text-xs font-bold">الجهة المصدرة للترخيص</label><input value={form.organizerLicenseIssuer} onChange={(e)=>setForm(x=>({...x,organizerLicenseIssuer:e.target.value}))} className={inputClass} placeholder="مثال: وزارة السياحة" /></div>
+                  </>}
+                </div>
+                <p className="mt-4 text-[11px] leading-6 text-[#0D3B34]/55">🏢 مقدم الخدمة هو الشريك المسجل في Arees Loop. رقم اعتماد البرنامج معلومة داخلية تساعد الإدارة في سرعة التحقق ولا يظهر للعميل.</p>
               </FormSection>
 
               {/* POLICY */}
