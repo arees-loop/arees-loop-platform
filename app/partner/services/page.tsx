@@ -740,7 +740,8 @@ export default function PartnerServicesPage() {
                           {(service.status==="PUBLISHED"||service.status==="SUSPENDED") && <button type="button" onClick={()=>void togglePublication(service)} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">{service.status==="PUBLISHED"?"◌ إخفاء من النشر":"● نشر الخدمة"}</button>}
                           <button type="button" onClick={()=>{setActionMenuId(null);void requestDeleteService(service);}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold text-red-700 hover:bg-red-50">⌫ حذف</button>
                         </div>}
-                      </div>                    </div>
+                      </div>
+                    </div>
 
                     <div className={viewMode==="grid" ? "p-3" : "flex-1 p-2 md:grid md:grid-cols-[1.45fr_1fr_.8fr_.8fr_auto] md:items-center md:gap-3"}>
                       <p className="text-[10px] font-semibold text-[#B99124]">
