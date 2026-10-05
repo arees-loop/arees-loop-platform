@@ -3,6 +3,7 @@
 
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 
 
@@ -293,6 +294,9 @@ const money = (value: number) =>
 
 export default function AdminPartnersPage() {
 
+  const searchParams = useSearchParams();
+  const activeView = searchParams.get("view") === "active";
+
   const [partners, setPartners] = useState<Partner[]>([]);
 
   const [selectedId, setSelectedId] = useState<string>("");
@@ -384,11 +388,13 @@ export default function AdminPartnersPage() {
 
 
 
-  const pendingPartners = useMemo(() => partners.filter((partner) => partner.status !== "ACTIVE" && partner.status !== "REJECTED"), [partners]);
+  const visiblePartners = useMemo(() => activeView
+    ? partners.filter((partner) => partner.status === "ACTIVE")
+    : partners.filter((partner) => partner.status !== "ACTIVE" && partner.status !== "REJECTED"), [partners, activeView]);
 
   const filteredPartners = useMemo(() => {
 
-    return pendingPartners.filter((partner) => {
+    return visiblePartners.filter((partner) => {
 
       const text =
 
@@ -408,7 +414,7 @@ export default function AdminPartnersPage() {
 
     });
 
-  }, [pendingPartners, search, statusFilter]);
+  }, [visiblePartners, search, statusFilter]);
 
 
 
@@ -416,7 +422,7 @@ export default function AdminPartnersPage() {
 
     () => ({
 
-      total: pendingPartners.length,
+      total: visiblePartners.length,
 
       review: partners.filter((p) => p.status === "UNDER_REVIEW").length,
 
@@ -428,11 +434,11 @@ export default function AdminPartnersPage() {
 
       final: partners.filter((p) => p.status === "PARTNER_ACCEPTED").length,
 
-      active: 0,
+      active: partners.filter((p) => p.status === "ACTIVE").length,
 
     }),
 
-    [pendingPartners]
+    [visiblePartners, partners]
 
   );
 
@@ -764,7 +770,7 @@ export default function AdminPartnersPage() {
 
             >
 
-              طلبات الشركاء
+              {activeView ? "الشركاء المعتمدون" : "طلبات الشركاء"}
 
             </h1>
 
@@ -772,9 +778,7 @@ export default function AdminPartnersPage() {
 
             <p className="mt-3 max-w-3xl text-sm leading-7 text-[#0D3B34]/60">
 
-              مراجعة بيانات المنشآت، التحقق من التراخيص، تحديد الشروط
-
-              التجارية، إرسال الاتفاقيات واعتماد الشريك قبل تفعيل خدماته.
+              {activeView ? "عرض وإدارة الشركاء المعتمدين والنشطين في المنصة." : "مراجعة بيانات المنشآت، التحقق من التراخيص، تحديد الشروط التجارية، إرسال الاتفاقيات واعتماد الشريك قبل تفعيل خدماته."}
 
             </p>
 
@@ -860,13 +864,13 @@ export default function AdminPartnersPage() {
 
                 >
 
-                  قائمة الطلبات
+                  {activeView ? "قائمة الشركاء المعتمدين" : "قائمة الطلبات"}
 
                 </h2>
 
                 <p className="mt-1 text-xs text-[#0D3B34]/50">
 
-                  اختر منشأة لعرض ملف التدقيق.
+                  {activeView ? "اختر شريكاً لعرض ملفه." : "اختر منشأة لعرض ملف التدقيق."}
 
                 </p>
 
@@ -942,7 +946,7 @@ export default function AdminPartnersPage() {
 
             <div className={viewMode === "CARDS" ? "grid gap-3 md:grid-cols-2 xl:grid-cols-3" : "space-y-3"}>
 
-              {filteredPartners.length === 0 && <div className="col-span-full rounded-2xl bg-[#F9F7F2] p-8 text-center text-sm text-[#0D3B34]/55">لا توجد طلبات شركاء معلقة حالياً.</div>}
+              {filteredPartners.length === 0 && <div className="col-span-full rounded-2xl bg-[#F9F7F2] p-8 text-center text-sm text-[#0D3B34]/55">{activeView ? "لا يوجد شركاء معتمدون حالياً." : "لا توجد طلبات شركاء معلقة حالياً."}</div>}
               {filteredPartners.map((partner) => {
 
                 const active = partner.id === selectedId;
