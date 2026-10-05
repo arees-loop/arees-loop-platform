@@ -74,72 +74,6 @@ const statusConfig: Record<
   },
 };
 
-const initialServices: Service[] = [
-  {
-    id: 1,
-    nameAr: "متحف وبستان الصافية",
-    nameEn: "Al Safiya Museum & Garden",
-    category: "وجهة أو موقع سياحي",
-    subCategory: "متحف",
-    license: "ترخيص وزارة السياحة - 73104550",
-    city: "المدينة المنورة",
-    locationName: "متحف وبستان الصافية",
-    formattedAddress: "المدينة المنورة، المملكة العربية السعودية",
-    placeId: "",
-    latitude: 24.4672,
-    longitude: 39.6111,
-    basePrice: 60.87,
-    vatRate: 15,
-    finalPrice: 70,
-    capacity: 80,
-    bookings: 42,
-    status: "PUBLISHED",
-    imageCount: 6,
-  },
-  {
-    id: 2,
-    nameAr: "جولة المدينة التاريخية",
-    nameEn: "Historic Madinah Tour",
-    category: "تنظيم الرحلات السياحية",
-    subCategory: "جولات يومية",
-    license: "ترخيص تنظيم الرحلات - TR-209844",
-    city: "المدينة المنورة",
-    locationName: "نقطة تجمع معتمدة",
-    formattedAddress: "المدينة المنورة، المملكة العربية السعودية",
-    placeId: "",
-    latitude: 24.4686,
-    longitude: 39.6133,
-    basePrice: 121.74,
-    vatRate: 15,
-    finalPrice: 140,
-    capacity: 18,
-    bookings: 31,
-    status: "PUBLISHED",
-    imageCount: 8,
-  },
-  {
-    id: 3,
-    nameAr: "تجربة طعام مدينية",
-    nameEn: "Madinah Food Experience",
-    category: "مزود تجربة أو نشاط",
-    subCategory: "تجربة طعام",
-    license: "ترخيص النشاط - ACT-55821",
-    city: "المدينة المنورة",
-    locationName: "قباء",
-    formattedAddress: "قباء، المدينة المنورة، المملكة العربية السعودية",
-    placeId: "",
-    latitude: 24.4397,
-    longitude: 39.6172,
-    basePrice: 82.61,
-    vatRate: 15,
-    finalPrice: 95,
-    capacity: 14,
-    bookings: 18,
-    status: "UNDER_REVIEW",
-    imageCount: 5,
-  },
-];
-
 const mainCategories = [
   "برامج سياحية","نقل سياحي","حجوزات وتذاكر","مطاعم وكافيهات",
   "تجارب ثرية","مواقع أثرية","حرف يدوية","تقنية وخدمات سياحية","معارض وفعاليات"
@@ -548,7 +482,7 @@ export default function PartnerServicesPage() {
 
             <NavItem
               href="/partner/services"
-              label="الخدمات"
+              label="الخدمات والتجارب"
               icon="◈"
               active
             />
