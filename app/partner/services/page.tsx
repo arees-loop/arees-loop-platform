@@ -407,6 +407,16 @@ export default function PartnerServicesPage() {
     } finally { setSubmitting(false); }
   };
 
+  const togglePublication = async (service: Service) => {
+    const action=service.status==="PUBLISHED"?"HIDE":"PUBLISH";
+    setActionMenuId(null); setSubmitMessage("");
+    try{
+      const response=await fetch(`/api/partner/services/${service.id}`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({action})});
+      const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر تنفيذ الإجراء.");
+      setServices((current)=>current.map((item)=>item.id===service.id?{...item,status:data.status}:item)); setSubmitMessage(data.message);
+    }catch(error:any){setSubmitMessage(error?.message||"تعذر تنفيذ الإجراء.");}
+  };
+
   const requestDeleteService = async (service: Service) => {
     if (!window.confirm(`هل تريد حذف «${service.nameAr}»؟ إذا كانت مرتبطة بحجوزات أو سجل مالي فلن يتم حذفها نهائياً.`)) return;
     setSubmitMessage("");
@@ -754,12 +764,13 @@ export default function PartnerServicesPage() {
                       </div>
 
                       <div className={viewMode==="grid" ? "mt-4 flex items-center gap-2" : "mt-1 flex items-center gap-1 md:mt-0"}>
-                        <Link href={`/experience/${service.id}`} className="flex-1 rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-center text-xs font-bold text-[#0D3B34]/60">معاينة</Link>
-                        <div className="relative">
+                        <div className="relative mr-auto">
                           <button type="button" aria-label="إجراءات الخدمة" onClick={()=>setActionMenuId(actionMenuId===service.id?null:service.id)} className="h-10 w-10 rounded-xl border border-[#0D3B34]/10 bg-white text-lg font-bold">⋮</button>
                           {actionMenuId===service.id && <div className="absolute left-0 bottom-12 z-30 w-40 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white p-1 shadow-xl">
-                            <button type="button" onClick={()=>{setActionMenuId(null);openEditServiceForm(service);window.scrollTo({top:0,behavior:"smooth"});}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">تعديل الخدمة</button>
-                            <button type="button" onClick={()=>{setActionMenuId(null);void requestDeleteService(service);}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold text-red-700 hover:bg-red-50">حذف الخدمة</button>
+                            <button type="button" onClick={()=>{setActionMenuId(null);openEditServiceForm(service);window.scrollTo({top:0,behavior:"smooth"});}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">✎ تعديل</button>
+                            <Link href={`/experience/${service.id}`} className="block w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">◉ معاينة</Link>
+                            {(service.status==="PUBLISHED"||service.status==="SUSPENDED") && <button type="button" onClick={()=>void togglePublication(service)} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">{service.status==="PUBLISHED"?"◌ إخفاء من النشر":"● نشر الخدمة"}</button>}
+                            <button type="button" onClick={()=>{setActionMenuId(null);void requestDeleteService(service);}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold text-red-700 hover:bg-red-50">⌫ حذف</button>
                           </div>}
                         </div>
                       </div>
