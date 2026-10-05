@@ -2,7 +2,7 @@
 
 
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 
@@ -292,7 +292,7 @@ const money = (value: number) =>
 
 
 
-export default function AdminPartnersPage() {
+export default function AdminPartnersPage() {\n  return <Suspense fallback={<main dir="rtl" className="min-h-screen bg-[#FBF8F1] p-8 text-[#0D3B34]">جارٍ تحميل الشركاء...</main>}><AdminPartnersContent /></Suspense>;\n}\n\nfunction AdminPartnersContent() {
 
   const searchParams = useSearchParams();
   const activeView = searchParams.get("view") === "active";
