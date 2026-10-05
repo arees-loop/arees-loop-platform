@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { getAdminNotificationEmails, sendEmail } from "@/lib/notifications/email";
 
 async function getPartner(userId:string){
   return prisma.partnerMember.findFirst({
     where:{userId,isActive:true},
-    include:{partner:true},
+    include:{partner:true,user:true},
     orderBy:{createdAt:"desc"}
   });
 }
@@ -54,6 +55,27 @@ export async function POST(request:Request){
       },
       include:{images:true}
     });
-    return NextResponse.json({success:true,message:"تم حفظ الخدمة وإرسالها للإدارة للمراجعة.",service:{...service,basePrice:Number(service.basePrice),vatRate:Number(service.vatRate),finalPrice:Number(service.finalPrice)}},{status:201});
+    const partnerEmail=membership.user.email;
+    const adminEmails=getAdminNotificationEmails();
+    const origin=new URL(request.url).origin;
+    const partnerName=membership.partner.legalNameAr || membership.partner.tradeNameAr || "الشريك";
+    const serviceName=service.nameAr;
+    const partnerDelivery=await sendEmail({
+      to:partnerEmail,
+      subject:"تم استلام خدمتك للمراجعة – Arees Loop",
+      html:'<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.9;color:#173b35"><h2>تم استلام الخدمة</h2><p>مرحباً،</p><p>تم استلام خدمة <b>'+serviceName+'</b> وإرسالها إلى إدارة Arees Loop للمراجعة والموافقة.</p><p>الحالة الحالية: <b>تحت المراجعة</b>.</p><p>سنرسل لك إشعاراً عبر البريد الإلكتروني عند تحديث حالة الخدمة.</p></div>'
+    });
+    let adminDelivery:{sent:boolean;reason?:string}={sent:false,reason:"NO_ADMIN_EMAILS"};
+    if(adminEmails.length){
+      adminDelivery=await sendEmail({
+        to:adminEmails,
+        subject:"خدمة جديدة تحتاج إلى المراجعة – Arees Loop",
+        replyTo:partnerEmail,
+        html:'<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.9;color:#173b35"><h2>خدمة جديدة بانتظار المراجعة</h2><p><b>الشريك:</b> '+partnerName+'</p><p><b>الخدمة:</b> '+serviceName+'</p><p><b>المدينة:</b> '+service.city+'</p><p><a href="'+origin+'/admin/partners" style="display:inline-block;background:#0D3B34;color:white;padding:12px 20px;border-radius:10px;text-decoration:none">فتح لوحة المراجعة</a></p></div>'
+      });
+    }
+    if(!partnerDelivery.sent) console.warn("Partner service email not sent",partnerDelivery);
+    if(!adminDelivery.sent) console.warn("Admin service email not sent",adminDelivery);
+    return NextResponse.json({success:true,message:"تم إرسال الخدمة إلى إدارة Arees Loop للمراجعة والموافقة بنجاح.",service:{...service,basePrice:Number(service.basePrice),vatRate:Number(service.vatRate),finalPrice:Number(service.finalPrice)},notifications:{partner:partnerDelivery.sent,admin:adminDelivery.sent}},{status:201});
   }catch(error){console.error("POST /api/partner/services failed:",error);return NextResponse.json({success:false,message:"تعذر حفظ الخدمة. حاول مرة أخرى."},{status:500});}
 }
