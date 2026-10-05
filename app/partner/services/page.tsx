@@ -36,6 +36,11 @@ type Service = {
   bookings: number;
   status: ServiceStatus;
   imageCount: number;
+  descriptionAr?: string;
+  descriptionEn?: string;
+  cancellationPolicy?: string;
+  meetingInstructions?: string;
+  images?: { url:string; altText?:string|null; sortOrder?:number }[];
 };
 
 type PartnerApplication = {
@@ -163,6 +168,7 @@ export default function PartnerServicesPage() {
           bookings: Number(service.bookingCount ?? 0),
           status: service.status,
           imageCount: service.images?.length ?? 0,
+          descriptionAr: service.descriptionAr ?? "", descriptionEn: service.descriptionEn ?? "", cancellationPolicy: service.cancellationPolicy ?? "", meetingInstructions: service.meetingInstructions ?? "", images: service.images ?? [],
         })));
       })
       .catch(() => {});
@@ -237,13 +243,13 @@ export default function PartnerServicesPage() {
       meetingPointName: "",
       meetingPointUrl: "",
       capacity: "",
-      descriptionAr: "",
-      descriptionEn: "",
-      cancellationPolicy: "",
-      meetingInstructions: "",
-      images: [],
-      imagePreviews: [],
-      primaryImage: "",
+      descriptionAr: service.descriptionAr ?? "",
+      descriptionEn: service.descriptionEn ?? "",
+      cancellationPolicy: service.cancellationPolicy ?? "",
+      meetingInstructions: service.meetingInstructions ?? "",
+      images: (service.images ?? []).map((image,index)=>({name:image.altText || `صورة ${index+1}`,url:image.url})),
+      imagePreviews: (service.images ?? []).map((image,index)=>({name:image.altText || `صورة ${index+1}`,url:image.url})),
+      primaryImage: service.images?.[0]?.altText || (service.images?.length ? "صورة 1" : ""),
       bookingMode: "direct",
       availableDays: [],
       startDate: "",
@@ -330,25 +336,33 @@ export default function PartnerServicesPage() {
       form.images.length > 0 ? form.images.length : existing?.imageCount ?? 0,
   });
 
-  const saveDraft = () => {
-    const existing = editingServiceId
-      ? services.find((service) => service.id === editingServiceId)
-      : undefined;
+  const servicePayload = (submitForReview=false) => ({
+    nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:form.descriptionAr,descriptionEn:form.descriptionEn,
+    basePrice:form.basePrice,vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
+    placeId:form.placeId,latitude:form.latitude,longitude:form.longitude,meetingInstructions:form.meetingInstructions,cancellationPolicy:form.cancellationPolicy,
+    images:form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})),submitForReview
+  });
 
-    const savedService = buildServiceFromForm(
-      existing?.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT",
-      existing
-    );
+  const refreshServices = async () => {
+    const refreshed=await fetch("/api/partner/operations",{credentials:"include",cache:"no-store"}).then(r=>r.json());
+    if(refreshed?.success) setServices((refreshed.services??[]).map((service:any)=>({
+      id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",subCategory:service.subCategory??"غير محدد",
+      license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",city:service.city??"",locationName:service.locationName??"",
+      formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),
+      vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
+      imageCount:Array.isArray(service.images)?service.images.length:0,descriptionAr:service.descriptionAr??"",descriptionEn:service.descriptionEn??"",
+      cancellationPolicy:service.cancellationPolicy??"",meetingInstructions:service.meetingInstructions??"",images:service.images??[]
+    })));
+  };
 
-    setServices((current) =>
-      existing
-        ? current.map((service) =>
-            service.id === existing.id ? savedService : service
-          )
-        : [savedService, ...current]
-    );
-
-    closeServiceForm();
+  const saveDraft = async () => {
+    if(!editingServiceId){ setSubmitMessage("استخدم «إرسال للمراجعة» لإنشاء الخدمة الجديدة."); return; }
+    if(submitting)return; setSubmitting(true); setSubmitMessage("");
+    try{
+      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(servicePayload(false))});
+      const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر حفظ التعديلات.");
+      await refreshServices(); setSubmitMessage(data.message||"تم حفظ التعديلات بنجاح."); closeServiceForm();
+    }catch(error:any){setSubmitMessage(error?.message||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
   };
 
   const submitForReview = async () => {
@@ -356,8 +370,8 @@ export default function PartnerServicesPage() {
     setSubmitting(true);
     setSubmitMessage("");
     try {
-      const response = await fetch("/api/partner/services", {
-        method: "POST",
+      const response = await fetch(editingServiceId ? `/api/partner/services/${editingServiceId}` : "/api/partner/services", {
+        method: editingServiceId ? "PATCH" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -372,7 +386,7 @@ export default function PartnerServicesPage() {
           cancellationPolicy: form.cancellationPolicy, bookingMode: form.bookingMode,
           availableDays: form.availableDays, startDate: form.startDate, endDate: form.endDate,
           startTime: form.startTime, endTime: form.endTime,
-          images: form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:form.nameAr,sortOrder:image.name===form.primaryImage?-1:index}))
+          images: form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})), submitForReview: Boolean(editingServiceId)
         }),
       });
       const data = await response.json();
