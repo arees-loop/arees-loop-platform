@@ -1099,7 +1099,7 @@ export default function PartnerServicesPage() {
                         const result=await response.json();
                         if(!response.ok||!result?.success) throw new Error(result?.message||"تعذر رفع الصورة.");
                         return {name:file.name,url:result.url as string};
-                      })).then((uploaded)=>{ setForm((current)=>({...current,images:[...current.images,...uploaded]})); setPendingImageFiles([]); }).catch((error)=>{ setForm((current)=>({...current,imagePreviews:current.imagePreviews.filter((p)=>!previews.some((x)=>x.url===p.url))})); setPendingImageFiles([]); setSubmitMessage(error?.message||"تعذر رفع الصورة. لم يتم حفظها."); }).finally(()=>setUploadingImages(false));
+                      })).then((uploaded)=>{ setForm((current)=>({...current,images:[...current.images,...uploaded]})); setPendingImageFiles([]); setSubmitMessage("✓ تم رفع الصورة بنجاح. اضغط «حفظ التعديلات» لتثبيتها في الخدمة."); }).catch((error)=>{ setForm((current)=>({...current,imagePreviews:current.imagePreviews.filter((p)=>!previews.some((x)=>x.url===p.url))})); setPendingImageFiles([]); setSubmitMessage(error?.message||"تعذر رفع الصورة. لم يتم حفظها."); }).finally(()=>setUploadingImages(false));
                       e.currentTarget.value="";
                     }}
                   />
