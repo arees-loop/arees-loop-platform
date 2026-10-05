@@ -106,6 +106,7 @@ export default function PartnerServicesPage() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | ServiceStatus>("ALL");
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
   const [editingOriginalService, setEditingOriginalService] = useState<Service | null>(null);
@@ -382,13 +383,14 @@ export default function PartnerServicesPage() {
 
   const saveDraft = async () => {
     if(!editingServiceId){ setSubmitMessage("استخدم «إرسال للمراجعة» لإنشاء الخدمة الجديدة."); return; }
+    if(uploadingImages){ setSubmitMessage("انتظر لحظة حتى يكتمل رفع الصور ثم احفظ التعديلات."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
       const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges),submitForReview:editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges})});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر حفظ التعديلات.");
       const sentForReview=editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges;
       await refreshServices(); closeServiceForm(); setSubmitMessage(sentForReview ? "✓ تم حفظ التعديل. التعديل الذي تم جوهري ويحتاج مراجعة الإدارة، وتم إرسال الخدمة للمراجعة." : "✓ تم حفظ التعديلات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
-      window.setTimeout(()=>setSubmitMessage(""),3500);
+      window.setTimeout(()=>setSubmitMessage(""),6000);
     }catch(error:any){setSubmitMessage(error?.message||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
   };
 
@@ -1095,13 +1097,14 @@ export default function PartnerServicesPage() {
                         imagePreviews:[...current.imagePreviews,...previews],
                         primaryImage:current.primaryImage || files[0].name,
                       }));
+                      setUploadingImages(true);
                       void Promise.all(files.map(async(file)=>{
                         const data=new FormData(); data.append("file",file);
                         const response=await fetch("/api/partner/services/images",{method:"POST",credentials:"include",body:data});
                         const result=await response.json();
                         if(!response.ok||!result?.success) throw new Error(result?.message||"تعذر رفع الصورة.");
                         return {name:file.name,url:result.url as string};
-                      })).then((uploaded)=>setForm((current)=>({...current,images:[...current.images,...uploaded]}))).catch((error)=>setSubmitMessage(error?.message||"تعذر رفع الصورة."));
+                      })).then((uploaded)=>setForm((current)=>({...current,images:[...current.images,...uploaded]}))).catch((error)=>setSubmitMessage(error?.message||"تعذر رفع الصورة.")).finally(()=>setUploadingImages(false));
                       e.currentTarget.value="";
                     }}
                   />
@@ -1186,9 +1189,10 @@ export default function PartnerServicesPage() {
                   <button
                     type="button"
                     onClick={saveDraft}
+                    disabled={submitting || uploadingImages}
                     className="rounded-2xl border border-white/15 bg-white/8 px-5 py-3.5 text-sm font-bold text-white"
                   >
-                    {submitting ? "جارٍ الحفظ..." : (editingServiceId ? "حفظ التعديلات" : "حفظ كمسودة")}
+                    {uploadingImages ? "جارٍ رفع الصور..." : submitting ? "جارٍ الحفظ..." : (editingServiceId ? "حفظ التعديلات" : "حفظ كمسودة")}
                   </button>
 
                   <button
