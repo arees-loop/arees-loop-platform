@@ -102,6 +102,7 @@ export default function PartnerServicesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
+  const [actionMenuId, setActionMenuId] = useState<string | number | null>(null);
   const [form, setForm] = useState({
     nameAr: "",
     nameEn: "",
@@ -392,6 +393,18 @@ export default function PartnerServicesPage() {
     } finally { setSubmitting(false); }
   };
 
+  const requestDeleteService = async (service: Service) => {
+    if (!window.confirm(`هل تريد حذف «${service.nameAr}»؟ إذا كانت مرتبطة بحجوزات أو سجل مالي فلن يتم حذفها نهائياً.`)) return;
+    setSubmitMessage("");
+    try {
+      const response = await fetch(`/api/partner/services/${service.id}`, { method:"DELETE", credentials:"include" });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw new Error(data?.message || "تعذر حذف الخدمة.");
+      setServices((current)=>current.filter((item)=>item.id!==service.id));
+      setSubmitMessage(data.message || "تم حذف الخدمة.");
+    } catch(error:any) { setSubmitMessage(error?.message || "تعذر حذف الخدمة."); }
+  };
+
   const updateLocation = (location: LocationValue) => {
     setForm((current) => ({
       ...current,
@@ -645,7 +658,7 @@ export default function PartnerServicesPage() {
             </section>
 
             {/* SERVICES GRID */}
-            <section className={viewMode === "grid" ? "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "mt-6 space-y-2"}>
+            {!showForm && <section className={viewMode === "grid" ? "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "mt-6 space-y-2"}>
               {filteredServices.map((service) => {
                 const status = statusConfig[service.status];
 
@@ -726,29 +739,23 @@ export default function PartnerServicesPage() {
                         </p>
                       </div>
 
-                      <div className={viewMode==="grid" ? "mt-4 flex gap-2" : "mt-1 flex gap-1 md:mt-0"}>
-                        <button
-                          type="button"
-                          onClick={() => openEditServiceForm(service)}
-                          className="flex-1 rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white"
-                        >
-                          تعديل الخدمة
-                        </button>
-
-                        <Link
-                          href={`/experience/${service.id}`}
-                          className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold text-[#0D3B34]/60"
-                        >
-                          معاينة
-                        </Link>
+                      <div className={viewMode==="grid" ? "mt-4 flex items-center gap-2" : "mt-1 flex items-center gap-1 md:mt-0"}>
+                        <Link href={`/experience/${service.id}`} className="flex-1 rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-center text-xs font-bold text-[#0D3B34]/60">معاينة</Link>
+                        <div className="relative">
+                          <button type="button" aria-label="إجراءات الخدمة" onClick={()=>setActionMenuId(actionMenuId===service.id?null:service.id)} className="h-10 w-10 rounded-xl border border-[#0D3B34]/10 bg-white text-lg font-bold">⋮</button>
+                          {actionMenuId===service.id && <div className="absolute left-0 bottom-12 z-30 w-40 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white p-1 shadow-xl">
+                            <button type="button" onClick={()=>{setActionMenuId(null);openEditServiceForm(service);window.scrollTo({top:0,behavior:"smooth"});}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">تعديل الخدمة</button>
+                            <button type="button" onClick={()=>{setActionMenuId(null);void requestDeleteService(service);}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold text-red-700 hover:bg-red-50">حذف الخدمة</button>
+                          </div>}
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
-            </section>
+            </section>}
 
-            {filteredServices.length === 0 && (
+            {!showForm && filteredServices.length === 0 && (
               <div className="mt-6 rounded-[28px] border border-white/80 bg-white/70 px-6 py-16 text-center">
                 <p className="font-bold">لا توجد خدمات مطابقة</p>
 
