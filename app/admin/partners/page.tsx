@@ -308,6 +308,8 @@ export default function AdminPartnersPage() {
 
   const [search, setSearch] = useState("");
 
+  const [viewMode, setViewMode] = useState<"CARDS" | "LIST">("CARDS");
+
   const [statusFilter, setStatusFilter] = useState<"ALL" | PartnerStatus>(
 
     "ALL"
@@ -359,11 +361,7 @@ export default function AdminPartnersPage() {
         if (cancelled) return;
 
         setPartners(mapped);
-        setSelectedId((current) =>
-          current && mapped.some((partner) => partner.id === current)
-            ? current
-            : mapped[0]?.id ?? ""
-        );
+        setSelectedId((current) => current && mapped.some((partner) => partner.id === current) ? current : "");
       } catch (error) {
         if (cancelled) return;
         setLoadError(
@@ -382,15 +380,15 @@ export default function AdminPartnersPage() {
     };
   }, []);
 
-  const selectedPartner =
-
-    partners.find((partner) => partner.id === selectedId) ?? partners[0];
+  const selectedPartner = partners.find((partner) => partner.id === selectedId);
 
 
+
+  const pendingPartners = useMemo(() => partners.filter((partner) => partner.status !== "ACTIVE" && partner.status !== "REJECTED"), [partners]);
 
   const filteredPartners = useMemo(() => {
 
-    return partners.filter((partner) => {
+    return pendingPartners.filter((partner) => {
 
       const text =
 
@@ -410,7 +408,7 @@ export default function AdminPartnersPage() {
 
     });
 
-  }, [partners, search, statusFilter]);
+  }, [pendingPartners, search, statusFilter]);
 
 
 
@@ -418,7 +416,7 @@ export default function AdminPartnersPage() {
 
     () => ({
 
-      total: partners.length,
+      total: pendingPartners.length,
 
       review: partners.filter((p) => p.status === "UNDER_REVIEW").length,
 
@@ -430,11 +428,11 @@ export default function AdminPartnersPage() {
 
       final: partners.filter((p) => p.status === "PARTNER_ACCEPTED").length,
 
-      active: partners.filter((p) => p.status === "ACTIVE").length,
+      active: 0,
 
     }),
 
-    [partners]
+    [pendingPartners]
 
   );
 
@@ -699,16 +697,6 @@ export default function AdminPartnersPage() {
     );
   }
 
-  if (!selectedPartner) {
-    return (
-      <main dir="rtl" className="min-h-screen bg-[#F5F1E8] p-8 text-[#0D3B34]">
-        <div className="mx-auto max-w-[1580px] rounded-[28px] border border-white/80 bg-white/70 p-8 text-center">
-          لا توجد طلبات شركاء حالياً.
-        </div>
-      </main>
-    );
-  }
-
   return (
 
     <main
@@ -850,13 +838,13 @@ export default function AdminPartnersPage() {
 
 
 
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
+        <div className={selectedPartner ? "grid gap-6" : "grid gap-6"}>
 
           {/* PARTNERS LIST */}
 
-          <section className="rounded-[28px] border border-white/80 bg-white/68 p-5 backdrop-blur-xl md:p-6">
+          <section className={`${selectedPartner ? "hidden" : "block"} rounded-[28px] border border-white/80 bg-white/68 p-5 backdrop-blur-xl md:p-6`}>
 
-            <div className="mb-5 flex items-center justify-between">
+            <div className="mb-5 flex items-center justify-between gap-3">
 
               <div>
 
@@ -892,9 +880,7 @@ export default function AdminPartnersPage() {
 
               </span>
 
-            </div>
-
-
+            <div className="flex rounded-xl bg-[#0D3B34]/5 p-1"><button type="button" onClick={() => setViewMode("CARDS")} className={`rounded-lg px-3 py-2 text-xs font-bold ${viewMode === "CARDS" ? "bg-white shadow-sm" : ""}`}>بطاقات</button><button type="button" onClick={() => setViewMode("LIST")} className={`rounded-lg px-3 py-2 text-xs font-bold ${viewMode === "LIST" ? "bg-white shadow-sm" : ""}`}>قائمة</button></div></div>
 
             <div className="mb-5 grid gap-3 md:grid-cols-[1fr_170px]">
 
@@ -954,11 +940,12 @@ export default function AdminPartnersPage() {
 
 
 
-            <div className="space-y-3">
+            <div className={viewMode === "CARDS" ? "grid gap-3 md:grid-cols-2 xl:grid-cols-3" : "space-y-3"}>
 
+              {filteredPartners.length === 0 && <div className="col-span-full rounded-2xl bg-[#F9F7F2] p-8 text-center text-sm text-[#0D3B34]/55">لا توجد طلبات شركاء معلقة حالياً.</div>}
               {filteredPartners.map((partner) => {
 
-                const active = partner.id === selectedPartner.id;
+                const active = partner.id === selectedId;
 
                 const status = statusConfig[partner.status];
 
@@ -1088,11 +1075,11 @@ export default function AdminPartnersPage() {
 
           {/* REVIEW PANEL */}
 
-          <section className="overflow-hidden rounded-[30px] border border-white/80 bg-white/72 backdrop-blur-xl">
+          {selectedPartner && <section className="overflow-hidden rounded-[30px] border border-white/80 bg-white/72 backdrop-blur-xl">
 
             {/* PROFILE HEADER */}
 
-            <div className="border-b border-[#0D3B34]/7 p-6 md:p-8">
+            <div className="border-b border-[#0D3B34]/7 p-6 md:p-8"><button type="button" onClick={() => setSelectedId("")} className="mb-5 rounded-xl border border-[#0D3B34]/10 bg-white px-4 py-2 text-xs font-bold">← العودة لطلبات الشركاء</button>
 
               <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
 
@@ -1782,7 +1769,7 @@ export default function AdminPartnersPage() {
 
             </div>
 
-          </section>
+          </section>}
 
         </div>
 
