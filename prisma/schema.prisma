@@ -502,6 +502,12 @@ model Service {
   cancellationPolicy  String?
   meetingInstructions String?
 
+  organizerType          String? @default("SELF")
+  organizerName          String?
+  organizerLicenseNumber String?
+  organizerLicenseIssuer String?
+  programApprovalNumber  String?
+
   status ServiceStatus @default(DRAFT)
 
   createdAt DateTime @default(now())
