@@ -30,6 +30,24 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
     return NextResponse.json({success:true,message:body.submitForReview?"تم حفظ التعديلات وإرسال الخدمة للمراجعة.":"تم حفظ التعديلات بنجاح.",service:{...service,basePrice:Number(service.basePrice),vatRate:Number(service.vatRate),finalPrice:Number(service.finalPrice)}});
   }catch(error){console.error("PATCH partner service failed",error);return NextResponse.json({success:false,message:"تعذر حفظ تعديلات الخدمة."},{status:500});}
 }
+export async function POST(request:NextRequest,context:{params:Promise<{id:string}>}){
+  try{
+    const session=await getCurrentSession(); if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
+    const {id}=await context.params; const service=await ownedService(session.user.id,id); if(!service) return NextResponse.json({success:false,message:"الخدمة غير موجودة."},{status:404});
+    const body=await request.json(); const action=body?.action;
+    if(action==="HIDE"){
+      if(service.status!=="PUBLISHED") return NextResponse.json({success:false,message:"يمكن إخفاء الخدمة بعد نشرها فقط."},{status:409});
+      await prisma.service.update({where:{id},data:{status:"SUSPENDED"}});
+      return NextResponse.json({success:true,status:"SUSPENDED",message:"تم إخفاء الخدمة من العملاء مؤقتاً."});
+    }
+    if(action==="PUBLISH"){
+      if(service.status!=="SUSPENDED") return NextResponse.json({success:false,message:"الخدمة ليست مخفية حالياً."},{status:409});
+      await prisma.service.update({where:{id},data:{status:"PUBLISHED"}});
+      return NextResponse.json({success:true,status:"PUBLISHED",message:"تم نشر الخدمة للعملاء من جديد."});
+    }
+    return NextResponse.json({success:false,message:"إجراء غير مدعوم."},{status:400});
+  }catch(error){console.error("POST partner service action failed",error);return NextResponse.json({success:false,message:"تعذر تنفيذ الإجراء."},{status:500});}
+}
 export async function DELETE(_request:NextRequest,context:{params:Promise<{id:string}>}){
   const session=await getCurrentSession(); if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
   const {id}=await context.params; const service=await ownedService(session.user.id,id); if(!service) return NextResponse.json({success:false,message:"الخدمة غير موجودة."},{status:404});
