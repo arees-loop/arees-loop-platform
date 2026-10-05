@@ -609,14 +609,14 @@ export default function PartnerServicesPage() {
               <div className="relative">
                 <button type="button" onClick={()=>setAccountMenuOpen(v=>!v)} className="flex items-center gap-3 rounded-2xl px-2 py-1.5 text-right hover:bg-white/70">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0D3B34] font-bold text-[#D4AF37]">ت</div>
-                  <div className="hidden sm:block"><p className="text-sm font-bold">تجارب المدينة</p><p className="text-[10px] text-[#0D3B34]/45">partner@areesloop.com</p></div><span className="text-xs">⌄</span>
+                  <div className="hidden sm:block"><p className="text-sm font-bold">حساب الشريك</p><p className="text-[10px] text-[#0D3B34]/45">البيانات من حسابك المسجل</p></div><span className="text-xs">⌄</span>
                 </button>
                 {accountMenuOpen && <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-[#0D3B34]/10 bg-white p-2 shadow-lg">
                   <Link href="/partner/profile" className="block rounded-xl px-4 py-3 text-xs font-bold hover:bg-[#F7F4EA]">الملف الشخصي</Link>
                   <Link href="/partner/logout" className="block rounded-xl px-4 py-3 text-xs font-bold text-red-700 hover:bg-red-50">تسجيل الخروج</Link>
                 </div>}
               </div>
-              <div className="hidden rounded-full bg-[#0D3B34] px-5 py-2.5 text-[10px] font-bold tracking-[.14em] text-[#E6C24D] md:block">AREES LOOP <span className="text-white/55">| إصدار تجريبي</span></div>
+              
               <div className="flex items-center gap-2">
                 <Link href="/" className="rounded-full border border-[#0D3B34]/10 bg-white px-4 py-2.5 text-xs font-semibold">العودة للمنصة</Link>
                 <button type="button" onClick={()=>setSidebarOpen(v=>!v)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0D3B34] text-white" title={sidebarOpen?"إخفاء القائمة":"إظهار القائمة"}>{sidebarOpen?"⇥":"⇤"}</button>
