@@ -16,5 +16,5 @@ export async function POST(request: NextRequest) {
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const blob = await put(`services/${session.user.id}/${Date.now()}-${safeName}`, file, { access: "private", addRandomSuffix: true });
-  return NextResponse.json({ success: true, url: blob.url, pathname: blob.pathname });
+  return NextResponse.json({ success: true, url: `/api/media?pathname=${encodeURIComponent(blob.pathname)}`, pathname: blob.pathname });
 }
