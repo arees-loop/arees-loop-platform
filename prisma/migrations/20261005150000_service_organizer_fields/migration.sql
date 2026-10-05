@@ -1,0 +1,6 @@
+ALTER TABLE "Service"
+ADD COLUMN IF NOT EXISTS "organizerType" TEXT DEFAULT 'SELF',
+ADD COLUMN IF NOT EXISTS "organizerName" TEXT,
+ADD COLUMN IF NOT EXISTS "organizerLicenseNumber" TEXT,
+ADD COLUMN IF NOT EXISTS "organizerLicenseIssuer" TEXT,
+ADD COLUMN IF NOT EXISTS "programApprovalNumber" TEXT;
