@@ -468,12 +468,14 @@ export default function PartnerServicesPage() {
   const [locationBusy, setLocationBusy] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
   const [locationSuggestions, setLocationSuggestions] = useState<Array<{name:string;address:string;city:string;location:{lat:number;lng:number}}>>([]);
+  const locationSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const searchServiceLocation = async () => {
-    if (!locationQuery.trim()) return;
+  const searchServiceLocation = async (queryOverride?: string) => {
+    const q = (queryOverride ?? locationQuery).trim();
+    if (q.length < 2) { setLocationSuggestions([]); return; }
     setLocationBusy(true); setLocationMessage("");
     try {
-      const r = await fetch(`/api/location/search?query=${encodeURIComponent(locationQuery.trim())}`, { cache: "no-store" });
+      const r = await fetch(`/api/location/search?query=${encodeURIComponent(q)}`, { cache: "no-store" });
       const data = await r.json();
       if (!r.ok || !data?.location) throw new Error();
       const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [data];
@@ -481,6 +483,14 @@ export default function PartnerServicesPage() {
       setLocationMessage(suggestions.length ? "اختر الموقع الصحيح من النتائج أدناه." : "لم نجد نتائج.");
     } catch { setLocationMessage("تعذر العثور على الموقع. جرّب اسم المكان مع المدينة."); }
     finally { setLocationBusy(false); }
+  };
+
+  const handleLocationQueryChange = (value: string) => {
+    setLocationQuery(value);
+    setLocationMessage("");
+    if (locationSearchTimer.current) clearTimeout(locationSearchTimer.current);
+    if (value.trim().length < 2) { setLocationSuggestions([]); return; }
+    locationSearchTimer.current = setTimeout(() => { void searchServiceLocation(value); }, 350);
   };
 
   const useCurrentServiceLocation = () => {
@@ -936,8 +946,8 @@ export default function PartnerServicesPage() {
                 <div className="mt-4 rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
                   <p className="mb-2 text-xs font-bold">تحديد الموقع على الخريطة *</p>
                   <div className="flex flex-col gap-2 md:flex-row">
-                    <input value={locationQuery} onChange={(e)=>setLocationQuery(e.target.value)} onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();void searchServiceLocation();}}} className={inputClass} placeholder="ابحث باسم المكان، الحي أو العنوان"/>
-                    <button type="button" onClick={searchServiceLocation} disabled={locationBusy} className="shrink-0 rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">بحث</button>
+                    <input value={locationQuery} onChange={(e)=>handleLocationQueryChange(e.target.value)} onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();void searchServiceLocation();}}} className={inputClass} placeholder="ابحث باسم المكان، الحي أو العنوان"/>
+                    <button type="button" onClick={()=>void searchServiceLocation()} disabled={locationBusy} className="shrink-0 rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">بحث</button>
                     <button type="button" onClick={useCurrentServiceLocation} disabled={locationBusy} className="shrink-0 rounded-2xl border border-[#0D3B34]/15 bg-white px-5 py-3 text-sm font-bold disabled:opacity-50">استخدام موقعي الحالي</button>
                   </div>
                   {locationMessage&&<p className="mt-3 text-xs font-bold">{locationMessage}</p>}
