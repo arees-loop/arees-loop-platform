@@ -718,10 +718,10 @@ export default function PartnerServicesPage() {
                 return (
                   <div
                     key={service.id}
-                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-visible rounded-[16px] border border-[#0D3B34]/8 bg-white/90 backdrop-blur-xl md:flex md:min-h-[92px]"}
+                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-visible rounded-[14px] border border-[#0D3B34]/8 bg-white/95 backdrop-blur-xl md:grid md:grid-cols-[76px_2fr_.8fr_.8fr_1fr_auto] md:items-center md:min-h-[76px]"}
                   >
                     {/* IMAGE PLACEHOLDER */}
-                    <div className={viewMode === "grid" ? "relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[82px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:min-h-[92px] md:w-[112px] md:shrink-0"}>
+                    <div className={viewMode === "grid" ? "relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[76px] items-center justify-center overflow-hidden rounded-r-[14px] bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-[76px] md:w-[76px]"}>
                       {service.images?.[0]?.url ? <img src={service.images[0].url} alt={service.nameAr} className="absolute inset-0 h-full w-full object-cover" /> : null}
                       {!service.images?.[0]?.url && <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-[#0D3B34]/10" />}
                       {!service.images?.[0]?.url && <div className="absolute bottom-[-40px] left-5 h-32 w-32 rounded-full border border-[#D4AF37]/25" />}
@@ -743,47 +743,28 @@ export default function PartnerServicesPage() {
                       </div>}
                     </div>
 
-                    <div className={viewMode==="grid" ? "p-3" : "flex-1 p-2 md:grid md:grid-cols-[1.45fr_1fr_.8fr_.8fr_auto] md:items-center md:gap-3"}>
-                      <p className="text-[10px] font-semibold text-[#B99124]">
-                        {service.category}
-                      </p>
-
-                      <h2 className="mt-2 text-lg font-bold">
-                        {service.nameAr}
-                      </h2>
-
-                      <p className="mt-1 text-xs text-[#0D3B34]/42">
-                        {service.nameEn}
-                      </p>
-
-                      <div className={viewMode==="grid" ? "mt-4 grid grid-cols-2 gap-2" : "mt-2 grid grid-cols-2 gap-2 md:mt-0"}>
-                        <InfoBox label="السعر" value={`${money(service.finalPrice)} ر.س`} />
-                        <InfoBox label="الحجوزات" value={String(service.bookings)} />
-                        <><InfoBox label="السعة" value={`${service.capacity} زائر`} /><InfoBox label="الضريبة" value={`${service.vatRate}%`} /></>
+                    <div className={viewMode==="grid" ? "p-3" : "contents"}>
+                      <div className={viewMode==="grid" ? "" : "min-w-0 px-3 py-2"}>
+                        <p className="text-[10px] font-semibold text-[#B99124]">{service.category}</p>
+                        <h2 className={viewMode==="grid" ? "mt-2 text-lg font-bold" : "mt-1 truncate text-sm font-bold"}>{service.nameAr}</h2>
+                        <p className={viewMode==="grid" ? "mt-1 text-xs text-[#0D3B34]/42" : "mt-1 truncate text-[10px] text-[#0D3B34]/42"}>{service.nameEn}</p>
                       </div>
 
-                      <div className={viewMode==="grid" ? "hidden" : "mt-2 rounded-xl bg-[#F7F6F1] p-2 md:mt-0"}>
-                        <p className="text-[10px] text-[#0D3B34]/40">
-                          الموقع
-                        </p>
-
-                        <p className="mt-1 text-xs font-semibold text-[#0D3B34]/70">
-                          {service.locationName}
-                        </p>
-
-                        {service.latitude !== null &&
-                          service.longitude !== null && (
-                            <p
-                              className="mt-1 text-[10px] text-[#0D3B34]/40"
-                              dir="ltr"
-                            >
-                              {service.latitude.toFixed(5)},{" "}
-                              {service.longitude.toFixed(5)}
-                            </p>
-                          )}
+                      <div className={viewMode==="grid" ? "mt-4 grid grid-cols-2 gap-2" : "contents"}>
+                        {viewMode==="grid" ? <>
+                          <InfoBox label="السعر" value={`${money(service.finalPrice)} ر.س`} />
+                          <InfoBox label="الحجوزات" value={String(service.bookings)} />
+                          <InfoBox label="السعة" value={`${service.capacity} زائر`} />
+                          <InfoBox label="الضريبة" value={`${service.vatRate}%`} />
+                        </> : <>
+                          <div className="px-2 text-center"><p className="text-[9px] text-[#0D3B34]/40">السعر</p><p className="mt-1 text-xs font-bold">{money(service.finalPrice)} ر.س</p></div>
+                          <div className="px-2 text-center"><p className="text-[9px] text-[#0D3B34]/40">السعة</p><p className="mt-1 text-xs font-bold">{service.capacity} زائر</p></div>
+                        </>}
                       </div>
 
-                      <div className={viewMode==="grid" ? "hidden" : "mt-2 rounded-xl bg-[#F7F6F1] p-2 md:mt-0"}>
+                      {viewMode==="list" && <div className="min-w-0 px-2"><p className="text-[9px] text-[#0D3B34]/40">الموقع</p><p className="mt-1 truncate text-xs font-semibold text-[#0D3B34]/70">{service.locationName}</p></div>}
+
+                      <div className={viewMode==="grid" ? "hidden" : "min-w-0 px-2"}>
                         <p className="text-[10px] text-[#0D3B34]/40">
                           الترخيص المرتبط
                         </p>
@@ -791,10 +772,10 @@ export default function PartnerServicesPage() {
                         <p className="mt-1 text-xs font-semibold text-[#0D3B34]/70">
                           {service.license}
                         </p>
-                        {viewMode==="list" && <span className={`mt-2 inline-block rounded-full px-3 py-1.5 text-[10px] font-bold ${status.className}`}>{status.label}</span>}
+                        {viewMode==="list" && <span className={`mt-1 inline-block rounded-full px-2 py-1 text-[9px] font-bold ${status.className}`}>{status.label}</span>}
                       </div>
 
-                      {viewMode==="list" && <div className="relative justify-self-start">
+                      {viewMode==="list" && <div className="relative justify-self-end px-3">
                         <button type="button" aria-label="إجراءات الخدمة" onClick={()=>setActionMenuId(actionMenuId===service.id?null:service.id)} className="h-10 w-10 rounded-xl border border-[#0D3B34]/10 bg-white text-lg font-bold">⋮</button>
                         {actionMenuId===service.id && <div className="absolute left-0 top-12 z-30 w-40 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white p-1 shadow-xl">
                           <button type="button" onClick={()=>{setActionMenuId(null);openEditServiceForm(service);window.scrollTo({top:0,behavior:"smooth"});}} className="w-full rounded-xl px-3 py-2 text-right text-xs font-bold hover:bg-[#F7F4EA]">✎ تعديل</button>
