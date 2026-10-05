@@ -93,7 +93,28 @@ export async function POST(
         afterData: { status: "REJECTED", reason },
       },
     });
-    return NextResponse.json({ success: true, data: { ...updated, finalPrice: Number(updated.finalPrice) } });
+
+    const recipients = [...new Set(service.partner.members.map((m) => m.user.email).filter(Boolean))];
+    let emailSent = false;
+    if (recipients.length) {
+      const delivery = await sendEmail({
+        to: recipients,
+        subject: "ملاحظة على خدمتك في Arees Loop",
+        html: `
+          <div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8">
+            <h2>لم يتم اعتماد الخدمة</h2>
+            <p>بعد مراجعة خدمة <strong>${service.nameAr}</strong>، لم يتم اعتمادها للنشر حالياً.</p>
+            <p><strong>سبب الرفض:</strong> ${reason}</p>
+            <p>يمكنكم مراجعة الملاحظة وتعديل الخدمة من لوحة تحكم الشريك ثم إعادة إرسالها للمراجعة.</p>
+            <p>فريق Arees Loop</p>
+          </div>
+        `,
+      });
+      emailSent = delivery.sent;
+      if (!delivery.sent) console.warn("Service rejection email failed:", delivery.reason);
+    }
+
+    return NextResponse.json({ success: true, data: { ...updated, finalPrice: Number(updated.finalPrice) }, notification: { emailSent } });
   }
 
   return NextResponse.json({ success: false, message: "إجراء غير صالح." }, { status: 400 });
