@@ -186,7 +186,7 @@ export default function PartnerServicesPage() {
     descriptionEn: "",
     cancellationPolicy: "",
     meetingInstructions: "",
-    images: [] as string[],
+    images: [] as { name: string; url: string }[],
     imagePreviews: [] as { name: string; url: string }[],
     primaryImage: "",
     bookingMode: "direct",
@@ -431,7 +431,8 @@ export default function PartnerServicesPage() {
           meetingPointUrl: form.meetingPointUrl, meetingInstructions: form.meetingInstructions,
           cancellationPolicy: form.cancellationPolicy, bookingMode: form.bookingMode,
           availableDays: form.availableDays, startDate: form.startDate, endDate: form.endDate,
-          startTime: form.startTime, endTime: form.endTime
+          startTime: form.startTime, endTime: form.endTime,
+          images: form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:form.nameAr,sortOrder:image.name===form.primaryImage?-1:index}))
         }),
       });
       const data = await response.json();
@@ -1090,10 +1091,16 @@ export default function PartnerServicesPage() {
                       const previews=files.map((file)=>({name:file.name,url:URL.createObjectURL(file)}));
                       setForm((current)=>({
                         ...current,
-                        images:[...current.images,...files.map((file)=>file.name)],
                         imagePreviews:[...current.imagePreviews,...previews],
                         primaryImage:current.primaryImage || files[0].name,
                       }));
+                      void Promise.all(files.map(async(file)=>{
+                        const data=new FormData(); data.append("file",file);
+                        const response=await fetch("/api/partner/services/images",{method:"POST",credentials:"include",body:data});
+                        const result=await response.json();
+                        if(!response.ok||!result?.success) throw new Error(result?.message||"تعذر رفع الصورة.");
+                        return {name:file.name,url:result.url as string};
+                      })).then((uploaded)=>setForm((current)=>({...current,images:[...current.images,...uploaded]}))).catch((error)=>setSubmitMessage(error?.message||"تعذر رفع الصورة."));
                       e.currentTarget.value="";
                     }}
                   />
@@ -1115,7 +1122,7 @@ export default function PartnerServicesPage() {
                               URL.revokeObjectURL(image.url);
                               const nextPreviews=x.imagePreviews.filter((_,i)=>i!==index);
                               const nextImages=x.images.filter((_,i)=>i!==index);
-                              return {...x,imagePreviews:nextPreviews,images:nextImages,primaryImage:x.primaryImage===image.name?(nextImages[0]||""):x.primaryImage};
+                              return {...x,imagePreviews:nextPreviews,images:nextImages,primaryImage:x.primaryImage===image.name?(nextImages[0]?.name||""):x.primaryImage};
                             })} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600">حذف</button>
                           </div>
                         </div>
