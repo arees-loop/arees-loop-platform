@@ -35,12 +35,25 @@ export default function AdminLayout({
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
+  const [pendingServiceCount, setPendingServiceCount] = useState(0);
 
   useEffect(() => {
     if (pathname === "/admin/login" || pathname === "/admin/invite") return;
     void fetch("/api/admin/me", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => { if (d.success) setAdmin(d.data); })
+      .catch(() => {});
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname === "/admin/login" || pathname === "/admin/invite") return;
+    void fetch("/api/admin/services", { cache: "no-store", credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data)) {
+          setPendingServiceCount(d.data.filter((service: { status?: string }) => service.status === "UNDER_REVIEW").length);
+        }
+      })
       .catch(() => {});
   }, [pathname]);
 
@@ -140,9 +153,9 @@ export default function AdminLayout({
 
                   <span className="flex-1">{item.label}</span>
 
-                  {item.badge && (
+                  {((item.href === "/admin/services" && pendingServiceCount > 0) || item.badge) && (
                     <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#D39B16] px-1.5 text-[12px] font-extrabold text-white shadow-[0_3px_8px_rgba(211,155,22,.28)]">
-                      {item.badge}
+                      {item.href === "/admin/services" ? pendingServiceCount : item.badge}
                     </span>
                   )}
                 </Link>
