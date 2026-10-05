@@ -292,7 +292,15 @@ const money = (value: number) =>
 
 
 
-export default function AdminPartnersPage() {\n  return <Suspense fallback={<main dir="rtl" className="min-h-screen bg-[#FBF8F1] p-8 text-[#0D3B34]">جارٍ تحميل الشركاء...</main>}><AdminPartnersContent /></Suspense>;\n}\n\nfunction AdminPartnersContent() {
+export default function AdminPartnersPage() {
+  return (
+    <Suspense fallback={<main dir="rtl" className="min-h-screen bg-[#FBF8F1] p-8 text-[#0D3B34]">جارٍ تحميل الشركاء...</main>}>
+      <AdminPartnersContent />
+    </Suspense>
+  );
+}
+
+function AdminPartnersContent() {
 
   const searchParams = useSearchParams();
   const activeView = searchParams.get("view") === "active";
