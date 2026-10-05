@@ -108,6 +108,7 @@ export default function PartnerServicesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
+  const [editingOriginalService, setEditingOriginalService] = useState<Service | null>(null);
   const [actionMenuId, setActionMenuId] = useState<string | number | null>(null);
   const [form, setForm] = useState({
     nameAr: "",
@@ -265,12 +266,14 @@ export default function PartnerServicesPage() {
 
   const openNewServiceForm = () => {
     setEditingServiceId(null);
+    setEditingOriginalService(null);
     resetForm();
     setShowForm(true);
   };
 
   const openEditServiceForm = (service: Service) => {
     setEditingServiceId(service.id);
+    setEditingOriginalService(service);
     setForm({
       nameAr: service.nameAr,
       nameEn: service.nameEn,
@@ -360,13 +363,32 @@ export default function PartnerServicesPage() {
     })));
   };
 
+  const hasMaterialChanges = Boolean(editingOriginalService && (
+    form.nameAr.trim() !== (editingOriginalService.nameAr ?? "").trim() ||
+    form.nameEn.trim() !== (editingOriginalService.nameEn ?? "").trim() ||
+    form.category !== editingOriginalService.category ||
+    form.subCategory !== editingOriginalService.subCategory ||
+    form.descriptionAr.trim() !== (editingOriginalService.descriptionAr ?? "").trim() ||
+    form.descriptionEn.trim() !== (editingOriginalService.descriptionEn ?? "").trim() ||
+    Number(form.basePrice || 0) !== Number(editingOriginalService.basePrice || 0) ||
+    Number(form.capacity || 0) !== Number(editingOriginalService.capacity || 0) ||
+    form.city !== editingOriginalService.city ||
+    form.locationName !== editingOriginalService.locationName ||
+    form.cancellationPolicy.trim() !== (editingOriginalService.cancellationPolicy ?? "").trim() ||
+    form.organizerType !== (editingOriginalService.organizerType ?? "SELF") ||
+    form.organizerName.trim() !== (editingOriginalService.organizerName ?? "").trim() ||
+    form.organizerLicenseNumber.trim() !== (editingOriginalService.organizerLicenseNumber ?? "").trim()
+  ));
+
   const saveDraft = async () => {
     if(!editingServiceId){ setSubmitMessage("استخدم «إرسال للمراجعة» لإنشاء الخدمة الجديدة."); return; }
+    if(editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges){ setSubmitMessage("هذه تعديلات جوهرية على خدمة منشورة. اضغط «إرسال للمراجعة» لإرسال طلب التعديل، وستتحول حالة الخدمة إلى «تحت المراجعة»."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
       const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(servicePayload(false))});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر حفظ التعديلات.");
-      await refreshServices(); closeServiceForm(); setSubmitMessage("تم حفظ التغييرات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
+      await refreshServices(); closeServiceForm(); setSubmitMessage("✓ تم حفظ التغييرات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
+      window.setTimeout(()=>setSubmitMessage(""),3500);
     }catch(error:any){setSubmitMessage(error?.message||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
   };
 
@@ -396,7 +418,7 @@ export default function PartnerServicesPage() {
       });
       const data = await response.json();
       if (!response.ok || !data?.success) throw new Error(data?.message || "تعذر حفظ الخدمة.");
-      setSubmitMessage("تم إرسال الخدمة إلى إدارة Arees Loop للمراجعة والموافقة بنجاح.");
+      setSubmitMessage(editingOriginalService?.status==="PUBLISHED" ? "✓ تم إرسال طلب التعديلات للمراجعة، وأصبحت حالة الخدمة «تحت المراجعة»." : "✓ تم إرسال الخدمة إلى إدارة Arees Loop للمراجعة والموافقة بنجاح.");
       const refreshed = await fetch("/api/partner/operations", { credentials:"include", cache:"no-store" }).then(r=>r.json());
       if (refreshed?.success) setServices((refreshed.services ?? []).map((service:any)=>({
         id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",
@@ -1160,7 +1182,7 @@ export default function PartnerServicesPage() {
 
                 <p className="mt-2 text-xs leading-6 text-white/50">
                   {editingServiceId
-                    ? "يمكنك حفظ التعديلات الحالية، أو إعادة إرسال الخدمة للمراجعة إذا كانت التغييرات تحتاج اعتماد إدارة Arees Loop."
+                    ? (editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges ? "تم رصد تعديل جوهري على خدمة منشورة. يجب إرسال طلب التعديل للمراجعة، وستتحول حالة الخدمة إلى «تحت المراجعة»." : "يمكنك حفظ التعديلات غير الجوهرية مباشرة. التغييرات الجوهرية على الخدمة المنشورة تتطلب إرسال طلب للمراجعة.")
                     : "الحفظ كمسودة لا ينشر الخدمة. إرسالها للمراجعة يحولها إلى «تحت المراجعة» حتى تعتمدها إدارة Arees Loop."}
                 </p>
 
