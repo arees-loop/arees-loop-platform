@@ -382,12 +382,12 @@ export default function PartnerServicesPage() {
 
   const saveDraft = async () => {
     if(!editingServiceId){ setSubmitMessage("استخدم «إرسال للمراجعة» لإنشاء الخدمة الجديدة."); return; }
-    if(editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges){ setSubmitMessage("هذه تعديلات جوهرية على خدمة منشورة. اضغط «إرسال للمراجعة» لإرسال طلب التعديل، وستتحول حالة الخدمة إلى «تحت المراجعة»."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
-      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(servicePayload(false))});
+      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges),submitForReview:editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges})});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر حفظ التعديلات.");
-      await refreshServices(); closeServiceForm(); setSubmitMessage("✓ تم حفظ التغييرات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
+      const sentForReview=editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges;
+      await refreshServices(); closeServiceForm(); setSubmitMessage(sentForReview ? "✓ تم حفظ التعديل. التعديل الذي تم جوهري ويحتاج مراجعة الإدارة، وتم إرسال الخدمة للمراجعة." : "✓ تم حفظ التعديلات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
       window.setTimeout(()=>setSubmitMessage(""),3500);
     }catch(error:any){setSubmitMessage(error?.message||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
   };
@@ -1182,7 +1182,7 @@ export default function PartnerServicesPage() {
 
                 <p className="mt-2 text-xs leading-6 text-white/50">
                   {editingServiceId
-                    ? (editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges ? "تم رصد تعديل جوهري على خدمة منشورة. يجب إرسال طلب التعديل للمراجعة، وستتحول حالة الخدمة إلى «تحت المراجعة»." : "يمكنك حفظ التعديلات غير الجوهرية مباشرة. التغييرات الجوهرية على الخدمة المنشورة تتطلب إرسال طلب للمراجعة.")
+                    ? "اضغط حفظ التعديلات. إذا كان التعديل جوهرياً فسيتم حفظه وإرساله تلقائياً لمراجعة الإدارة."
                     : "الحفظ كمسودة لا ينشر الخدمة. إرسالها للمراجعة يحولها إلى «تحت المراجعة» حتى تعتمدها إدارة Arees Loop."}
                 </p>
 
@@ -1192,7 +1192,7 @@ export default function PartnerServicesPage() {
                     onClick={saveDraft}
                     className="rounded-2xl border border-white/15 bg-white/8 px-5 py-3.5 text-sm font-bold text-white"
                   >
-                    {editingServiceId ? "حفظ التعديلات" : "حفظ كمسودة"}
+                    {submitting ? "جارٍ الحفظ..." : (editingServiceId ? "حفظ التعديلات" : "حفظ كمسودة")}
                   </button>
 
                   <button
