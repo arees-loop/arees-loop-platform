@@ -91,6 +91,38 @@ const mainCategories = [
 ];
 
 
+function RichTextEditor({value,onChange,dir="rtl"}:{value:string;onChange:(value:string)=>void;dir?:"rtl"|"ltr"}) {
+  const ref=useRef<HTMLDivElement>(null);
+  useEffect(()=>{ if(ref.current && ref.current.innerHTML!==value) ref.current.innerHTML=value||""; },[value]);
+  const cmd=(command:string,arg?:string)=>{ ref.current?.focus(); document.execCommand(command,false,arg); if(ref.current) onChange(ref.current.innerHTML); };
+  const btn="min-w-9 rounded-lg border border-[#0D3B34]/10 bg-white px-2.5 py-2 text-sm font-bold text-[#0D3B34] hover:bg-[#F4F0E4]";
+  return <div className="overflow-hidden rounded-[16px] border border-[#0D3B34]/15 bg-white">
+    <div className="flex flex-wrap items-center gap-1 border-b border-[#0D3B34]/10 bg-[#FAF8F2] p-2">
+      <button type="button" className={btn} onClick={()=>cmd("bold")} title="عريض"><b>B</b></button>
+      <button type="button" className={btn} onClick={()=>cmd("italic")} title="مائل"><i>I</i></button>
+      <button type="button" className={btn} onClick={()=>cmd("underline")} title="تحته خط"><u>U</u></button>
+      <span className="mx-1 h-7 w-px bg-[#0D3B34]/10" />
+      <button type="button" className={btn} onClick={()=>cmd("justifyRight")} title="محاذاة يمين">⇥</button>
+      <button type="button" className={btn} onClick={()=>cmd("justifyCenter")} title="توسيط">≡</button>
+      <button type="button" className={btn} onClick={()=>cmd("justifyLeft")} title="محاذاة يسار">⇤</button>
+      <span className="mx-1 h-7 w-px bg-[#0D3B34]/10" />
+      <button type="button" className={btn} onClick={()=>cmd("insertUnorderedList")} title="قائمة نقطية">•☰</button>
+      <button type="button" className={btn} onClick={()=>cmd("insertOrderedList")} title="قائمة رقمية">1☰</button>
+      <select aria-label="حجم النص" className="rounded-lg border border-[#0D3B34]/10 bg-white px-2 py-2 text-xs text-[#0D3B34]" defaultValue="3" onChange={e=>cmd("fontSize",e.target.value)}>
+        <option value="2">صغير</option><option value="3">عادي</option><option value="4">كبير</option><option value="5">عنوان</option>
+      </select>
+      <label className="flex h-9 items-center gap-1 rounded-lg border border-[#0D3B34]/10 bg-white px-2 text-xs text-[#0D3B34]" title="لون النص">لون
+        <input type="color" className="h-5 w-6 cursor-pointer border-0 bg-transparent p-0" onChange={e=>cmd("foreColor",e.target.value)} />
+      </label>
+      <button type="button" className={btn} onClick={()=>cmd("removeFormat")} title="مسح التنسيق">Tx</button>
+    </div>
+    <div ref={ref} contentEditable suppressContentEditableWarning dir={dir}
+      onInput={e=>onChange(e.currentTarget.innerHTML)}
+      className="min-h-[180px] px-4 py-4 text-sm leading-8 text-[#173F38] outline-none"
+      data-placeholder={dir==="rtl"?"اكتب وصف الخدمة هنا...":"Write the service description..."} />
+  </div>;
+}
+
 const money = (value: number) =>
   new Intl.NumberFormat("ar-SA", {
     minimumFractionDigits: 2,
@@ -903,32 +935,11 @@ export default function PartnerServicesPage() {
                 title="وصف الخدمة"
               >
                 <Field label="الوصف بالعربية">
-                  <textarea
-                    value={form.descriptionAr}
-                    onChange={(e) =>
-                      setForm((current) => ({
-                        ...current,
-                        descriptionAr: e.target.value,
-                      }))
-                    }
-                    rows={5}
-                    className={`${inputClass} h-auto min-h-[140px] py-4`}
-                  />
+                  <RichTextEditor value={form.descriptionAr} onChange={(value)=>setForm((current)=>({...current,descriptionAr:value}))} dir="rtl" />
                 </Field>
 
                 <Field label="Description in English">
-                  <textarea
-                    value={form.descriptionEn}
-                    onChange={(e) =>
-                      setForm((current) => ({
-                        ...current,
-                        descriptionEn: e.target.value,
-                      }))
-                    }
-                    rows={5}
-                    dir="ltr"
-                    className={`${inputClass} h-auto min-h-[140px] py-4`}
-                  />
+                  <RichTextEditor value={form.descriptionEn} onChange={(value)=>setForm((current)=>({...current,descriptionEn:value}))} dir="ltr" />
                 </Field>
               </FormSection>
 
