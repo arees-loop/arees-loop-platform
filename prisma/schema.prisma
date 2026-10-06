@@ -112,6 +112,18 @@ enum ServiceStatus {
   REJECTED
 }
 
+enum ServicePricingModel {
+  PER_PERSON
+  PER_UNIT
+  HYBRID
+}
+
+enum ExtraPricingMode {
+  PER_PERSON
+  PER_UNIT
+  PER_ORDER
+}
+
 enum BookingStatus {
   PENDING
   PAID
@@ -499,6 +511,12 @@ model Service {
   finalPrice Decimal @db.Decimal(12, 2)
 
   capacity            Int?
+  pricingModel        ServicePricingModel @default(PER_UNIT)
+  saleUnitLabel       String? @default("حجز")
+  peoplePerUnit       Int? @default(1)
+  adultPrice          Decimal? @db.Decimal(12, 2)
+  childPrice          Decimal? @db.Decimal(12, 2)
+  infantPrice         Decimal? @default(0) @db.Decimal(12, 2)
   cancellationPolicy  String?
   meetingInstructions String?
 
@@ -517,6 +535,7 @@ model Service {
   license License? @relation(fields: [licenseId], references: [id], onDelete: SetNull)
 
   images   ServiceImage[]
+  bookingExtras ServiceBookingExtra[]
   bookings Booking[]
 
   @@index([partnerId])
@@ -534,6 +553,19 @@ model ServiceImage {
 
   service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
+  @@index([serviceId])
+}
+
+model ServiceBookingExtra {
+  id          String @id @default(cuid())
+  serviceId   String
+  name        String
+  price       Decimal @db.Decimal(12, 2)
+  pricingMode ExtraPricingMode @default(PER_ORDER)
+  sortOrder   Int @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   @@index([serviceId])
 }
 
