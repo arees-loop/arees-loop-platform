@@ -422,10 +422,9 @@ export default function PartnerServicesPage() {
     if(uploadingImages){ setSubmitMessage("جارٍ رفع الصورة، سيتم تفعيل الحفظ فور اكتمال الرفع."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
-      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges),submitForReview:editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges})});
+      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(false),submitForReview:false})});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر حفظ التعديلات.");
-      const sentForReview=editingOriginalService?.status==="PUBLISHED" && hasMaterialChanges;
-      await refreshServices(); closeServiceForm(); setSubmitMessage(sentForReview ? "✓ تم حفظ التعديل. التعديل الذي تم جوهري ويحتاج مراجعة الإدارة، وتم إرسال الخدمة للمراجعة." : "✓ تم حفظ التعديلات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
+      await refreshServices(); closeServiceForm(); setSubmitMessage("✓ تم حفظ التعديلات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
       window.setTimeout(()=>setSubmitMessage(""),6000);
     }catch(error:any){setSubmitMessage(error?.message||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
   };
