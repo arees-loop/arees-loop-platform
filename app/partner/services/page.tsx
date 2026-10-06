@@ -124,6 +124,11 @@ function RichTextEditor({value,onChange,dir="rtl"}:{value:string;onChange:(value
   </div>;
 }
 
+
+const sectionMarker=(name:string,value:string)=>value.trim()?`<div data-arees-section="${name}" style="display:none">${value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>`:"";
+const stripProgramSections=(html:string)=>html.replace(/<div data-arees-section="(?:includes|excludes|notes)" style="display:none">[\\s\\S]*?<\\/div>/g,"").trim();
+const readProgramSection=(html:string,name:string)=>{const m=html.match(new RegExp(`<div data-arees-section="${name}" style="display:none">([\\s\\S]*?)<\\/div>`));return (m?.[1]||"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&");};
+
 const money = (value: number) =>
   new Intl.NumberFormat("ar-SA", {
     minimumFractionDigits: 2,
@@ -215,7 +220,7 @@ export default function PartnerServicesPage() {
           bookings: Number(service.bookingCount ?? 0),
           status: service.status,
           imageCount: service.images?.length ?? 0,
-          descriptionAr: service.descriptionAr ?? "", descriptionEn: service.descriptionEn ?? "", programIncludes: service.programIncludes ?? "", programExcludes: service.programExcludes ?? "", programNotes: service.programNotes ?? "", cancellationPolicy: service.cancellationPolicy ?? "", meetingInstructions: service.meetingInstructions ?? "", images: service.images ?? [],
+          descriptionAr: stripProgramSections(service.descriptionAr ?? ""), descriptionEn: service.descriptionEn ?? "", programIncludes: readProgramSection(service.descriptionAr ?? "","includes"), programExcludes: readProgramSection(service.descriptionAr ?? "","excludes"), programNotes: readProgramSection(service.descriptionAr ?? "","notes"), cancellationPolicy: service.cancellationPolicy ?? "", meetingInstructions: service.meetingInstructions ?? "", images: service.images ?? [],
         })));
       })
       .catch(() => {});
@@ -346,9 +351,9 @@ export default function PartnerServicesPage() {
       meetingPointName: "",
       meetingPointUrl: "",
       capacity: String(service.capacity),
-      descriptionAr: service.descriptionAr ?? "",
+      descriptionAr: stripProgramSections(service.descriptionAr ?? ""),
       descriptionEn: service.descriptionEn ?? "",
-      programIncludes: service.programIncludes ?? "", programExcludes: service.programExcludes ?? "", programNotes: service.programNotes ?? "",
+      programIncludes: readProgramSection(service.descriptionAr ?? "","includes"), programExcludes: readProgramSection(service.descriptionAr ?? "","excludes"), programNotes: readProgramSection(service.descriptionAr ?? "","notes"),
       cancellationPolicy: service.cancellationPolicy ?? "",
       meetingInstructions: service.meetingInstructions ?? "",
       organizerType: service.organizerType ?? "SELF", organizerName: service.organizerName ?? "", organizerLicenseNumber: service.organizerLicenseNumber ?? "", organizerLicenseIssuer: service.organizerLicenseIssuer ?? "", programApprovalNumber: service.programApprovalNumber ?? "",
@@ -407,7 +412,7 @@ export default function PartnerServicesPage() {
   });
 
   const servicePayload = (submitForReview=false) => ({
-    nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:form.descriptionAr,descriptionEn:form.descriptionEn,programIncludes:form.programIncludes,programExcludes:form.programExcludes,programNotes:form.programNotes,
+    nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:stripProgramSections(form.descriptionAr)+sectionMarker("includes",form.programIncludes)+sectionMarker("excludes",form.programExcludes)+sectionMarker("notes",form.programNotes),descriptionEn:form.descriptionEn,
     basePrice:form.basePrice,vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
     placeId:form.placeId,latitude:form.latitude,longitude:form.longitude,meetingInstructions:form.meetingInstructions,cancellationPolicy:form.cancellationPolicy,
     organizerType:form.organizerType,organizerName:form.organizerName,organizerLicenseNumber:form.organizerLicenseNumber,organizerLicenseIssuer:form.organizerLicenseIssuer,programApprovalNumber:form.programApprovalNumber,
