@@ -1172,7 +1172,7 @@ export default function PartnerServicesPage() {
               {/* IMAGES */}
               <FormSection eyebrow="MEDIA" title="صور الخدمة">
                 <div className="mb-3 text-xs leading-5 text-[#0D3B34]/55">
-                  الصور الموصى بها: <strong>1080 × 1080 بكسل (1:1)</strong> · الحد الأقصى <strong>2 MB للصورة</strong> · حتى <strong>10 صور</strong> · JPG / PNG / WebP
+                  <span className="font-black text-red-600">المقاس المطلوب: 1080 × 1080 بكسل (1:1) — الحد الأقصى 2 MB للصورة.</span> <span>حتى 10 صور · JPG / PNG / WebP</span>
                 </div>
                 <label className="flex cursor-pointer items-center justify-center rounded-[18px] border border-dashed border-[#B88A13]/45 bg-white px-5 py-5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF9E8]">
                   + إضافة صور
@@ -1180,7 +1180,16 @@ export default function PartnerServicesPage() {
                     onChange={(e)=>{
                       const selected=Array.from(e.target.files||[]);
                       const remaining=Math.max(0,10-form.imagePreviews.length);
-                      const files=selected.filter((file)=>file.size<=2*1024*1024).slice(0,remaining);
+                      const candidates=selected.slice(0,remaining);
+                      const validated=await Promise.all(candidates.map(async(file)=>{
+                        if(file.size>2*1024*1024) return {file,error:`${file.name}: حجم الصورة أكبر من 2 MB.`};
+                        const dims=await new Promise<{width:number;height:number}>((resolve,reject)=>{const img=new window.Image();const url=URL.createObjectURL(file);img.onload=()=>{resolve({width:img.naturalWidth,height:img.naturalHeight});URL.revokeObjectURL(url)};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("تعذر قراءة الصورة"))};img.src=url;});
+                        if(dims.width!==1080||dims.height!==1080) return {file,error:`${file.name}: المقاس ${dims.width}×${dims.height} غير مناسب. المطلوب 1080×1080 بكسل.`};
+                        return {file,error:""};
+                      }));
+                      const errors=validated.filter(x=>x.error).map(x=>x.error);
+                      const files=validated.filter(x=>!x.error).map(x=>x.file);
+                      if(errors.length) setSubmitMessage(errors.join(" "));
                       if(!files.length) { e.currentTarget.value=""; return; }
                       const previews=files.map((file)=>({name:file.name,url:URL.createObjectURL(file)}));
                       setForm((current)=>({
