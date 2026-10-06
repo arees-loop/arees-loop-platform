@@ -1164,7 +1164,7 @@ export default function PartnerServicesPage() {
                         <option value="الأمانة / البلدية">الأمانة / البلدية</option>
                         <option value="أخرى">أخرى</option>
                       </select>
-                      {(!["","وزارة السياحة","الهيئة العامة للترفيه","وزارة الرياضة","الأمانة / البلدية"].includes(form.organizerLicenseIssuer)) || form.organizerLicenseIssuer==="أخرى") && (
+                      {((!["","وزارة السياحة","الهيئة العامة للترفيه","وزارة الرياضة","الأمانة / البلدية"].includes(form.organizerLicenseIssuer)) || form.organizerLicenseIssuer==="أخرى") && (
                         <input
                           value={form.organizerLicenseIssuer==="أخرى" ? "" : form.organizerLicenseIssuer}
                           onChange={(e)=>setForm(x=>({...x,organizerLicenseIssuer:e.target.value || "أخرى"}))}
