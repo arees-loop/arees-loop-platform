@@ -171,6 +171,13 @@ export default function PartnerServicesPage() {
     images: [] as { name: string; url: string }[],
     imagePreviews: [] as { name: string; url: string }[],
     primaryImage: "",
+    pricingModel: "PER_PERSON",
+    saleUnitLabel: "حجز",
+    peoplePerUnit: "1",
+    adultPrice: "",
+    childPrice: "",
+    infantPrice: "0",
+    bookingExtras: [] as { id:string; name:string; price:string; pricingMode:string }[],
     bookingMode: "direct",
     availableDays: [] as string[],
     startDate: "",
@@ -288,7 +295,14 @@ export default function PartnerServicesPage() {
       images: [],
       imagePreviews: [],
       primaryImage: "",
-      bookingMode: "direct",
+      pricingModel: "PER_PERSON",
+    saleUnitLabel: "حجز",
+    peoplePerUnit: "1",
+    adultPrice: "",
+    childPrice: "",
+    infantPrice: "0",
+    bookingExtras: [] as { id:string; name:string; price:string; pricingMode:string }[],
+    bookingMode: "direct",
       availableDays: [],
       startDate: "",
       endDate: "",
@@ -336,7 +350,14 @@ export default function PartnerServicesPage() {
       images: (service.images ?? []).map((image,index)=>({name:image.altText || `صورة ${index+1}`,url:image.url})),
       imagePreviews: (service.images ?? []).map((image,index)=>({name:image.altText || `صورة ${index+1}`,url:image.url})),
       primaryImage: service.images?.[0]?.altText || (service.images?.length ? "صورة 1" : ""),
-      bookingMode: "direct",
+      pricingModel: "PER_PERSON",
+    saleUnitLabel: "حجز",
+    peoplePerUnit: "1",
+    adultPrice: "",
+    childPrice: "",
+    infantPrice: "0",
+    bookingExtras: [] as { id:string; name:string; price:string; pricingMode:string }[],
+    bookingMode: "direct",
       availableDays: [],
       startDate: "",
       endDate: "",
@@ -1067,6 +1088,32 @@ export default function PartnerServicesPage() {
               </FormSection>
 
               {/* BOOKING & AVAILABILITY */}
+              <FormSection eyebrow="BOOKING OPTIONS" title="خيارات الحجز والإضافات">
+                <div className="rounded-[18px] border border-[#D4AF37]/25 bg-[#FFF8E5] p-4 text-xs leading-6 text-[#0D3B34]/70">
+                  نفصل بين عدد وحدات الحجز وعدد الأشخاص حتى تناسب الخدمة البرامج السياحية والمجموعات والمركبات والقوارب.
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Field label="طريقة التسعير"><select value={form.pricingModel} onChange={(e)=>setForm(x=>({...x,pricingModel:e.target.value}))} className={inputClass}><option value="PER_PERSON">حسب الأشخاص والفئات</option><option value="PER_UNIT">حسب وحدة الحجز / المجموعة</option><option value="HYBRID">وحدة حجز + فئات أشخاص</option></select></Field>
+                  <Field label="اسم وحدة الحجز"><input value={form.saleUnitLabel} onChange={(e)=>setForm(x=>({...x,saleUnitLabel:e.target.value}))} className={inputClass} placeholder="مجموعة، قارب، مركبة، جولة" /></Field>
+                  <Field label="عدد الأشخاص لكل وحدة"><input type="number" min="1" value={form.peoplePerUnit} onChange={(e)=>setForm(x=>({...x,peoplePerUnit:e.target.value}))} className={inputClass} /></Field>
+                </div>
+                {(form.pricingModel==="PER_PERSON"||form.pricingModel==="HYBRID")&&<div className="grid gap-3 rounded-[22px] border border-[#0D3B34]/10 bg-[#F8F7F2] p-4 md:grid-cols-3">
+                  <Field label="سعر البالغ"><input type="number" min="0" value={form.adultPrice} onChange={(e)=>setForm(x=>({...x,adultPrice:e.target.value}))} className={inputClass}/></Field>
+                  <Field label="سعر الطفل"><input type="number" min="0" value={form.childPrice} onChange={(e)=>setForm(x=>({...x,childPrice:e.target.value}))} className={inputClass}/></Field>
+                  <Field label="سعر الرضيع"><input type="number" min="0" value={form.infantPrice} onChange={(e)=>setForm(x=>({...x,infantPrice:e.target.value}))} className={inputClass}/></Field>
+                </div>}
+                <div className="rounded-[22px] border border-[#0D3B34]/10 p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-sm font-black">الإضافات الاختيارية</p><p className="mt-1 text-[11px] opacity-55">كل إضافة يمكن تسعيرها لكل شخص أو لكل وحدة حجز أو مرة واحدة للطلب.</p></div><button type="button" onClick={()=>setForm(x=>({...x,bookingExtras:[...x.bookingExtras,{id:String(Date.now()),name:"",price:"",pricingMode:"PER_ORDER"}]}))} className="rounded-xl border border-[#0D3B34]/15 bg-white px-4 py-2 text-xs font-black">+ إضافة خيار</button></div>
+                  <div className="space-y-3">{form.bookingExtras.map((extra,index)=><div key={extra.id} className="grid gap-3 rounded-xl bg-[#F8F7F2] p-3 md:grid-cols-[1fr_150px_190px_auto]">
+                    <input value={extra.name} onChange={(e)=>setForm(x=>({...x,bookingExtras:x.bookingExtras.map((v,i)=>i===index?{...v,name:e.target.value}:v)}))} className={inputClass} placeholder="اسم الإضافة"/>
+                    <input type="number" min="0" value={extra.price} onChange={(e)=>setForm(x=>({...x,bookingExtras:x.bookingExtras.map((v,i)=>i===index?{...v,price:e.target.value}:v)}))} className={inputClass} placeholder="السعر"/>
+                    <select value={extra.pricingMode} onChange={(e)=>setForm(x=>({...x,bookingExtras:x.bookingExtras.map((v,i)=>i===index?{...v,pricingMode:e.target.value}:v)}))} className={inputClass}><option value="PER_PERSON">لكل شخص</option><option value="PER_UNIT">لكل وحدة حجز</option><option value="PER_ORDER">مرة واحدة للطلب</option></select>
+                    <button type="button" onClick={()=>setForm(x=>({...x,bookingExtras:x.bookingExtras.filter((_,i)=>i!==index)}))} className="rounded-xl px-3 text-xs font-bold text-red-600">حذف</button>
+                  </div>)}</div>
+                </div>
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" onClick={()=>{setSubmitMessage("✓ تم تجهيز خيارات الحجز والإضافات. ربط الحفظ الدائم بقاعدة البيانات هو الخطوة التالية.");window.setTimeout(()=>setSubmitMessage(""),5000)}} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white">حفظ خيارات الحجز والإضافات</button></div>}
+              </FormSection>
+
               <FormSection eyebrow="BOOKING" title="الحجز والتوفر">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="طريقة الحجز">
