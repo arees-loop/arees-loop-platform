@@ -141,6 +141,7 @@ export default function PartnerServicesPage() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
   const [editingOriginalService, setEditingOriginalService] = useState<Service | null>(null);
   const [actionMenuId, setActionMenuId] = useState<string | number | null>(null);
@@ -463,7 +464,8 @@ export default function PartnerServicesPage() {
 
   const submitForReview = async () => {
     const missing=missingRequiredFields();
-    if(missing.length){ setSubmitMessage(`أكمل الحقول الإلزامية التالية: ${missing.join("، ")}`); return; }
+    if(missing.length){ setInvalidFields(missing); setSubmitMessage(`أكمل الحقول الإلزامية التالية: ${missing.join("، ")}`); window.setTimeout(()=>document.querySelector("[data-invalid-field=true]")?.scrollIntoView({behavior:"smooth",block:"center"}),80); return; }
+    setInvalidFields([]);
     if(uploadingImages){ setSubmitMessage("انتظر لحظة حتى يكتمل رفع الصور."); return; }
     if(form.imagePreviews.length > form.images.length){ setSubmitMessage("لم يكتمل حفظ الصور. أعد رفعها قبل الإرسال للمراجعة."); return; }
     if (submitting) return;
@@ -877,7 +879,7 @@ export default function PartnerServicesPage() {
       </div>
 
       {submitMessage && (
-        <div className="fixed left-1/2 top-5 z-[100] -translate-x-1/2 rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-sm font-bold text-[#0D3B34] shadow-xl">
+        <div className="fixed left-1/2 top-1/2 z-[100] w-[min(90vw,560px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#0D3B34]/10 bg-white px-6 py-5 text-center text-sm font-bold text-[#0D3B34] shadow-2xl">
           {submitMessage}
         </div>
       )}
@@ -920,7 +922,7 @@ export default function PartnerServicesPage() {
                 title="معلومات الخدمة"
               >
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="اسم الخدمة بالعربية">
+                  <Field label="اسم الخدمة بالعربية" invalid={invalidFields.includes("اسم الخدمة")}>
                     <input
                       value={form.nameAr}
                       onChange={(e) =>
@@ -949,7 +951,7 @@ export default function PartnerServicesPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="التصنيف">
+                  <Field label="التصنيف" invalid={invalidFields.includes("التصنيف")}>
                     <select value={form.category} onChange={(e)=>setForm((current)=>({...current,category:e.target.value,subCategory:""}))} className={inputClass}>
                       <option value="">اختر التصنيف</option>
                       {mainCategories.map((category)=><option key={category}>{category}</option>)}
@@ -1025,7 +1027,7 @@ export default function PartnerServicesPage() {
                 title="السعر والضريبة"
               >
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Field label="السعر">
+                  <Field label="السعر" invalid={invalidFields.includes("السعر")}>
                     <input
                       type="number"
                       min="0"
@@ -2033,13 +2035,15 @@ function InfoBox({
 function Field({
   label,
   children,
+  invalid = false,
 }: {
   label: string;
   children: React.ReactNode;
+  invalid?: boolean;
 }) {
   return (
-    <label className="block">
-      <span className="mb-2 block text-xs font-semibold text-[#0D3B34]/65">
+    <label data-invalid-field={invalid ? "true" : undefined} className={`block rounded-xl ${invalid ? "border-2 border-red-500 bg-red-50/40 p-2" : ""}`}>
+      <span className={`mb-2 block text-xs font-semibold ${invalid ? "text-red-700" : "text-[#0D3B34]/65"}`}>
         {label}
       </span>
 
