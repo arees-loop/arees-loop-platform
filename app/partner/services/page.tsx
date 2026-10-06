@@ -126,7 +126,7 @@ function RichTextEditor({value,onChange,dir="rtl"}:{value:string;onChange:(value
 
 
 const sectionMarker=(name:string,value:string)=>value.trim()?`<div data-arees-section="${name}" style="display:none">${value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>`:"";
-const stripProgramSections=(html:string)=>html.replace(/<div data-arees-section="(?:includes|excludes|notes)" style="display:none">[\\s\\S]*?<\\/div>/g,"").trim();
+const stripProgramSections=(html:string)=>html.replace(new RegExp('<div data-arees-section="(?:includes|excludes|notes)" style="display:none">[\\\\s\\\\S]*?</div>','g'),"").trim();
 const readProgramSection=(html:string,name:string)=>{const m=html.match(new RegExp(`<div data-arees-section="${name}" style="display:none">([\\s\\S]*?)<\\/div>`));return (m?.[1]||"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&");};
 
 const money = (value: number) =>
