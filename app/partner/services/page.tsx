@@ -501,7 +501,7 @@ export default function PartnerServicesPage() {
         city:service.city??"",locationName:service.locationName??"",formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",
         latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),vatRate:Number(service.vatRate??0),
         finalPrice:Number(service.finalPrice??0),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),
-        status:service.status,imageCount:Array.isArray(service.images)?service.images.length:0
+        status:service.status,imageCount:Array.isArray(service.images)?service.images.length:0,descriptionAr:service.descriptionAr??"",descriptionEn:service.descriptionEn??"",cancellationPolicy:service.cancellationPolicy??"",meetingInstructions:service.meetingInstructions??"",organizerType:service.organizerType??"SELF",organizerName:service.organizerName??"",organizerLicenseNumber:service.organizerLicenseNumber??"",organizerLicenseIssuer:service.organizerLicenseIssuer??"",programApprovalNumber:service.programApprovalNumber??"",images:service.images??[]
       })));
       closeServiceForm();
     } catch (error:any) {
@@ -880,6 +880,7 @@ export default function PartnerServicesPage() {
 
       {submitMessage && (
         <div className="fixed left-1/2 top-1/2 z-[100] w-[min(90vw,560px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#0D3B34]/10 bg-white px-6 py-5 text-center text-sm font-bold text-[#0D3B34] shadow-2xl">
+          <button type="button" onClick={()=>setSubmitMessage("")} className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-[#0D3B34]/8 text-sm" aria-label="إغلاق">×</button>
           {submitMessage}
         </div>
       )}
