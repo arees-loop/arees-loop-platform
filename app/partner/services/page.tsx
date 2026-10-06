@@ -719,17 +719,17 @@ export default function PartnerServicesPage() {
             </section>
 
             {/* SERVICES GRID */}
-            {!showForm && <section className={viewMode === "grid" ? "mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "mt-6 space-y-2"}>
+            {!showForm && <section className={viewMode === "grid" ? "mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "mt-6 overflow-hidden rounded-[18px] border border-[#0D3B34]/10 bg-white"}>
               {filteredServices.map((service) => {
                 const status = statusConfig[service.status];
 
                 return (
                   <div
                     key={service.id}
-                    className={viewMode === "grid" ? "overflow-hidden rounded-[22px] border border-white/80 bg-white/80 backdrop-blur-xl" : "overflow-visible rounded-[14px] border border-[#0D3B34]/8 bg-white/95 backdrop-blur-xl md:grid md:grid-cols-[76px_2fr_.8fr_.8fr_1.15fr_auto] md:items-center md:min-h-[76px]"}
+                    className={viewMode === "grid" ? "overflow-hidden rounded-[18px] border border-[#0D3B34]/10 bg-white shadow-sm" : "overflow-visible border-b border-[#0D3B34]/8 bg-white last:border-b-0 md:grid md:grid-cols-[76px_2fr_.8fr_.8fr_1.15fr_auto] md:items-center md:min-h-[76px]"}
                   >
                     {/* IMAGE PLACEHOLDER */}
-                    <div className={viewMode === "grid" ? "relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[76px] items-center justify-center overflow-hidden rounded-r-[14px] bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-[76px] md:w-[76px]"}>
+                    <div className={viewMode === "grid" ? "relative flex aspect-[16/11] items-center justify-center overflow-hidden bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3]" : "relative flex h-[76px] items-center justify-center overflow-hidden rounded-r-[14px] bg-gradient-to-br from-[#D9E5DF] via-[#F1E8D1] to-[#E8DFC3] md:h-[76px] md:w-[76px]"}>
                       {service.images?.[0]?.url ? <img src={service.images[0].url} alt={service.nameAr} className="absolute inset-0 h-full w-full object-cover" /> : null}
                       {!service.images?.[0]?.url && <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full border border-[#0D3B34]/10" />}
                       {!service.images?.[0]?.url && <div className="absolute bottom-[-40px] left-5 h-32 w-32 rounded-full border border-[#D4AF37]/25" />}
@@ -813,7 +813,7 @@ export default function PartnerServicesPage() {
         </div>
       </div>
 
-      {submitMessage && !showForm && (
+      {submitMessage && (
         <div className="fixed left-1/2 top-5 z-[100] -translate-x-1/2 rounded-2xl border border-[#0D3B34]/10 bg-white px-5 py-3 text-sm font-bold text-[#0D3B34] shadow-xl">
           {submitMessage}
         </div>
