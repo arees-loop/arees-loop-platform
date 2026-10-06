@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const file = formData.get("file");
   if (!(file instanceof File)) return NextResponse.json({ success: false, message: "الصورة مطلوبة." }, { status: 400 });
   if (!["image/jpeg","image/png","image/webp"].includes(file.type)) return NextResponse.json({ success: false, message: "نوع الصورة غير مدعوم." }, { status: 400 });
-  if (file.size > 2 * 1024 * 1024) return NextResponse.json({ success: false, message: "حجم الصورة غير مناسب. الحد الأقصى 2 MB." }, { status: 400 });
+  if (file.size > 5 * 1024 * 1024) return NextResponse.json({ success: false, message: "حجم الصورة غير مناسب. الحد الأقصى 5 MB." }, { status: 400 });
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const blob = await put(`services/${session.user.id}/${Date.now()}-${safeName}`, file, { access: "private", addRandomSuffix: true });
