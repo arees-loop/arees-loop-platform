@@ -1150,7 +1150,29 @@ export default function PartnerServicesPage() {
                   {form.organizerType==="OTHER" && <>
                     <div><label className="mb-2 block text-xs font-bold">اسم الجهة المنظمة</label><input value={form.organizerName} onChange={(e)=>setForm(x=>({...x,organizerName:e.target.value}))} className={inputClass} placeholder="اسم الجهة المنظمة" /></div>
                     <div><label className="mb-2 block text-xs font-bold">رقم ترخيص الجهة المنظمة</label><input value={form.organizerLicenseNumber} onChange={(e)=>setForm(x=>({...x,organizerLicenseNumber:e.target.value}))} className={inputClass} placeholder="رقم الترخيص" /></div>
-                    <div className="md:col-span-2"><label className="mb-2 block text-xs font-bold">الجهة المصدرة للترخيص</label><input value={form.organizerLicenseIssuer} onChange={(e)=>setForm(x=>({...x,organizerLicenseIssuer:e.target.value}))} className={inputClass} placeholder="مثال: وزارة السياحة" /></div>
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-xs font-bold">جهة الترخيص أو التصريح</label>
+                      <select
+                        value={["وزارة السياحة","الهيئة العامة للترفيه","وزارة الرياضة","الأمانة / البلدية"].includes(form.organizerLicenseIssuer) ? form.organizerLicenseIssuer : (form.organizerLicenseIssuer ? "أخرى" : "")}
+                        onChange={(e)=>setForm(x=>({...x,organizerLicenseIssuer:e.target.value==="أخرى" ? "أخرى" : e.target.value}))}
+                        className={inputClass}
+                      >
+                        <option value="">اختر جهة الترخيص أو التصريح</option>
+                        <option value="وزارة السياحة">وزارة السياحة</option>
+                        <option value="الهيئة العامة للترفيه">الهيئة العامة للترفيه</option>
+                        <option value="وزارة الرياضة">وزارة الرياضة</option>
+                        <option value="الأمانة / البلدية">الأمانة / البلدية</option>
+                        <option value="أخرى">أخرى</option>
+                      </select>
+                      {(!["","وزارة السياحة","الهيئة العامة للترفيه","وزارة الرياضة","الأمانة / البلدية"].includes(form.organizerLicenseIssuer)) || form.organizerLicenseIssuer==="أخرى") && (
+                        <input
+                          value={form.organizerLicenseIssuer==="أخرى" ? "" : form.organizerLicenseIssuer}
+                          onChange={(e)=>setForm(x=>({...x,organizerLicenseIssuer:e.target.value || "أخرى"}))}
+                          className={`${inputClass} mt-2`}
+                          placeholder="اكتب اسم جهة الترخيص أو التصريح"
+                        />
+                      )}
+                    </div>
                   </>}
                 </div>
                 <p className="mt-4 text-[11px] leading-6 text-[#0D3B34]/55">🏢 مقدم الخدمة هو الشريك المسجل في Arees Loop. رقم اعتماد البرنامج معلومة داخلية تساعد الإدارة في سرعة التحقق ولا يظهر للعميل.</p>
