@@ -488,12 +488,12 @@ export default function PartnerServicesPage() {
           cancellationPolicy: form.cancellationPolicy, organizerType:form.organizerType, organizerName:form.organizerName, organizerLicenseNumber:form.organizerLicenseNumber, organizerLicenseIssuer:form.organizerLicenseIssuer, programApprovalNumber:form.programApprovalNumber, bookingMode: form.bookingMode,
           availableDays: form.availableDays, startDate: form.startDate, endDate: form.endDate,
           startTime: form.startTime, endTime: form.endTime,
-          images: form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})), submitForReview: Boolean(editingServiceId)
+          images: form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})), submitForReview: !editingServiceId
         }),
       });
       const data = await response.json();
       if (!response.ok || !data?.success) throw new Error(data?.message || "تعذر حفظ الخدمة.");
-      setSubmitMessage(editingOriginalService?.status==="PUBLISHED" ? "✓ تم إرسال طلب التعديلات للمراجعة، وأصبحت حالة الخدمة «تحت المراجعة»." : "✓ تم إرسال الخدمة إلى إدارة Arees Loop للمراجعة والموافقة بنجاح.");
+      setSubmitMessage(editingServiceId ? "✓ تم حفظ تعديلات الخدمة بنجاح." : "✓ تم إرسال الخدمة إلى إدارة Arees Loop للمراجعة والموافقة بنجاح.");
       const refreshed = await fetch("/api/partner/operations", { credentials:"include", cache:"no-store" }).then(r=>r.json());
       if (refreshed?.success) setServices((refreshed.services ?? []).map((service:any)=>({
         id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",
