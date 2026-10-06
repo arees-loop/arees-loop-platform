@@ -99,8 +99,8 @@ export default function AdminServicesPage() {
               ["ترخيص المنظم",selected.organizerType==="OTHER"?(selected.organizerLicenseNumber||"—"):(selected.license?.licenseNumber||"غير مرتبط")],["🔢 رقم اعتماد البرنامج",selected.programApprovalNumber||"غير مدخل"],["الحجوزات",String(selected.bookingCount)]
             ].map(([l,v])=><div key={l} className="rounded-2xl bg-white p-4"><p className="text-[10px] opacity-45">{l}</p><p className="mt-1 text-sm font-bold">{v}</p></div>)}
           </div>
-          <div className="mt-4 rounded-2xl bg-white p-4"><p className="text-xs font-bold">الوصف العربي</p><p className="mt-2 whitespace-pre-wrap text-sm leading-7 opacity-70">{selected.descriptionAr||"—"}</p></div>
-          <div className="mt-4 rounded-2xl bg-white p-4"><p className="text-xs font-bold">الوصف الإنجليزي</p><p className="mt-2 whitespace-pre-wrap text-sm leading-7 opacity-70">{selected.descriptionEn||"—"}</p></div>
+          <div className="mt-4 rounded-2xl bg-white p-4"><p className="text-xs font-bold">الوصف العربي</p><div className="mt-2 text-sm leading-7 opacity-70 [&_ul]:list-disc [&_ul]:pr-5 [&_ol]:list-decimal [&_ol]:pr-5" dangerouslySetInnerHTML={{__html:selected.descriptionAr||"—"}} /></div>
+          <div className="mt-4 rounded-2xl bg-white p-4"><p className="text-xs font-bold">الوصف الإنجليزي</p><div className="mt-2 text-sm leading-7 opacity-70 [&_ul]:list-disc [&_ul]:pr-5 [&_ol]:list-decimal [&_ol]:pr-5" dangerouslySetInnerHTML={{__html:selected.descriptionEn||"—"}} /></div>
           {selected.status==="UNDER_REVIEW"&&<div className="mt-6 grid gap-3 sm:grid-cols-2">
             <button disabled={busy} onClick={()=>void decide("REJECT")} className="rounded-2xl border border-red-200 bg-white px-5 py-3 font-bold text-red-600 disabled:opacity-40">رفض الخدمة</button>
             <button disabled={busy} onClick={()=>void decide("APPROVE")} className="rounded-2xl bg-[#0D3B34] px-5 py-3 font-bold text-white disabled:opacity-40">{busy?"جارٍ الاعتماد...":"اعتماد ونشر للعملاء"}</button>
