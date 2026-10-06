@@ -485,9 +485,6 @@ model Service {
 
   descriptionAr String?
   descriptionEn String?
-  programIncludes String?
-  programExcludes String?
-  programNotes    String?
 
   city             String?
   locationName     String?
