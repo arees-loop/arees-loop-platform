@@ -20,7 +20,7 @@ export default function ServiceDetails(){
    <div className="mb-6 text-right"><p className="text-xs font-bold opacity-50">{service.category}{service.subCategory&&` · ${service.subCategory}`}</p><h1 className="mt-2 text-3xl font-bold leading-tight">{service.nameAr}</h1><p className="mt-2 text-sm opacity-55">{service.city}{service.locationName&&` · ${service.locationName}`}</p></div>
    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]" dir="ltr">
     <section dir="rtl" className="rounded-[24px] bg-white p-6 shadow-sm md:p-7">
-     <h2 className="flex items-center gap-2 text-xl font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0D3B34] text-white">◆</span> تفاصيل البرنامج</h2>
+     <h2 className="arees-body flex items-center gap-2 text-xl font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0D3B34] text-white">◆</span> تفاصيل البرنامج</h2>
      <div className="mt-5 text-sm leading-8 text-[#0D3B34]/75 [&_p]:mb-2 [&_ul]:mr-5 [&_ul]:list-disc [&_ol]:mr-5 [&_ol]:list-decimal [&_strong]:font-bold [&_strong]:text-[#0D3B34]" dangerouslySetInnerHTML={{__html:description||"<p>تفاصيل البرنامج قيد الاستكمال.</p>"}}/>
      {includes&&<div className="mt-7"><h3 className="flex items-center gap-2 font-semibold text-[#0D3B34]"><span>●</span> يشمل البرنامج</h3><ul className="mt-2 space-y-1 text-sm leading-7 opacity-70">{lines(includes).map((x,i)=><li key={i}>✓ {x}</li>)}</ul></div>}
      {excludes&&<div className="mt-7"><h3 className="flex items-center gap-2 font-semibold text-[#B99124]"><span>◆</span> لا يشمل البرنامج</h3><ul className="mt-2 space-y-1 text-sm leading-7 opacity-70">{lines(excludes).map((x,i)=><li key={i}>• {x}</li>)}</ul></div>}
