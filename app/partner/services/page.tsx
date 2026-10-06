@@ -38,6 +38,7 @@ type Service = {
   imageCount: number;
   descriptionAr?: string;
   descriptionEn?: string;
+  programIncludes?: string; programExcludes?: string; programNotes?: string;
   cancellationPolicy?: string;
   meetingInstructions?: string;
   images?: { url:string; altText?:string|null; sortOrder?:number }[];
@@ -166,6 +167,7 @@ export default function PartnerServicesPage() {
     capacity: "",
     descriptionAr: "",
     descriptionEn: "",
+    programIncludes: "", programExcludes: "", programNotes: "",
     cancellationPolicy: "",
     meetingInstructions: "",
     organizerType: "SELF", organizerName: "", organizerLicenseNumber: "", organizerLicenseIssuer: "", programApprovalNumber: "",
@@ -213,7 +215,7 @@ export default function PartnerServicesPage() {
           bookings: Number(service.bookingCount ?? 0),
           status: service.status,
           imageCount: service.images?.length ?? 0,
-          descriptionAr: service.descriptionAr ?? "", descriptionEn: service.descriptionEn ?? "", cancellationPolicy: service.cancellationPolicy ?? "", meetingInstructions: service.meetingInstructions ?? "", images: service.images ?? [],
+          descriptionAr: service.descriptionAr ?? "", descriptionEn: service.descriptionEn ?? "", programIncludes: service.programIncludes ?? "", programExcludes: service.programExcludes ?? "", programNotes: service.programNotes ?? "", cancellationPolicy: service.cancellationPolicy ?? "", meetingInstructions: service.meetingInstructions ?? "", images: service.images ?? [],
         })));
       })
       .catch(() => {});
@@ -290,6 +292,7 @@ export default function PartnerServicesPage() {
       capacity: "",
       descriptionAr: "",
       descriptionEn: "",
+      programIncludes: "", programExcludes: "", programNotes: "",
       cancellationPolicy: "",
       meetingInstructions: "",
       organizerType: "SELF", organizerName: "", organizerLicenseNumber: "", organizerLicenseIssuer: "", programApprovalNumber: "",
@@ -345,6 +348,7 @@ export default function PartnerServicesPage() {
       capacity: String(service.capacity),
       descriptionAr: service.descriptionAr ?? "",
       descriptionEn: service.descriptionEn ?? "",
+      programIncludes: service.programIncludes ?? "", programExcludes: service.programExcludes ?? "", programNotes: service.programNotes ?? "",
       cancellationPolicy: service.cancellationPolicy ?? "",
       meetingInstructions: service.meetingInstructions ?? "",
       organizerType: service.organizerType ?? "SELF", organizerName: service.organizerName ?? "", organizerLicenseNumber: service.organizerLicenseNumber ?? "", organizerLicenseIssuer: service.organizerLicenseIssuer ?? "", programApprovalNumber: service.programApprovalNumber ?? "",
@@ -403,7 +407,7 @@ export default function PartnerServicesPage() {
   });
 
   const servicePayload = (submitForReview=false) => ({
-    nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:form.descriptionAr,descriptionEn:form.descriptionEn,
+    nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:form.descriptionAr,descriptionEn:form.descriptionEn,programIncludes:form.programIncludes,programExcludes:form.programExcludes,programNotes:form.programNotes,
     basePrice:form.basePrice,vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
     placeId:form.placeId,latitude:form.latitude,longitude:form.longitude,meetingInstructions:form.meetingInstructions,cancellationPolicy:form.cancellationPolicy,
     organizerType:form.organizerType,organizerName:form.organizerName,organizerLicenseNumber:form.organizerLicenseNumber,organizerLicenseIssuer:form.organizerLicenseIssuer,programApprovalNumber:form.programApprovalNumber,
@@ -977,6 +981,12 @@ export default function PartnerServicesPage() {
                 <Field label="Description in English">
                   <RichTextEditor value={form.descriptionEn} onChange={(value)=>setForm((current)=>({...current,descriptionEn:value}))} dir="ltr" />
                 </Field>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Field label="يشمل البرنامج (اختياري)"><textarea value={form.programIncludes} onChange={(e)=>setForm((x)=>({...x,programIncludes:e.target.value}))} rows={5} className={`${inputClass} h-auto py-4`} placeholder="اكتب كل بند في سطر مستقل"/></Field>
+                  <Field label="لا يشمل البرنامج (اختياري)"><textarea value={form.programExcludes} onChange={(e)=>setForm((x)=>({...x,programExcludes:e.target.value}))} rows={5} className={`${inputClass} h-auto py-4`} placeholder="اكتب كل بند في سطر مستقل"/></Field>
+                  <Field label="ملاحظات مهمة (اختياري)"><textarea value={form.programNotes} onChange={(e)=>setForm((x)=>({...x,programNotes:e.target.value}))} rows={5} className={`${inputClass} h-auto py-4`} placeholder="إذا تركتها فارغة لن تظهر للعميل"/></Field>
+                </div>
               
                 {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("محتوى البرنامج")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ محتوى البرنامج</button></div>}
               </FormSection>
