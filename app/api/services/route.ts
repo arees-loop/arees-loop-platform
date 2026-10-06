@@ -40,9 +40,14 @@ export async function GET(request: NextRequest) {
     const services = await prisma.service.findMany({
       where: partnerId ? { partnerId } : { status: "PUBLISHED" },
       orderBy: { updatedAt: "desc" },
-      include: {
+      select: {
+        id: true, nameAr: true, nameEn: true, category: true, subCategory: true,
+        descriptionAr: true, city: true, locationName: true, formattedAddress: true,
+        basePrice: true, vatRate: true, finalPrice: true, latitude: true, longitude: true,
+        capacity: true, cancellationPolicy: true, meetingInstructions: true,
+        organizerType: true, organizerName: true, organizerLicenseNumber: true, organizerLicenseIssuer: true,
         partner: { select: { legalNameAr: true, tradeNameAr: true } },
-        images: { orderBy: { sortOrder: "asc" } },
+        images: { orderBy: { sortOrder: "asc" }, select: { url: true } },
       },
     });
 
