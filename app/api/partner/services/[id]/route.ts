@@ -26,7 +26,7 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
         cancellationPolicy:body.cancellationPolicy?.trim()||null,meetingInstructions:body.meetingInstructions?.trim()||null,
         organizerType:body.organizerType==="OTHER"?"OTHER":"SELF",organizerName:body.organizerName?.trim()||null,organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null,
         organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,programApprovalNumber:body.programApprovalNumber?.trim()||null,status,
-        images:{create:images.map((x:any,index:number)=>({url:x.url,altText:x.altText?.trim()||body.nameAr.trim(),sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}
+        images:{create:images.map((x:any,index:number)=>({url:x.url,sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}
       },include:{images:true}});
     });
     return NextResponse.json({success:true,message:body.submitForReview?"تم حفظ التعديلات وإرسال الخدمة للمراجعة.":"تم حفظ التعديلات بنجاح.",service:{...service,basePrice:Number(service.basePrice),vatRate:Number(service.vatRate),finalPrice:Number(service.finalPrice)}});
