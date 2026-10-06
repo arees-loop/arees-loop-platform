@@ -11,7 +11,7 @@ export default function ServiceDetails(){
  if(!service)return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] p-10 text-center text-[#0D3B34]"><h1 className="text-2xl font-bold">الخدمة غير متاحة</h1><Link href="/services" className="mt-5 inline-block underline">العودة للخدمات والتجارب</Link></main>;
  const total=Number(service.finalPrice||0)*qty, images=service.images||[];
  const raw=service.descriptionAr||""; const read=(name:string)=>{const m=raw.match(new RegExp(`<div data-arees-section="${name}" style="display:none">([\\s\\S]*?)<\\/div>`));return (m?.[1]||"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&").trim();};
- const includes=read("includes"),excludes=read("excludes"),notes=read("notes"); const description=raw.replace(/<div data-arees-section="(?:includes|excludes|notes)" style="display:none">[\\s\\S]*?<\\/div>/g,"").trim();
+ const includes=read("includes"),excludes=read("excludes"),notes=read("notes"); const hiddenSections=new RegExp('<div data-arees-section="(?:includes|excludes|notes)" style="display:none">[\\\\s\\\\S]*?</div>','g'); const description=raw.replace(hiddenSections,"").trim();
  const lines=(v:string)=>v.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean);
  const next=()=>setImageIndex(i=>(i+1)%images.length), prev=()=>setImageIndex(i=>(i-1+images.length)%images.length);
  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] text-[#0D3B34]">
