@@ -56,6 +56,7 @@ export default function AdminServicesPage() {
       if(!r.ok||!p.success) throw new Error(p.message||"تعذر تنفيذ الإجراء.");
       setMessage(action==="APPROVE"?"تم اعتماد الخدمة ونشرها للعملاء وإرسال إشعار البريد للشريك.":"تم رفض الخدمة.");
       setSelected(null); await load();
+      window.scrollTo({top:0,behavior:"smooth"});
     }catch(e){setMessage(e instanceof Error?e.message:"تعذر تنفيذ الإجراء.");}
     finally{setBusy(false);}
   };
