@@ -429,6 +429,17 @@ export default function PartnerServicesPage() {
     }catch(error:any){setSubmitMessage(error?.message||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
   };
 
+  const saveSection = async (label:string) => {
+    if(!editingServiceId){ setSubmitMessage("أنشئ الخدمة أولاً ثم استخدم الحفظ المستقل للأقسام."); return; }
+    if(uploadingImages){ setSubmitMessage("انتظر حتى يكتمل رفع الصور."); return; }
+    if(submitting)return; setSubmitting(true); setSubmitMessage("");
+    try{
+      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(false),submitForReview:false})});
+      const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||`تعذر حفظ ${label}.`);
+      await refreshServices(); setSubmitMessage(`✓ تم حفظ ${label} بنجاح.`); window.setTimeout(()=>setSubmitMessage(""),4500);
+    }catch(error:any){setSubmitMessage(error?.message||`تعذر حفظ ${label}.`);}finally{setSubmitting(false);}
+  };
+
   const submitForReview = async () => {
     const missing=missingRequiredFields();
     if(missing.length){ setSubmitMessage(`أكمل الحقول الإلزامية التالية: ${missing.join("، ")}`); return; }
@@ -926,7 +937,9 @@ export default function PartnerServicesPage() {
                   <Field label="التصنيف الفرعي (اختياري)">
                     <input value={form.subCategory} onChange={(e)=>setForm((current)=>({...current,subCategory:e.target.value}))} className={inputClass} placeholder="اكتب تصنيفك، مثال: تجربة تاريخية" />
                   </Field>
-                </div></FormSection>
+                </div>
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("معلومات الخدمة")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ معلومات الخدمة</button></div>}
+              </FormSection>
 
               {/* DESCRIPTION */}
               <FormSection
@@ -940,6 +953,8 @@ export default function PartnerServicesPage() {
                 <Field label="Description in English">
                   <RichTextEditor value={form.descriptionEn} onChange={(value)=>setForm((current)=>({...current,descriptionEn:value}))} dir="ltr" />
                 </Field>
+              
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("محتوى البرنامج")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ محتوى البرنامج</button></div>}
               </FormSection>
 
               {/* LOCATION */}
@@ -979,6 +994,8 @@ export default function PartnerServicesPage() {
                     </div>
                   )}
                 </div>
+              
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("الموقع")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ الموقع</button></div>}
               </FormSection>
 
               {/* PRICING */}
@@ -1045,6 +1062,8 @@ export default function PartnerServicesPage() {
                 <div className="rounded-[18px] border border-[#0D3B34]/8 bg-white p-4 text-xs leading-6 text-[#0D3B34]/60">
                   إذا كان السعر شامل الضريبة يظهر كما أدخله الشريك. وإذا كان غير شامل، تضيف المنصة 15% تلقائيًا إلى السعر النهائي.
                 </div>
+              
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("السعر والضريبة")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ السعر والضريبة</button></div>}
               </FormSection>
 
               {/* BOOKING & AVAILABILITY */}
@@ -1081,6 +1100,8 @@ export default function PartnerServicesPage() {
                     </div>
                   </div>
                 )}
+              
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("الحجز والتوفر")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ الحجز والتوفر</button></div>}
               </FormSection>
 
               {/* IMAGES */}
@@ -1141,6 +1162,8 @@ export default function PartnerServicesPage() {
                     <p className="mt-3 text-[10px] leading-5 text-[#0D3B34]/50">في صفحة العميل تظهر الصورة الرئيسية أولاً، وبقية الصور ضمن معرض يمكن التنقل فيه يمينًا ويسارًا.</p>
                   </div>
                 )}
+              
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("الصور")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ الصور</button></div>}
               </FormSection>
 
               <FormSection eyebrow="ORGANIZER & APPROVAL" title="بيانات التنظيم والاعتماد">
@@ -1176,6 +1199,8 @@ export default function PartnerServicesPage() {
                   </>}
                 </div>
                 <p className="mt-4 text-[11px] leading-6 text-[#0D3B34]/55">🏢 مقدم الخدمة هو الشريك المسجل في Arees Loop. رقم اعتماد البرنامج معلومة داخلية تساعد الإدارة في سرعة التحقق ولا يظهر للعميل.</p>
+              
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("بيانات المنظم")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ بيانات المنظم</button></div>}
               </FormSection>
 
               {/* POLICY */}
@@ -1195,6 +1220,8 @@ export default function PartnerServicesPage() {
                   className={`${inputClass} h-auto py-4`}
                   placeholder="مثال: استرداد كامل قبل 24 ساعة..."
                 />
+              
+                {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("سياسة الإلغاء والاسترداد")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ سياسة الإلغاء والاسترداد</button></div>}
               </FormSection>
 
               {/* SUBMIT */}
