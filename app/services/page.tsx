@@ -37,8 +37,8 @@ export default function PublicServicesPage(){
       services.length===0 ? <div className="mt-10 rounded-3xl border border-[#0D3B34]/10 bg-white p-8 text-center">لا توجد خدمات منشورة حالياً.</div> :
       <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {services.map(service=><Link key={service.id} href={`/services/${service.id}`} className="group overflow-hidden rounded-[28px] border border-[#0D3B34]/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-          <div className="relative h-56 bg-[#EAE6DC]">
-            {service.images?.[0] ? <Image src={service.images[0]} alt={service.nameAr} fill className="object-contain p-2"/> : <div className="flex h-full items-center justify-center px-6 text-center text-xs font-bold text-[#0D3B34]/35">لا توجد صورة مرفوعة لهذه الخدمة</div>}
+          <div className="relative flex min-h-56 items-center justify-center bg-[#F7F5EF] p-3">
+            {service.images?.[0] ? <Image src={service.images[0]} alt={service.nameAr} width={1200} height={1200} className="h-auto max-h-[520px] w-full object-contain"/> : <div className="flex h-full items-center justify-center px-6 text-center text-xs font-bold text-[#0D3B34]/35">لا توجد صورة مرفوعة لهذه الخدمة</div>}
             <span className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold">{service.subCategory || service.category}</span>
           </div>
           <div className="p-5">
