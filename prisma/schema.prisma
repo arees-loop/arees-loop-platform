@@ -112,6 +112,11 @@ enum ServiceStatus {
   REJECTED
 }
 
+enum CouponDiscountType {
+  PERCENTAGE
+  FIXED
+}
+
 enum BookingStatus {
   PENDING
   PAID
@@ -178,6 +183,7 @@ model User {
 
   partnerMemberships PartnerMember[]
   bookings           Booking[]
+  couponRedemptions  CouponRedemption[]
   sessions           Session[]
   verificationTokens VerificationToken[]
   partnerContactVerification PartnerContactVerification?
@@ -524,6 +530,7 @@ model Service {
 
   images   ServiceImage[]
   bookings Booking[]
+  coupons  Coupon[]
 
   @@index([partnerId])
   @@index([status])
@@ -541,6 +548,60 @@ model ServiceImage {
   service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@index([serviceId])
+}
+
+model Coupon {
+  id String @id @default(cuid())
+
+  code String @unique
+  name String?
+
+  discountType CouponDiscountType
+  discountValue Decimal @db.Decimal(12, 2)
+
+  startsAt DateTime?
+  expiresAt DateTime?
+
+  isActive Boolean @default(true)
+  maxUses Int?
+  usedCount Int @default(0)
+  maxUsesPerUser Int?
+
+  minOrderAmount Decimal? @db.Decimal(12, 2)
+  maxDiscountAmount Decimal? @db.Decimal(12, 2)
+
+  serviceId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  redemptions CouponRedemption[]
+
+  @@index([code])
+  @@index([serviceId])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+model CouponRedemption {
+  id String @id @default(cuid())
+
+  couponId String
+  bookingId String @unique
+  userId String?
+
+  codeSnapshot String
+  discountAmount Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([couponId])
+  @@index([userId])
 }
 
 model Booking {
@@ -578,6 +639,7 @@ model Booking {
   service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
 
   invoice Invoice?
+  couponRedemption CouponRedemption?
 
   @@index([userId])
   @@index([partnerId])
