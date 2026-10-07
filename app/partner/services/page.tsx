@@ -1149,6 +1149,10 @@ export default function PartnerServicesPage() {
                   <Field label="السعة القصوى المتاحة">
                     <input type="number" min="1" value={form.capacity} onChange={(e)=>setForm((x)=>({...x,capacity:e.target.value}))} className={inputClass}/>
                   </Field>
+                  <Field label="نقاط Arees Loop المكتسبة">
+                    <input type="number" min="150" step="1" value={form.loyaltyPoints} onChange={(e)=>setForm((x)=>({...x,loyaltyPoints:String(Math.max(150,Math.floor(Number(e.target.value)||150)))}))} className={inputClass}/>
+                    <p className="mt-2 text-[10px] font-bold text-[#B99124]">احجز واحصل على {Math.max(150,Number(form.loyaltyPoints)||150)} نقطة Arees Loop</p>
+                  </Field>
                 </div>
                 {form.bookingMode === "scheduled" && (
                   <div className="rounded-[22px] border border-[#0D3B34]/10 bg-white p-5">
