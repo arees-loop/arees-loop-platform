@@ -621,72 +621,8 @@ function DiscoverContent() {
       </div>
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-[#0D3B34]/[0.05] bg-[#F7F5EF]/85 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-[1450px] items-center justify-between gap-5 px-5 py-3.5 md:px-8">
-          <Link href="/">
-            <Image
-              src="/Logo/arees-loop-logo.png"
-              alt="Arees Loop"
-              width={170}
-              height={85}
-              priority
-              className="h-auto w-[120px] md:w-[140px]"
-            />
-          </Link>
 
-          {/* DESKTOP NAV */}
-          <div className="hidden flex-1 justify-center lg:flex">
-            <div className="flex items-center gap-1 rounded-full border border-[#0D3B34]/[0.07] bg-white/55 p-1 backdrop-blur-xl">
-              <Link
-                href="/discover"
-                className="rounded-full bg-[#0D3B34] px-5 py-2 text-[10px] font-semibold text-white"
-              >
-                اكتشف
-              </Link>
-
-              <Link
-                href="/bookings"
-                className="rounded-full px-5 py-2 text-[10px] font-semibold text-[#0D3B34]/50 transition hover:bg-[#0D3B34]/5"
-              >
-                حجوزاتي
-              </Link>
-
-              <Link
-                href="/rewards"
-                className="rounded-full px-5 py-2 text-[10px] font-semibold text-[#0D3B34]/50 transition hover:bg-[#0D3B34]/5"
-              >
-                المكافآت
-              </Link>
-
-              <Link
-                href="/favorites"
-                className="rounded-full px-5 py-2 text-[10px] font-semibold text-[#0D3B34]/50 transition hover:bg-[#0D3B34]/5"
-              >
-                المفضلة
-              </Link>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/notifications"
-              className="hidden items-center gap-2 rounded-full border border-[#0D3B34]/[0.07] bg-white/55 px-3.5 py-2 text-[11px] font-semibold text-[#0D3B34]/65 md:flex"
-            >
-              <BellIcon />
-              <span className="hidden xl:inline">الإشعارات</span>
-            </Link>
-
-            <AccountMenu
-              firstName={authUser?.firstName}
-              lastName={authUser?.lastName}
-              email={authUser?.email}
-              phone={authUser?.phone}
-            />
-          </div>
-        </div>
-      </header>
-
-      <div className="relative z-10 mx-auto max-w-[1450px] px-5 pb-20 pt-6 md:px-8">
+<div className="relative z-10 mx-auto max-w-[1450px] px-5 pb-20 pt-28 md:px-8 md:pt-32">
         {/* HERO */}
         <section className="grid gap-5 xl:grid-cols-[1.45fr_0.55fr]">
           <div className="relative overflow-hidden rounded-[30px] border border-white/80 bg-[#0D3B34] p-6 text-white shadow-[0_20px_55px_rgba(13,59,52,0.11)] md:p-8">
