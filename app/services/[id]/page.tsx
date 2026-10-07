@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import {useParams} from "next/navigation";
 import {useEffect,useState} from "react";
@@ -16,7 +15,6 @@ export default function ServiceDetails(){
  const lines=(v:string)=>v.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean);
  const next=()=>setImageIndex(i=>(i+1)%images.length), prev=()=>setImageIndex(i=>(i-1+images.length)%images.length);
  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] text-[#0D3B34]">
-  <header className="border-b border-[#0D3B34]/10 bg-white/75"><div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4"><Link href="/"><Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={150} height={70} className="h-auto w-[120px]"/></Link><Link href="/services" className="text-xs font-bold">← الخدمات والتجارب</Link></div></header>
   <div className="mx-auto max-w-6xl px-5 py-8">
    <div className="mb-6 text-right"><p className="text-xs font-bold opacity-50">{service.category}{service.subCategory&&` · ${service.subCategory}`}</p><h1 className="mt-2 text-3xl font-bold leading-tight">{service.nameAr}</h1><p className="mt-2 text-sm opacity-55">{service.city}{service.locationName&&` · ${service.locationName}`}</p></div>
    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]" dir="ltr">
