@@ -6,6 +6,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
+import GlobalHeader from "./components/GlobalHeader";
 
 const experiences = [
   {
@@ -99,6 +100,25 @@ const heroScenes = [
     detailEn: "Destinations · Experiences · Missions",
   },
   {
+    id: "world",
+    nameAr: "العالم",
+    nameEn: "World",
+    eyebrowAr: "وجهتك القادمة",
+    eyebrowEn: "YOUR NEXT DESTINATION",
+    titleAr: "استكشف العالم",
+    titleEn: "Explore the world",
+    descriptionAr:
+      "من جورجيا إلى طوكيو؛ وجهات وبرامج وتجارب مختارة في مكان واحد.",
+    descriptionEn:
+      "From Georgia to Tokyo, discover curated destinations, programs and experiences in one place.",
+    image: "/Image/hero/world-destinations-hero.webp",
+    coords: null,
+    metaAr: "العالم بين يديك",
+    metaEn: "The world in your hands",
+    detailAr: "وجهات · برامج سياحية · تجارب",
+    detailEn: "Destinations · Programs · Experiences",
+  },
+  {
     id: "medina",
     nameAr: "المدينة المنورة",
     nameEn: "Al Madinah",
@@ -175,6 +195,16 @@ const heroScenes = [
     detailAr: "تراث · طبيعة · مغامرة",
     detailEn: "Heritage · Nature · Adventure",
   },
+];
+
+
+const featuredWorldDestinations = [
+  { id: "georgia", nameAr: "جورجيا", nameEn: "Georgia", position: "18% center" },
+  { id: "turkey", nameAr: "تركيا", nameEn: "Türkiye", position: "38% center" },
+  { id: "malaysia", nameAr: "ماليزيا", nameEn: "Malaysia", position: "82% center" },
+  { id: "thailand", nameAr: "تايلاند", nameEn: "Thailand", position: "72% center" },
+  { id: "bali", nameAr: "بالي", nameEn: "Bali", position: "88% bottom" },
+  { id: "london", nameAr: "لندن", nameEn: "London", position: "4% center" },
 ];
 
 
@@ -456,70 +486,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#041713]/44 via-transparent to-black/10" />
         </div>
 
-        <header className="relative z-40 px-4 pt-1 md:px-8 md:pt-1">
-          <nav className="mx-auto flex h-[92px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border border-white/35 bg-white/[0.055] px-4 py-0 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-[10px] backdrop-saturate-150 md:h-[96px] md:px-6">
-            <Image
-              src="/Logo/arees-loop-logo.png"
-              alt="Arees Loop"
-              width={240}
-              height={120}
-              priority
-              className="h-auto w-[142px] md:w-[166px]"
-            />
-
-            <div
-              dir="rtl"
-              className="hidden items-center gap-8 text-[13px] font-bold text-white/95 lg:flex xl:gap-10"
-            >
-              <a href="#discover" className="transition hover:text-[#e6bd4b]">اكتشف</a>
-              <a href="#how" className="transition hover:text-[#e6bd4b]">كيف تعمل؟</a>
-              <a href="#rewards" className="transition hover:text-[#e6bd4b]">المكافآت</a>
-              <a href="#partners" className="transition hover:text-[#e6bd4b]">للشركاء</a>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex rounded-full border border-white/30 bg-white/[0.05] p-1 text-[11px] font-black text-white backdrop-blur-xl">
-                <button
-                  type="button"
-                  onClick={() => setHeroLanguage("ar")}
-                  className={`rounded-full px-2.5 py-2 transition ${
-                    heroLanguage === "ar"
-                      ? "bg-white text-[#0D3B34]"
-                      : "text-white/75 hover:text-white"
-                  }`}
-                >
-                  AR
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setHeroLanguage("en")}
-                  className={`rounded-full px-2.5 py-2 transition ${
-                    heroLanguage === "en"
-                      ? "bg-white text-[#0D3B34]"
-                      : "text-white/75 hover:text-white"
-                  }`}
-                >
-                  EN
-                </button>
-              </div>
-
-              <Link
-                href="/login"
-                className="hidden rounded-full border border-white/30 bg-white/[0.06] px-4 py-2.5 text-xs font-bold text-white backdrop-blur-xl transition hover:bg-white/15 sm:inline-flex"
-              >
-                تسجيل الدخول
-              </Link>
-
-              <Link
-                href="/auth"
-                className="rounded-full bg-[#0D3B34]/90 px-4 py-2.5 text-xs font-black text-white shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[#145347] md:px-5"
-              >
-                ابدأ التجربة
-              </Link>
-            </div>
-          </nav>
-        </header>
+        <GlobalHeader overlay />
 
         {showLocationNotice && detectedLocationScene && (
           <div
@@ -627,6 +594,41 @@ export default function Home() {
             <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-white/82 drop-shadow-[0_2px_10px_rgba(0,0,0,0.28)] md:text-lg">
               {isArabic ? currentScene.descriptionAr : currentScene.descriptionEn}
             </p>
+
+            {currentScene.id === "world" && (
+              <div className="mt-7">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-xs font-black text-white/80">
+                    {isArabic ? "وجهات مختارة" : "Featured destinations"}
+                  </p>
+                  <span className="text-[11px] font-bold text-white/55">
+                    {isArabic ? "اسحب للاستكشاف" : "Swipe to explore"}
+                  </span>
+                </div>
+                <div className="flex max-w-3xl snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {featuredWorldDestinations.map((destination) => (
+                    <Link
+                      key={destination.id}
+                      href={`/discover?destination=${destination.id}`}
+                      className="group relative h-24 min-w-[148px] snap-start overflow-hidden rounded-[22px] border border-white/30 bg-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#D4AF37]/80"
+                    >
+                      <Image
+                        src="/Image/hero/world-destinations-hero.webp"
+                        alt={isArabic ? destination.nameAr : destination.nameEn}
+                        fill
+                        sizes="148px"
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                        style={{ objectPosition: destination.position }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                      <span className="absolute bottom-3 right-3 left-3 text-sm font-black text-white drop-shadow">
+                        {isArabic ? destination.nameAr : destination.nameEn}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link

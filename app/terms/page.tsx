@@ -1,18 +1,10 @@
 import Link from "next/link";
+import GlobalHeader from "../components/GlobalHeader";
 
 export default function TermsPage() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#f7f7f2] text-[#0D3B34]">
-      <header className="border-b border-[#0D3B34]/10 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5 md:px-8">
-          <Link href="/" className="text-sm font-black transition hover:text-[#9A741B]">
-            ← العودة إلى أريس لوب
-          </Link>
-          <span className="text-xs font-bold tracking-[0.16em] text-[#9A741B]">AREES LOOP</span>
-        </div>
-      </header>
-
-      <section className="bg-[#0D3B34] px-5 py-3 text-white md:px-8 md:py-3">
+      <GlobalHeader />      <section className="bg-[#0D3B34] px-5 py-3 text-white md:px-8 md:py-3">
         <div className="mx-auto max-w-5xl">
           <p className="text-[9px] font-black leading-none tracking-[0.18em] text-[#D4AF37]">AREES LOOP</p>
           <h1 className="mt-1 whitespace-nowrap text-xl font-black leading-none md:text-2xl">
@@ -25,8 +17,8 @@ export default function TermsPage() {
         </div>
       </section>
 
-      <section className="px-5 py-12 md:px-8 md:py-16">
-        <article className="mx-auto max-w-5xl rounded-[32px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_50px_rgba(13,59,52,0.07)] md:p-10">
+      <section className="px-5 pb-12 pt-0 md:px-8 md:pb-16 md:pt-0">
+        <article className="mx-auto max-w-5xl rounded-b-[32px] border-t-0 border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_50px_rgba(13,59,52,0.07)] md:p-10">
           <div className="mb-10 grid gap-3 rounded-[26px] border border-[#D4AF37]/25 bg-[#D4AF37]/[0.07] p-5 text-sm md:grid-cols-3 md:p-6">
             <div>
               <p className="text-xs font-bold text-[#0D3B34]/45">الجهة المالكة والمشغلة</p>
