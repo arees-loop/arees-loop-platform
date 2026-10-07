@@ -21,7 +21,7 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
   const services = await prisma.service.findMany({
-    where: { partnerId: membership.partnerId, status: "PUBLISHED" },
+    where: { partnerId: membership.partnerId },
     select: { id: true, nameAr: true, category: true },
     orderBy: { nameAr: "asc" },
   });
@@ -45,12 +45,12 @@ export async function POST(request: Request) {
     if (scope === "CATEGORY") {
       category = String(body.category || "").trim();
       if (!category) return NextResponse.json({ success: false, message: "اختر التصنيف." }, { status: 400 });
-      const exists = await prisma.service.findFirst({ where: { partnerId: membership.partnerId, category, status: "PUBLISHED" }, select: { id: true } });
+      const exists = await prisma.service.findFirst({ where: { partnerId: membership.partnerId, category }, select: { id: true } });
       if (!exists) return NextResponse.json({ success: false, message: "التصنيف غير متاح." }, { status: 400 });
     }
     if (scope === "SERVICE") {
       serviceId = String(body.serviceId || "");
-      const exists = await prisma.service.findFirst({ where: { id: serviceId, partnerId: membership.partnerId, status: "PUBLISHED" }, select: { id: true } });
+      const exists = await prisma.service.findFirst({ where: { id: serviceId, partnerId: membership.partnerId }, select: { id: true } });
       if (!exists) return NextResponse.json({ success: false, message: "الخدمة غير متاحة." }, { status: 400 });
     }
 
