@@ -20,14 +20,8 @@ export default function PublicServicesPage(){
   },[]);
 
   return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] text-[#0D3B34]">
-    <header className="border-b border-[#0D3B34]/10 bg-white/75 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-        <Link href="/"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={150} height={70} className="h-auto w-[120px]"/></Link>
-        <Link href="/discover" className="rounded-full border border-[#0D3B34]/15 px-4 py-2 text-xs font-bold">اكتشف حولك</Link>
-      </div>
-    </header>
 
-    <section className="mx-auto max-w-7xl px-5 py-10">
+<section className="mx-auto max-w-7xl px-5 pb-10 pt-28 md:pt-32">
       <p className="text-xs font-bold text-[#B99124]">AREES LOOP</p>
       <h1 className="mt-2 text-3xl font-black md:text-4xl">الخدمات والتجارب</h1>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-[#0D3B34]/65">برامج وتجارب معتمدة ومنشورة عبر Arees Loop.</p>
