@@ -39,7 +39,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
         </Link>
 
         <div dir="rtl" className={`hidden items-center gap-5 text-[13px] font-bold lg:flex xl:gap-7 ${text}`}>
-          <Link href="/#discover" className="transition hover:text-[#D4AF37]">اكتشف</Link>
+          <Link href="/discover" className="transition hover:text-[#D4AF37]">اكتشف</Link>
           <Link href="/#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</Link>
           <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">برامج سياحية <span className="text-[10px]">⌄</span></button>
