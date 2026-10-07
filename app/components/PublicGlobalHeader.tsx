@@ -7,9 +7,7 @@ const hiddenPrefixes = [
   "/admin",
   "/login",
   "/auth",
-  "/partner/dashboard",
-  "/partner/login",
-  "/partner/register",
+  "/partner",
 ];
 
 export default function PublicGlobalHeader() {
