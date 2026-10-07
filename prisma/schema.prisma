@@ -123,6 +123,14 @@ enum LoyaltyScope {
   SERVICE
 }
 
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
+  GIFT_SENT
+  GIFT_RECEIVED
+  ADJUSTMENT
+}
+
 enum BookingStatus {
   PENDING
   PAID
@@ -190,6 +198,8 @@ model User {
   partnerMemberships PartnerMember[]
   bookings           Booking[]
   couponRedemptions  CouponRedemption[]
+  loyaltyWallet      LoyaltyWallet?
+  loyaltyTransactions LoyaltyTransaction[]
   sessions           Session[]
   verificationTokens VerificationToken[]
   partnerContactVerification PartnerContactVerification?
@@ -558,6 +568,34 @@ model ServiceImage {
   @@index([serviceId])
 }
 
+
+model LoyaltyWallet {
+  id        String @id @default(cuid())
+  userId    String @unique
+  balance   Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([balance])
+}
+
+model LoyaltyTransaction {
+  id          String @id @default(cuid())
+  userId      String
+  type        LoyaltyTransactionType
+  points      Int
+  description String?
+  referenceId String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@index([referenceId])
+}
 
 model PartnerLoyaltySetting {
   id String @id @default(cuid())
