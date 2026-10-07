@@ -126,7 +126,7 @@ export default function RootLayout({
 
       
         {/* AREES LOOP — BETA STATUS */}
-        <div className="pointer-events-none fixed left-1/2 top-3 z-[9999] -translate-x-1/2">
+        <div className="pointer-events-none fixed right-3 top-3 z-[9999] md:right-5">
           <div className="flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#073F37]/90 px-4 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D4AF37] opacity-40" />
