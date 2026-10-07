@@ -12,6 +12,8 @@ type TomTomGeocodeResult = {
     municipalitySubdivision?: string;
     countrySubdivision?: string;
     country?: string;
+    countryCode?: string;
+    countryCodeISO3?: string;
   };
 };
 
@@ -44,7 +46,6 @@ export async function GET(request: NextRequest) {
       `https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json` +
       `?key=${encodeURIComponent(apiKey)}` +
       `&language=ar-SA` +
-      `&countrySet=SA` +
       `&limit=8` +
       `&typeahead=true`;
 
@@ -79,7 +80,9 @@ export async function GET(request: NextRequest) {
       return {
         name,
         address: result.address?.freeformAddress ?? name,
-        city: result.address?.municipality ?? "",
+        city: result.address?.municipality ?? result.address?.municipalitySubdivision ?? "",
+        country: result.address?.country ?? "",
+        countryCode: result.address?.countryCode ?? result.address?.countryCodeISO3 ?? "",
         location: { lat: result.position!.lat!, lng: result.position!.lon! },
       };
     });
