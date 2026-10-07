@@ -51,13 +51,13 @@ export default function LoyaltyPage() {
   return <main className="min-h-screen p-6 md:p-10">
     <div className="mx-auto max-w-5xl">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div><p className="text-xs font-bold tracking-[.16em] text-[#B99124]">AREES LOOP LOYALTY</p><h1 className="mt-2 text-3xl font-black">النقاط والمكافآت</h1><p className="mt-2 max-w-2xl text-sm text-[#0D3B34]/60">فعّل نقاط Arees Loop لخدماتك وحدد أين يمكن للعميل كسبها. قيمة النقاط وقواعد الاستبدال تديرها Arees Loop مركزياً.</p></div>
+        <div><p className="text-xs font-bold tracking-[.16em] text-[#B99124]">AREES LOOP LOYALTY</p><h1 className="mt-2 text-3xl font-black">النقاط والمكافآت</h1><p className="mt-2 max-w-2xl text-sm text-[#0D3B34]/60">فعّل نقاط Arees Loop لخدماتك لتشجّع العميل على العودة والحجز معك مرة أخرى. كل 100 نقطة = 1 ريال، وتُحفظ النقاط في محفظة العميل وتدير Arees Loop قيمتها وقواعد الاستبدال مركزياً.</p></div>
         {setting&&<button onClick={toggle} className={"rounded-2xl px-5 py-3 text-sm font-black text-white shadow-sm "+(setting.isActive?"bg-emerald-700 hover:bg-emerald-800":"bg-red-700 hover:bg-red-800")}>{setting.isActive?"● النقاط مفعّلة — اضغط للإيقاف":"● النقاط متوقفة — اضغط للتفعيل"}</button>}
       </div>
 
       {loadError&&<div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{loadError}</div>}
       <section className="rounded-[28px] border border-[#0D3B34]/10 bg-white p-6 shadow-sm">
-        <div className="mb-6 flex items-center justify-between gap-3"><div><h2 className="text-lg font-black">نطاق كسب النقاط</h2><p className="mt-1 text-xs text-[#0D3B34]/50">الشريك يحدد الخدمات المشاركة فقط، ولا يحدد قيمة النقطة.</p></div>{setting&&<span className={"rounded-full px-3 py-1 text-xs font-bold "+(setting.isActive?"bg-emerald-700 text-white":"bg-red-700 text-white")}>{setting.isActive?"● مفعّل":"● متوقف"}</span>}</div>
+        <div className="mb-6 rounded-2xl border border-[#D4AF37]/25 bg-[#FFF9E8] p-4 text-sm leading-7 text-[#0D3B34]"><strong>لماذا تفعّل نقاط الولاء؟</strong> تمنح عميلك سبباً للعودة إليك وتجربة خدماتك مرة أخرى، وتزيد ارتباطه بخدماتك داخل Arees Loop. <strong>كل 100 نقطة = 1 ريال</strong> محفوظة في محفظة العميل ويمكن استخدامها وفق قواعد Arees Loop.</div><div className="mb-6 flex items-center justify-between gap-3"><div><h2 className="text-lg font-black">نطاق كسب النقاط</h2><p className="mt-1 text-xs text-[#0D3B34]/50">الشريك يحدد الخدمات المشاركة فقط، ولا يحدد قيمة النقطة.</p></div>{setting&&<span className={"rounded-full px-3 py-1 text-xs font-bold "+(setting.isActive?"bg-emerald-700 text-white":"bg-red-700 text-white")}>{setting.isActive?"● مفعّل":"● متوقف"}</span>}</div>
         <div className="grid gap-3 md:grid-cols-3">
           {([["ALL","كل الخدمات"],["CATEGORY","تصنيف محدد"],["SERVICE","خدمة محددة"]] as const).map(([value,label])=><button key={value} onClick={()=>setScope(value)} className={"rounded-2xl border p-4 text-right text-sm font-bold transition "+(scope===value?"border-[#D4AF37] bg-[#FFF9E8]":"border-[#0D3B34]/10 hover:border-[#0D3B34]/25")}>{label}</button>)}
         </div>
