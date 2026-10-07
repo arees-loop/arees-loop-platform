@@ -6,7 +6,6 @@ import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
-import GlobalHeader from "./components/GlobalHeader";
 
 const experiences = [
   {
@@ -242,6 +241,7 @@ export default function Home() {
   const wheelLocked = useRef(false);
   const touchStartY = useRef<number | null>(null);
   const touchLocked = useRef(false);
+  const worldDestinationsRef = useRef<HTMLDivElement | null>(null);
 
   const currentScene = heroScenes[activeScene];
   const isArabic = heroLanguage === "ar";
@@ -486,7 +486,6 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#041713]/44 via-transparent to-black/10" />
         </div>
 
-        <GlobalHeader overlay />
 
         {showLocationNotice && detectedLocationScene && (
           <div
@@ -587,45 +586,63 @@ export default function Home() {
               {isArabic ? currentScene.nameAr : currentScene.nameEn}
             </p>
 
-            <h1 className="max-w-3xl text-5xl font-black leading-[1.07] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.34)] md:text-7xl xl:text-[5.3rem]">
+            <h1 className={`max-w-3xl font-black leading-[1.07] tracking-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.30)] ${currentScene.id === "world" ? "text-4xl text-[#F7F1E3] md:text-5xl xl:text-6xl" : "text-5xl text-white md:text-7xl xl:text-[5.3rem]"}`}>
               {isArabic ? currentScene.titleAr : currentScene.titleEn}
             </h1>
 
-            <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-white/82 drop-shadow-[0_2px_10px_rgba(0,0,0,0.28)] md:text-lg">
+            <p className={`max-w-2xl font-medium drop-shadow-[0_2px_10px_rgba(0,0,0,0.26)] ${currentScene.id === "world" ? "mt-4 text-sm leading-7 text-[#F7F1E3]/85 md:text-base" : "mt-6 text-base leading-8 text-white/82 md:text-lg"}`}>
               {isArabic ? currentScene.descriptionAr : currentScene.descriptionEn}
             </p>
 
             {currentScene.id === "world" && (
-              <div className="mt-7">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-xs font-black text-white/80">
-                    {isArabic ? "وجهات مختارة" : "Featured destinations"}
-                  </p>
-                  <span className="text-[11px] font-bold text-white/55">
-                    {isArabic ? "اسحب للاستكشاف" : "Swipe to explore"}
-                  </span>
-                </div>
-                <div className="flex max-w-3xl snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {featuredWorldDestinations.map((destination) => (
-                    <Link
-                      key={destination.id}
-                      href={`/discover?destination=${destination.id}`}
-                      className="group relative h-24 min-w-[148px] snap-start overflow-hidden rounded-[22px] border border-white/30 bg-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#D4AF37]/80"
+              <div
+                dir={isArabic ? "rtl" : "ltr"}
+                className="absolute bottom-5 left-1/2 z-40 w-[min(760px,calc(100vw-120px))] -translate-x-1/2 md:bottom-7"
+              >
+                <div className="rounded-[28px] border border-white/35 bg-white/[0.08] p-2.5 shadow-[0_18px_55px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.28)] backdrop-blur-2xl backdrop-saturate-150">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label={isArabic ? "الوجهات السابقة" : "Previous destinations"}
+                      onClick={() => worldDestinationsRef.current?.scrollBy({ left: -330, behavior: "smooth" })}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/10 text-xl text-white transition hover:border-[#D4AF37]/80 hover:bg-[#D4AF37] hover:text-[#0D3B34]"
                     >
-                      <Image
-                        src="/Image/hero/world-destinations-hero.webp"
-                        alt={isArabic ? destination.nameAr : destination.nameEn}
-                        fill
-                        sizes="148px"
-                        className="object-cover transition duration-500 group-hover:scale-105"
-                        style={{ objectPosition: destination.position }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                      <span className="absolute bottom-3 right-3 left-3 text-sm font-black text-white drop-shadow">
-                        {isArabic ? destination.nameAr : destination.nameEn}
-                      </span>
-                    </Link>
-                  ))}
+                      ‹
+                    </button>
+                    <div
+                      ref={worldDestinationsRef}
+                      className="flex flex-1 snap-x gap-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    >
+                      {featuredWorldDestinations.map((destination) => (
+                        <Link
+                          key={destination.id}
+                          href={`/discover?destination=${destination.id}`}
+                          className="group relative h-[82px] min-w-[150px] flex-1 snap-start overflow-hidden rounded-[20px] border border-white/28 bg-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#D4AF37]/80"
+                        >
+                          <Image
+                            src="/Image/hero/world-destinations-hero.webp"
+                            alt={isArabic ? destination.nameAr : destination.nameEn}
+                            fill
+                            sizes="150px"
+                            className="object-cover transition duration-500 group-hover:scale-105"
+                            style={{ objectPosition: destination.position }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
+                          <span className="absolute bottom-2.5 right-3 left-3 text-xs font-black text-white drop-shadow">
+                            {isArabic ? destination.nameAr : destination.nameEn}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      aria-label={isArabic ? "الوجهات التالية" : "Next destinations"}
+                      onClick={() => worldDestinationsRef.current?.scrollBy({ left: 330, behavior: "smooth" })}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/10 text-xl text-white transition hover:border-[#D4AF37]/80 hover:bg-[#D4AF37] hover:text-[#0D3B34]"
+                    >
+                      ›
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -638,13 +655,15 @@ export default function Home() {
                 {isArabic ? "اكتشف الآن" : "Discover now"}
               </Link>
 
-              <button
-                type="button"
-                onClick={handleHowClick}
-                className="rounded-full border border-white/35 bg-white/[0.05] px-7 py-3.5 text-sm font-black text-white backdrop-blur-xl transition hover:bg-white/12"
-              >
-                {isArabic ? "شاهد كيف تعمل" : "See how it works"}
-              </button>
+              {currentScene.id !== "world" && (
+                <button
+                  type="button"
+                  onClick={handleHowClick}
+                  className="rounded-full border border-white/35 bg-white/[0.05] px-7 py-3.5 text-sm font-black text-white backdrop-blur-xl transition hover:bg-white/12"
+                >
+                  {isArabic ? "شاهد كيف تعمل" : "See how it works"}
+                </button>
+              )}
             </div>
           </div>
 
