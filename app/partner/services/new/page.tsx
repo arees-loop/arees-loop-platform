@@ -213,7 +213,7 @@ export default function NewPartnerServicePage() {
           <p className="text-xs leading-6 text-[#0D3B34]/45">سيظهر للعميل اسم الجهة المنفذة ورقم الترخيص بصورة تعريفية هادئة، بدون رقم هاتف أو بريد إلكتروني أو رابط تواصل مباشر.</p>
         </Card>}
 
-        {step===3 && serviceType==="HOTEL" && <HotelInventory />{loyaltyField}}
+        {step===3 && serviceType==="HOTEL" && <HotelInventory />}{loyaltyField}
 
         {step===3 && serviceType!=="HOTEL" && <Card eyebrow="STEP 03" title="السعر والسياسات" note="اختيار بسيط، ونوضح لك النتيجة قبل النشر.">
           <Field label="سعر الخدمة"><div className="relative"><input type="number" value={price} onChange={e=>setPrice(Number(e.target.value)||0)} className="input pl-16"/><span className="absolute left-4 top-3.5 text-xs font-bold">ر.س</span></div></Field>
