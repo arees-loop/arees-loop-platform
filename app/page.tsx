@@ -586,20 +586,20 @@ export default function Home() {
               {isArabic ? currentScene.nameAr : currentScene.nameEn}
             </p>
 
-            <h1 className={`max-w-3xl font-black leading-[1.07] tracking-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.30)] ${currentScene.id === "world" ? "text-4xl text-[#F7F1E3] md:text-5xl xl:text-6xl" : "text-5xl text-white md:text-7xl xl:text-[5.3rem]"}`}>
+            <h1 className={`max-w-3xl font-black leading-[1.07] tracking-tight ${currentScene.id === "world" ? "text-4xl text-[#F7F1E3] [text-shadow:0_3px_12px_rgba(6,47,39,0.92),0_1px_2px_rgba(0,0,0,0.55)] md:text-5xl xl:text-6xl" : "text-5xl text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.30)] md:text-7xl xl:text-[5.3rem]"}`}>
               {isArabic ? currentScene.titleAr : currentScene.titleEn}
             </h1>
 
-            <p className={`max-w-2xl font-medium drop-shadow-[0_2px_10px_rgba(0,0,0,0.26)] ${currentScene.id === "world" ? "mt-4 text-sm leading-7 text-[#F7F1E3]/85 md:text-base" : "mt-6 text-base leading-8 text-white/82 md:text-lg"}`}>
+            <p className={`max-w-2xl font-medium ${currentScene.id === "world" ? "mt-4 text-sm leading-7 text-[#F7F1E3] [text-shadow:0_2px_8px_rgba(6,47,39,0.92),0_1px_2px_rgba(0,0,0,0.55)] md:text-base" : "mt-6 text-base leading-8 text-white/82 drop-shadow-[0_2px_10px_rgba(0,0,0,0.26)] md:text-lg"}`}>
               {isArabic ? currentScene.descriptionAr : currentScene.descriptionEn}
             </p>
 
             {currentScene.id === "world" && (
               <div
                 dir={isArabic ? "rtl" : "ltr"}
-                className="absolute bottom-5 left-1/2 z-40 w-[min(760px,calc(100vw-120px))] -translate-x-1/2 md:bottom-7"
+                className="relative z-40 mt-4 w-[min(760px,calc(100vw-40px))]"
               >
-                <div className="rounded-[28px] border border-white/35 bg-white/[0.08] p-2.5 shadow-[0_18px_55px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.28)] backdrop-blur-2xl backdrop-saturate-150">
+                <div className="rounded-[28px] border border-[#D4AF37]/55 bg-[#0D3B34]/18 p-2.5 shadow-[0_18px_55px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-2xl backdrop-saturate-150">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -708,7 +708,7 @@ export default function Home() {
 
               {/* قطعة الزجاج الرئيسية — شفافة بالكامل مثل عدسة موضوعة فوق المشهد */}
               <div
-                className="relative overflow-hidden rounded-[36px] border border-white/55 bg-white/[0.012] shadow-[0_30px_80px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.95),inset_1px_0_0_rgba(255,255,255,0.30),inset_-1px_0_0_rgba(255,255,255,0.16),inset_0_-1px_0_rgba(255,255,255,0.12)]"
+                className="relative overflow-hidden rounded-[36px] border border-[#D4AF37]/55 bg-white/[0.012] shadow-[0_30px_80px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.95),inset_1px_0_0_rgba(255,255,255,0.30),inset_-1px_0_0_rgba(255,255,255,0.16),inset_0_-1px_0_rgba(255,255,255,0.12)]"
                 style={{
                   transform: "translateZ(24px)",
                   backdropFilter:
@@ -774,11 +774,11 @@ export default function Home() {
                 />
 
                 {/* خط داخلي رفيع يثبت الإحساس بأن القطعة بارزة */}
-                <div className="pointer-events-none absolute inset-[7px] rounded-[29px] border border-white/13" />
+                <div className="pointer-events-none absolute inset-[7px] rounded-[29px] border border-[#D4AF37]/28" />
 
                 <div
                   dir={isArabic ? "rtl" : "ltr"}
-                  className={`relative z-10 p-8 text-white ${
+                  className={`relative z-10 p-8 text-white [text-shadow:0_2px_7px_rgba(6,47,39,0.90),0_1px_2px_rgba(0,0,0,0.48)] ${
                     isArabic ? "text-right" : "text-left"
                   }`}
                 >
