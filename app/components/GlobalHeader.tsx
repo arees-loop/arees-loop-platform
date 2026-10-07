@@ -23,10 +23,10 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 font-black text-[#D4AF37] transition hover:text-[#0D3B34]">برامج سياحية <span className="text-[10px]">⌄</span></button>
             <div className="invisible absolute right-1/2 top-[64px] w-52 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-[#0D3B34]/82 p-2 text-right text-white opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-              <Link href="/discover?type=domestic" className="block rounded-xl px-4 py-2.5 font-bold text-white transition hover:bg-[#D4AF37] hover:text-[#0D3B34]">سياحة داخلية</Link>
-              <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 font-bold text-white transition hover:bg-[#D4AF37] hover:text-[#0D3B34]">سياحة دولية</Link>
-              <Link href="/discover?type=packages" className="block rounded-xl px-4 py-2.5 font-bold text-white transition hover:bg-[#D4AF37] hover:text-[#0D3B34]">باقات سياحية</Link>
-              <Link href="/discover?type=private" className="block rounded-xl px-4 py-2.5 font-bold text-white transition hover:bg-[#D4AF37] hover:text-[#0D3B34]">برامج خاصة</Link>
+              <Link href="/discover?type=domestic" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:text-[#D4AF37]">سياحة داخلية</Link>
+              <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:text-[#D4AF37]">سياحة دولية</Link>
+              <Link href="/discover?type=packages" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:text-[#D4AF37]">باقات سياحية</Link>
+              <Link href="/discover?type=private" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:text-[#D4AF37]">برامج خاصة</Link>
             </div>
           </div>
           <Link href="/#experiences" className="transition hover:text-[#D4AF37]">التجارب</Link>
