@@ -23,6 +23,7 @@ export async function POST(request:Request){
     const vatIncluded=body.vatMode==="included";
     const vatRate=15;
     const finalPrice=vatIncluded?basePrice:basePrice*1.15;
+    const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150)));
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     const latitude=Number(body.latitude);
     const longitude=Number(body.longitude);
@@ -50,6 +51,7 @@ export async function POST(request:Request){
         basePrice,
         vatRate,
         finalPrice,
+        loyaltyPoints,
         capacity:Number(body.capacity||0)||null,
         cancellationPolicy:body.cancellationPolicy?.trim()||null,
         meetingInstructions:body.meetingInstructions?.trim()||null,
