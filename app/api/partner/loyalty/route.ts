@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { getCurrentSession } from "@/app/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { getCurrentSession } from "@/lib/session";
 
 async function membershipFor(userId: string) {
   return prisma.partnerMember.findFirst({
