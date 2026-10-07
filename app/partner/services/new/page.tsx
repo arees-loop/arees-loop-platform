@@ -44,6 +44,17 @@ export default function NewPartnerServicePage() {
   const [placeId,setPlaceId]=useState("");
   const [locationQuery,setLocationQuery]=useState("");
   const [searchingLocation,setSearchingLocation]=useState(false);
+  const [locationSuggestions,setLocationSuggestions]=useState<Array<{name:string;address:string;city:string;country:string;countryCode:string;location:{lat:number;lng:number}}>>([]);
+  const [country,setCountry]=useState("");
+  const [countryCode,setCountryCode]=useState("");
+  const [hasMeetingPoint,setHasMeetingPoint]=useState(false);
+  const [meetingPointName,setMeetingPointName]=useState("");
+  const [meetingInstructions,setMeetingInstructions]=useState("");
+  const [meetingLocation,setMeetingLocation]=useState<{lat:number;lng:number}|null>(null);
+  const [meetingPointAddress,setMeetingPointAddress]=useState("");
+  const [meetingQuery,setMeetingQuery]=useState("");
+  const [meetingSuggestions,setMeetingSuggestions]=useState<Array<{name:string;address:string;city:string;country:string;countryCode:string;location:{lat:number;lng:number}}>>([]);
+  const [searchingMeeting,setSearchingMeeting]=useState(false);
   const [licenseId,setLicenseId]=useState("");
   const [cancellationPolicy,setCancellationPolicy]=useState("");
   const [submitting,setSubmitting]=useState(false);
@@ -79,18 +90,40 @@ export default function NewPartnerServicePage() {
       const r=await fetch(`/api/location/search?query=${encodeURIComponent(locationQuery.trim())}`,{cache:"no-store"});
       const j=await r.json();
       if(!r.ok) throw new Error();
-      setLocation(j.location);setFormattedAddress(j.address||"");setLocationName(j.name||locationQuery.trim());
-    }catch{setLocationError("لم نعثر على الموقع. جرّب اسم المكان مع المدينة أو الحي.");}
+      const items=Array.isArray(j.suggestions)?j.suggestions:[j];
+      setLocationSuggestions(items);
+    }catch{setLocationError("لم نعثر على الموقع. جرّب اسم المكان مع المدينة أو الدولة.");setLocationSuggestions([]);}
     finally{setSearchingLocation(false);}
   };
+  const selectExecutionLocation=(item:{name:string;address:string;city:string;country:string;countryCode:string;location:{lat:number;lng:number}})=>{
+    setLocation(item.location);setLocationName(item.name||item.address);setFormattedAddress(item.address||"");
+    if(item.city) setCity(item.city);setCountry(item.country||"");setCountryCode(item.countryCode||"");setLocationSuggestions([]);
+  };
+  const searchMeetingLocation=async()=>{
+    if(!meetingQuery.trim()) return;
+    setSearchingMeeting(true);setLocationError("");
+    try{
+      const r=await fetch(`/api/location/search?query=${encodeURIComponent(meetingQuery.trim())}`,{cache:"no-store"});
+      const j=await r.json();if(!r.ok) throw new Error();
+      setMeetingSuggestions(Array.isArray(j.suggestions)?j.suggestions:[j]);
+    }catch{setLocationError("لم نعثر على نقطة التجمع. جرّب اسم المكان مع المدينة أو الدولة.");setMeetingSuggestions([]);}
+    finally{setSearchingMeeting(false);}
+  };
+  const selectMeetingLocation=(item:{name:string;address:string;city:string;country:string;countryCode:string;location:{lat:number;lng:number}})=>{
+    setMeetingLocation(item.location);setMeetingPointName(item.name||item.address);setMeetingPointAddress(item.address||"");setMeetingSuggestions([]);
+  };
+  const googleMapsUrl=(p:{lat:number;lng:number})=>`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
   const submitService=async()=>{
     setSubmitError("");setSubmitMessage("");
-    if(!nameAr.trim()||!city.trim()||!locationName.trim()||!location){setSubmitError("أكمل اسم الخدمة والمدينة وحدد موقع تنفيذ الخدمة بدقة.");return;}
+    if(!nameAr.trim()||!city.trim()||!locationName.trim()||!location){setSubmitError("أكمل اسم الخدمة وحدد مكان تنفيذ الخدمة بدقة.");return;} if(hasMeetingPoint&&(!meetingPointName.trim()||!meetingLocation)){setSubmitError("حدد اسم وموقع نقطة التجمع أو ألغِ خيار نقطة التجمع.");return;}
     setSubmitting(true);
     try{
       const r=await fetch("/api/partner/services",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-        nameAr,descriptionAr,category:serviceType,city,locationName,formattedAddress,placeId,
-        latitude:location.lat,longitude:location.lng,licenseId,basePrice:price,vatMode:"included",cancellationPolicy
+        nameAr,descriptionAr,category:serviceType,city,locationName,formattedAddress,placeId,country,countryCode,
+        latitude:location.lat,longitude:location.lng,
+        hasMeetingPoint,meetingPointName,meetingPointAddress,meetingInstructions,
+        meetingLatitude:meetingLocation?.lat,meetingLongitude:meetingLocation?.lng,
+        licenseId,basePrice:price,vatMode:"included",cancellationPolicy
       })});
       const j=await r.json();
       if(!r.ok) throw new Error(j.message||"تعذر إرسال الخدمة.");
@@ -131,18 +164,25 @@ export default function NewPartnerServicePage() {
           {serviceType==="HOTEL" && <div className="rounded-[24px] border border-[#D4AF37]/25 bg-[#FFF8E5] p-5"><p className="text-sm font-bold">الإقامة لها نظام إتاحة مستقل</p><p className="mt-2 text-xs leading-6 text-[#0D3B34]/55">سجّل الفندق وبياناته الأساسية مرة واحدة. بعد الاعتماد ستدير أنواع الوحدات والأسعار والكميات المتاحة حسب التاريخ من شاشة الإتاحة، بدلاً من إنشاء خدمة جديدة لكل فترة.</p></div>}
           <Field label="اسم الخدمة"><input value={nameAr} onChange={e=>setNameAr(e.target.value)} className="input" placeholder="مثال: جولة المدينة التاريخية أو إقامة فندقية"/></Field>
           <Field label="وصف مختصر"><textarea value={descriptionAr} onChange={e=>setDescriptionAr(e.target.value)} className="input min-h-28" placeholder="صف الخدمة كما سيشاهدها العميل..."/></Field>
-          <div className="grid gap-4 md:grid-cols-2"><Field label="المدينة *"><input value={city} onChange={e=>setCity(e.target.value)} className="input" placeholder="المدينة المنورة"/></Field><Field label="اسم الموقع / نقطة التجمع *"><input value={locationName} onChange={e=>setLocationName(e.target.value)} className="input" placeholder="مثال: بوابة ٣، متحف، فندق..."/></Field></div>
           <div className="rounded-[24px] border border-[#0D3B34]/8 bg-[#F8F6EF] p-5">
             <p className="text-[10px] font-bold tracking-[.16em] text-[#B99124]">LOCATION</p>
-            <p className="mt-2 text-sm font-bold">موقع تنفيذ الخدمة</p>
-            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">ابحث باسم المكان أو العنوان/الحي، أو استخدم موقعك الحالي. الإحداثيات هي المرجع الأساسي لـ Arees Loop لحساب القرب.</p>
-            <div className="mt-4 flex gap-2"><input value={locationQuery} onChange={e=>setLocationQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void searchLocation();}}} className="input" placeholder="مثال: جبل الفيل العلا أو اسم الحي"/><button type="button" disabled={searchingLocation} onClick={searchLocation} className="shrink-0 rounded-2xl border border-[#0D3B34]/10 bg-white px-4 text-xs font-bold disabled:opacity-50">{searchingLocation?"جاري البحث...":"بحث عن الموقع"}</button></div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" onClick={useCurrentLocation} className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white">استخدام موقعي الحالي</button>
-              {location&&<button type="button" onClick={()=>setLocation(null)} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">مسح الموقع</button>}
-            </div>
-            {location&&<div className="mt-4 rounded-2xl bg-white p-4 text-xs"><b>تم تثبيت الموقع ✓</b>{formattedAddress&&<p className="mt-1 text-[#0D3B34]/60">{formattedAddress}</p>}<p className="mt-1 text-[#0D3B34]/50" dir="ltr">{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</p></div>}
+            <p className="mt-2 text-sm font-bold">مكان تنفيذ الخدمة <span className="text-red-600">*</span></p>
+            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">ابحث عالمياً باسم المكان أو المدينة أو العنوان ثم اختر النتيجة الصحيحة. هذا الموقع هو المرجع الأساسي لـ Arees Loop لحساب القرب.</p>
+            <div className="mt-4 flex gap-2"><input value={locationQuery} onChange={e=>setLocationQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void searchLocation();}}} className="input" placeholder="مثال: جبل الفيل العلا، برج لندن، متحف اللوفر"/><button type="button" disabled={searchingLocation} onClick={searchLocation} className="shrink-0 rounded-2xl border border-[#0D3B34]/10 bg-white px-4 text-xs font-bold disabled:opacity-50">{searchingLocation?"جاري البحث...":"بحث"}</button></div>
+            {locationSuggestions.length>0&&<div className="mt-2 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white">{locationSuggestions.map((item,i)=><button key={i} type="button" onClick={()=>selectExecutionLocation(item)} className="block w-full border-b border-[#0D3B34]/6 px-4 py-3 text-right last:border-0 hover:bg-[#FFF8E5]"><b className="text-xs">{item.name}</b><p className="mt-1 text-[11px] text-[#0D3B34]/55">{[item.address,item.city,item.country].filter(Boolean).join(" · ")}</p></button>)}</div>}
+            <div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={useCurrentLocation} className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white">استخدام موقعي الحالي</button>{location&&<button type="button" onClick={()=>{setLocation(null);setLocationName("");setFormattedAddress("");}} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">مسح الموقع</button>}</div>
+            {location&&<div className="mt-4 rounded-2xl bg-white p-4 text-xs"><b>تم تثبيت مكان تنفيذ الخدمة ✓</b><p className="mt-1 font-bold">{locationName}</p>{formattedAddress&&<p className="mt-1 text-[#0D3B34]/60">{formattedAddress}</p>}<p className="mt-1 text-[#0D3B34]/50">{[city,country].filter(Boolean).join(" · ")}</p><div className="mt-3 flex items-center gap-3"><span dir="ltr" className="text-[#0D3B34]/45">{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</span><a href={googleMapsUrl(location)} target="_blank" rel="noreferrer" className="font-bold text-[#B99124]">عرض على Google Maps ↗</a></div></div>}
             {locationError&&<p className="mt-3 text-xs font-bold text-red-600">{locationError}</p>}
+          </div>
+          <div className="rounded-[24px] border border-[#0D3B34]/8 bg-white p-5">
+            <div className="flex items-center justify-between gap-4"><div><p className="text-sm font-bold">هل توجد نقطة تجمع؟</p><p className="mt-1 text-xs text-[#0D3B34]/50">اختياري — فعّلها فقط إذا كان العميل سيتجمع في مكان مختلف عن مكان تنفيذ الخدمة.</p></div><button type="button" onClick={()=>setHasMeetingPoint(v=>!v)} className={`rounded-full px-4 py-2 text-xs font-bold ${hasMeetingPoint?"bg-[#0D3B34] text-white":"bg-[#F8F6EF] text-[#0D3B34]"}`}>{hasMeetingPoint?"نعم":"لا"}</button></div>
+            {hasMeetingPoint&&<div className="mt-5 space-y-4">
+              <Field label="اسم نقطة التجمع *"><input value={meetingPointName} onChange={e=>setMeetingPointName(e.target.value)} className="input" placeholder="مثال: بوابة الفندق الرئيسية"/></Field>
+              <Field label="وصف / تعليمات نقطة التجمع"><textarea value={meetingInstructions} onChange={e=>setMeetingInstructions(e.target.value)} className="input min-h-20" placeholder="مثال: الحضور قبل الموعد بـ 15 دقيقة أمام البوابة الرئيسية"/></Field>
+              <div><p className="mb-2 text-xs font-bold">موقع نقطة التجمع <span className="text-red-600">*</span></p><div className="flex gap-2"><input value={meetingQuery} onChange={e=>setMeetingQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void searchMeetingLocation();}}} className="input" placeholder="ابحث عن موقع نقطة التجمع"/><button type="button" disabled={searchingMeeting} onClick={searchMeetingLocation} className="shrink-0 rounded-2xl border border-[#0D3B34]/10 bg-white px-4 text-xs font-bold">{searchingMeeting?"جاري البحث...":"بحث"}</button></div>
+              {meetingSuggestions.length>0&&<div className="mt-2 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white">{meetingSuggestions.map((item,i)=><button key={i} type="button" onClick={()=>selectMeetingLocation(item)} className="block w-full border-b border-[#0D3B34]/6 px-4 py-3 text-right last:border-0 hover:bg-[#FFF8E5]"><b className="text-xs">{item.name}</b><p className="mt-1 text-[11px] text-[#0D3B34]/55">{[item.address,item.city,item.country].filter(Boolean).join(" · ")}</p></button>)}</div>}
+              {meetingLocation&&<div className="mt-3 rounded-2xl bg-[#F8F6EF] p-4 text-xs"><b>تم تثبيت نقطة التجمع ✓</b>{meetingPointAddress&&<p className="mt-1 text-[#0D3B34]/60">{meetingPointAddress}</p>}<a href={googleMapsUrl(meetingLocation)} target="_blank" rel="noreferrer" className="mt-2 inline-block font-bold text-[#B99124]">عرض على Google Maps ↗</a></div>}</div>
+            </div>}
           </div>
           <div className="rounded-[24px] border border-[#0D3B34]/8 bg-white p-5">
             <p className="text-[10px] font-bold tracking-[.16em] text-[#B99124]">MEDIA</p>
