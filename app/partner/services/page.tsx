@@ -393,7 +393,7 @@ export default function PartnerServicesPage() {
     nameAr: form.nameAr || "خدمة جديدة",
     nameEn: form.nameEn || "New Service",
     category: form.category || "غير محدد",
-    subCategory: form.subCategory || "غير محدد",
+    subCategory: form.subCategory || "",
     license: form.license || "غير مرتبط",
     city: form.city || "غير محدد",
     locationName: form.locationName || "غير محدد",
@@ -422,7 +422,7 @@ export default function PartnerServicesPage() {
   const refreshServices = async () => {
     const refreshed=await fetch("/api/partner/operations",{credentials:"include",cache:"no-store"}).then(r=>r.json());
     if(refreshed?.success) setServices((refreshed.services??[]).map((service:any)=>({
-      id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",subCategory:service.subCategory??"غير محدد",
+      id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",subCategory:service.subCategory??"",
       license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",city:service.city??"",locationName:service.locationName??"",
       formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),
       vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
@@ -487,7 +487,7 @@ export default function PartnerServicesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nameAr: form.nameAr, nameEn: form.nameEn, category: form.category,
-          subCategory: form.subCategory, descriptionAr: form.descriptionAr,
+          subCategory: form.subCategory, descriptionAr: stripProgramSections(form.descriptionAr)+sectionMarker("includes",form.programIncludes)+sectionMarker("excludes",form.programExcludes)+sectionMarker("notes",form.programNotes),
           descriptionEn: form.descriptionEn, basePrice: form.basePrice,
           vatMode: form.vatRate, capacity: form.capacity, city: form.city,
           locationName: form.locationName, formattedAddress: form.formattedAddress,
@@ -506,7 +506,7 @@ export default function PartnerServicesPage() {
       const refreshed = await fetch("/api/partner/operations", { credentials:"include", cache:"no-store" }).then(r=>r.json());
       if (refreshed?.success) setServices((refreshed.services ?? []).map((service:any)=>({
         id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",
-        subCategory:service.subCategory??"غير محدد",license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",
+        subCategory:service.subCategory??"",license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",
         city:service.city??"",locationName:service.locationName??"",formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",
         latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),vatRate:Number(service.vatRate??0),
         finalPrice:Number(service.finalPrice??0),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),
@@ -967,9 +967,9 @@ export default function PartnerServicesPage() {
                       {mainCategories.map((category)=><option key={category}>{category}</option>)}
                     </select>
                   </Field>
-                  <Field label="التصنيف الفرعي (اختياري)">
+                  <Field label="وسم الخدمة (اختياري)">
                     <input value={form.subCategory} onChange={(e)=>setForm((current)=>({...current,subCategory:e.target.value}))} className={inputClass} placeholder="اكتب تصنيفك، مثال: تجربة تاريخية" />
-                  </Field>
+                  <p className="mt-2 text-[10px] leading-5 text-[#0D3B34]/45">استخدمه لإبراز الخدمة ضمن عرض أو مناسبة معينة. مثال: عرض الصيف، عرض اليوم الوطني، عرض خاص، الأكثر طلبًا. إذا تركته فارغًا فلن يظهر أي وسم للعميل.</p></Field>
                 </div>
                 {editingServiceId&&<div className="flex justify-end pt-2"><button type="button" disabled={submitting||uploadingImages} onClick={()=>void saveSection("معلومات الخدمة")} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">حفظ معلومات الخدمة</button></div>}
               </FormSection>
