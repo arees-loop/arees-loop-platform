@@ -586,7 +586,7 @@ export default function Home() {
               {isArabic ? currentScene.nameAr : currentScene.nameEn}
             </p>
 
-            <h1 className={`max-w-3xl font-black leading-[1.07] tracking-tight ${currentScene.id === "world" ? "text-4xl text-[#F7F1E3] [text-shadow:0_3px_12px_rgba(6,47,39,0.92),0_1px_2px_rgba(0,0,0,0.55)] md:text-5xl xl:text-6xl" : "text-5xl text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.30)] md:text-7xl xl:text-[5.3rem]"}`}>
+            <h1 className={`max-w-3xl font-black leading-[1.07] tracking-tight ${currentScene.id === "world" ? "text-4xl text-[#F7F1E3] [text-shadow:0_3px_12px_rgba(6,47,39,0.92),0_1px_2px_rgba(0,0,0,0.55)] md:text-5xl xl:text-6xl" : "text-4xl text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.30)] md:text-5xl lg:whitespace-nowrap xl:text-6xl"}`}>
               {isArabic ? currentScene.titleAr : currentScene.titleEn}
             </h1>
 
