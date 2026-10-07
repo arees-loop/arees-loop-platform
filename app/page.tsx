@@ -597,7 +597,7 @@ export default function Home() {
             {currentScene.id === "world" && (
               <div
                 dir={isArabic ? "rtl" : "ltr"}
-                className="relative z-40 mt-7 w-[min(760px,calc(100vw-40px))] lg:absolute lg:left-1/2 lg:top-[calc(50%+185px)] lg:-translate-x-1/2"
+                className="relative z-40 mt-7 w-[min(760px,calc(100vw-40px))] lg:absolute lg:left-1/2 lg:top-[calc(50%+205px)] lg:-translate-x-1/2"
               >
                 <div className="rounded-[28px] border border-[#D4AF37]/55 bg-[#0D3B34]/18 p-2.5 shadow-[0_18px_55px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-2xl backdrop-saturate-150">
                   <div className="flex items-center gap-2">
