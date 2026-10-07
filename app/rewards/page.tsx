@@ -72,16 +72,47 @@ function formatArabicDate(value: string) {
 export default function RewardsPage() {
   const [progress, setProgress] = useState<LoopProgressState | null>(null);
   const [feedback, setFeedback] = useState("");
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [giftEmail, setGiftEmail] = useState("");
+  const [giftPoints, setGiftPoints] = useState("");
+  const [giftMessage, setGiftMessage] = useState("");
+  const [gifting, setGifting] = useState(false);
 
   const refreshProgress = () => {
     setProgress(getLoopProgress());
   };
 
+  async function loadWallet() {
+    const res = await fetch("/api/loyalty/wallet", { cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.success) setWalletBalance(data.wallet.balance);
+  }
+
   useEffect(() => {
     refreshProgress();
+    loadWallet();
   }, []);
 
-  const balance = progress ? getTotalLoopPoints() : 0;
+  const balance = walletBalance ?? (progress ? getTotalLoopPoints() : 0);
+
+  async function sendGift() {
+    setGifting(true);
+    setGiftMessage("");
+    const res = await fetch("/api/loyalty/gift", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: giftEmail, points: Number(giftPoints) }),
+    });
+    const data = await res.json();
+    setGifting(false);
+    setGiftMessage(data.message || (data.success ? "تم الإهداء." : "تعذر الإهداء."));
+    if (data.success) {
+      setGiftEmail("");
+      setGiftPoints("");
+      await loadWallet();
+    }
+  }
   const earnedPoints = progress ? getEarnedLoopPoints() : 0;
   const redeemedPoints = progress ? getRedeemedLoopPoints() : 0;
   const completedMissions = progress?.missionRewardsClaimed.length ?? 0;
@@ -306,6 +337,18 @@ export default function RewardsPage() {
               />
             </div>
           </div>
+        </section>
+
+        <section className="mt-10 rounded-[28px] border border-[#D4AF37]/20 bg-white/70 p-6 backdrop-blur-xl">
+          <p className="text-[9px] font-bold tracking-[0.18em] text-[#B99124]">GIFT LOOP POINTS</p>
+          <h2 className="mt-2 text-[24px] font-semibold text-[#0D3B34]" style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}>أهدِ نقاطك لمن تحب</h2>
+          <p className="mt-2 text-[11px] leading-6 text-[#0D3B34]/60">حوّل جزءاً من رصيدك إلى عميل آخر مسجل في Arees Loop. كل 100 نقطة = 1 ريال.</p>
+          <div className="mt-5 grid gap-3 md:grid-cols-[1fr_180px_auto]">
+            <input type="email" value={giftEmail} onChange={(e)=>setGiftEmail(e.target.value)} placeholder="البريد الإلكتروني للمستلم" className="rounded-[15px] border border-[#0D3B34]/15 bg-white px-4 py-3 text-[11px] outline-none focus:border-[#D4AF37]" />
+            <input type="number" min="1" step="1" value={giftPoints} onChange={(e)=>setGiftPoints(e.target.value)} placeholder="عدد النقاط" className="rounded-[15px] border border-[#0D3B34]/15 bg-white px-4 py-3 text-[11px] outline-none focus:border-[#D4AF37]" />
+            <button type="button" disabled={gifting || !giftEmail || !giftPoints} onClick={sendGift} className="rounded-[15px] bg-[#0D3B34] px-6 py-3 text-[10px] font-bold text-white disabled:opacity-40">{gifting ? "جاري الإرسال..." : "إهداء النقاط"}</button>
+          </div>
+          {giftMessage && <p className="mt-3 text-[10px] font-semibold text-[#0D3B34]">{giftMessage}</p>}
         </section>
 
         {/* REWARDS AVAILABLE */}
