@@ -117,6 +117,12 @@ enum CouponDiscountType {
   FIXED
 }
 
+enum LoyaltyScope {
+  ALL
+  CATEGORY
+  SERVICE
+}
+
 enum BookingStatus {
   PENDING
   PAID
@@ -355,6 +361,7 @@ model Partner {
   settlements Settlement[]
   agreements  Agreement[]
   changeRequests PartnerChangeRequest[]
+  loyaltySettings PartnerLoyaltySetting[]
 
   @@index([status])
   @@index([partnerType])
@@ -531,6 +538,7 @@ model Service {
   images   ServiceImage[]
   bookings Booking[]
   coupons  Coupon[]
+  loyaltySettings PartnerLoyaltySetting[]
 
   @@index([partnerId])
   @@index([status])
@@ -548,6 +556,28 @@ model ServiceImage {
   service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@index([serviceId])
+}
+
+
+model PartnerLoyaltySetting {
+  id String @id @default(cuid())
+
+  partnerId String
+  scope LoyaltyScope
+  category String?
+  serviceId String?
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([partnerId, isActive])
+  @@index([serviceId])
+  @@index([category])
 }
 
 model Coupon {
