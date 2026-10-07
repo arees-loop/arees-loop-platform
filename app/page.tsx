@@ -6,6 +6,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
+import GlobalHeader from "./components/GlobalHeader";
 
 const experiences = [
   {
@@ -485,74 +486,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#041713]/44 via-transparent to-black/10" />
         </div>
 
-        <header className="sticky top-1 z-40 px-4 pt-1 md:px-8 md:pt-1">
-          <nav className="mx-auto flex h-[92px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border border-white/35 bg-white/[0.055] px-4 py-0 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-[10px] backdrop-saturate-150 md:h-[96px] md:px-6">
-            <Image
-              src="/Logo/arees-loop-logo.png"
-              alt="Arees Loop"
-              width={240}
-              height={120}
-              priority
-              className="h-auto w-[142px] md:w-[166px]"
-            />
-
-            <div
-              dir="rtl"
-              className="hidden items-center gap-8 text-[13px] font-bold text-white/95 lg:flex xl:gap-10"
-            >
-              <a href="#discover" className="transition hover:text-[#e6bd4b]">اكتشف</a>
-              <a href="#how" className="transition hover:text-[#e6bd4b]">كيف تعمل؟</a>
-              <a href="#programs" className="transition hover:text-[#e6bd4b]">برامج سياحية⌄</a>
-              <a href="#experiences" className="transition hover:text-[#e6bd4b]">التجارب</a>
-              <a href="#hotels" className="transition hover:text-[#e6bd4b]">الفنادق</a>
-              <a href="#flights" className="transition hover:text-[#e6bd4b]">الطيران</a>
-              <a href="#cruise" className="transition hover:text-[#e6bd4b]">الكروز</a>
-              <a href="#partners" className="transition hover:text-[#e6bd4b]">للشركاء</a>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex rounded-full border border-white/30 bg-white/[0.05] p-1 text-[11px] font-black text-white backdrop-blur-xl">
-                <button
-                  type="button"
-                  onClick={() => setHeroLanguage("ar")}
-                  className={`rounded-full px-2.5 py-2 transition ${
-                    heroLanguage === "ar"
-                      ? "bg-white text-[#0D3B34]"
-                      : "text-white/75 hover:text-white"
-                  }`}
-                >
-                  AR
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setHeroLanguage("en")}
-                  className={`rounded-full px-2.5 py-2 transition ${
-                    heroLanguage === "en"
-                      ? "bg-white text-[#0D3B34]"
-                      : "text-white/75 hover:text-white"
-                  }`}
-                >
-                  EN
-                </button>
-              </div>
-
-              <Link
-                href="/login"
-                className="hidden rounded-full border border-white/30 bg-white/[0.06] px-4 py-2.5 text-xs font-bold text-white backdrop-blur-xl transition hover:bg-white/15 sm:inline-flex"
-              >
-                تسجيل الدخول
-              </Link>
-
-              <Link
-                href="/auth"
-                className="rounded-full bg-[#0D3B34]/90 px-4 py-2.5 text-xs font-black text-white shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[#145347] md:px-5"
-              >
-                ابدأ التجربة
-              </Link>
-            </div>
-          </nav>
-        </header>
+        <GlobalHeader overlay />
 
         {showLocationNotice && detectedLocationScene && (
           <div
