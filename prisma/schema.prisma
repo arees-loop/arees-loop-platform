@@ -571,6 +571,7 @@ model Coupon {
   maxDiscountAmount Decimal? @db.Decimal(12, 2)
 
   serviceId String?
+  category String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -580,6 +581,7 @@ model Coupon {
 
   @@index([code])
   @@index([serviceId])
+  @@index([category])
   @@index([isActive])
   @@index([expiresAt])
 }
