@@ -89,65 +89,8 @@ export default function BookingsPage() {
       </div>
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-[#0D3B34]/[0.06] bg-[#F7F5EF]/90 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-[1450px] items-center justify-between gap-5 px-5 py-3.5 md:px-8">
-          <Link href="/">
-            <Image
-              src="/Logo/arees-loop-logo.png"
-              alt="Arees Loop"
-              width={170}
-              height={85}
-              priority
-              className="h-auto w-[120px] md:w-[140px]"
-            />
-          </Link>
 
-          <div className="hidden flex-1 justify-center lg:flex">
-            <div className="flex items-center gap-1 rounded-full border border-[#0D3B34]/[0.09] bg-white/60 p-1 backdrop-blur-xl">
-              <NavLink href="/discover">اكتشف</NavLink>
-
-              <NavLink href="/bookings" active>
-                حجوزاتي
-              </NavLink>
-
-              <NavLink href="/rewards">المكافآت</NavLink>
-
-              <NavLink href="/favorites">المفضلة</NavLink>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/notifications"
-              className="hidden items-center gap-2 rounded-full border border-[#0D3B34]/[0.09] bg-white/60 px-3.5 py-2 text-[11px] font-semibold text-[#0D3B34]/70 md:flex"
-            >
-              <BellIcon />
-              <span className="hidden xl:inline">الإشعارات</span>
-            </Link>
-
-            <Link
-              href="/profile"
-              className="flex items-center gap-2 rounded-full border border-[#0D3B34]/[0.09] bg-white/70 py-1.5 pl-3 pr-1.5"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0D3B34] text-[11px] font-bold text-[#D4AF37]">
-                م
-              </div>
-
-              <div className="hidden text-right sm:block">
-                <p className="text-[10px] font-semibold text-[#0D3B34]">
-                  مرحبًا معتز
-                </p>
-
-                <p className="text-[8px] text-[#0D3B34]/55">حسابي</p>
-              </div>
-
-              <ChevronDownIcon />
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <div className="relative z-10 mx-auto max-w-[1450px] px-5 pb-24 pt-8 md:px-8">
+<div className="relative z-10 mx-auto max-w-[1450px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
         {/* PAGE HEADER */}
         <section className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
