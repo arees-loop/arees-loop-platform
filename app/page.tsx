@@ -7,51 +7,7 @@ import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
 
-const experiences = [
-  {
-    id: 1,
-    image: "/Image/hero/experiences/alsafiya-museum.jpg",
-    alt: "متحف وبستان الصافية",
-    distance: "2.4 كم",
-    badge: "تجربة موصى بها",
-    icon: "location",
-    title: "متحف وبستان الصافية",
-    description:
-      "تجربة ثقافية تفاعلية تستكشف تاريخ المدينة المنورة وإرثها في بيئة عصرية.",
-    duration: "60 دقيقة",
-    points: "+750 نقطة",
-    position: "object-center",
-  },
-  {
-    id: 2,
-    image: "/Image/hero/experiences/seerah-museum.jpg",
-    alt: "المعرض والمتحف الدولي للسيرة النبوية",
-    distance: "3.2 كم",
-    badge: "ثقافة وتراث",
-    icon: null,
-    title: "المعرض الدولي للسيرة النبوية",
-    description:
-      "تجربة معرفية تفاعلية تستعرض السيرة النبوية والحضارة الإسلامية بأسلوب حديث.",
-    duration: "60 دقيقة",
-    points: "+900 نقطة",
-    position: "object-center",
-  },
-  {
-    id: 3,
-    image: "/Image/hero/experiences/al-ghamamah-mosque.jpg",
-    alt: "مسجد الغمامة",
-    distance: "4.8 كم",
-    badge: "معلم تاريخي",
-    icon: null,
-    title: "مسجد الغمامة",
-    description:
-      "اكتشف أحد المعالم التاريخية البارزة في قلب المدينة المنورة ضمن تجربة قريبة.",
-    duration: "30 دقيقة",
-    points: "+500 نقطة",
-    position: "object-center",
-  },
-];
-
+type LiveService = { id:string; nameAr:string; descriptionAr?:string|null; city?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string };
 const steps = [
   {
     number: "01",
@@ -230,6 +186,7 @@ const distanceKm = (
 
 export default function Home() {
   const [partnersNudge, setPartnersNudge] = useState(0);
+  const [liveServices, setLiveServices] = useState<LiveService[]>([]);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [activeScene, setActiveScene] = useState(0);
   const [locationReady, setLocationReady] = useState(false);
@@ -249,6 +206,13 @@ export default function Home() {
   const nearbyDiscoverHref = userCoords
     ? `/discover?lat=${userCoords.lat.toFixed(6)}&lng=${userCoords.lng.toFixed(6)}&source=location`
     : "/discover";
+
+
+  useEffect(() => {
+    let alive=true;
+    fetch("/api/services",{cache:"no-store"}).then(r=>r.json()).then(j=>{if(alive&&j?.success)setLiveServices(Array.isArray(j.data)?j.data:[]);}).catch(()=>{if(alive)setLiveServices([])});
+    return()=>{alive=false};
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -930,97 +894,21 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Experience cards */}
-          <div
-            id="experiences"
-            dir="rtl"
-            className="grid gap-6 text-right md:grid-cols-3"
-          >
-            {experiences.map((experience) => (
-              <article
-                key={experience.title}
-                className="group relative flex h-full flex-col overflow-hidden rounded-[30px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_45px_rgba(13,59,52,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(13,59,52,0.14)]"
-              >
-                {/* Image */}
-                <div className="relative mb-5 h-48 overflow-hidden rounded-[22px]">
-                  <Image
-                    src={experience.image}
-                    alt={experience.alt}
-                    fill
-                    sizes="(min-width: 768px) 33vw, 100vw"
-                    className={`object-cover ${experience.position} transition-transform duration-700 group-hover:scale-105`}
-                  />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-
-                  {/* Distance */}
-                  <div className="absolute left-4 top-4 rounded-full border border-white/30 bg-[#0D3B34]/55 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md">
-                    {experience.distance}
-                  </div>
-
-                  {/* Badge */}
-                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-5 text-white">
-                    <span className="rounded-full border border-white/30 bg-black/15 px-3 py-1 text-xs font-bold backdrop-blur-md">
-                      {experience.badge}
-                    </span>
-
-                    {experience.icon === "location" && (
-                      <span
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-[#0D3B34]/65 text-white shadow-sm backdrop-blur-md"
-                        aria-label="الموقع"
-                        title="الموقع"
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="h-5 w-5"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-                          <circle cx="12" cy="10" r="2.5" />
-                        </svg>
-                      </span>
-                    )}
-                  </div>
+          {/* Live published services only */}
+          {liveServices.length > 0 && <div id="experiences" dir="rtl" className="grid gap-6 text-right md:grid-cols-3">
+            {liveServices.slice(0,6).map((service) => (
+              <article key={service.id} className="group flex h-full flex-col overflow-hidden rounded-[30px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_45px_rgba(13,59,52,0.10)] transition hover:-translate-y-1">
+                <div className="relative mb-5 h-48 overflow-hidden rounded-[22px] bg-[#F1EEE5]">
+                  {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="h-full w-full object-cover transition duration-700 group-hover:scale-105"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
+                  <div className="absolute bottom-4 right-4 rounded-full bg-[#0D3B34]/75 px-3 py-1 text-xs font-bold text-white">{service.category}</div>
                 </div>
-
-                {/* Content */}
-                <h3 className="text-2xl font-black leading-9 text-[#0D3B34]">
-                  {experience.title}
-                </h3>
-
-                <p className="mt-3 flex-1 leading-7 text-[#0D3B34]/65">
-                  {experience.description}
-                </p>
-
-                {/* Chips */}
-                <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <span className="rounded-full bg-[#0D3B34]/[0.07] px-4 py-2 text-sm font-bold text-[#0D3B34]">
-                    ◷ {experience.duration}
-                  </span>
-
-                  <span className="rounded-full bg-[#D4AF37]/[0.12] px-4 py-2 text-sm font-bold text-[#9A741B]">
-                    {experience.points}
-                  </span>
-                </div>
-
-                {/* Button */}
-                <Link
-                  href={`/experience/${experience.id}`}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#145347] hover:shadow-[0_10px_25px_rgba(13,59,52,0.20)]"
-                >
-                  عرض التجربة
-
-                  <span className="text-lg">←</span>
-                </Link>
+                <h3 className="text-xl font-black text-[#0D3B34]">{service.nameAr}</h3>
+                <p className="mt-2 text-xs text-[#0D3B34]/50">{[service.city,service.locationName].filter(Boolean).join(" · ")}</p>
+                <div className="mt-4 flex items-center justify-between gap-3"><b>{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</b><span className="flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-3 py-2 text-xs font-bold text-[#9A741B]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-6 w-auto"/> احجز واحصل على {service.loyaltyPoints || 150} نقطة</span></div>
+                <Link href={`/services/${service.id}`} className="mt-6 flex w-full items-center justify-center rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white">عرض البرنامج ←</Link>
               </article>
             ))}
-          </div>
-
+          </div>}
           {/* Discover more */}
           <div className="mt-12 flex justify-center">
             <Link
