@@ -71,7 +71,7 @@ export default function NewPartnerServicePage() {
     try{
       const r=await fetch(`/api/location/reverse-geocode?lat=${lat}&lng=${lng}`,{cache:"no-store"});
       const j=await r.json();
-      if(r.ok){setFormattedAddress(j.address||"");setPlaceId(j.placeId||"");if(!locationName&&j.address)setLocationName(j.address);}
+      if(r.ok){setFormattedAddress(j.address||"");setPlaceId(j.placeId||"");if(j.address)setLocationName(j.address);if(j.city)setCity(j.city);setCountry(j.country||"");setCountryCode(j.countryCode||"");}
     }catch{}
   };
   const useCurrentLocation=()=>{
