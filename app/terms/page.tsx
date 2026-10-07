@@ -12,16 +12,16 @@ export default function TermsPage() {
         </div>
       </header>
 
-      <section className="bg-[#0D3B34] px-5 py-4 text-white md:px-8 md:py-5">
+      <section className="bg-[#0D3B34] px-5 py-3 text-white md:px-8 md:py-3">
         <div className="mx-auto max-w-5xl">
-          <p className="text-xs font-black tracking-[0.18em] text-[#D4AF37]">AREES LOOP</p>
-          <h1 className="mt-1 whitespace-nowrap text-3xl font-black leading-none md:text-4xl">
+          <p className="text-[9px] font-black leading-none tracking-[0.18em] text-[#D4AF37]">AREES LOOP</p>
+          <h1 className="mt-1 whitespace-nowrap text-xl font-black leading-none md:text-2xl">
             الشروط والأحكام
           </h1>
-          <p className="mt-2 max-w-4xl text-xs leading-5 text-white/70 md:text-sm">
+          <p className="mt-1 max-w-4xl text-[11px] leading-4 text-white/70">
             تنظم هذه الشروط استخدام منصة أريس لوب وحجز الخدمات والتجارب، وتشمل أحكام الإلغاء والاسترداد والضمان المسترد وتعذّر أو عدم تنفيذ الخدمة.
           </p>
-          <p className="mt-1 text-[10px] font-bold text-white/45">آخر تحديث: سبتمبر 2026م</p>
+          <p className="mt-1 text-[9px] font-bold leading-none text-white/45">آخر تحديث: سبتمبر 2026م</p>
         </div>
       </section>
 
