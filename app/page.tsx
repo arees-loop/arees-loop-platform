@@ -99,6 +99,25 @@ const heroScenes = [
     detailEn: "Destinations · Experiences · Missions",
   },
   {
+    id: "world",
+    nameAr: "العالم",
+    nameEn: "World",
+    eyebrowAr: "وجهتك القادمة",
+    eyebrowEn: "YOUR NEXT DESTINATION",
+    titleAr: "استكشف العالم",
+    titleEn: "Explore the world",
+    descriptionAr:
+      "من جورجيا إلى طوكيو؛ وجهات وبرامج وتجارب مختارة في مكان واحد.",
+    descriptionEn:
+      "From Georgia to Tokyo, discover curated destinations, programs and experiences in one place.",
+    image: "/Image/hero/world-destinations-hero.webp",
+    coords: null,
+    metaAr: "العالم بين يديك",
+    metaEn: "The world in your hands",
+    detailAr: "وجهات · برامج سياحية · تجارب",
+    detailEn: "Destinations · Programs · Experiences",
+  },
+  {
     id: "medina",
     nameAr: "المدينة المنورة",
     nameEn: "Al Madinah",
@@ -456,7 +475,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#041713]/44 via-transparent to-black/10" />
         </div>
 
-        <header className="relative z-40 px-4 pt-1 md:px-8 md:pt-1">
+        <header className="sticky top-1 z-40 px-4 pt-1 md:px-8 md:pt-1">
           <nav className="mx-auto flex h-[92px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border border-white/35 bg-white/[0.055] px-4 py-0 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-[10px] backdrop-saturate-150 md:h-[96px] md:px-6">
             <Image
               src="/Logo/arees-loop-logo.png"
@@ -473,7 +492,11 @@ export default function Home() {
             >
               <a href="#discover" className="transition hover:text-[#e6bd4b]">اكتشف</a>
               <a href="#how" className="transition hover:text-[#e6bd4b]">كيف تعمل؟</a>
-              <a href="#rewards" className="transition hover:text-[#e6bd4b]">المكافآت</a>
+              <a href="#programs" className="transition hover:text-[#e6bd4b]">برامج سياحية⌄</a>
+              <a href="#experiences" className="transition hover:text-[#e6bd4b]">التجارب</a>
+              <a href="#hotels" className="transition hover:text-[#e6bd4b]">الفنادق</a>
+              <a href="#flights" className="transition hover:text-[#e6bd4b]">الطيران</a>
+              <a href="#cruise" className="transition hover:text-[#e6bd4b]">الكروز</a>
               <a href="#partners" className="transition hover:text-[#e6bd4b]">للشركاء</a>
             </div>
 
