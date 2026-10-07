@@ -110,7 +110,7 @@ const heroScenes = [
       "من جورجيا إلى طوكيو؛ وجهات وبرامج وتجارب مختارة في مكان واحد.",
     descriptionEn:
       "From Georgia to Tokyo, discover curated destinations, programs and experiences in one place.",
-    image: "/Image/hero/world-destinations-hero.webp",
+    image: "/Image/hero/world-destinations-hero.png",
     coords: null,
     metaAr: "العالم بين يديك",
     metaEn: "The world in your hands",
