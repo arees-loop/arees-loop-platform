@@ -32,6 +32,7 @@ type Service = {
   basePrice: number;
   vatRate: number;
   finalPrice: number;
+  loyaltyPoints: number;
   capacity: number;
   bookings: number;
   status: ServiceStatus;
@@ -164,6 +165,7 @@ export default function PartnerServicesPage() {
     latitude: null as number | null,
     longitude: null as number | null,
     basePrice: "",
+    loyaltyPoints: "150",
     vatRate: "included",
     locationUrl: "",
     hasMeetingPoint: false,
@@ -216,6 +218,7 @@ export default function PartnerServicesPage() {
           basePrice: Number(service.basePrice ?? 0),
           vatRate: Number(service.vatRate ?? 0),
           finalPrice: Number(service.finalPrice ?? 0),
+          loyaltyPoints: Number(service.loyaltyPoints ?? 150),
           capacity: Number(service.capacity ?? 0),
           bookings: Number(service.bookingCount ?? 0),
           status: service.status,
@@ -289,6 +292,7 @@ export default function PartnerServicesPage() {
       latitude: null,
       longitude: null,
       basePrice: "",
+      loyaltyPoints: "150",
       vatRate: "included",
       locationUrl: "",
       hasMeetingPoint: false,
@@ -345,6 +349,7 @@ export default function PartnerServicesPage() {
       latitude: service.latitude,
       longitude: service.longitude,
       basePrice: String(service.basePrice),
+      loyaltyPoints: String(service.loyaltyPoints || 150),
       vatRate: "included",
       locationUrl: "",
       hasMeetingPoint: false,
@@ -404,6 +409,7 @@ export default function PartnerServicesPage() {
     basePrice: Number(form.basePrice) || 0,
     vatRate: Number(form.vatRate) || 0,
     finalPrice: calculatedFinalPrice,
+    loyaltyPoints: Math.max(150, Number(form.loyaltyPoints) || 150),
     capacity: Number(form.capacity) || 0,
     bookings: existing?.bookings ?? 0,
     status,
@@ -413,7 +419,7 @@ export default function PartnerServicesPage() {
 
   const servicePayload = (submitForReview=false) => ({
     nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:stripProgramSections(form.descriptionAr)+sectionMarker("includes",form.programIncludes)+sectionMarker("excludes",form.programExcludes)+sectionMarker("notes",form.programNotes),descriptionEn:form.descriptionEn,
-    basePrice:form.basePrice,vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
+    basePrice:form.basePrice,loyaltyPoints:Math.max(150,Number(form.loyaltyPoints)||150),vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
     placeId:form.placeId,latitude:form.latitude,longitude:form.longitude,meetingInstructions:form.meetingInstructions,cancellationPolicy:form.cancellationPolicy,
     organizerType:form.organizerType,organizerName:form.organizerName,organizerLicenseNumber:form.organizerLicenseNumber,organizerLicenseIssuer:form.organizerLicenseIssuer,programApprovalNumber:form.programApprovalNumber,
     images:form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})),submitForReview
@@ -425,7 +431,7 @@ export default function PartnerServicesPage() {
       id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",subCategory:service.subCategory??"",
       license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",city:service.city??"",locationName:service.locationName??"",
       formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),
-      vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
+      vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),loyaltyPoints:Number(service.loyaltyPoints??150),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
       imageCount:Array.isArray(service.images)?service.images.length:0,descriptionAr:service.descriptionAr??"",descriptionEn:service.descriptionEn??"",
       cancellationPolicy:service.cancellationPolicy??"",meetingInstructions:service.meetingInstructions??"",organizerType:service.organizerType??"SELF",organizerName:service.organizerName??"",organizerLicenseNumber:service.organizerLicenseNumber??"",organizerLicenseIssuer:service.organizerLicenseIssuer??"",programApprovalNumber:service.programApprovalNumber??"",images:service.images??[]
     })));
@@ -2136,4 +2142,5 @@ function MobileNav({
       {label}
     </Link>
   );
-}
+<Field label="نقاط Arees Loop المكتسبة"><div className="rounded-2xl border border-[#D4AF37]/25 bg-[#FFF8E5] p-4"><input type="number" min="150" step="1" value={form.loyaltyPoints} onChange={e=>setForm({...form,loyaltyPoints:String(Math.max(150,Math.floor(Number(e.target.value)||150)))})} className="input"/><div className="mt-3 flex items-center gap-2 text-xs font-bold text-[#B99124]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-7 w-auto"/> احجز واحصل على {Math.max(150,Number(form.loyaltyPoints)||150)} نقطة Arees Loop</div><p className="mt-2 text-[10px] text-[#0D3B34]/50">تُمنح للعميل بعد اكتمال الحجز. الحد الأدنى 150 نقطة.</p></div></Field>
+          }
