@@ -12,20 +12,19 @@ export default function TermsPage() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-[#0D3B34] px-5 py-16 text-white md:px-8 md:py-20">
+      <section className="relative overflow-hidden bg-[#0D3B34] px-5 py-8 text-white md:px-8 md:py-10">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#D4AF37]/10 blur-3xl" />
         <div className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-white/[0.04] blur-3xl" />
         <div className="relative mx-auto max-w-5xl">
           <p className="text-sm font-black tracking-[0.18em] text-[#D4AF37]">AREES LOOP</p>
-          <h1 className="mt-4 text-4xl font-black leading-tight md:text-6xl">
-            الشروط
-            <span className="mt-2 block text-[#D4AF37]">والأحكام</span>
+          <h1 className="mt-2 whitespace-nowrap text-3xl font-black leading-tight md:text-5xl">
+            الشروط <span className="text-[#D4AF37]">والأحكام</span>
           </h1>
-          <p className="mt-6 max-w-3xl text-base leading-8 text-white/75 md:text-lg">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-white/75 md:text-base">
             تنظم هذه الشروط استخدام منصة أريس لوب وحجز الخدمات والتجارب، وتشمل
             أحكام الإلغاء والاسترداد، والضمان المسترد، وتعذّر أو عدم تنفيذ الخدمة.
           </p>
-          <p className="mt-5 text-sm font-bold text-white/50">آخر تحديث: سبتمبر 2026م</p>
+          <p className="mt-3 text-xs font-bold text-white/50">آخر تحديث: سبتمبر 2026م</p>
         </div>
       </section>
 
@@ -129,6 +128,16 @@ export default function TermsPage() {
           />
 
           <PolicySection title="6. شروط الإلغاء والاسترداد">
+            <div className="mb-5 rounded-[22px] border-2 border-[#D4AF37]/55 bg-[#FFF9E8] p-5">
+              <p className="text-base font-black text-[#0D3B34]">
+                رسوم معالجة طلب الاسترداد: 6 ريالات سعودية
+              </p>
+              <p className="mt-2 text-sm leading-7 text-[#0D3B34]/75">
+                إذا ألغيت الحجز من طرفك وكان لك مبلغ مسترد وفق سياسة الإلغاء الخاصة بالخدمة،
+                تخصم 6 ريالات فقط كرسوم معالجة طلب الاسترداد. لا تخصم هذه الرسوم إذا كان
+                الإلغاء أو عدم تنفيذ الخدمة بسبب مقدم الخدمة أو أريس لوب.
+              </p>
+            </div>
             <p>
               تختلف شروط الإلغاء والتعديل والاسترداد من خدمة إلى أخرى بحسب طبيعتها وموعد
               تنفيذها ومقدمها وأي حجوزات أو التزامات مرتبطة بها. وتعرض الشروط الخاصة بالخدمة
