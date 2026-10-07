@@ -12,19 +12,19 @@ export default function TermsPage() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-[#0D3B34] px-5 py-5 text-white md:px-8 md:py-6">
+      <section className="relative overflow-hidden bg-[#0D3B34] px-5 py-4 text-white md:px-8 md:py-5">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#D4AF37]/10 blur-3xl" />
         <div className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-white/[0.04] blur-3xl" />
         <div className="relative mx-auto max-w-5xl">
           <p className="text-sm font-black tracking-[0.18em] text-[#D4AF37]">AREES LOOP</p>
-          <h1 className="mt-1 whitespace-nowrap text-[28px] font-black leading-tight md:text-4xl">
+          <h1 className="mt-1 whitespace-nowrap text-2xl font-black leading-tight md:text-3xl">
             الشروط والأحكام
           </h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-white/75 md:text-[15px]">
+          <p className="mt-1.5 max-w-4xl text-[13px] leading-5 text-white/70 md:text-sm">
             تنظم هذه الشروط استخدام منصة أريس لوب وحجز الخدمات والتجارب، وتشمل
             أحكام الإلغاء والاسترداد، والضمان المسترد، وتعذّر أو عدم تنفيذ الخدمة.
           </p>
-          <p className="mt-2 text-[11px] font-bold text-white/50">آخر تحديث: سبتمبر 2026م</p>
+          <p className="mt-1.5 text-[10px] font-bold text-white/45">آخر تحديث: سبتمبر 2026م</p>
         </div>
       </section>
 
