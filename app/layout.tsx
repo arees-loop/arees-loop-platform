@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
+import PublicGlobalHeader from "./components/PublicGlobalHeader";
 import "./globals.css";
 
 const SITE_URL = "https://www.areesloop.com";
@@ -119,6 +120,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <InitialSplash />
+        <PublicGlobalHeader />
 
         {children}
 
