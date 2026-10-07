@@ -490,6 +490,8 @@ model Service {
   locationName     String?
   formattedAddress String?
   placeId          String?
+  country           String?
+  countryCode       String?
 
   latitude  Decimal? @db.Decimal(10, 7)
   longitude Decimal? @db.Decimal(10, 7)
@@ -501,6 +503,10 @@ model Service {
   capacity            Int?
   cancellationPolicy  String?
   meetingInstructions String?
+  meetingPointName     String?
+  meetingPointAddress  String?
+  meetingLatitude      Decimal? @db.Decimal(10, 7)
+  meetingLongitude     Decimal? @db.Decimal(10, 7)
 
   organizerType          String? @default("SELF")
   organizerName          String?
