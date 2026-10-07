@@ -6,6 +6,10 @@ type TomTomReverseGeocodeResult = {
   address?: {
     freeformAddress?: string;
     formattedAddress?: string;
+    municipality?: string;
+    municipalitySubdivision?: string;
+    country?: string;
+    countryCode?: string;
   };
 };
 
@@ -124,6 +128,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       address,
       placeId: result.id ?? null,
+      city: result.address?.municipality || result.address?.municipalitySubdivision || "",
+      country: result.address?.country || "",
+      countryCode: result.address?.countryCode || "",
       location: {
         lat: latitude,
         lng: longitude,
