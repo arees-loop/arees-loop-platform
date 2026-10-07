@@ -2146,5 +2146,4 @@ function MobileNav({
       {label}
     </Link>
   );
-<Field label="نقاط Arees Loop المكتسبة"><div className="rounded-2xl border border-[#D4AF37]/25 bg-[#FFF8E5] p-4"><input type="number" min="150" step="1" value={form.loyaltyPoints} onChange={e=>setForm({...form,loyaltyPoints:String(Math.max(150,Math.floor(Number(e.target.value)||150)))})} className="input"/><div className="mt-3 flex items-center gap-2 text-xs font-bold text-[#B99124]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-7 w-auto"/> احجز واحصل على {Math.max(150,Number(form.loyaltyPoints)||150)} نقطة Arees Loop</div><p className="mt-2 text-[10px] text-[#0D3B34]/50">تُمنح للعميل بعد اكتمال الحجز. الحد الأدنى 150 نقطة.</p></div></Field>
-          }
+}
