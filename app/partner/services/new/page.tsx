@@ -123,7 +123,7 @@ export default function NewPartnerServicePage() {
         latitude:location.lat,longitude:location.lng,
         hasMeetingPoint,meetingPointName,meetingPointAddress,meetingInstructions,
         meetingLatitude:meetingLocation?.lat,meetingLongitude:meetingLocation?.lng,
-        licenseId,basePrice:price,vatMode:"included",cancellationPolicy
+        licenseId,basePrice:price,vatMode:"included",loyaltyPoints,cancellationPolicy
       })});
       const j=await r.json();
       if(!r.ok) throw new Error(j.message||"تعذر إرسال الخدمة.");
@@ -132,7 +132,9 @@ export default function NewPartnerServicePage() {
     finally{setSubmitting(false);}
   };
   const [price, setPrice] = useState(100);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(150);
   const commissionRate = 10;
+  const loyaltyField = <div className="rounded-[24px] border border-[#D4AF37]/30 bg-[#FFF8E5] p-5"><p className="text-sm font-bold">نقاط Arees Loop المكتسبة</p><p className="mt-1 text-xs leading-6 text-[#0D3B34]/55">يحصل عليها العميل بعد اكتمال الحجز. الحد الأدنى 150 نقطة ويمكنك زيادتها.</p><input type="number" min={150} step={1} value={loyaltyPoints} onChange={e=>setLoyaltyPoints(Math.max(150,Math.floor(Number(e.target.value)||150)))} className="input mt-3" /><div className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#B99124]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-7 w-auto" /> احجز واحصل على {loyaltyPoints} نقطة Arees Loop</div></div>;
 
   const preview = useMemo(() => {
     const areesBase = price * (commissionRate / 100);
@@ -211,7 +213,7 @@ export default function NewPartnerServicePage() {
           <p className="text-xs leading-6 text-[#0D3B34]/45">سيظهر للعميل اسم الجهة المنفذة ورقم الترخيص بصورة تعريفية هادئة، بدون رقم هاتف أو بريد إلكتروني أو رابط تواصل مباشر.</p>
         </Card>}
 
-        {step===3 && serviceType==="HOTEL" && <HotelInventory />}
+        {step===3 && serviceType==="HOTEL" && <HotelInventory />{loyaltyField}}
 
         {step===3 && serviceType!=="HOTEL" && <Card eyebrow="STEP 03" title="السعر والسياسات" note="اختيار بسيط، ونوضح لك النتيجة قبل النشر.">
           <Field label="سعر الخدمة"><div className="relative"><input type="number" value={price} onChange={e=>setPrice(Number(e.target.value)||0)} className="input pl-16"/><span className="absolute left-4 top-3.5 text-xs font-bold">ر.س</span></div></Field>
