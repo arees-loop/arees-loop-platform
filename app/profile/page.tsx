@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getTotalLoopPoints } from "@/lib/loop-progress";
 import AccountMenu from "@/app/components/AccountMenu";
 
 type ToggleRowProps = {
@@ -89,6 +88,7 @@ export default function ProfilePage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [smartRecommendations, setSmartRecommendations] = useState(true);
   const [loopPoints, setLoopPoints] = useState(0);
+  const [bookingCount, setBookingCount] = useState(0);
   const [profile, setProfile] = useState<ProfileData>(EMPTY_PROFILE);
   const [draftProfile, setDraftProfile] = useState<ProfileData>(EMPTY_PROFILE);
   const [interests, setInterests] = useState<InterestCode[]>([]);
@@ -112,7 +112,8 @@ export default function ProfilePage() {
   const avatarInitial = firstName.trim().charAt(0) || "ز";
 
   useEffect(() => {
-    setLoopPoints(getTotalLoopPoints());
+    fetch("/api/loyalty/wallet",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success)setLoopPoints(d.wallet.balance)}).catch(()=>{});
+    fetch("/api/customer/bookings",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success)setBookingCount((d.bookings||[]).length)}).catch(()=>{});
 
     let cancelled = false;
 
@@ -345,10 +346,6 @@ export default function ProfilePage() {
                     الحساب موثّق
                   </span>
                 </div>
-
-                <p className="mt-4 text-[10px] leading-5 text-white/60">
-                  عضو منذ سبتمبر 2026 • آخر تحديث للملف اليوم
-                </p>
               </div>
             </div>
           </div>
@@ -368,7 +365,7 @@ export default function ProfilePage() {
             <div className="mt-6 grid gap-3">
               <MiniSummary
                 label="الحجوزات"
-                value="3"
+                value={bookingCount.toLocaleString("en-US")}
                 href="/bookings"
               />
 
@@ -376,12 +373,6 @@ export default function ProfilePage() {
                 label="نقاط Loop"
                 value={loopPoints.toLocaleString("en-US")}
                 href="/rewards"
-              />
-
-              <MiniSummary
-                label="المفضلة"
-                value="3"
-                href="/favorites"
               />
             </div>
           </div>
