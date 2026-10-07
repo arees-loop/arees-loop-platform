@@ -45,7 +45,10 @@ export async function POST(request: NextRequest) {
     if (coupon.serviceId && coupon.serviceId !== serviceId) {
       return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لهذه الخدمة." }, { status: 400 });
     }
-    if (coupon.category && service && coupon.category !== service.category) {\n      return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لتصنيف هذه الخدمة." }, { status: 400 });\n    }\n    if (!service) {
+    if (coupon.category && service && coupon.category !== service.category) {
+      return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لتصنيف هذه الخدمة." }, { status: 400 });
+    }
+    if (!service) {
       return NextResponse.json({ success: false, error: "SERVICE_NOT_FOUND", message: "الخدمة غير متاحة." }, { status: 404 });
     }
 
