@@ -74,9 +74,9 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                 </button>
                 {accountOpen && (
                   <div dir="rtl" className="absolute left-0 top-[52px] w-52 overflow-hidden rounded-[18px] border border-[#D4AF37]/35 bg-white/95 p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-                    <Link href="/account" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الملف الشخصي</Link>
-                    <Link href="/account/bookings" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">حجوزاتي</Link>
-                    <Link href="/account/rewards" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">نقاطي ومكافآتي</Link>
+                    <Link href="/profile" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الملف الشخصي</Link>
+                    <Link href="/bookings" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">حجوزاتي</Link>
+                    <Link href="/rewards" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">نقاطي ومكافآتي</Link>
                     <div className="my-1 h-px bg-[#0D3B34]/10" />
                     <button type="button" onClick={logout} className="block w-full rounded-xl px-4 py-2.5 text-right text-xs font-bold text-red-700 hover:bg-red-50">تسجيل الخروج</button>
                   </div>
