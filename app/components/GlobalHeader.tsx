@@ -21,7 +21,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           <Link href="/#discover" className="transition hover:text-[#D4AF37]">اكتشف</Link>
           <Link href="/#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</Link>
           <div className="group relative">
-            <button type="button" className="flex items-center gap-1 py-6 font-black text-[#8A6500] drop-shadow-[0_1px_1px_rgba(255,255,255,0.95)] transition hover:text-[#0D3B34] hover:drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)]">برامج سياحية <span className="text-[10px]">⌄</span></button>
+            <button type="button" className="flex items-center gap-1 py-6 font-black text-white transition hover:text-[#D4AF37] hover:drop-shadow-[0_1px_2px_rgba(13,59,52,0.65)]">برامج سياحية <span className="text-[10px]">⌄</span></button>
             <div className="invisible absolute right-1/2 top-[64px] w-52 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
               <Link href="/discover?type=domestic" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35 hover:text-[#0D3B34] hover:drop-shadow-[0_1px_1px_rgba(255,255,255,0.95)]">سياحة داخلية</Link>
               <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35 hover:text-[#0D3B34] hover:drop-shadow-[0_1px_1px_rgba(255,255,255,0.95)]">سياحة دولية</Link>
