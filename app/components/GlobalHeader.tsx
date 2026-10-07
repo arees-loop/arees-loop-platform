@@ -8,11 +8,11 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   const [language, setLanguage] = useState<"ar" | "en">("ar");
   const text = overlay ? "text-white" : "text-[#0D3B34]";
   const border = overlay ? "border-white/35" : "border-[#0D3B34]/15";
-  const glass = overlay ? "bg-white/[0.055]" : "bg-white/80";
+  const glass = overlay ? "bg-white/[0.075]" : "bg-white/72";
 
   return (
-    <header className="sticky top-1 z-[100] px-4 pt-1 md:px-8">
-      <nav className={`mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border ${border} ${glass} px-4 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-xl backdrop-saturate-150 md:h-[82px] md:px-6`}>
+    <header className="pointer-events-none fixed inset-x-0 top-2 z-[100] px-4 md:px-8">
+      <nav className={`pointer-events-auto mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border ${border} ${glass} px-4 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-xl backdrop-saturate-150 md:h-[82px] md:px-6`}>
         <Link href="/" aria-label="Arees Loop">
           <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[132px] md:w-[154px]" />
         </Link>
@@ -22,11 +22,11 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           <Link href="/#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</Link>
           <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 transition hover:text-[#D4AF37]">برامج سياحية <span className="text-[10px]">⌄</span></button>
-            <div className="invisible absolute right-1/2 top-[64px] w-52 translate-x-1/2 translate-y-2 rounded-2xl border border-white/30 bg-[#0D3B34]/95 p-2 text-right text-white opacity-0 shadow-2xl backdrop-blur-xl transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-              <Link href="/discover?type=domestic" className="block rounded-xl px-4 py-2.5 hover:bg-white/10">سياحة داخلية</Link>
-              <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 hover:bg-white/10">سياحة دولية</Link>
-              <Link href="/discover?type=packages" className="block rounded-xl px-4 py-2.5 hover:bg-white/10">باقات سياحية</Link>
-              <Link href="/discover?type=private" className="block rounded-xl px-4 py-2.5 hover:bg-white/10">برامج خاصة</Link>
+            <div className="invisible absolute right-1/2 top-[64px] w-52 translate-x-1/2 translate-y-2 rounded-[22px] border border-white/40 bg-white/[0.12] p-2 text-right text-white opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+              <Link href="/discover?type=domestic" className="block rounded-xl px-4 py-2.5 transition hover:bg-white/15">سياحة داخلية</Link>
+              <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 transition hover:bg-white/15">سياحة دولية</Link>
+              <Link href="/discover?type=packages" className="block rounded-xl px-4 py-2.5 transition hover:bg-white/15">باقات سياحية</Link>
+              <Link href="/discover?type=private" className="block rounded-xl px-4 py-2.5 transition hover:bg-white/15">برامج خاصة</Link>
             </div>
           </div>
           <Link href="/#experiences" className="transition hover:text-[#D4AF37]">التجارب</Link>
