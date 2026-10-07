@@ -1,10 +1,9 @@
 import Link from "next/link";
-import GlobalHeader from "../components/GlobalHeader";
 
 export default function TermsPage() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#f7f7f2] text-[#0D3B34]">
-      <GlobalHeader />      <section className="bg-[#0D3B34] px-5 py-3 text-white md:px-8 md:py-3">
+      <section className="bg-[#0D3B34] px-5 py-3 text-white md:px-8 md:py-3">
         <div className="mx-auto max-w-5xl">
           <p className="text-[9px] font-black leading-none tracking-[0.18em] text-[#D4AF37]">AREES LOOP</p>
           <h1 className="mt-1 whitespace-nowrap text-xl font-black leading-none md:text-2xl">
