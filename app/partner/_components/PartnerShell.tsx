@@ -4,17 +4,36 @@ import Link from "next/link";
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-const items = [
-  ["/partner/dashboard", "⌂", "الرئيسية"],
-  ["/partner/bookings", "▣", "الحجوزات"],
-  ["/partner/services", "◈", "الخدمات"],
-  ["/partner/settlements", "﷼", "التسويات"],
-  ["/partner/invoices", "▤", "الفواتير"],
-  ["/partner/reports", "◫", "التقارير"],
-  ["/partner/team", "◎", "الموظفون والصلاحيات"],
-  ["/partner/business", "◇", "المنشأة والتراخيص"],
-  ["/partner/contracts/current", "✓", "الاتفاقيات والعقود"],
-] as const;
+type IconName = "home" | "bookings" | "services" | "riyal" | "invoice" | "report" | "team" | "license" | "contract";
+
+const items: ReadonlyArray<readonly [string, IconName, string]> = [
+  ["/partner/dashboard", "home", "الرئيسية"],
+  ["/partner/bookings", "bookings", "الحجوزات"],
+  ["/partner/services", "services", "الخدمات"],
+  ["/partner/settlements", "riyal", "التسويات"],
+  ["/partner/invoices", "invoice", "الفواتير"],
+  ["/partner/reports", "report", "التقارير"],
+  ["/partner/team", "team", "الموظفون والصلاحيات"],
+  ["/partner/business", "license", "المنشأة والتراخيص"],
+  ["/partner/contracts/current", "contract", "الاتفاقيات والعقود"],
+];
+
+function NavIcon({ name }: { name: IconName }) {
+  const common = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  if (name === "riyal") return <span className="text-[18px] font-bold leading-none">﷼</span>;
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden="true" {...common}>
+      {name === "home" && <><path d="M3.5 10.5 12 3.8l8.5 6.7"/><path d="M5.5 9.2V20h13V9.2"/><path d="M9.5 20v-6h5v6"/></>}
+      {name === "bookings" && <><rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 9.5h16"/><path d="m8 14 2 2 5-5"/></>}
+      {name === "services" && <><path d="M12 3.5 20.5 8 12 12.5 3.5 8 12 3.5Z"/><path d="m5.5 11.5 6.5 3.5 6.5-3.5M5.5 15.5 12 19l6.5-3.5"/></>}
+      {name === "invoice" && <><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4v-17Z"/><path d="M9 8h6M9 12h6M9 16h4"/></>}
+      {name === "report" && <><path d="M5 3.5h10l4 4V20H5Z"/><path d="M15 3.5V8h4M8 12h5M8 15.5h4"/><path d="m14.5 17.5 4-4 1.5 1.5-4 4-2 .5Z"/></>}
+      {name === "team" && <><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.3"/><path d="M3.5 19c.5-3.5 2.4-5.5 5.5-5.5s5 2 5.5 5.5M14 14c3.3-.6 5.5 1.1 6 4"/></>}
+      {name === "license" && <><path d="M6 3.5h9l3 3V20H6Z"/><path d="M15 3.5V7h3M9 10h6M9 13h4"/><circle cx="14.5" cy="16.5" r="2.2"/><path d="m13.2 18.2-.4 2 1.7-1 1.7 1-.4-2"/></>}
+      {name === "contract" && <><path d="M6 3.5h12V20H6Z"/><path d="M9 8h6M9 11.5h6"/><path d="m9 16 1.5 1.5 4-4"/></>}
+    </svg>
+  );
+}
 
 type PartnerInfo = {
   tradeName: string;
@@ -388,7 +407,7 @@ export default function PartnerShell({
                       ${active ? "text-[#E6C24D]" : ""}
                     `}
                   >
-                    {icon}
+                    <NavIcon name={icon} />
                   </span>
 
                   {sidebarOpen && <span>{label}</span>}
