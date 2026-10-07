@@ -197,6 +197,16 @@ const heroScenes = [
 ];
 
 
+const featuredWorldDestinations = [
+  { id: "georgia", nameAr: "جورجيا", nameEn: "Georgia", position: "18% center" },
+  { id: "turkey", nameAr: "تركيا", nameEn: "Türkiye", position: "38% center" },
+  { id: "malaysia", nameAr: "ماليزيا", nameEn: "Malaysia", position: "82% center" },
+  { id: "thailand", nameAr: "تايلاند", nameEn: "Thailand", position: "72% center" },
+  { id: "bali", nameAr: "بالي", nameEn: "Bali", position: "88% bottom" },
+  { id: "london", nameAr: "لندن", nameEn: "London", position: "4% center" },
+];
+
+
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
 const distanceKm = (
@@ -650,6 +660,41 @@ export default function Home() {
             <p className="mt-6 max-w-2xl text-base font-medium leading-8 text-white/82 drop-shadow-[0_2px_10px_rgba(0,0,0,0.28)] md:text-lg">
               {isArabic ? currentScene.descriptionAr : currentScene.descriptionEn}
             </p>
+
+            {currentScene.id === "world" && (
+              <div className="mt-7">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-xs font-black text-white/80">
+                    {isArabic ? "وجهات مختارة" : "Featured destinations"}
+                  </p>
+                  <span className="text-[11px] font-bold text-white/55">
+                    {isArabic ? "اسحب للاستكشاف" : "Swipe to explore"}
+                  </span>
+                </div>
+                <div className="flex max-w-3xl snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {featuredWorldDestinations.map((destination) => (
+                    <Link
+                      key={destination.id}
+                      href={`/discover?destination=${destination.id}`}
+                      className="group relative h-24 min-w-[148px] snap-start overflow-hidden rounded-[22px] border border-white/30 bg-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#D4AF37]/80"
+                    >
+                      <Image
+                        src="/Image/hero/world-destinations-hero.webp"
+                        alt={isArabic ? destination.nameAr : destination.nameEn}
+                        fill
+                        sizes="148px"
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                        style={{ objectPosition: destination.position }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                      <span className="absolute bottom-3 right-3 left-3 text-sm font-black text-white drop-shadow">
+                        {isArabic ? destination.nameAr : destination.nameEn}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
