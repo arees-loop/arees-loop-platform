@@ -4,13 +4,14 @@ import Link from "next/link";
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-type IconName = "home" | "bookings" | "services" | "coupon" | "riyal" | "invoice" | "report" | "team" | "license" | "contract";
+type IconName = "home" | "bookings" | "services" | "coupon" | "loyalty" | "riyal" | "invoice" | "report" | "team" | "license" | "contract";
 
 const items: ReadonlyArray<readonly [string, IconName, string]> = [
   ["/partner/dashboard", "home", "الرئيسية"],
   ["/partner/bookings", "bookings", "الحجوزات"],
   ["/partner/services", "services", "الخدمات"],
   ["/partner/coupons", "coupon", "الكوبونات"],
+  ["/partner/loyalty", "loyalty", "النقاط والمكافآت"],
   ["/partner/settlements", "riyal", "التسويات"],
   ["/partner/invoices", "invoice", "الفواتير"],
   ["/partner/reports", "report", "التقارير"],
@@ -28,6 +29,7 @@ function NavIcon({ name }: { name: IconName }) {
       {name === "bookings" && <><rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 9.5h16"/><path d="m8 14 2 2 5-5"/></>}
       {name === "services" && <><path d="M12 3.5 20.5 8 12 12.5 3.5 8 12 3.5Z"/><path d="m5.5 11.5 6.5 3.5 6.5-3.5M5.5 15.5 12 19l6.5-3.5"/></>}
       {name === "coupon" && <><path d="M4 7.5A2.5 2.5 0 0 0 6.5 5h11A2.5 2.5 0 0 0 20 7.5v2a2.5 2.5 0 0 0 0 5v2A2.5 2.5 0 0 0 17.5 19h-11A2.5 2.5 0 0 0 4 16.5v-2a2.5 2.5 0 0 0 0-5Z"/><path d="m9 15 6-6M9.5 9.5h.01M14.5 14.5h.01"/></>}
+      {name === "loyalty" && <><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M8.5 10h7M8.5 14h7"/></>}
       {name === "invoice" && <><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4v-17Z"/><path d="M9 8h6M9 12h6M9 16h4"/></>}
       {name === "report" && <><path d="M5 3.5h10l4 4V20H5Z"/><path d="M15 3.5V8h4M8 12h5M8 15.5h4"/><path d="m14.5 17.5 4-4 1.5 1.5-4 4-2 .5Z"/></>}
       {name === "team" && <><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.3"/><path d="M3.5 19c.5-3.5 2.4-5.5 5.5-5.5s5 2 5.5 5.5M14 14c3.3-.6 5.5 1.1 6 4"/></>}
