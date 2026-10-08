@@ -49,6 +49,7 @@ type AuthUser = {
   phoneVerifiedAt: string | null;
   visitorType: VisitorType | null;
   interests: InterestCode[];
+  profileImageUrl?: string | null;
 };
 
 const EMPTY_PROFILE: ProfileData = {
@@ -88,6 +89,9 @@ export default function ProfilePage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [smartRecommendations, setSmartRecommendations] = useState(true);
   const [loopPoints, setLoopPoints] = useState(0);
+  const [avatarUrl,setAvatarUrl]=useState<string|null>(null);
+  const [avatarBusy,setAvatarBusy]=useState(false);
+  const [avatarError,setAvatarError]=useState("");
   const [bookingCount, setBookingCount] = useState(0);
   const [profile, setProfile] = useState<ProfileData>(EMPTY_PROFILE);
   const [draftProfile, setDraftProfile] = useState<ProfileData>(EMPTY_PROFILE);
@@ -137,6 +141,7 @@ export default function ProfilePage() {
         };
 
         if (!cancelled) {
+          setAvatarUrl(user.profileImageUrl ?? null);
           setProfile(nextProfile);
           setDraftProfile(nextProfile);
           setInterests(user.interests ?? []);
@@ -154,6 +159,21 @@ export default function ProfilePage() {
       cancelled = true;
     };
   }, []);
+
+  async function uploadAvatar(file:File|undefined){
+    if(!file)return;
+    setAvatarError("");
+    if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>2*1024*1024){setAvatarError("اختر صورة JPG أو PNG أو WebP بحجم لا يتجاوز 2 ميجابايت");return;}
+    setAvatarBusy(true);
+    try{
+      const form=new FormData();form.set("image",file);
+      const response=await fetch("/api/profile/avatar",{method:"POST",body:form,credentials:"include"});
+      const result=await response.json();
+      if(!response.ok||!result.success)throw Error(result.message||"تعذر رفع الصورة");
+      setAvatarUrl(result.url);
+      window.dispatchEvent(new CustomEvent("arees:avatar-updated",{detail:{url:result.url}}));
+    }catch(e){setAvatarError(e instanceof Error?e.message:"تعذر رفع الصورة")}finally{setAvatarBusy(false)}
+  }
 
   function openProfileEditor() {
     setDraftProfile(profile);
