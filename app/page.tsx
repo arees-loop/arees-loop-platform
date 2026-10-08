@@ -6,6 +6,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
+import { getTotalLoopPoints, getLoopProgress } from "../lib/loop-progress";
 
 type LiveService = { id:string; nameAr:string; descriptionAr?:string|null; city?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string };
 const steps = [
@@ -186,6 +187,8 @@ const distanceKm = (
 
 export default function Home() {
   const [partnersNudge, setPartnersNudge] = useState(0);
+  const [walletPoints, setWalletPoints] = useState<number | null>(null);
+  const [lastRewardPoints, setLastRewardPoints] = useState<number | null>(null);
   const [liveServices, setLiveServices] = useState<LiveService[]>([]);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [activeScene, setActiveScene] = useState(0);
@@ -207,6 +210,21 @@ export default function Home() {
     ? `/discover?lat=${userCoords.lat.toFixed(6)}&lng=${userCoords.lng.toFixed(6)}&source=location`
     : "/discover";
 
+
+  useEffect(() => {
+    const syncWallet = () => {
+      setWalletPoints(getTotalLoopPoints());
+      const rewards = getLoopProgress().rewardRedemptions;
+      setLastRewardPoints(rewards.length ? rewards[rewards.length - 1].points : null);
+    };
+    syncWallet();
+    window.addEventListener("storage", syncWallet);
+    window.addEventListener("focus", syncWallet);
+    return () => {
+      window.removeEventListener("storage", syncWallet);
+      window.removeEventListener("focus", syncWallet);
+    };
+  }, []);
 
   useEffect(() => {
     let alive=true;
@@ -1060,7 +1078,7 @@ export default function Home() {
       </section>
 
       {/* =====================================================
-          مكافأة أريس لوبS
+          مكافآت أريس لوب
       ====================================================== */}
 
       <section
@@ -1078,7 +1096,7 @@ export default function Home() {
           {/* Rewards Text */}
           <div>
             <p className="text-sm font-bold tracking-[0.18em] text-[#e5b83f]">
-              مكافأة أريس لوبS
+              مكافآت أريس لوب
             </p>
 
             <h2 className="mt-4 text-4xl font-black leading-tight md:text-5xl">
@@ -1123,8 +1141,8 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-xl">
-                    ◆
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 p-2">
+                    <Image src="/Logo/arees-loop-logo.png" alt="شعار أريس لوب" width={40} height={40} className="h-full w-full object-contain" />
                   </div>
                 </div>
 
@@ -1132,8 +1150,8 @@ export default function Home() {
                   <p className="text-sm text-white/55">رصيدك الحالي</p>
 
                   <div className="mt-2 flex items-end gap-3">
-                    <p className="text-5xl font-black text-[#e5b83f]">
-                      5,750
+                    <p className="text-5xl font-black text-[#e5b83f]" aria-live="polite">
+                      {walletPoints === null ? "—" : walletPoints.toLocaleString("en-US")}
                     </p>
 
                     <span className="pb-1 font-bold text-white/70">
@@ -1149,17 +1167,16 @@ export default function Home() {
                     </span>
 
                     <span className="font-black text-[#e5b83f]">
-                      +750 نقطة
+                      {lastRewardPoints === null ? "لا توجد عمليات استبدال" : `-${lastRewardPoints.toLocaleString("en-US")} نقطة`}
                     </span>
                   </div>
 
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-                    <div className="h-full w-[72%] rounded-full bg-[#D4AF37]" />
+                    <div className="h-full w-0 rounded-full bg-[#D4AF37]" />
                   </div>
 
                   <p className="mt-3 text-xs leading-6 text-white/50">
-                    كلما اكتشفت تجارب مؤهلة أكثر، تتقدم نحو مكافآت وتجارب
-                    جديدة.
+                    الرصيد المعروض هنا مستمد من سجل التقدم المحفوظ في هذا المتصفح، وليس محفظة حساب موثقة بعد.
                   </p>
                 </div>
               </div>
