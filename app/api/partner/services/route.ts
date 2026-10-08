@@ -67,6 +67,7 @@ export async function POST(request:Request){
       },
       include:{images:true}
     });
+    await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_CREATED",entityType:"Service",entityId:service.id,afterData:{partnerId:membership.partnerId,nameAr:service.nameAr,status:service.status,employeeEmail:membership.user.email}}});
     const partnerEmail=membership.user.email;
     const adminEmails=getAdminNotificationEmails();
     const origin=new URL(request.url).origin;
