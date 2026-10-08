@@ -330,3 +330,13 @@ button.arees-primary-action:not(:disabled):active,
 a.arees-primary-action[href]:active {
   transform: translateY(0) scale(0.98) !important;
 }
+
+/* Service descriptions may contain pasted rich HTML with legacy inline fonts. */
+.arees-service-content,
+.arees-service-content :where(p, span, div, li, ul, ol, strong, em, b, i, table, td, th) {
+  font-family: var(--font-ibm-plex-arabic), Arial, sans-serif !important;
+}
+.arees-service-content :where(p, li) {
+  font-size: 0.875rem;
+  line-height: 1.9;
+}
