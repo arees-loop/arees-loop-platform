@@ -829,3 +829,10 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
 }
+
+// Public header navigation switches controlled by platform administration.
+model NavigationVisibility {
+  key String @id
+  visible Boolean @default(true)
+  updatedAt DateTime @updatedAt
+}
