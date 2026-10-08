@@ -344,7 +344,7 @@ export default function ProfilePage() {
                 {avatarBusy ? "جارٍ رفع الصورة…" : "إضافة أو تغيير الصورة"}
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={avatarBusy} onChange={e => { void uploadAvatar(e.target.files?.[0]); e.target.value = ""; }} />
               </label>
-              {avatarError && <p role="alert" className="text-xs text-red-200">{avatarError}</p>
+              {avatarError && <p role="alert" className="text-xs text-red-200">{avatarError}</p>}
 
               <div>
                 <p className="text-[9px] font-semibold tracking-[0.18em] text-[#D4AF37]">
