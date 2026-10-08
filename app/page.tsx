@@ -1259,7 +1259,7 @@ export default function Home() {
             <p className="mt-1 text-sm font-medium leading-7 text-[#3D3528]/65">للشركات ومقدمي التجارب والجهات الراغبة في الوصول إلى الزوار عبر تجربة رقمية ذكية.</p>
           </div>
           <Link href="/partner/onboarding" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/55 px-8 py-3.5 font-black text-[#8B6718] shadow-[0_12px_35px_rgba(155,112,24,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/75">انضم كشريك</Link>
-          <Link href="/partner/login" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/70 px-7 py-3 font-black text-[#0D3B34]">تسجيل دخول الشريك</Link>
+
         </div>
 
         <style jsx>{`
