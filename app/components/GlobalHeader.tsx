@@ -49,6 +49,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
             </div>
           </div>
           <Link href="/discover?type=experiences" className="transition hover:text-[#D4AF37]">التجارب</Link>
+          <Link href="/guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>
           <Link href="/hotels" className="transition hover:text-[#D4AF37]">الفنادق</Link>
           <Link href="/flights" className="transition hover:text-[#D4AF37]">الطيران</Link>
           <Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>
