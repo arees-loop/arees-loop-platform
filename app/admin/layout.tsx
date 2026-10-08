@@ -25,6 +25,8 @@ const nav: NavItem[] = [
   { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
   { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
   { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
+  { href: "/admin/rewards", label: "النقاط وتقارير الاستبدال", icon: "✦", permission: "REPORTS_ANALYTICS" },
+  { href: "/admin/navigation", label: "إظهار وإخفاء روابط الهيدر", icon: "◉", superOnly: true, permission: null },
   { href: "/admin/dashboard?section=settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
 ];
 
