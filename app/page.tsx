@@ -903,8 +903,8 @@ export default function Home() {
           {liveServices.length > 0 && <div id="experiences" dir="rtl" className="grid gap-6 text-right sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {liveServices.slice(0,8).map((service) => (
               <article key={service.id} className="group flex h-full flex-col overflow-hidden rounded-[30px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_45px_rgba(13,59,52,0.10)] transition hover:-translate-y-1">
-                <div className="relative mb-5 aspect-[1.8/1] overflow-hidden rounded-[22px] bg-[#F1EEE5]">
-                  {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="h-full w-full object-contain bg-[#F5EFE2]"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
+                <div className="relative mb-5 overflow-hidden rounded-[22px] bg-[#F1EEE5]">
+                  {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="block h-auto w-full bg-[#F5EFE2]"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
                   <div className="absolute bottom-4 right-4 rounded-full bg-[#0D3B34]/75 px-3 py-1 text-xs font-bold text-white">{service.category}</div>
                 </div>
                 <h3 className="text-xl font-black text-[#0D3B34]">{service.nameAr}</h3>
