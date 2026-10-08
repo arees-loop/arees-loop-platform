@@ -1181,14 +1181,28 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="tour-guides" dir="rtl" className="scroll-mt-24 bg-[#F8F5ED]" px-5 py-12 md:px-10">
+      <section id="tour-guides" dir="rtl" className="scroll-mt-24 bg-[#F8F5ED] px-5 py-12 md:px-10">
         <div className="mx-auto max-w-[1440px]">
-          <div className="mb-5 text-center"><p className="text-xs font-bold tracking-widest text-[#A87917]">AREES LOOP GUIDES</p><h2 className="mt-2 text-3xl font-black text-[#0D3B34] md:text-4xl">المرشدون السياحيون</h2><p className="mt-2 text-sm text-[#0D3B34]/65">خبرة محلية تقودك لتجارب أصيلة في المملكة</p></div>
+          <div className="mb-6 text-center">
+            <p className="text-xs font-bold tracking-widest text-[#A87917]">AREES LOOP GUIDES</p>
+            <h2 className="mt-2 text-3xl font-black text-[#0D3B34] md:text-4xl">المرشدون السياحيون</h2>
+            <p className="mt-2 text-sm text-[#0D3B34]/65">خبرة محلية تقودك لتجارب أصيلة في المملكة</p>
+          </div>
           <div className="overflow-hidden rounded-[28px] border border-[#D4AF37]/35 bg-white shadow-[0_18px_55px_rgba(13,59,52,0.09)]">
-            <img src="/Image/guides/arees-loop-tour-guides-banner.png" alt="مرشد سياحي مع زوار في العلا" className="block h-auto w-full object-contain bg-[#F5EFE2]" />
-            <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#D4AF37]/20 bg-white/90 p-5">
-              <Link href="/guides/directory" className="rounded-full bg-[#0D3B34] px-7 py-3 text-sm font-black text-white">ابحث عن مرشد سياحي</Link>
-              <Link href="/guides/register" className="rounded-full border border-[#C5A052] bg-[#FFF9EB] px-7 py-3 text-sm font-black text-[#0D3B34]">انضم كمرشد سياحي</Link>
+            <img src="/Image/guides/arees-loop-tour-guides-banner.png" alt="مرشد سياحي يرافق زواراً بين معالم المملكة التاريخية" className="block h-auto w-full object-contain" />
+            <div className="grid grid-cols-1 gap-0 border-t border-[#D4AF37]/20 md:grid-cols-2">
+              <div className="flex flex-col items-center px-6 py-8 text-center md:px-9">
+                <span className="text-xs font-bold text-[#A87917]">للزوار والسياح</span>
+                <h3 className="mt-2 text-xl font-black text-[#0D3B34]">اكتشف المكان مع المرشد المناسب</h3>
+                <p className="mt-3 max-w-md flex-1 text-sm leading-7 text-[#0D3B34]/70">وين ما تكون وجهتك، أريس لوب بتوصلك بالمرشد السياحي المناسب في المكان المناسب، وتوفر عليك وقت وجهد البحث، عشان تعيش تجربة أغنى وأسهل.</p>
+                <Link href="/guides/directory" className="mt-5 rounded-full bg-[#0D3B34] px-7 py-3 text-sm font-black text-white transition hover:bg-[#175A50]">ابحث عن مرشد سياحي</Link>
+              </div>
+              <div className="flex flex-col items-center border-t border-[#D4AF37]/25 bg-[#FBF7EC] px-6 py-8 text-center md:border-r md:border-t-0 md:px-9">
+                <span className="text-xs font-bold text-[#A87917]">للمرشدين السياحيين</span>
+                <h3 className="mt-2 text-xl font-black text-[#0D3B34]">خبرتك تستحق الوصول</h3>
+                <p className="mt-3 max-w-md flex-1 text-sm leading-7 text-[#0D3B34]/70">حوّل خبرتك السياحية إلى فرص حقيقية. انضم إلى أريس لوب، وخلّي العملاء يكتشفوا خدماتك في الوجهة والوقت المناسبين.</p>
+                <Link href="/guides/register" className="mt-5 rounded-full border border-[#C5A052] bg-white px-7 py-3 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF3D3]">انضم كمرشد سياحي</Link>
+              </div>
             </div>
           </div>
         </div>
