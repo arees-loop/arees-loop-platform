@@ -1181,7 +1181,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="tour-guides" dir="rtl" className="bg-[#F8F5ED] px-5 py-12 md:px-10">
+      <section id="tour-guides" dir="rtl" className="scroll-mt-24 bg-[#F8F5ED]" px-5 py-12 md:px-10">
         <div className="mx-auto max-w-[1440px]">
           <div className="mb-5 text-center"><p className="text-xs font-bold tracking-widest text-[#A87917]">AREES LOOP GUIDES</p><h2 className="mt-2 text-3xl font-black text-[#0D3B34] md:text-4xl">المرشدون السياحيون</h2><p className="mt-2 text-sm text-[#0D3B34]/65">خبرة محلية تقودك لتجارب أصيلة في المملكة</p></div>
           <div className="overflow-hidden rounded-[28px] border border-[#D4AF37]/35 bg-white shadow-[0_18px_55px_rgba(13,59,52,0.09)]">
@@ -1198,7 +1198,7 @@ export default function Home() {
           SUCCESS PARTNERS — CONTINUOUS LUXURY RIBBON
       ====================================================== */}
 
-      <section id="partners" className="relative overflow-hidden bg-[#F8F0E2] px-0 py-10 md:py-12">
+      <section id="partners" className="scroll-mt-24 relative overflow-hidden bg-[#F8F0E2] px-0 py-10 md:py-12">
         <div dir="rtl" className="relative z-20 mx-auto max-w-7xl px-6 text-center md:px-10">
           <p className="text-sm font-black tracking-[0.20em] text-[#A87917] md:text-base">شركاء النجاح</p>
           <h2 className="mt-3 text-4xl font-black leading-tight text-[#11130F] md:text-6xl">
@@ -1245,7 +1245,7 @@ export default function Home() {
             <p className="mt-1 text-sm font-medium leading-7 text-[#3D3528]/65">للشركات ومقدمي التجارب والجهات الراغبة في الوصول إلى الزوار عبر تجربة رقمية ذكية.</p>
           </div>
           <Link href="/partner/onboarding" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/55 px-8 py-3.5 font-black text-[#8B6718] shadow-[0_12px_35px_rgba(155,112,24,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/75">انضم كشريك</Link>
-          <Link href="/guides/register" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/70 px-7 py-3 font-black text-[#0D3B34]">انضم كمرشد سياحي</Link>
+          <Link href="/partner/login" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/70 px-7 py-3 font-black text-[#0D3B34]">تسجيل دخول الشريك</Link>
         </div>
 
         <style jsx>{`
