@@ -1,0 +1,1 @@
+CREATE TABLE "NavigationVisibility" ("key" TEXT NOT NULL, "visible" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "NavigationVisibility_pkey" PRIMARY KEY ("key"));
