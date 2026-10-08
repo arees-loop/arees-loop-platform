@@ -899,7 +899,7 @@ export default function Home() {
             {liveServices.slice(0,6).map((service) => (
               <article key={service.id} className="group flex h-full flex-col overflow-hidden rounded-[30px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_45px_rgba(13,59,52,0.10)] transition hover:-translate-y-1">
                 <div className="relative mb-5 h-48 overflow-hidden rounded-[22px] bg-[#F1EEE5]">
-                  {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="h-full w-full object-cover transition duration-700 group-hover:scale-105"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
+                  {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="h-full w-full object-contain bg-[#F5EFE2]"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
                   <div className="absolute bottom-4 right-4 rounded-full bg-[#0D3B34]/75 px-3 py-1 text-xs font-bold text-white">{service.category}</div>
                 </div>
                 <h3 className="text-xl font-black text-[#0D3B34]">{service.nameAr}</h3>
@@ -1181,37 +1181,36 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="tour-guides" dir="rtl" className="bg-[#F8F5ED] px-5 py-12 md:px-10">
+        <div className="mx-auto max-w-[1440px]">
+          <div className="mb-5 text-center"><p className="text-xs font-bold tracking-widest text-[#A87917]">AREES LOOP GUIDES</p><h2 className="mt-2 text-3xl font-black text-[#0D3B34] md:text-4xl">المرشدون السياحيون</h2><p className="mt-2 text-sm text-[#0D3B34]/65">خبرة محلية تقودك لتجارب أصيلة في المملكة</p></div>
+          <div className="overflow-hidden rounded-[28px] border border-[#D4AF37]/35 bg-white shadow-[0_18px_55px_rgba(13,59,52,0.09)]">
+            <img src="/Image/guides/arees-loop-tour-guides-banner.png" alt="مرشد سياحي مع زوار في العلا" className="block aspect-video h-auto w-full object-contain bg-[#F5EFE2]" />
+            <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#D4AF37]/20 bg-white/90 p-5">
+              <Link href="/guides" className="rounded-full bg-[#0D3B34] px-7 py-3 text-sm font-black text-white">ابحث عن مرشد سياحي</Link>
+              <Link href="/guides/register" className="rounded-full border border-[#C5A052] bg-[#FFF9EB] px-7 py-3 text-sm font-black text-[#0D3B34]">انضم كمرشد سياحي</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* =====================================================
           SUCCESS PARTNERS — CONTINUOUS LUXURY RIBBON
       ====================================================== */}
 
-      <section id="partners" className="relative overflow-hidden bg-[#F8F0E2] px-0 py-20 md:py-24">
-        <div className="pointer-events-none absolute inset-0 opacity-80">
-          <div className="absolute -left-[12%] top-[12%] h-[2px] w-[62%] rotate-[-5deg] bg-gradient-to-r from-transparent via-[#D4AF37]/35 to-transparent" />
-          <div className="absolute -right-[10%] top-[24%] h-[2px] w-[58%] rotate-[5deg] bg-gradient-to-r from-transparent via-[#B98A20]/25 to-transparent" />
-          <div className="absolute left-[8%] top-[36%] h-24 w-[84%] rounded-[50%] border-t border-[#D4AF37]/20" />
-          <div className="absolute inset-x-0 bottom-0 h-44 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.14),transparent_68%)]" />
-        </div>
-
+      <section id="partners" className="relative overflow-hidden bg-[#F8F0E2] px-0 py-10 md:py-12">
         <div dir="rtl" className="relative z-20 mx-auto max-w-7xl px-6 text-center md:px-10">
           <p className="text-sm font-black tracking-[0.20em] text-[#A87917] md:text-base">شركاء النجاح</p>
           <h2 className="mt-3 text-4xl font-black leading-tight text-[#11130F] md:text-6xl">
             شراكات تصنع تجربة أقرب
             <span className="text-[#A87917]"> وأثراً أكبر</span>
           </h2>
-          <div className="mx-auto mt-5 flex w-52 items-center justify-center gap-3">
-            <span className="h-px flex-1 bg-gradient-to-l from-[#B88A25] to-transparent" />
-            <span className="h-2.5 w-2.5 rotate-45 border border-[#A87917] bg-[#D4AF37]/45" />
-            <span className="h-px flex-1 bg-gradient-to-r from-[#B88A25] to-transparent" />
-          </div>
           <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-8 text-[#34382F]/65 md:text-lg">
             نعمل مع شركائنا لربط الزائر بالخدمات والتجارب والفرص التي تثري رحلته، ضمن منظومة رقمية واحدة تجمع الاكتشاف والحجز والتفاعل.
           </p>
         </div>
 
-        <div className="partners-stage relative z-20 mt-12 overflow-hidden py-14 md:mt-16 md:py-20">
-          <div className="pointer-events-none absolute left-1/2 top-[26%] h-20 w-[115%] -translate-x-1/2 rounded-[50%] border-t-[3px] border-[#C28B18]/70 shadow-[0_-2px_12px_rgba(255,209,87,.35)]" />
-          <div className="pointer-events-none absolute left-1/2 bottom-[23%] h-20 w-[115%] -translate-x-1/2 rounded-[50%] border-b-[3px] border-[#C28B18]/70 shadow-[0_3px_14px_rgba(255,196,50,.35)]" />
+        <div className="partners-stage relative z-20 mt-5 overflow-hidden rounded-[30px] border border-[#D4AF37]/35 bg-white/35 py-5 backdrop-blur-xl md:mt-7 md:py-6">
 
           <button type="button" aria-label="الشريك السابق" className="partner-arrow left-4 md:left-8" onClick={() => setPartnersNudge((value) => value - 1)}>‹</button>
           <button type="button" aria-label="الشريك التالي" className="partner-arrow right-4 md:right-8" onClick={() => setPartnersNudge((value) => value + 1)}>›</button>
@@ -1240,12 +1239,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative z-20 mx-auto mt-2 flex max-w-5xl flex-col items-center justify-between gap-4 px-6 text-center md:flex-row md:px-10 md:text-right" dir="rtl">
+        <div className="relative z-20 mx-auto mt-5 flex max-w-5xl flex-col items-center justify-between gap-4 px-6 text-center md:flex-row md:px-10 md:text-right" dir="rtl">
           <div>
-            <p className="text-lg font-black text-[#201B12]">انضم إلى منظومة أريس لوب</p>
+            <p className="text-lg font-black text-[#201B12]">انضم لمنظومة Arees Loop</p>
             <p className="mt-1 text-sm font-medium leading-7 text-[#3D3528]/65">للشركات ومقدمي التجارب والجهات الراغبة في الوصول إلى الزوار عبر تجربة رقمية ذكية.</p>
           </div>
           <Link href="/partner/onboarding" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/55 px-8 py-3.5 font-black text-[#8B6718] shadow-[0_12px_35px_rgba(155,112,24,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/75">انضم كشريك</Link>
+          <Link href="/guides/register" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/70 px-7 py-3 font-black text-[#0D3B34]">انضم كمرشد سياحي</Link>
         </div>
 
         <style jsx>{`
@@ -1593,7 +1593,9 @@ export default function Home() {
               <a href="#discover" className="transition hover:text-[#D4AF37]">اكتشف</a>
               <a href="#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</a>
               <a href="#rewards" className="transition hover:text-[#D4AF37]">المكافآت</a>
-              <a href="#partners" className="transition hover:text-[#D4AF37]">للشركاء</a>
+              <Link href="/auth" className="transition hover:text-[#D4AF37]">تسجيل جديد</Link>
+              <Link href="/partner/onboarding" className="transition hover:text-[#D4AF37]">انضم كشريك</Link>
+              <Link href="/guides/register" className="transition hover:text-[#D4AF37]">انضم كمرشد سياحي</Link>
             <Link href="/privacy-policy" className="transition hover:text-[#D4AF37]">سياسة الخصوصية</Link>
 <Link href="/terms" className="transition hover:text-[#D4AF37]">الشروط والأحكام</Link>
             </div>
