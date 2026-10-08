@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type HeaderUser = { firstName?: string | null; lastName?: string | null };
+type HeaderUser = { firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null };
 
 export default function GlobalHeader({ overlay = false }: { overlay?: boolean }) {
   const [language, setLanguage] = useState<"ar" | "en">("ar");
@@ -26,6 +26,11 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    const onAvatar=(event:Event)=>{const url=(event as CustomEvent<{url:string}>).detail?.url;if(url)setUser(current=>current?{...current,profileImageUrl:url}:current)};
+    window.addEventListener("arees:avatar-updated",onAvatar);
+    return()=>window.removeEventListener("arees:avatar-updated",onAvatar);
+  },[]);
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() || "حسابي";
 
   async function logout() {
@@ -69,8 +74,9 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                 <span className="text-[20px] leading-none">🛒</span>
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-[#D4AF37] px-1 text-[10px] font-black text-[#0D3B34]">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
-              <div className="relative">
+              <div className="relative" onMouseLeave={() => setAccountOpen(false)}>
                 <button type="button" onClick={() => setAccountOpen((value) => !value)} className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
+                  {user.profileImageUrl && <img src={user.profileImageUrl} alt="صورتي" className="h-8 w-8 rounded-full border border-white/25 object-cover" />}
                   <span>مرحباً، {displayName}</span>
                   <span className={`text-[#D4AF37] transition-transform ${accountOpen ? "rotate-180" : ""}`}>⌄</span>
                 </button>
