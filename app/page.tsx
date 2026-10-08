@@ -1505,7 +1505,7 @@ export default function Home() {
                 <h3 className="text-[11px] font-black text-[#0D3B34]">للشركاء</h3>
                 <div className="mt-1.5 space-y-1 text-[11px] text-[#0D3B34]/50">
                   <Link href="/partner/onboarding" className="block transition hover:text-[#D4AF37]">سجل كشريك</Link>
-                  <Link href="/partner/dashboard" className="block transition hover:text-[#D4AF37]">لوحة الشريك</Link>
+                  <Link href="/partner/login" className="block transition hover:text-[#D4AF37]">تسجيل دخول الشريك</Link>
                 </div>
               </div>
             </div>
