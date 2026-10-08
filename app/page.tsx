@@ -1185,9 +1185,9 @@ export default function Home() {
         <div className="mx-auto max-w-[1440px]">
           <div className="mb-5 text-center"><p className="text-xs font-bold tracking-widest text-[#A87917]">AREES LOOP GUIDES</p><h2 className="mt-2 text-3xl font-black text-[#0D3B34] md:text-4xl">المرشدون السياحيون</h2><p className="mt-2 text-sm text-[#0D3B34]/65">خبرة محلية تقودك لتجارب أصيلة في المملكة</p></div>
           <div className="overflow-hidden rounded-[28px] border border-[#D4AF37]/35 bg-white shadow-[0_18px_55px_rgba(13,59,52,0.09)]">
-            <img src="/Image/guides/arees-loop-tour-guides-banner.png" alt="مرشد سياحي مع زوار في العلا" className="block aspect-video h-auto w-full object-contain bg-[#F5EFE2]" />
+            <img src="/Image/guides/arees-loop-tour-guides-banner.png" alt="مرشد سياحي مع زوار في العلا" className="block h-auto w-full object-contain bg-[#F5EFE2]" />
             <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#D4AF37]/20 bg-white/90 p-5">
-              <Link href="/guides" className="rounded-full bg-[#0D3B34] px-7 py-3 text-sm font-black text-white">ابحث عن مرشد سياحي</Link>
+              <Link href="/guides/directory" className="rounded-full bg-[#0D3B34] px-7 py-3 text-sm font-black text-white">ابحث عن مرشد سياحي</Link>
               <Link href="/guides/register" className="rounded-full border border-[#C5A052] bg-[#FFF9EB] px-7 py-3 text-sm font-black text-[#0D3B34]">انضم كمرشد سياحي</Link>
             </div>
           </div>
