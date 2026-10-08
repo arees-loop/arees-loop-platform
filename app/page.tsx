@@ -286,24 +286,12 @@ export default function Home() {
   }, []);
 
 
+  // Keep native page scrolling available at every hero scene.
+  // Header anchor links and dismissing the location notice must never trap the visitor.
   useEffect(() => {
-    const previousOverflow = document.body.style.overflowY;
-
-    if (!isLastScene) {
-      window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: "auto",
-      });
-      document.body.style.overflowY = "hidden";
-    } else {
-      document.body.style.overflowY = "auto";
-    }
-
-    return () => {
-      document.body.style.overflowY = previousOverflow;
-    };
-  }, [isLastScene]);
+    document.body.style.overflowY = "";
+    return () => { document.body.style.overflowY = ""; };
+  }, []);
     const handleMouseMove = (e: MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
@@ -333,7 +321,6 @@ export default function Home() {
 
     if (!canMoveForward && !canMoveBackward) return;
 
-    e.preventDefault();
     if (wheelLocked.current) return;
 
     wheelLocked.current = true;
