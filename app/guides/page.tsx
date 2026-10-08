@@ -1,3 +1,4 @@
+import { SAUDI_CITY_SUGGESTIONS, GUIDE_LICENSE_CATEGORIES } from "@/lib/guides/reference-data";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
@@ -13,7 +14,7 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
       status: "ACTIVE",
       licenses: { some: { status: "VERIFIED", expiryDate: { gt: new Date() }, OR: [{ type: { contains: "إرشاد" } }, { type: { contains: "GUIDE", mode: "insensitive" } }] } },
       ...(city ? { city: { contains: city, mode: "insensitive" as const } } : {}),
-      ...(specialty ? { descriptionAr: { contains: specialty, mode: "insensitive" as const } } : {}),
+      ...(specialty ? { licenses: { some: { status: "VERIFIED" as const, expiryDate: { gt: new Date() }, type: { contains: specialty, mode: "insensitive" as const } } } } : {}),
     },
     select: { id: true, publicName: true, legalNameAr: true, descriptionAr: true, city: true, locationName: true, logoUrl: true, licenses: { where: { status: "VERIFIED", expiryDate: { gt: new Date() } }, select: { type: true }, take: 3 } },
     orderBy: { activatedAt: "desc" },
@@ -24,9 +25,11 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
     <div className="mx-auto max-w-7xl">
       <div className="mb-9 text-center"><p className="text-xs font-bold tracking-[.15em] text-[#A87917]">AREES LOOP GUIDES</p><h1 className="mt-2 text-4xl font-black md:text-5xl">المرشدون السياحيون</h1><p className="mx-auto mt-4 max-w-2xl leading-8 text-[#0D3B34]/65">اكتشف المرشدين المعتمدين حسب المنطقة والتخصص والمسار السياحي. تظهر هنا الملفات التي اعتمدتها المنصة وتراخيصها سارية فقط.</p></div>
       <form action="/guides" className="mb-9 grid gap-3 rounded-[26px] border border-[#D4AF37]/25 bg-white/80 p-5 shadow-sm md:grid-cols-[1fr_1fr_auto]" >
-        <label className="flex flex-col gap-2 text-sm font-bold">المنطقة أو المدينة<input name="city" defaultValue={city} placeholder="مثلاً: المدينة المنورة" className="rounded-xl border border-[#0D3B34]/15 bg-[#FAF9F5] px-4 py-3 font-normal outline-none focus:border-[#C49A37]"/></label>
-        <label className="flex flex-col gap-2 text-sm font-bold">التخصص أو المسار<input name="specialty" defaultValue={specialty} placeholder="مثلاً: التاريخ أو المواقع التراثية" className="rounded-xl border border-[#0D3B34]/15 bg-[#FAF9F5] px-4 py-3 font-normal outline-none focus:border-[#C49A37]"/></label>
+        <label className="flex flex-col gap-2 text-sm font-bold">المنطقة أو المدينة<input list="guide-cities" name="city" defaultValue={city} placeholder="اختر مدينة أو اكتب للبحث" className="rounded-xl border border-[#0D3B34]/15 bg-[#FAF9F5] px-4 py-3 font-normal outline-none focus:border-[#C49A37]"/></label>
+        <label className="flex flex-col gap-2 text-sm font-bold">التخصص أو المسار<input list="guide-categories" name="specialty" defaultValue={specialty} placeholder="اختر فئة الترخيص أو ابحث" className="rounded-xl border border-[#0D3B34]/15 bg-[#FAF9F5] px-4 py-3 font-normal outline-none focus:border-[#C49A37]"/></label>
         <button type="submit" className="self-end rounded-xl bg-[#0D3B34] px-8 py-3.5 font-bold text-white transition hover:bg-[#165B50]">ابحث عن مرشد</button>
+        <datalist id="guide-cities">{SAUDI_CITY_SUGGESTIONS.map(c=><option key={c} value={c}/>)}</datalist>
+        <datalist id="guide-categories">{GUIDE_LICENSE_CATEGORIES.map(c=><option key={c} value={c}/>)}</datalist>
       </form>
       {guides.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{guides.map(guide => <article key={guide.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_12px_35px_rgba(13,59,52,.07)] transition hover:-translate-y-1 hover:shadow-xl">
         <div className="flex aspect-[4/3] items-center justify-center bg-[#EDE9DC]">{guide.logoUrl ? <img src={guide.logoUrl} alt={guide.publicName || guide.legalNameAr} className="h-full w-full object-contain"/> : <span className="text-6xl font-bold text-[#0D3B34]/25" aria-label="لا توجد صورة شخصية">◉</span>}</div>
