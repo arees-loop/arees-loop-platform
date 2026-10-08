@@ -338,8 +338,13 @@ export default function ProfilePage() {
 
             <div className="relative flex flex-col gap-6 md:flex-row md:items-center">
               <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] border border-white/10 bg-white/[0.07] text-3xl font-bold text-[#D4AF37]">
-                {avatarInitial}
+                {avatarUrl ? <img src={avatarUrl} alt="الصورة الشخصية" className="h-full w-full object-cover" /> : avatarInitial}
               </div>
+              <label className="cursor-pointer rounded-xl border border-[#D4AF37]/50 px-3 py-2 text-xs text-[#D4AF37]">
+                {avatarBusy ? "جارٍ رفع الصورة…" : "إضافة أو تغيير الصورة"}
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={avatarBusy} onChange={e => { void uploadAvatar(e.target.files?.[0]); e.target.value = ""; }} />
+              </label>
+              {avatarError && <p role="alert" className="text-xs text-red-200">{avatarError}</p>
 
               <div>
                 <p className="text-[9px] font-semibold tracking-[0.18em] text-[#D4AF37]">
