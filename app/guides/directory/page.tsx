@@ -24,7 +24,7 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
   return <main dir="rtl" className="min-h-screen bg-[#F8F5ED] px-5 pb-24 pt-36 text-[#0D3B34]">
     <div className="mx-auto max-w-7xl">
       <div className="mb-9 text-center"><p className="text-xs font-bold tracking-[.15em] text-[#A87917]">AREES LOOP GUIDES</p><h1 className="mt-2 text-4xl font-black md:text-5xl">المرشدون السياحيون</h1><p className="mx-auto mt-4 max-w-2xl leading-8 text-[#0D3B34]/65">اكتشف المرشدين المعتمدين حسب المنطقة والتخصص والمسار السياحي. تظهر هنا الملفات التي اعتمدتها المنصة وتراخيصها سارية فقط.</p></div>
-      <form action="/guides" className="mb-9 grid gap-3 rounded-[26px] border border-[#D4AF37]/25 bg-white/80 p-5 shadow-sm md:grid-cols-[1fr_1fr_auto]" >
+      <form action="/guides/directory" className="mb-9 grid gap-3 rounded-[26px] border border-[#D4AF37]/25 bg-white/80 p-5 shadow-sm md:grid-cols-[1fr_1fr_auto]" >
         <label className="flex flex-col gap-2 text-sm font-bold">المنطقة أو المدينة<input list="guide-cities" name="city" defaultValue={city} placeholder="اختر مدينة أو اكتب للبحث" className="rounded-xl border border-[#0D3B34]/15 bg-[#FAF9F5] px-4 py-3 font-normal outline-none focus:border-[#C49A37]"/></label>
         <label className="flex flex-col gap-2 text-sm font-bold">التخصص أو المسار<input list="guide-categories" name="specialty" defaultValue={specialty} placeholder="اختر فئة الترخيص أو ابحث" className="rounded-xl border border-[#0D3B34]/15 bg-[#FAF9F5] px-4 py-3 font-normal outline-none focus:border-[#C49A37]"/></label>
         <button type="submit" className="self-end rounded-xl bg-[#0D3B34] px-8 py-3.5 font-bold text-white transition hover:bg-[#165B50]">ابحث عن مرشد</button>
