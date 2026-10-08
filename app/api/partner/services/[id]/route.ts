@@ -29,6 +29,7 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
         images:{create:images.map((x:any,index:number)=>({url:x.url,sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}
       },include:{images:true}});
     });
+    await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_UPDATED",entityType:"Service",entityId:id,beforeData:{nameAr:current.nameAr,status:current.status,finalPrice:String(current.finalPrice)},afterData:{nameAr:service.nameAr,status:service.status,finalPrice:String(service.finalPrice)}}});
     return NextResponse.json({success:true,message:body.submitForReview?"تم حفظ التعديلات وإرسال الخدمة للمراجعة.":"تم حفظ التعديلات بنجاح.",service:{...service,basePrice:Number(service.basePrice),vatRate:Number(service.vatRate),finalPrice:Number(service.finalPrice)}});
   }catch(error){console.error("PATCH partner service failed",error);return NextResponse.json({success:false,message:"تعذر حفظ تعديلات الخدمة."},{status:500});}
 }
@@ -40,11 +41,13 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
     if(action==="HIDE"){
       if(service.status!=="PUBLISHED") return NextResponse.json({success:false,message:"يمكن إخفاء الخدمة بعد نشرها فقط."},{status:409});
       await prisma.service.update({where:{id},data:{status:"SUSPENDED"}});
+      await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_HIDDEN",entityType:"Service",entityId:id,beforeData:{status:service.status},afterData:{status:"SUSPENDED"}}});
       return NextResponse.json({success:true,status:"SUSPENDED",message:"تم إخفاء الخدمة من العملاء مؤقتاً."});
     }
     if(action==="PUBLISH"){
       if(service.status!=="SUSPENDED") return NextResponse.json({success:false,message:"الخدمة ليست مخفية حالياً."},{status:409});
       await prisma.service.update({where:{id},data:{status:"PUBLISHED"}});
+      await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_REPUBLISHED",entityType:"Service",entityId:id,beforeData:{status:service.status},afterData:{status:"PUBLISHED"}}});
       return NextResponse.json({success:true,status:"PUBLISHED",message:"تم نشر الخدمة للعملاء من جديد."});
     }
     return NextResponse.json({success:false,message:"إجراء غير مدعوم."},{status:400});
@@ -54,6 +57,7 @@ export async function DELETE(_request:NextRequest,context:{params:Promise<{id:st
   const session=await getCurrentSession(); if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
   const {id}=await context.params; const service=await ownedService(session.user.id,id); if(!service) return NextResponse.json({success:false,message:"الخدمة غير موجودة."},{status:404});
   if(service._count.bookings>0) return NextResponse.json({success:false,message:"لا يمكن حذف هذه الخدمة لأنها مرتبطة بحجوزات. استخدم الأرشفة/الإخفاء للحفاظ على السجل."},{status:409});
+  await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_DELETED",entityType:"Service",entityId:id,beforeData:{nameAr:service.nameAr,status:service.status}}});
   await prisma.$transaction([prisma.serviceImage.deleteMany({where:{serviceId:id}}),prisma.service.delete({where:{id}})]);
   return NextResponse.json({success:true,message:"تم حذف الخدمة نهائياً لعدم وجود حجوزات مرتبطة بها."});
 }
