@@ -10,7 +10,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   const [language, setLanguage] = useState<"ar" | "en">("ar");
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [cartCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
   const [navVisible, setNavVisible] = useState<Record<string,boolean>>({});
   useEffect(() => { let mounted=true; fetch("/api/navigation",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(mounted&&d.success)setNavVisible(d.data)}).catch(()=>{});return()=>{mounted=false}; }, []);
   const text = "text-[#0D3B34]";
@@ -31,6 +31,18 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
     window.addEventListener("arees:avatar-updated",onAvatar);
     return()=>window.removeEventListener("arees:avatar-updated",onAvatar);
   },[]);
+  useEffect(() => {
+    const syncCart = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("arees-loop-cart-v1") || "[]");
+        setCartCount(Array.isArray(saved) ? saved.reduce((n: number, item: {quantity?:number}) => n + (Number.isInteger(item.quantity) && Number(item.quantity)>0 ? Number(item.quantity) : 0), 0) : 0);
+      } catch { setCartCount(0); }
+    };
+    syncCart();
+    window.addEventListener("arees-cart-updated", syncCart);
+    window.addEventListener("storage", syncCart);
+    return () => { window.removeEventListener("arees-cart-updated", syncCart); window.removeEventListener("storage", syncCart); };
+  }, []);
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() || "حسابي";
 
   async function logout() {
