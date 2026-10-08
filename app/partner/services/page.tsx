@@ -238,7 +238,7 @@ export default function PartnerServicesPage() {
     if(!form.city.trim()) missing.push("المدينة");
     if(!form.locationName.trim() || !Number.isFinite(form.latitude) || !Number.isFinite(form.longitude)) missing.push("موقع التنفيذ");
     if(!(Number(form.basePrice)>0)) missing.push("السعر");
-    if(!(Number(form.capacity)>0)) missing.push("السعة");
+    if(form.capacity.trim() !== "" && !(Number(form.capacity)>0)) missing.push("السعة (يجب أن تكون أكبر من صفر أو تُترك فارغة)");
     if(!form.cancellationPolicy.trim()) missing.push("سياسة الإلغاء");
     return missing;
   };
@@ -355,7 +355,7 @@ export default function PartnerServicesPage() {
       hasMeetingPoint: false,
       meetingPointName: "",
       meetingPointUrl: "",
-      capacity: String(service.capacity),
+      capacity: service.capacity == null || Number(service.capacity) <= 0 ? "" : String(service.capacity),
       descriptionAr: stripProgramSections(service.descriptionAr ?? ""),
       descriptionEn: service.descriptionEn ?? "",
       programIncludes: readProgramSection(service.descriptionAr ?? "","includes"), programExcludes: readProgramSection(service.descriptionAr ?? "","excludes"), programNotes: readProgramSection(service.descriptionAr ?? "","notes"),
@@ -842,11 +842,11 @@ export default function PartnerServicesPage() {
                         {viewMode==="grid" ? <>
                           <InfoBox label="السعر" value={`${money(service.finalPrice)} ر.س`} />
                           <InfoBox label="الحجوزات" value={String(service.bookings)} />
-                          <InfoBox label="السعة" value={`${service.capacity} زائر`} />
+                          <InfoBox label="السعة" value={service.capacity > 0 ? `${service.capacity} زائر` : "غير محدود"} />
                           <InfoBox label="الضريبة" value={`${service.vatRate}%`} />
                         </> : <>
                           <div className="px-2 text-center"><p className="text-[9px] text-[#0D3B34]/40">السعر</p><p className="mt-1 text-xs font-bold">{money(service.finalPrice)} ر.س</p></div>
-                          <div className="px-2 text-center"><p className="text-[9px] text-[#0D3B34]/40">السعة</p><p className="mt-1 text-xs font-bold">{service.capacity} زائر</p></div>
+                          <div className="px-2 text-center"><p className="text-[9px] text-[#0D3B34]/40">السعة</p><p className="mt-1 text-xs font-bold">{service.capacity > 0 ? `${service.capacity} زائر` : "غير محدود"}</p></div>
                         </>}
                       </div>
 
@@ -1146,7 +1146,7 @@ export default function PartnerServicesPage() {
                       <option value="scheduled">حجز بموعد / تاريخ</option>
                     </select>
                   </Field>
-                  <Field label="السعة القصوى المتاحة">
+                  <Field label="السعة القصوى المتاحة (اختياري — اتركها فارغة لعدد غير محدود)">
                     <input type="number" min="1" value={form.capacity} onChange={(e)=>setForm((x)=>({...x,capacity:e.target.value}))} className={inputClass}/>
                   </Field>
                   <Field label="نقاط Arees Loop المكتسبة">
