@@ -52,7 +52,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           <Link href="/hotels" className="transition hover:text-[#D4AF37]">الفنادق</Link>
           <Link href="/flights" className="transition hover:text-[#D4AF37]">الطيران</Link>
           <Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>
-          <Link href="/#partners" className="transition hover:text-[#D4AF37]">للشركاء</Link>
+          <Link href="/partner" className="transition hover:text-[#D4AF37]">للشركاء</Link>
         </div>
 
         <div className="flex items-center gap-2">
