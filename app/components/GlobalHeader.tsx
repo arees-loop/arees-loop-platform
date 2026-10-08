@@ -95,6 +95,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                 {accountOpen && (
                   <div dir="rtl" className="absolute left-0 top-full mt-1 w-52 overflow-hidden rounded-[18px] border border-[#D4AF37]/35 bg-white/95 p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
                     <Link href="/profile" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الملف الشخصي</Link>
+                    <Link href="/cart" onClick={() => setAccountOpen(false)} className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]"><span>السلة</span>{cartCount > 0 && <span className="rounded-full bg-[#D4AF37] px-2 py-0.5 text-[10px] font-black text-[#0D3B34]">{cartCount}</span>}</Link>
                     <Link href="/bookings" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">حجوزاتي</Link>
                     <Link href="/rewards" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">نقاطي ومكافآتي</Link>
                     <div className="my-1 h-px bg-[#0D3B34]/10" />
