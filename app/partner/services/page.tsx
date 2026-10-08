@@ -1151,7 +1151,8 @@ export default function PartnerServicesPage() {
                   </Field>
                   <Field label="نقاط Arees Loop المكتسبة">
                     <input type="number" min="150" step="1" value={form.loyaltyPoints} onChange={(e)=>setForm((x)=>({...x,loyaltyPoints:String(Math.max(150,Math.floor(Number(e.target.value)||150)))}))} className={inputClass}/>
-                    <p className="mt-2 text-[10px] font-bold text-[#B99124]">احجز واحصل على {Math.max(150,Number(form.loyaltyPoints)||150)} نقطة Arees Loop</p>
+                    <p className="mt-2 text-xs font-bold text-[#B99124]">احجز واحصل على {Math.max(150,Number(form.loyaltyPoints)||150)} نقطة Arees Loop</p>
+                    <p className="mt-2 text-xs leading-6 text-[#0D3B34]/70">الحد الأدنى 150 نقطة لكل خدمة، ويمكنك زيادة النقاط لجذب العملاء وتشجيعهم على العودة والحجز مرة أخرى. كل 100 نقطة تعادل 1 ريال عند الاستبدال وفق سياسة Arees Loop، وتحدد المنصة قواعد الاستبدال مركزياً.</p>
                   </Field>
                 </div>
                 {form.bookingMode === "scheduled" && (
