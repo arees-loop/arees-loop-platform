@@ -11,9 +11,9 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [cartCount] = useState(0);
-  const text = overlay ? "text-white" : "text-[#0D3B34]";
+  const text = "text-[#0D3B34]";
   const border = overlay ? "border-white/35" : "border-[#0D3B34]/15";
-  const glass = overlay ? "bg-white/[0.075]" : "bg-white/72";
+  const glass = "bg-white/90";
 
   useEffect(() => {
     let active = true;
