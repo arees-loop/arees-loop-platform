@@ -50,4 +50,44 @@ export async function POST(request:Request){
  }catch(error){console.error("POST /api/partner/coupons failed:",error);return NextResponse.json({success:false,message:"تعذر إنشاء الكوبون."},{status:500});}
 }
 
-export async function PATCH(request:Request){try{const session=await getCurrentSession();if(!session)return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});const membership=await partnerFor(session.user.id);if(!membership)return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});const body=await request.json();const coupon=await prisma.coupon.findFirst({where:{id:String(body.id||""),service:{partnerId:membership.partnerId}},select:{id:true}});if(!coupon)return NextResponse.json({success:false,message:"الكوبون غير موجود."},{status:404});const updated=await prisma.coupon.update({where:{id:coupon.id},data:{isActive:Boolean(body.isActive)}});return NextResponse.json({success:true,isActive:updated.isActive});}catch(error){console.error("PATCH /api/partner/coupons failed:",error);return NextResponse.json({success:false,message:"تعذر تحديث حالة الكوبون."},{status:500});}}
+
+export async function PATCH(request:Request){
+ try{
+  const session=await getCurrentSession();if(!session)return NextResponse.json({success:false,message:"يجب تسجيل الدخول."},{status:401});
+  const membership=await partnerFor(session.user.id);if(!membership||membership.partner.status!=="ACTIVE")return NextResponse.json({success:false,message:"غير مصرح."},{status:403});
+  const body=await request.json();
+  const coupon=await prisma.coupon.findFirst({where:{id:String(body.id||""),service:{partnerId:membership.partnerId}}});
+  if(!coupon)return NextResponse.json({success:false,message:"الكوبون غير موجود."},{status:404});
+  let data:any={};
+  if(typeof body.isActive==="boolean")data.isActive=body.isActive;
+  if(body.edit===true){
+   const value=Number(body.discountValue);
+   if(!Number.isFinite(value)||value<=0||(body.discountType==="PERCENTAGE"&&value>100))return NextResponse.json({success:false,message:"قيمة الخصم غير صحيحة."},{status:400});
+   if(!["FIXED","PERCENTAGE"].includes(body.discountType))return NextResponse.json({success:false,message:"نوع الخصم غير صحيح."},{status:400});
+   const code=String(body.code||"").trim().toUpperCase();
+   if(!/^[A-Z0-9]+$/.test(code))return NextResponse.json({success:false,message:"كود الكوبون غير صحيح."},{status:400});
+   const existing=await prisma.coupon.findUnique({where:{code},select:{id:true}});
+   if(existing&&existing.id!==coupon.id)return NextResponse.json({success:false,message:"كود الكوبون مستخدم."},{status:409});
+   const startsAt=body.duration==="DATED"&&body.startsAt?new Date(body.startsAt):null;
+   const expiresAt=body.duration==="DATED"&&body.expiresAt?new Date(body.expiresAt+"T23:59:59.999"):null;
+   if(body.duration==="DATED"&&(!startsAt||!expiresAt||!Number.isFinite(startsAt.getTime())||!Number.isFinite(expiresAt.getTime())||expiresAt<startsAt))return NextResponse.json({success:false,message:"تواريخ الكوبون غير صحيحة."},{status:400});
+   data={...data,code,discountType:body.discountType,discountValue:value,startsAt,expiresAt};
+  }
+  const updated=await prisma.coupon.update({where:{id:coupon.id},data});
+  await prisma.auditLog.create({data:{userId:session.user.id,action:body.edit===true?"PARTNER_COUPON_UPDATED":"PARTNER_COUPON_STATUS",entityType:"Coupon",entityId:coupon.id,beforeData:{code:coupon.code,discountValue:Number(coupon.discountValue),isActive:coupon.isActive},afterData:{code:updated.code,discountValue:Number(updated.discountValue),isActive:updated.isActive}}});
+  return NextResponse.json({success:true,message:"تم تحديث الكوبون.",isActive:updated.isActive});
+ }catch(error){console.error("PATCH /api/partner/coupons",error);return NextResponse.json({success:false,message:"تعذر تعديل الكوبون."},{status:500});}
+}
+export async function DELETE(request:Request){
+ try{
+  const session=await getCurrentSession();if(!session)return NextResponse.json({success:false,message:"يجب تسجيل الدخول."},{status:401});
+  const membership=await partnerFor(session.user.id);if(!membership||membership.partner.status!=="ACTIVE")return NextResponse.json({success:false,message:"غير مصرح."},{status:403});
+  const body=await request.json();
+  const coupon=await prisma.coupon.findFirst({where:{id:String(body.id||""),service:{partnerId:membership.partnerId}},include:{_count:{select:{redemptions:true}}}});
+  if(!coupon)return NextResponse.json({success:false,message:"الكوبون غير موجود."},{status:404});
+  if(coupon._count.redemptions>0||coupon.usedCount>0)return NextResponse.json({success:false,message:"لا يمكن حذف كوبون مستخدم في حجوزات سابقة. يمكنك إيقافه بدلاً من ذلك."},{status:409});
+  await prisma.coupon.delete({where:{id:coupon.id}});
+  await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_COUPON_DELETED",entityType:"Coupon",entityId:coupon.id,beforeData:{code:coupon.code,discountValue:Number(coupon.discountValue)}}});
+  return NextResponse.json({success:true,message:"تم حذف الكوبون."});
+ }catch(error){console.error("DELETE /api/partner/coupons",error);return NextResponse.json({success:false,message:"تعذر حذف الكوبون."},{status:500});}
+}
