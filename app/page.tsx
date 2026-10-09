@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type Whe
 import { getCurrentLocation } from "../lib/location";
 import { getTotalLoopPoints, getLoopProgress } from "../lib/loop-progress";
 
-type LiveService = { id:string; nameAr:string; descriptionAr?:string|null; city?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string };
+type LiveService = { id:string; nameAr:string; descriptionAr?:string|null; city?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string; latitude?:number|null; longitude?:number|null };
 const steps = [
   {
     number: "01",
@@ -199,10 +199,16 @@ export default function Home() {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [heroLanguage, setHeroLanguage] = useState<"ar" | "en">("ar");
   const wheelLocked = useRef(false);
+  const heroRef = useRef<HTMLElement|null>(null);
   const touchStartY = useRef<number | null>(null);
   const touchLocked = useRef(false);
   const worldDestinationsRef = useRef<HTMLDivElement | null>(null);
 
+  const nearbyServices = userCoords ? liveServices.map(service=>{
+    if(typeof service.latitude!=="number"||typeof service.longitude!=="number")return null;
+    const distance=distanceKm(userCoords.lat,userCoords.lng,service.latitude,service.longitude);
+    return {...service,distance};
+  }).filter((s):s is LiveService & {distance:number}=>s!==null&&s.distance<=50).sort((a,b)=>a.distance-b.distance) : [];
   const currentScene = heroScenes[activeScene];
   const isArabic = heroLanguage === "ar";
   const isLastScene = activeScene === heroScenes.length - 1;
@@ -331,33 +337,26 @@ export default function Home() {
     }, 40);
   };
 
-  const handleHeroWheel = (e: WheelEvent<HTMLElement>) => {
-    const forward = e.deltaY > 8;
-    const backward = e.deltaY < -8;
-    const canMoveForward = forward && activeScene < heroScenes.length - 1;
-    const canMoveBackward = backward && activeScene > 0;
-
-    if (!canMoveForward && !canMoveBackward) return;
-
-    if (wheelLocked.current) return;
-
-    wheelLocked.current = true;
-    setShowLocationNotice(false);
-
-    setActiveScene((current) =>
-      Math.max(
-        0,
-        Math.min(
-          heroScenes.length - 1,
-          current + (canMoveForward ? 1 : -1),
-        ),
-      ),
-    );
-
-    window.setTimeout(() => {
-      wheelLocked.current = false;
-    }, 820);
-  };
+  useEffect(()=>{
+    const hero=heroRef.current;
+    if(!hero)return;
+    const onWheel=(e:globalThis.WheelEvent)=>{
+      if(Math.abs(e.deltaY)<8)return;
+      const forward=e.deltaY>0;
+      const insideHero=hero.getBoundingClientRect().top<=2&&hero.getBoundingClientRect().bottom>window.innerHeight*0.35;
+      if(!insideHero)return;
+      if(forward&&activeScene>=heroScenes.length-1)return;
+      if(!forward&&activeScene<=0)return;
+      e.preventDefault();
+      if(wheelLocked.current)return;
+      wheelLocked.current=true;
+      setShowLocationNotice(false);
+      setActiveScene(v=>Math.max(0,Math.min(heroScenes.length-1,v+(forward?1:-1))));
+      window.setTimeout(()=>{wheelLocked.current=false;},820);
+    };
+    hero.addEventListener("wheel",onWheel,{passive:false});
+    return()=>hero.removeEventListener("wheel",onWheel);
+  },[activeScene]);
 
   const handleHeroTouchStart = (e: TouchEvent<HTMLElement>) => {
     touchStartY.current = e.touches[0]?.clientY ?? null;
@@ -406,10 +405,10 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f7f2] text-[#082d24]">
       <section
+        ref={heroRef}
         className="relative min-h-screen overflow-hidden bg-[#071713]"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMouse({ x: 0, y: 0 })}
-        onWheel={handleHeroWheel}
         onTouchStart={handleHeroTouchStart}
         onTouchEnd={handleHeroTouchEnd}
       >
@@ -900,20 +899,22 @@ export default function Home() {
           </div>
 
           {/* Live published services only */}
-          {liveServices.length > 0 && <div id="experiences" dir="rtl" className="grid gap-6 text-right sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {liveServices.slice(0,8).map((service) => (
+          {nearbyServices.length > 0 && <div id="experiences" dir="rtl" className="grid gap-6 text-right sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {nearbyServices.slice(0,8).map((service) => (
               <article key={service.id} className="group flex h-full flex-col overflow-hidden rounded-[30px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_45px_rgba(13,59,52,0.10)] transition hover:-translate-y-1">
                 <div className="relative mb-5 overflow-hidden rounded-[22px] bg-[#F1EEE5]">
                   {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="block h-auto w-full bg-[#F5EFE2]"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
                   <div className="absolute bottom-4 right-4 rounded-full bg-[#0D3B34]/75 px-3 py-1 text-xs font-bold text-white">{service.category}</div>
                 </div>
                 <h3 className="text-xl font-black text-[#0D3B34]">{service.nameAr}</h3>
-                <p className="mt-2 text-xs text-[#0D3B34]/50">{[service.city,service.locationName].filter(Boolean).join(" · ")}</p>
+                <p className="mt-2 text-xs text-[#0D3B34]/50">{[service.city,service.locationName].filter(Boolean).join(" · ")} · على بعد {service.distance<1?Math.round(service.distance*1000)+" متر":service.distance.toFixed(1)+" كم"}</p>
                 <div className="mt-4 flex items-center justify-between gap-3"><b>{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</b><span className="flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-3 py-2 text-xs font-bold text-[#9A741B]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-6 w-auto"/> احجز واحصل على {service.loyaltyPoints || 150} نقطة</span></div>
                 <Link href={`/services/${service.id}`} className="mt-6 flex w-full items-center justify-center rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white">عرض البرنامج ←</Link>
               </article>
             ))}
           </div>}
+          {locationReady && !userCoords && <p className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">فعّل إذن الموقع لعرض التجارب القريبة منك والمسافة الفعلية لكل تجربة.</p>}
+          {locationReady && userCoords && nearbyServices.length===0 && <p className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">لا توجد حالياً تجارب منشورة ضمن 50 كم من موقعك. يمكنك استكشاف الوجهات الأخرى من القائمة العلوية.</p>}
           {/* Discover more */}
           <div className="mt-12 flex justify-center">
             <Link
