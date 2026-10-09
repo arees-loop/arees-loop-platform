@@ -105,7 +105,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
               <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">سياحة عالمية</Link>
             </div>
           </div>}
-          {navVisible.guides !== false && (<Link href="/#tour-guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
+          {navVisible.guides !== false && (<Link href="/guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
           {navVisible.hotels !== false && (<Link href="/hotels" className="transition hover:text-[#D4AF37]">الفنادق</Link>)}
           {navVisible.flights !== false && (<Link href="/flights" className="transition hover:text-[#D4AF37]">الطيران</Link>)}
           {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}

@@ -886,3 +886,31 @@ model InterestNotificationRead {
   @@unique([userId, serviceId])
   @@index([serviceId])
 }
+
+model GuideApplication {
+ id String @id @default(cuid())
+ userId String
+ fullName String
+ email String
+ phone String
+ gender String
+ countries String[]
+ city String
+ licenseCategory String
+ licenseNumber String
+ licenseExpiresAt DateTime
+ specialization String?
+ languages String[]
+ bio String?
+ photoPath String?
+ licensePath String
+ photoPublicationConsent Boolean @default(false)
+ policyAcceptedAt DateTime
+ status String @default("UNDER_REVIEW")
+ reviewedAt DateTime?
+ reviewNotes String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([userId])
+ @@index([status])
+}

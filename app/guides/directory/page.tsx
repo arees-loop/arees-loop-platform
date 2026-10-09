@@ -1,3 +1,4 @@
+import GuideAvatar from "@/app/components/GuideAvatar";
 import NearbyGuideControls from "./NearbyGuideControls";
 import { SAUDI_CITY_SUGGESTIONS, GUIDE_LICENSE_CATEGORIES } from "@/lib/guides/reference-data";
 import Link from "next/link";
@@ -25,6 +26,7 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
     take: nearby ? 500 : 48,
   });
 
+  const approvedApplications=await prisma.guideApplication.findMany({where:{status:"APPROVED",licenseExpiresAt:{gt:new Date()},...(city?{city:{contains:city,mode:"insensitive" as const}}:{})},select:{id:true,fullName:true,gender:true,countries:true,city:true,licenseCategory:true,specialization:true,languages:true,bio:true,photoPath:true,photoPublicationConsent:true},orderBy:{reviewedAt:"desc"},take:48});
   const distanceKm = (g: {latitude: unknown; longitude: unknown}) => { const a=Number(g.latitude), b=Number(g.longitude); if(!Number.isFinite(a)||!Number.isFinite(b)||g.latitude==null||g.longitude==null)return Infinity; const dLat=(a-lat)*Math.PI/180,dLng=(b-lng)*Math.PI/180;const h=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(a*Math.PI/180)*Math.sin(dLng/2)**2;return 6371*2*Math.asin(Math.min(1,Math.sqrt(h))); };
   const visibleGuides = nearby ? guides.filter(g=>distanceKm(g)<=100).sort((a,b)=>distanceKm(a)-distanceKm(b)).slice(0,48) : guides;
   return <main dir="rtl" className="min-h-screen bg-[#F8F5ED] px-5 pb-24 pt-36 text-[#0D3B34]">
@@ -38,10 +40,11 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
         <datalist id="guide-cities">{SAUDI_CITY_SUGGESTIONS.map(c=><option key={c} value={c}/>)}</datalist>
         <datalist id="guide-categories">{GUIDE_LICENSE_CATEGORIES.map(c=><option key={c} value={c}/>)}</datalist>
       </form>
+      {approvedApplications.length>0&&<div className="mb-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{approvedApplications.map(g=><article key={g.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-sm"><div className="mx-auto aspect-[4/3] max-w-xs">{g.photoPublicationConsent&&g.photoPath?<img src={`/api/guides/photo?id=${encodeURIComponent(g.id)}`} alt={g.fullName} className="h-full w-full object-cover"/>:<GuideAvatar gender={g.gender==="FEMALE"?"FEMALE":"MALE"}/>}</div><div className="p-5"><p className="text-xs font-bold text-[#A87917]">مرشد سياحي معتمد من المنصة</p><h2 className="mt-2 text-xl font-black">{g.fullName}</h2><p className="mt-2 text-sm">{g.licenseCategory} · {g.city}</p><p className="mt-2 text-sm">{g.countries.join("، ")}</p><p className="mt-2 text-sm">{g.specialization||g.bio||"مرشد سياحي"}</p></div></article>)}</div>}
       {visibleGuides.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{visibleGuides.map(guide => <article key={guide.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_12px_35px_rgba(13,59,52,.07)] transition hover:-translate-y-1 hover:shadow-xl">
         <div className="flex aspect-[4/3] items-center justify-center bg-[#EDE9DC]">{guide.logoUrl ? <img src={guide.logoUrl} alt={guide.publicName || guide.legalNameAr} className="h-full w-full object-contain"/> : <span className="text-6xl font-bold text-[#0D3B34]/25" aria-label="لا توجد صورة شخصية">◉</span>}</div>
         <div className="p-5"><p className="mb-2 text-xs font-bold text-[#A87917]">مرشد سياحي معتمد</p><h2 className="text-xl font-black">{guide.publicName || guide.legalNameAr}</h2><p className="mt-2 min-h-12 text-sm leading-6 text-[#0D3B34]/70">{guide.descriptionAr || "مرشد سياحي مرخص"}</p><p className="mt-3 text-sm font-bold">📍 {guide.city || guide.locationName || "المملكة العربية السعودية"}{nearby && Number.isFinite(distanceKm(guide)) ? ` — ${Math.round(distanceKm(guide))} كم تقريباً` : ""}</p><p className="mt-2 text-xs text-[#0D3B34]/55">{guide.licenses.map(l=>l.type).join(" • ")}</p><Link href={`/guides/${guide.id}`} className="mt-5 block rounded-full bg-[#0D3B34] px-5 py-3 text-center text-sm font-bold text-white">عرض ملف المرشد</Link></div>
-      </article>)}</div> : <div className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-12 text-center"><h2 className="text-xl font-black">لا توجد ملفات مرشدين مطابقة حالياً</h2><p className="mt-3 text-sm text-[#0D3B34]/65">ستظهر بطاقات المرشدين بصورهم وتخصصاتهم ومناطقهم فور اعتماد بياناتهم وتراخيصهم.</p><Link href="/guides/register" className="mt-6 inline-block rounded-full bg-[#0D3B34] px-7 py-3 font-bold text-white">انضم كمرشد سياحي</Link></div>}
+      </article>)}</div> : approvedApplications.length===0?<div className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-12 text-center"><h2 className="text-xl font-black">لا توجد ملفات مرشدين مطابقة حالياً</h2><p className="mt-3 text-sm text-[#0D3B34]/65">ستظهر بطاقات المرشدين بصورهم وتخصصاتهم ومناطقهم فور اعتماد بياناتهم وتراخيصهم.</p><Link href="/guides/register" className="mt-6 inline-block rounded-full bg-[#0D3B34] px-7 py-3 font-bold text-white">انضم كمرشد سياحي</Link></div>}
     </div>
   </main>;
 }
