@@ -4,6 +4,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import OwnerVerification from "./OwnerVerification";
 
 
 
@@ -1086,6 +1087,8 @@ function AdminPartnersContent() {
 
 
           {/* REVIEW PANEL */}
+
+          {selectedPartner?.status==="ACTIVE"&&<OwnerVerification partnerId={selectedPartner.id}/>}
 
           {selectedPartner && <section className="overflow-hidden rounded-[30px] border border-white/80 bg-white/72 backdrop-blur-xl">
 
