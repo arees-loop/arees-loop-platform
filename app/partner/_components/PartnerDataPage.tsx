@@ -6,8 +6,8 @@ import TeamInvitations from "./TeamInvitations";
 import {useEffect,useMemo,useState} from "react";
 type Kind="dashboard"|"bookings"|"settlements"|"invoices"|"reports"|"team"|"business";
 const titles={dashboard:"الرئيسية",bookings:"الحجوزات",settlements:"التسويات",invoices:"الفواتير",reports:"التقارير",team:"الموظفون والصلاحيات",business:"المنشأة والتراخيص"};
-const money=(v:any)=>new Intl.NumberFormat("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v||0));
-const date=(v:any)=>v?new Date(v).toLocaleDateString("ar-SA"):"—";
+const money=(v:unknown)=>new Intl.NumberFormat("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v||0));
+const date=(v:string|number|Date|null|undefined)=>v?new Date(v).toLocaleDateString("ar-SA"):"—";
 export default function PartnerDataPage({kind}:{kind:Kind}){
  const [d,setD]=useState<any>(null);const [error,setError]=useState("");
  useEffect(()=>{fetch("/api/partner/portal",{credentials:"include",cache:"no-store"}).then(r=>r.json()).then(x=>x.success?setD(x):setError(x.message||"تعذر تحميل البيانات")).catch(()=>setError("تعذر تحميل البيانات"));},[]);
