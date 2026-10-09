@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     const partnerId = searchParams.get("partnerId");
 
     const services = await prisma.service.findMany({
-      where: partnerId ? { partnerId } : { status: "PUBLISHED" },
+      where: { status: "PUBLISHED", ...(partnerId ? { partnerId } : {}) },
       orderBy: { updatedAt: "desc" },
       select: {
         id: true, nameAr: true, nameEn: true, category: true, subCategory: true,
