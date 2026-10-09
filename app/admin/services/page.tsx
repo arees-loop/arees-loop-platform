@@ -99,17 +99,34 @@ export default function AdminServicesPage() {
       </div>
 
       {message&&<div role="status" className="mb-5 rounded-2xl border border-[#D4AF37]/25 bg-white/90 p-4 text-sm font-bold shadow-sm">✓ {message}</div>}
-      {!selected&&<div className="mb-5 flex justify-end"><div className="flex rounded-xl bg-[#0D3B34]/5 p-1"><button onClick={()=>setViewMode("CARDS")} className={`rounded-lg px-4 py-2 text-xs font-bold ${viewMode==="CARDS"?"bg-white shadow-sm":""}`}>بطاقات</button><button onClick={()=>setViewMode("LIST")} className={`rounded-lg px-4 py-2 text-xs font-bold ${viewMode==="LIST"?"bg-white shadow-sm":""}`}>قائمة</button></div></div>}
-      {loading?<div className="rounded-3xl bg-white/70 p-8 text-center">جاري تحميل الخدمات الحقيقية من قاعدة البيانات...</div>:
-      !items.length?<div className="rounded-3xl bg-white/70 p-8 text-center">لا توجد خدمات أو تجارب حالياً.</div>:
-      <div className={viewMode==="CARDS"?"grid gap-4 md:grid-cols-2 xl:grid-cols-3":"space-y-3"}>
-        {items.map(s=><button key={s.id} onClick={()=>setSelected(s)} className="rounded-[24px] border border-white/80 bg-white/75 p-5 text-right transition hover:-translate-y-0.5 hover:shadow-lg">
-          <div className="flex items-center justify-between gap-3"><span className="rounded-full bg-[#FFF3D2] px-3 py-1 text-[11px] font-bold">{labels[s.status]||s.status}</span><span className="text-[11px] text-[#B99124]">{s.category}</span></div>
-          <h2 className="mt-4 text-lg font-bold">{s.nameAr}</h2>
-          <p className="mt-1 text-xs opacity-55">{s.nameEn||"—"}</p>
-          <div className="mt-4 border-t border-[#0D3B34]/8 pt-3 text-xs"><b>الشريك:</b> {s.partnerName}</div>
-        </button>)}
+      {!selected&&<div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-white p-3">
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="بحث في جميع الخدمات" aria-label="بحث في جميع الخدمات" className="min-w-[220px] rounded-lg border p-2 text-sm"/>
+        <button onClick={()=>setNewestFirst(v=>!v)} className="rounded-lg border px-3 py-2 text-xs">{newestFirst?"الأحدث أولاً ↓":"الأقدم أولاً ↑"}</button>
+        <button onClick={()=>{setSearch("");setFilters({});}} className="rounded-lg border px-3 py-2 text-xs">مسح الفلاتر</button>
+        <button onClick={exportCsv} className="rounded-lg bg-green-700 px-3 py-2 text-xs text-white">تنزيل Excel CSV</button>
+        <button onClick={printPdf} className="rounded-lg bg-[#0D3B34] px-3 py-2 text-xs text-white">طباعة / حفظ PDF</button>
+        <span className="text-xs opacity-60">{visible.length} نتيجة</span>
       </div>}
+      {!selected&&<div className="mb-5 flex justify-end"><div className="flex rounded-xl bg-[#0D3B34]/5 p-1"><button onClick={()=>setViewMode("CARDS")} className={`rounded-lg px-4 py-2 text-xs font-bold ${viewMode==="CARDS"?"bg-white shadow-sm":""}`}>بطاقات</button><button onClick={()=>setViewMode("LIST")} className={`rounded-lg px-4 py-2 text-xs font-bold ${viewMode==="LIST"?"bg-white shadow-sm":""}`}>قائمة</button></div></div>}
+      {!selected&&(loading?<div className="rounded-3xl bg-white p-8">جاري التحميل...</div>:viewMode==="LIST"?
+      <div className="overflow-x-auto rounded-2xl bg-white">
+        <table className="w-full min-w-[1000px] border-collapse text-right text-xs">
+          <thead className="bg-[#E9EFEA]">
+            <tr>{cols.map(([key,label])=><th key={key} className="border-b p-3">{label}</th>)}<th className="p-3">الإجراء</th></tr>
+            <tr>{cols.map(([key,label])=><th key={key} className="border-b p-2"><input aria-label={"فلترة "+label} placeholder="⌕ فلترة" value={filters[key]||""} onChange={e=>setFilters(v=>({...v,[key]:e.target.value}))} className="w-full min-w-[100px] rounded border bg-white p-2 font-normal"/></th>)}<th/></tr>
+          </thead>
+          <tbody>{visible.map(s=><tr key={s.id} className="border-b hover:bg-[#F5F1E8]">{cols.map(([key])=><td key={key} className="max-w-[220px] truncate p-3">{display(s,key)}</td>)}<td className="p-2"><button onClick={()=>{setSelected(s);window.scrollTo({top:0,behavior:"smooth"});}} className="rounded bg-[#0D3B34] px-3 py-2 text-white">مراجعة</button></td></tr>)}</tbody>
+        </table>
+        {!visible.length&&<p className="p-6 text-center">لا توجد نتائج مطابقة.</p>}
+      </div>:
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {visible.map(s=><button key={s.id} onClick={()=>{setSelected(s);window.scrollTo({top:0,behavior:"smooth"});}} className="rounded-[24px] border border-white/80 bg-white/75 p-5 text-right transition hover:shadow-lg">
+          <div className="flex items-center justify-between gap-3"><span className="rounded-full bg-[#FFF3D2] px-3 py-1 text-[11px] font-bold">{labels[s.status]||s.status}</span><span className="text-[11px] text-[#B99124]">{s.category}</span></div>
+          <h2 className="mt-4 text-lg font-bold">{s.nameAr}</h2><p className="mt-1 text-xs opacity-55">{s.nameEn||"—"}</p>
+          <div className="mt-4 border-t pt-3 text-xs"><b>الشريك:</b> {s.partnerName}</div>
+        </button>)}
+        {!visible.length&&<p className="rounded-2xl bg-white p-6">لا توجد نتائج مطابقة.</p>}
+      </div>)}
 
       {selected&&<section className="mt-6 overflow-hidden rounded-[30px] border border-white/80 bg-white/72 p-6 shadow-sm md:p-8">
         <div className="w-full">
