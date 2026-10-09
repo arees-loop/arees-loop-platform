@@ -15,3 +15,18 @@ export function canViewPartnerFinances(permissions: unknown): boolean {
   if (!finances || typeof finances !== "object" || Array.isArray(finances)) return true;
   return (finances as Record<string, unknown>).view !== false;
 }
+
+/** Explicit member-level restrictions for booking and team visibility. */
+export function canViewPartnerBookings(permissions: unknown): boolean {
+  if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) return true;
+  const bookings = (permissions as Record<string, unknown>).bookings;
+  if (!bookings || typeof bookings !== "object" || Array.isArray(bookings)) return true;
+  return (bookings as Record<string, unknown>).view !== false;
+}
+
+export function canViewPartnerTeam(permissions: unknown): boolean {
+  if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) return true;
+  const team = (permissions as Record<string, unknown>).team;
+  if (!team || typeof team !== "object" || Array.isArray(team)) return true;
+  return (team as Record<string, unknown>).view !== false;
+}
