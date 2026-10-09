@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { sendPartnerTeamInvitationEmail } from "@/lib/email";
 import { canManagePartnerTeam, getPartnerAccessRole } from "@/lib/partner-permissions";
 
 const hashToken=(token:string)=>createHash("sha256").update(token).digest("hex");
@@ -46,7 +47,17 @@ export async function POST(request:Request){
    return created;
   });
   if(!invitation)return NextResponse.json({success:false,message:"لم تعد لديك صلاحية إرسال الدعوة."},{status:403});
-  // No mail transport is configured here. Do not expose the bearer token in API responses.
-  return NextResponse.json({success:true,id:invitation.id,message:"تم إنشاء الدعوة. الإرسال بالبريد غير مفعل بعد."},{status:201});
+  const baseUrl=process.env.NEXT_PUBLIC_APP_URL||process.env.APP_URL;
+  if(!baseUrl)return NextResponse.json({success:true,id:invitation.id,emailSent:false,message:"تم إنشاء الدعوة، لكن رابط الموقع غير مضبوط لإرسال البريد."},{status:201});
+  try{
+   const partner=await prisma.partner.findUnique({where:{id:actor.partnerId},select:{tradeNameAr:true,legalNameAr:true}});
+   const inviteUrl=new URL("/partner/invitations/accept",baseUrl);
+   inviteUrl.searchParams.set("token",token);
+   await sendPartnerTeamInvitationEmail({to:email,partnerName:partner?.tradeNameAr||partner?.legalNameAr||"شريك Arees Loop",inviteUrl:inviteUrl.toString(),expiresAt:invitation.expiresAt});
+   return NextResponse.json({success:true,id:invitation.id,emailSent:true,message:"تم إرسال الدعوة بالبريد الإلكتروني."},{status:201});
+  }catch(emailError){
+   console.error("Partner team invitation email failed:",emailError);
+   return NextResponse.json({success:true,id:invitation.id,emailSent:false,message:"تم إنشاء الدعوة، لكن تعذر إرسال البريد. يمكن إلغاء الدعوة وإعادة المحاولة."},{status:201});
+  }
  }catch(error){console.error("POST /api/partner/team/invitations failed:",error);return NextResponse.json({success:false,message:"تعذر إنشاء الدعوة."},{status:500});}
 }
