@@ -26,9 +26,14 @@ export async function PATCH(request:Request){
   return true;
  });
  if(!result)return NextResponse.json({success:false,message:"الطلب غير متاح"},{status:409});
+ let emailSent=false;
+ try{
  const renewal=await prisma.licenseRenewalRequest.findUnique({where:{id},select:{submittedById:true,licenseId:true}});
  const applicant=renewal?await prisma.user.findUnique({where:{id:renewal.submittedById},select:{email:true}}):null;
  const safeNotes=notes.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
  const delivery=applicant?.email?await sendEmail({to:applicant.email,subject:approved?"أريس لوب | اعتماد تجديد الترخيص":"أريس لوب | مراجعة تجديد الترخيص",html:`<div dir="rtl"><p>${approved?"تم اعتماد تجديد الترخيص":"لم تتم الموافقة على تجديد الترخيص"}.</p><p>ملاحظات الإدارة: ${safeNotes}</p><p>يمكنك متابعة الحالة من لوحة الشريك.</p></div>`}):{sent:false as const};
- return NextResponse.json({success:true,message:"تم تسجيل قرار المراجعة",applicantEmailSent:delivery.sent});
+
+ emailSent=delivery.sent;
+ }catch(error){console.error("License renewal decision notification failed",error);}
+ return NextResponse.json({success:true,message:"تم تسجيل قرار المراجعة",applicantEmailSent:emailSent});
 }
