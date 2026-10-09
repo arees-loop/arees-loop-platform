@@ -3,6 +3,14 @@ import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
 import {put} from "@vercel/blob";
 export const runtime="nodejs";
+export async function GET(){
+ const session=await getCurrentSession();
+ if(!session)return NextResponse.json({success:false,message:"سجل الدخول أولاً"},{status:401});
+ const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true}});
+ if(!member)return NextResponse.json({success:false,message:"حساب شريك مطلوب"},{status:403});
+ const requests=await prisma.licenseRenewalRequest.findMany({where:{partnerId:member.partnerId},select:{id:true,licenseId:true,requestedExpiryDate:true,status:true,reviewNotes:true,createdAt:true,reviewedAt:true},orderBy:{createdAt:"desc"},take:50});
+ return NextResponse.json({success:true,requests});
+}
 export async function POST(request:Request){
  try{
  const session=await getCurrentSession();

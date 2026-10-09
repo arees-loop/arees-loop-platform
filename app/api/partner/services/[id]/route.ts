@@ -20,6 +20,9 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
       const license=await prisma.license.findFirst({where:{id:licenseId,partnerId:current.partnerId},select:{id:true}});
       if(!license) return NextResponse.json({success:false,message:"الترخيص المحدد لا يتبع منشأتك."},{status:400});
     }
+    if(!licenseId)return NextResponse.json({success:false,message:"يجب اختيار ترخيص ساري ومعتمد للخدمة."},{status:400});
+    const activeLicense=await prisma.license.findFirst({where:{id:licenseId,partnerId:current.partnerId,status:"VERIFIED",expiryDate:{gte:new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")}},select:{id:true}});
+    if(!activeLicense)return NextResponse.json({success:false,message:"الترخيص غير ساري أو لم يتم اعتماده."},{status:403});
     const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
     const status = current.status === "PUBLISHED" || body.submitForReview ? "UNDER_REVIEW" : current.status;
     const service=await prisma.$transaction(async(tx)=>{
@@ -56,6 +59,8 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
       return NextResponse.json({success:true,status:"SUSPENDED",message:"تم إخفاء الخدمة من العملاء مؤقتاً."});
     }
     if(action==="PUBLISH"){
+      const valid=service.licenseId&&await prisma.license.findFirst({where:{id:service.licenseId,partnerId:service.partnerId,status:"VERIFIED",expiryDate:{gte:new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")}},select:{id:true}});
+      if(!valid)return NextResponse.json({success:false,message:"يجب تجديد الترخيص واعتماده قبل إعادة نشر الخدمة."},{status:403});
       if(service.status!=="SUSPENDED") return NextResponse.json({success:false,message:"الخدمة ليست مخفية حالياً."},{status:409});
       await prisma.$transaction(async tx=>{
         const changed=await tx.service.updateMany({where:{id,status:"SUSPENDED"},data:{status:"UNDER_REVIEW"}});
