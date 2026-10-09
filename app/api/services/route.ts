@@ -1,3 +1,5 @@
+import {serviceEligibilityWhere} from "@/lib/services/eligibility";
+import {sanitizeServiceHtml} from "@/lib/service-html";
 import { NextRequest, NextResponse } from "next/server";
 
 function databaseNotConfigured() {
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
     const partnerId = searchParams.get("partnerId");
 
     const services = await prisma.service.findMany({
-      where: { status: "PUBLISHED", ...(partnerId ? { partnerId } : {}), partner:{status:"ACTIVE"}, license:{is:{status:"VERIFIED",expiryDate:{gte:new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")}}} },
+      where: { status: "PUBLISHED", ...(partnerId ? { partnerId } : {}), ...serviceEligibilityWhere() },
       orderBy: { updatedAt: "desc" },
       select: {
         id: true, nameAr: true, nameEn: true, category: true, subCategory: true,
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
         nameEn: service.nameEn,
         category: service.category,
         subCategory: service.subCategory,
-        descriptionAr: service.descriptionAr,
+        descriptionAr: sanitizeServiceHtml(service.descriptionAr),
         city: service.city,
         region: service.region,
         country: service.country,
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest) {
         latitude: service.latitude == null ? null : Number(service.latitude),
         longitude: service.longitude == null ? null : Number(service.longitude),
         capacity: service.capacity,
-        cancellationPolicy: service.cancellationPolicy,
+        cancellationPolicy: sanitizeServiceHtml(service.cancellationPolicy),
         meetingInstructions: service.meetingInstructions,
         organizerType: service.organizerType,
         organizerName: service.organizerName,

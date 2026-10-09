@@ -1,3 +1,4 @@
+import {hasAdminPermission} from "@/lib/admin-permissions";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -18,8 +19,7 @@ export async function GET() {
     }
 
     if (
-      session.user.role !== "ADMIN" &&
-      session.user.role !== "SUPER_ADMIN"
+      !hasAdminPermission(session.user,"PARTNER_REQUESTS") && !hasAdminPermission(session.user,"ACTIVE_PARTNERS")
     ) {
       return NextResponse.json(
         {
@@ -31,6 +31,7 @@ export async function GET() {
     }
 
     const partners = await prisma.partner.findMany({
+      where: hasAdminPermission(session.user,"PARTNER_REQUESTS") && hasAdminPermission(session.user,"ACTIVE_PARTNERS") ? {} : hasAdminPermission(session.user,"ACTIVE_PARTNERS") ? {status:"ACTIVE"} : {status:{not:"ACTIVE"}},
       orderBy: {
         createdAt: "desc",
       },

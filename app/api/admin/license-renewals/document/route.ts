@@ -1,3 +1,4 @@
+import {hasAdminPermission} from "@/lib/admin-permissions";
 import {NextRequest} from "next/server";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
@@ -5,7 +6,7 @@ import {get} from "@vercel/blob";
 export const runtime="nodejs";
 export async function GET(request:NextRequest){
  const session=await getCurrentSession();
- if(!session||!["ADMIN","SUPER_ADMIN"].includes(session.user.role))return new Response("Forbidden",{status:403});
+ if(!session||!hasAdminPermission(session.user,"PARTNER_REQUESTS"))return new Response("Forbidden",{status:403});
  const id=request.nextUrl.searchParams.get("id")||"";
  if(!id||id.length>120)return new Response("Not found",{status:404});
  const renewal=await prisma.licenseRenewalRequest.findUnique({where:{id},select:{documentPath:true}});

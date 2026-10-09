@@ -1,3 +1,4 @@
+import {matchesLicenseDocument} from "@/lib/license-document";
 import {reviewRenewalWithAi} from "@/lib/partners/renewal-ai-review";
 import {Prisma} from "@/app/generated/prisma/client";
 import {NextResponse} from "next/server";
@@ -28,6 +29,8 @@ export async function POST(request:Request){
  if(!application)return NextResponse.json({success:false,message:"لا يوجد ملف مرشد معتمد مرتبط بالحساب"},{status:404});
  const pending=await prisma.guideLicenseRenewal.findFirst({where:{applicationId,status:"UNDER_REVIEW"},select:{id:true}});
  if(pending)return NextResponse.json({success:false,message:"يوجد طلب تجديد قيد المراجعة"},{status:409});
+ const prefix=new Uint8Array(await file.slice(0,12).arrayBuffer());
+ if(!matchesLicenseDocument(prefix,file.type))return NextResponse.json({success:false,message:"محتوى الملف لا يطابق نوع مستند الترخيص"},{status:400});
  const id=crypto.randomUUID();
  const blob=await put("guides/renewals/"+id+"/license",file,{access:"private",contentType:file.type,addRandomSuffix:false});
  const uploadedPath=blob.pathname;

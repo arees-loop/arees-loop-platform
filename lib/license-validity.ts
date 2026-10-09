@@ -16,3 +16,13 @@ export function licenseValidityLabel(expiryDate:Date|string|null|undefined,now=n
  if(daysRemaining===0)return "ينتهي الترخيص اليوم";
  return "الترخيص ساري — متبقي "+daysRemaining+" يوم لانتهاء الترخيص";
 }
+
+export function utcLicenseDay(now=new Date()):Date {
+ return new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()));
+}
+/** Renewal extends validity; it never revives a suspended/rejected license. */
+export function canApproveLicenseRenewal(current:{status:string; expiryDate:Date|string|null}, requested:Date, partnerStatus:string, now=new Date()):boolean {
+ return partnerStatus==="ACTIVE" && ["VERIFIED","EXPIRED"].includes(current.status) &&
+  Number.isFinite(requested.getTime()) && requested>=utcLicenseDay(now) &&
+  (!current.expiryDate || requested>new Date(current.expiryDate));
+}

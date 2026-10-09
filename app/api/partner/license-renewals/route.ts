@@ -1,3 +1,4 @@
+import {matchesLicenseDocument} from "@/lib/license-document";
 import {reviewRenewalWithAi} from "@/lib/partners/renewal-ai-review";
 import {Prisma} from "@/app/generated/prisma/client";
 import {canManagePartnerServices,getPartnerAccessRole} from "@/lib/partner-permissions";
@@ -10,7 +11,7 @@ export const runtime="nodejs";
 export async function GET(){
  const session=await getCurrentSession();
  if(!session)return NextResponse.json({success:false,message:"سجل الدخول أولاً"},{status:401});
- const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true,permissions:true}});
+ const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},orderBy:{createdAt:"desc"},select:{partnerId:true,permissions:true}});
  if(!member)return NextResponse.json({success:false,message:"حساب شريك مطلوب"},{status:403});
  if(!["OWNER","MANAGER"].includes(getPartnerAccessRole(member.permissions))||!canManagePartnerServices(member.permissions))return NextResponse.json({success:false,message:"ليست لديك صلاحية إدارة تراخيص المنشأة"},{status:403});
  const requests=await prisma.licenseRenewalRequest.findMany({where:{partnerId:member.partnerId},select:{id:true,licenseId:true,requestedExpiryDate:true,status:true,reviewNotes:true,createdAt:true,reviewedAt:true},orderBy:{createdAt:"desc"},take:50});
@@ -20,7 +21,7 @@ export async function POST(request:Request){
  try{
  const session=await getCurrentSession();
  if(!session)return NextResponse.json({success:false,message:"سجل الدخول أولاً"},{status:401});
- const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true,permissions:true,partner:{select:{status:true,legalNameAr:true}}}});
+ const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},orderBy:{createdAt:"desc"},select:{partnerId:true,permissions:true,partner:{select:{status:true,legalNameAr:true}}}});
  if(!member)return NextResponse.json({success:false,message:"حساب شريك مطلوب"},{status:403});
  if(member.partner.status!=="ACTIVE"||!["OWNER","MANAGER"].includes(getPartnerAccessRole(member.permissions))||!canManagePartnerServices(member.permissions))return NextResponse.json({success:false,message:"ليس لديك صلاحية تجديد ترخيص المنشأة"},{status:403});
  const form=await request.formData();
@@ -33,6 +34,8 @@ export async function POST(request:Request){
  if(!license)return NextResponse.json({success:false,message:"الترخيص لا يتبع المنشأة"},{status:404});
  const pending=await prisma.licenseRenewalRequest.findFirst({where:{licenseId,status:"UNDER_REVIEW"}});
  if(pending)return NextResponse.json({success:false,message:"هناك طلب تجديد قيد المراجعة"},{status:409});
+ const prefix=new Uint8Array(await file.slice(0,12).arrayBuffer());
+ if(!matchesLicenseDocument(prefix,file.type))return NextResponse.json({success:false,message:"محتوى الملف لا يطابق نوع مستند الترخيص"},{status:400});
  const id=crypto.randomUUID();
  const blob=await put("licenses/renewals/"+id+"/document",file,{access:"private",contentType:file.type,addRandomSuffix:false});
  const uploadedPath=blob.pathname;

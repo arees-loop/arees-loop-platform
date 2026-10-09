@@ -1,5 +1,7 @@
+import {utcLicenseDay} from "@/lib/license-validity";
+import {matchesLicenseDocument} from "@/lib/license-document";
 import {NextRequest,NextResponse} from "next/server";
-import {put} from "@vercel/blob";
+import {put,del} from "@vercel/blob";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
 import {GUIDE_LICENSE_CATEGORIES} from "@/lib/guides/reference-data";
@@ -18,19 +20,24 @@ export async function POST(request:NextRequest){
  const expires=new Date(value(data,"licenseExpiresAt")+"T00:00:00.000Z");
  const photo=data.get("photo"),license=data.get("license");
  const photoConsent=value(data,"photoPublicationConsent")==="yes";
- if(fullName.length<4||fullName.length>120||email!==session.user.email.toLowerCase()||!/^\+?[0-9]{8,15}$/.test(phone)||!["MALE","FEMALE"].includes(gender)||!city||city.length>100||!GUIDE_LICENSE_CATEGORIES.some(x=>x===category)||number.length<3||number.length>100||!countries.length||!languages.length||!Number.isFinite(expires.getTime())||expires<=new Date()||value(data,"policyAccepted")!=="yes"||!validFile(license)||photo instanceof File&&photo.size>0&&!validFile(photo)||specialization.length>300||bio.length>2000)return NextResponse.json({success:false,message:"تحقق من البيانات والترخيص الساري والموافقة على السياسات. يجب أن يكون البريد مؤكداً في حسابك."},{status:400});
+ if(fullName.length<4||fullName.length>120||email!==session.user.email.toLowerCase()||!/^\+?[0-9]{8,15}$/.test(phone)||!["MALE","FEMALE"].includes(gender)||!city||city.length>100||!GUIDE_LICENSE_CATEGORIES.some(x=>x===category)||number.length<3||number.length>100||!countries.length||!languages.length||!Number.isFinite(expires.getTime())||expires<utcLicenseDay()||expires.toISOString().slice(0,10)!==value(data,"licenseExpiresAt")||value(data,"policyAccepted")!=="yes"||!validFile(license)||photo instanceof File&&photo.size>0&&!validFile(photo)||specialization.length>300||bio.length>2000)return NextResponse.json({success:false,message:"تحقق من البيانات والترخيص الساري والموافقة على السياسات. يجب أن يكون البريد مؤكداً في حسابك."},{status:400});
+ if(!(license instanceof File)||!matchesLicenseDocument(new Uint8Array(await license.slice(0,12).arrayBuffer()),license.type))return NextResponse.json({success:false,message:"محتوى مستند الترخيص غير صحيح"},{status:400});
+ if(photo instanceof File&&photo.size>0&&(!["image/jpeg","image/png","image/webp"].includes(photo.type)||!matchesLicenseDocument(new Uint8Array(await photo.slice(0,12).arrayBuffer()),photo.type)))return NextResponse.json({success:false,message:"الصورة الشخصية غير صحيحة"},{status:400});
  const previous=await prisma.guideApplication.findFirst({where:{userId:session.user.id,status:{in:["UNDER_REVIEW","APPROVED"]}},select:{id:true}});
  if(previous)return NextResponse.json({success:false,message:"لديك طلب مرشد قائم قيد المراجعة أو معتمد."},{status:409});
  const id=crypto.randomUUID();
  const licenseFile=license as File;
+ const uploadedPaths:string[]=[];
+ try{
  const licenseBlob=await put(`guides/private/${id}/license-${crypto.randomUUID()}`,licenseFile,{access:"private",contentType:licenseFile.type,addRandomSuffix:false});
+ uploadedPaths.push(licenseBlob.pathname);
  let photoPath:string|null=null;
  if(photo instanceof File&&photo.size>0){
-  if(!["image/jpeg","image/png","image/webp"].includes(photo.type))return NextResponse.json({success:false,message:"الصورة الشخصية يجب أن تكون JPG أو PNG أو WEBP."},{status:400});
   const uploaded=await put(`guides/private/${id}/photo-${crypto.randomUUID()}`,photo,{access:"private",contentType:photo.type,addRandomSuffix:false});
-  photoPath=uploaded.pathname;
+  photoPath=uploaded.pathname;uploadedPaths.push(uploaded.pathname);
  }
  await prisma.guideApplication.create({data:{id,userId:session.user.id,fullName,email,phone,gender,countries,city,licenseCategory:category,licenseNumber:number,licenseExpiresAt:expires,specialization:specialization||null,languages,bio:bio||null,photoPath,licensePath:licenseBlob.pathname,photoPublicationConsent:photoConsent,policyAcceptedAt:new Date()}});
+ }catch(error){await Promise.allSettled(uploadedPaths.map(path=>del(path)));throw error;}
  return NextResponse.json({success:true,message:"تم استلام طلب المرشد وإحالته للمراجعة. لن يظهر الملف للعامة قبل الاعتماد."});
  }catch(error){console.error("Guide application error",error);return NextResponse.json({success:false,message:"تعذر إرسال الطلب حالياً. حاول مرة أخرى."},{status:500});}
 }

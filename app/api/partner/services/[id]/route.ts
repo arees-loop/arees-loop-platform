@@ -1,3 +1,4 @@
+import {sanitizeServiceHtml} from "@/lib/service-html";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -13,7 +14,7 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
     const session=await getCurrentSession(); if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
     const {id}=await context.params; const current=await ownedService(session.user.id,id); if(!current) return NextResponse.json({success:false,message:"الخدمة غير موجودة."},{status:404});
     const body=await request.json(); const basePrice=Number(body.basePrice||0); const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150))); const latitude=body.latitude==null||body.latitude===""?null:Number(body.latitude); const longitude=body.longitude==null||body.longitude===""?null:Number(body.longitude);
-    if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
+    if(!body.nameAr?.trim()||!body.category?.trim()||!Number.isFinite(basePrice)||basePrice<=0||!Number.isSafeInteger(loyaltyPoints)) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     if(!body.country?.trim()||!body.region?.trim()||!body.city?.trim()||!((latitude===null&&longitude===null)||(latitude!==null&&longitude!==null&&Number.isFinite(latitude)&&Number.isFinite(longitude)&&latitude>=-90&&latitude<=90&&longitude>=-180&&longitude<=180))) return NextResponse.json({success:false,message:"أكمل الدولة والمنطقة والمدينة، وتأكد من صحة إحداثيات الموقع الاختيارية."},{status:400});
     const licenseId=typeof body.licenseId==="string"?body.licenseId.trim():"";
     if(licenseId){
@@ -30,10 +31,10 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
       const updated=await tx.service.update({where:{id},data:{
         licenseId:licenseId||null,
         nameAr:body.nameAr.trim(),nameEn:body.nameEn?.trim()||null,category:body.category.trim(),subCategory:body.subCategory?.trim()||null,
-        descriptionAr:body.descriptionAr?.trim()||null,descriptionEn:body.descriptionEn?.trim()||null,city:body.city.trim(),region:body.region.trim(),country:body.country.trim(),countryCode:body.countryCode?.trim()||null,locationName:body.locationName?.trim()||null,
+        descriptionAr:sanitizeServiceHtml(body.descriptionAr)||null,descriptionEn:sanitizeServiceHtml(body.descriptionEn)||null,city:body.city.trim(),region:body.region.trim(),country:body.country.trim(),countryCode:body.countryCode?.trim()||null,locationName:body.locationName?.trim()||null,
         formattedAddress:body.formattedAddress?.trim()||null,placeId:body.placeId?.trim()||null,latitude,longitude,basePrice,
         vatRate:15,finalPrice:body.vatMode==="included"?basePrice:basePrice*1.15,loyaltyPoints,capacity:Number(body.capacity||0)||null,
-        cancellationPolicy:body.cancellationPolicy?.trim()||null,meetingInstructions:body.meetingInstructions?.trim()||null,
+        cancellationPolicy:sanitizeServiceHtml(body.cancellationPolicy)||null,meetingInstructions:body.meetingInstructions?.trim()||null,
         organizerType:body.organizerType==="OTHER"?"OTHER":"SELF",organizerName:body.organizerName?.trim()||null,organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null,
         organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,programApprovalNumber:body.programApprovalNumber?.trim()||null,status,
         images:{create:images.map((x:{url:string;sortOrder?:unknown},index:number)=>({url:x.url,sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}

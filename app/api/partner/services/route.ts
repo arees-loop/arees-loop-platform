@@ -1,3 +1,4 @@
+import {sanitizeServiceHtml} from "@/lib/service-html";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -26,7 +27,7 @@ export async function POST(request:Request){
     const vatRate=15;
     const finalPrice=vatIncluded?basePrice:basePrice*1.15;
     const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150)));
-    if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
+    if(!body.nameAr?.trim()||!body.category?.trim()||!Number.isFinite(basePrice)||basePrice<=0||!Number.isSafeInteger(loyaltyPoints)) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     const latitude=body.latitude==null||body.latitude===""?null:Number(body.latitude);
     const longitude=body.longitude==null||body.longitude===""?null:Number(body.longitude);
     if(!body.country?.trim()||!body.region?.trim()||!body.city?.trim()||!((latitude===null&&longitude===null)||(latitude!==null&&longitude!==null&&Number.isFinite(latitude)&&Number.isFinite(longitude)&&latitude>=-90&&latitude<=90&&longitude>=-180&&longitude<=180))){
@@ -48,8 +49,8 @@ export async function POST(request:Request){
         nameEn:body.nameEn?.trim()||null,
         category:body.category.trim(),
         subCategory:body.subCategory?.trim()||null,
-        descriptionAr:body.descriptionAr?.trim()||null,
-        descriptionEn:body.descriptionEn?.trim()||null,
+        descriptionAr:sanitizeServiceHtml(body.descriptionAr)||null,
+        descriptionEn:sanitizeServiceHtml(body.descriptionEn)||null,
         city:body.city.trim(),
         region:body.region.trim(),
         locationName:body.locationName?.trim()||null,
@@ -64,7 +65,7 @@ export async function POST(request:Request){
         finalPrice,
         loyaltyPoints,
         capacity:Number(body.capacity||0)||null,
-        cancellationPolicy:body.cancellationPolicy?.trim()||null,
+        cancellationPolicy:sanitizeServiceHtml(body.cancellationPolicy)||null,
         meetingInstructions:body.meetingInstructions?.trim()||null,
         meetingPointName:body.hasMeetingPoint?body.meetingPointName?.trim()||null:null,
         meetingPointAddress:body.hasMeetingPoint?body.meetingPointAddress?.trim()||null:null,

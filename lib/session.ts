@@ -135,7 +135,8 @@ export async function getCurrentSession() {
 
   if (
     session.user.status === "SUSPENDED" ||
-    session.user.status === "DISABLED"
+    session.user.status === "DISABLED" ||
+    (["ADMIN", "SUPER_ADMIN"].includes(session.user.role) && session.user.status !== "ACTIVE")
   ) {
     await prisma.session.delete({
       where: {

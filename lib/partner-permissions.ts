@@ -7,10 +7,11 @@ export function getPartnerAccessRole(permissions: unknown): PartnerAccessRole {
 }
 
 /** An explicit flag takes precedence; otherwise use the role preset.
- * LEGACY members retain prior access until ownership and membership are verified. */
+ * Unclassified memberships are denied until ownership and membership are verified. */
 function capability(permissions: unknown, section: "services" | "finances" | "bookings" | "team", action: "manage" | "view"): boolean {
   const role = getPartnerAccessRole(permissions);
   if (role === "OWNER") return true;
+  if (role === "LEGACY") return false;
   if (permissions && typeof permissions === "object" && !Array.isArray(permissions)) {
     const entry = (permissions as Record<string, unknown>)[section];
     if (entry && typeof entry === "object" && !Array.isArray(entry)) {
@@ -18,7 +19,6 @@ function capability(permissions: unknown, section: "services" | "finances" | "bo
       if (typeof flag === "boolean") return flag;
     }
   }
-  if (role === "LEGACY") return true;
   if (role === "EMPLOYEE") return false;
   return section === "services" && action === "manage" ||
     section === "bookings" && action === "view" ||

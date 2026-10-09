@@ -1,18 +1,18 @@
+import {escapeHtml} from "@/lib/service-html";
+import {serviceEligibilityWhere} from "@/lib/services/eligibility";
+import {hasAdminPermission} from "@/lib/admin-permissions";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { sendEmail } from "@/lib/notifications/email";
 
-function isAdmin(role?: string) {
-  return role === "ADMIN" || role === "SUPER_ADMIN";
-}
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const session = await getCurrentSession();
-  if (!session || !isAdmin(session.user.role)) {
+  if (!session || !hasAdminPermission(session.user,"CONTENT_EXPERIENCES")) {
     return NextResponse.json({ success: false, message: "غير مصرح." }, { status: 401 });
   }
 
@@ -48,11 +48,10 @@ export async function POST(
     if(service.partner.status!=="ACTIVE"||!license){
       return NextResponse.json({success:false,message:"لا يمكن نشر الخدمة: المنشأة غير نشطة أو الترخيص غير معتمد أو منتهي الصلاحية."},{status:403});
     }
-    const changed=await prisma.service.updateMany({where:{id,status:"UNDER_REVIEW",licenseId:license.id},data:{status:"PUBLISHED"}});
-    if(changed.count!==1)return NextResponse.json({success:false,message:"تغيرت حالة الخدمة أثناء المراجعة."},{status:409});
-    const updated=await prisma.service.findUniqueOrThrow({where:{id}});
-
-    await prisma.auditLog.create({
+    const updated=await prisma.$transaction(async tx=>{
+    const changed=await tx.service.updateMany({where:{id,partnerId:service.partnerId,status:"UNDER_REVIEW",licenseId:license.id,...serviceEligibilityWhere()},data:{status:"PUBLISHED"}});
+    if(changed.count!==1)return null;
+    await tx.auditLog.create({
       data: {
         userId: session.user.id,
         action: "SERVICE_APPROVED_PUBLISHED",
@@ -63,6 +62,9 @@ export async function POST(
       },
     });
 
+    return tx.service.findUniqueOrThrow({where:{id}});
+    });
+    if(!updated)return NextResponse.json({success:false,message:"تغيرت حالة الخدمة أو الترخيص أثناء المراجعة."},{status:409});
     const recipients = [...new Set(service.partner.members.map((m) => m.user.email).filter(Boolean))];
     if (recipients.length) {
       await sendEmail({
@@ -71,7 +73,7 @@ export async function POST(
         html: `
           <div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8">
             <h2>تم اعتماد الخدمة بنجاح</h2>
-            <p>تمت الموافقة على خدمة <strong>${service.nameAr}</strong> وأصبحت منشورة للعملاء على Arees Loop.</p>
+            <p>تمت الموافقة على خدمة <strong>${escapeHtml(service.nameAr)}</strong> وأصبحت منشورة للعملاء على Arees Loop.</p>
             <p>يمكنكم في أي لحظة إخفاء نشر الخدمة مؤقتاً في حالة رغبتكم في ذلك من لوحة تحكم الشريك، ثم إظهارها مجدداً عند توفرها.</p>
             <p>فريق Arees Loop</p>
           </div>
@@ -86,11 +88,10 @@ export async function POST(
     if (!reason) {
       return NextResponse.json({ success: false, message: "سبب الرفض مطلوب." }, { status: 400 });
     }
-    const updated = await prisma.service.update({
-      where: { id },
-      data: { status: "REJECTED" },
-    });
-    await prisma.auditLog.create({
+    const updated=await prisma.$transaction(async tx=>{
+    const changed=await tx.service.updateMany({where:{id,status:"UNDER_REVIEW"},data:{status:"REJECTED"}});
+    if(changed.count!==1)return null;
+    await tx.auditLog.create({
       data: {
         userId: session.user.id,
         action: "SERVICE_REJECTED",
@@ -101,6 +102,9 @@ export async function POST(
       },
     });
 
+    return tx.service.findUniqueOrThrow({where:{id}});
+    });
+    if(!updated)return NextResponse.json({success:false,message:"الخدمة ليست تحت المراجعة أو تغيرت حالتها."},{status:409});
     const recipients = [...new Set(service.partner.members.map((m) => m.user.email).filter(Boolean))];
     let emailSent = false;
     if (recipients.length) {
@@ -110,8 +114,8 @@ export async function POST(
         html: `
           <div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8">
             <h2>لم يتم اعتماد الخدمة</h2>
-            <p>بعد مراجعة خدمة <strong>${service.nameAr}</strong>، لم يتم اعتمادها للنشر حالياً.</p>
-            <p><strong>سبب الرفض:</strong> ${reason}</p>
+            <p>بعد مراجعة خدمة <strong>${escapeHtml(service.nameAr)}</strong>، لم يتم اعتمادها للنشر حالياً.</p>
+            <p><strong>سبب الرفض:</strong> ${escapeHtml(reason)}</p>
             <p>يمكنكم مراجعة الملاحظة وتعديل الخدمة من لوحة تحكم الشريك ثم إعادة إرسالها للمراجعة.</p>
             <p>فريق Arees Loop</p>
           </div>
