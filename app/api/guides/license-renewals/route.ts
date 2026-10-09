@@ -47,7 +47,7 @@ export async function POST(request:Request){
 
  adminEmailSent=delivery.sent;
  }catch(error){console.error("Renewal admin notification failed",error);}
- return NextResponse.json({success:true,message:"تم إرسال طلب التجديد للإدارة",adminEmailSent:adminEmailSent});
+ return NextResponse.json({success:true,message:adminEmailSent?"تم تسجيل طلب التجديد وإرسال إشعار للإدارة.":"تم تسجيل طلب التجديد بنجاح وهو بانتظار مراجعة الإدارة. تعذر إرسال إشعار البريد الإلكتروني.",adminEmailSent});
  }catch(e){
  if(e instanceof Prisma.PrismaClientKnownRequestError&&e.code==="P2002")return NextResponse.json({success:false,message:"يوجد طلب تجديد قيد المراجعة بالفعل. انتظر قرار الإدارة قبل تقديم طلب جديد."},{status:409});
  console.error("license renewal submission",e);
