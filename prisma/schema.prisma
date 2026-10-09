@@ -961,3 +961,20 @@ model GuideLicenseAlert {
  @@unique([recipientUserId,applicationId,kind,dayKey])
  @@index([recipientUserId,readAt,createdAt])
 }
+
+model GuideLicenseRenewal {
+ id String @id @default(cuid())
+ applicationId String
+ userId String
+ licenseNumber String
+ requestedExpiryDate DateTime
+ documentPath String
+ status String @default("UNDER_REVIEW")
+ reviewedById String?
+ reviewedAt DateTime?
+ reviewNotes String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([applicationId,status])
+ @@index([userId,createdAt])
+}
