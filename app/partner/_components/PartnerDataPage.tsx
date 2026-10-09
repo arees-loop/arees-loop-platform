@@ -1,5 +1,5 @@
-import Link from "next/link";
 "use client";
+import Link from "next/link";
 import ServiceHistory from "./ServiceHistory";
 import TeamRoleHistory from "./TeamRoleHistory";
 import TeamInvitations from "./TeamInvitations";
