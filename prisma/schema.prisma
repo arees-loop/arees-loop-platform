@@ -205,6 +205,7 @@ model User {
   verificationTokens VerificationToken[]
   partnerContactVerification PartnerContactVerification?
   interests          UserInterest[]
+  favoriteServices   UserFavoriteService[]
   auditLogs          AuditLog[]          @relation("AuditUser")
 }
 
@@ -570,6 +571,7 @@ model Service {
   partner Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   license License? @relation(fields: [licenseId], references: [id], onDelete: SetNull)
 
+  favorites UserFavoriteService[]
   images   ServiceImage[]
   bookings Booking[]
   coupons  Coupon[]
@@ -859,4 +861,15 @@ model NavigationVisibility {
   key String @id
   visible Boolean @default(true)
   updatedAt DateTime @updatedAt
+}
+
+model UserFavoriteService {
+  id String @id @default(cuid())
+  userId String
+  serviceId String
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  @@unique([userId, serviceId])
+  @@index([serviceId])
 }

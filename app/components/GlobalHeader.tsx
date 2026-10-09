@@ -106,7 +106,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                       {href:"/notifications",label:"الإشعارات",icon:"♧"},
                       {href:"/bookings",label:"الطلبات",icon:"▤"},
                       {href:"/bookings?payment=pending",label:"طلبات بانتظار الدفع",icon:"◷"},
-                      {href:"/wishlist",label:"قائمة الأمنيات",icon:"♡"},
+                      {href:"/interests",label:"اهتماماتي",icon:"♡"},
                       {href:"/wallet",label:"محفظتي",icon:"▣"},
                       {href:"/rewards",label:"نقاط الولاء",icon:"✧"},
                       {href:"/profile",label:"حسابي",icon:"♙"},
