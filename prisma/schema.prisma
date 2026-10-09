@@ -931,3 +931,19 @@ model LicenseRenewalRequest {
  @@index([licenseId,status])
  @@index([partnerId,status])
 }
+
+model LicenseAlert {
+ id String @id @default(cuid())
+ recipientUserId String
+ licenseId String
+ partnerId String
+ kind String
+ title String
+ message String
+ dayKey String
+ readAt DateTime?
+ createdAt DateTime @default(now())
+ @@unique([recipientUserId,licenseId,kind,dayKey])
+ @@index([recipientUserId,readAt,createdAt])
+ @@index([partnerId,createdAt])
+}
