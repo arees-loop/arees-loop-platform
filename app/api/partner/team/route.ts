@@ -28,15 +28,20 @@ export async function PATCH(request: Request) {
       return NextResponse.json({success:false,message:"تعيين المدير من صلاحيات المالك فقط."},{status:403});
     }
     const result = await prisma.$transaction(async tx => {
+      const currentActor = await tx.partnerMember.findFirst({where:{id:actor.id,userId:session.user.id,partnerId:actor.partnerId,isActive:true},select:{permissions:true}});
+      if(!currentActor || !canManagePartnerTeam(currentActor.permissions))return "FORBIDDEN" as const;
+      const currentActorRole=getPartnerAccessRole(currentActor.permissions);
+      if(currentActorRole!=="OWNER" && role==="MANAGER")return "FORBIDDEN" as const;
       const target = await tx.partnerMember.findFirst({
         where:{id:memberId,partnerId:actor.partnerId,isActive:true},
-        select:{id:true,permissions:true,userId:true}
+        select:{id:true,permissions:true,userId:true,updatedAt:true}
       });
       if (!target) return "NOT_FOUND" as const;
       const previousRole = getPartnerAccessRole(target.permissions);
-      if (previousRole === "OWNER" || previousRole === "LEGACY" || (actorRole !== "OWNER" && previousRole !== "EMPLOYEE")) return "FORBIDDEN" as const;
+      if (previousRole === "OWNER" || previousRole === "LEGACY" || (currentActorRole !== "OWNER" && previousRole !== "EMPLOYEE")) return "FORBIDDEN" as const;
       const permissions = partnerPermissionPreset(role);
-      await tx.partnerMember.update({where:{id:target.id},data:{permissions}});
+      const changed=await tx.partnerMember.updateMany({where:{id:target.id,partnerId:actor.partnerId,isActive:true,updatedAt:target.updatedAt},data:{permissions}});
+      if(changed.count!==1)return "CONFLICT" as const;
       await tx.auditLog.create({data:{
         userId:session.user.id,action:"PARTNER_MEMBER_ROLE_UPDATED",entityType:"PartnerMember",entityId:target.id,
         beforeData:{partnerId:actor.partnerId,role:previousRole},
@@ -44,6 +49,7 @@ export async function PATCH(request: Request) {
       }});
       return "UPDATED" as const;
     });
+    if(result === "CONFLICT") return NextResponse.json({success:false,message:"تغيرت بيانات الموظف. حدّث الصفحة وحاول مجدداً."},{status:409});
     if(result === "NOT_FOUND") return NextResponse.json({success:false,message:"الموظف غير موجود."},{status:404});
     if(result === "FORBIDDEN") return NextResponse.json({success:false,message:"لا يمكن تعديل دور المالك أو الحسابات غير المصنفة."},{status:403});
     return NextResponse.json({success:true,message:"تم تحديث دور الموظف."});
