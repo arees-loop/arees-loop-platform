@@ -429,7 +429,7 @@ export default function PartnerServicesPage() {
     const refreshed=await fetch("/api/partner/operations",{credentials:"include",cache:"no-store"}).then(r=>r.json());
     if(refreshed?.success) setServices((refreshed.services??[]).map((service:any)=>({
       id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",subCategory:service.subCategory??"",
-      license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",city:service.city??"",locationName:service.locationName??"",
+      license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",city:service.city??"",region:service.region??"",country:service.country??"",locationName:service.locationName??"",
       formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),
       vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),loyaltyPoints:Number(service.loyaltyPoints??150),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
       imageCount:Array.isArray(service.images)?service.images.length:0,descriptionAr:service.descriptionAr??"",descriptionEn:service.descriptionEn??"",
