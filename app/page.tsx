@@ -2,6 +2,7 @@
 "use client";
 
 import Image from "next/image";
+import FavoriteHeart from "./components/FavoriteHeart";
 import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
@@ -902,7 +903,7 @@ export default function Home() {
           {nearbyServices.length > 0 && <div id="experiences" dir="rtl" className="grid gap-6 text-right sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {nearbyServices.slice(0,8).map((service) => (
               <article key={service.id} className="group flex h-full flex-col overflow-hidden rounded-[30px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_45px_rgba(13,59,52,0.10)] transition hover:-translate-y-1">
-                <div className="relative mb-5 overflow-hidden rounded-[22px] bg-[#F1EEE5]">
+                <div className="relative mb-5 overflow-hidden rounded-[22px] bg-[#F1EEE5]"><FavoriteHeart serviceId={service.id} className="absolute left-3 top-3 z-10"/>
                   {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="block h-auto w-full bg-[#F5EFE2]"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
                   <div className="absolute bottom-4 right-4 rounded-full bg-[#0D3B34]/75 px-3 py-1 text-xs font-bold text-white">{service.category}</div>
                 </div>
