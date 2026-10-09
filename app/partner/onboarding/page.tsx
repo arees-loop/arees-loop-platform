@@ -2672,13 +2672,25 @@ export default function PartnerOnboardingPage() {
                                 .value
                             )
                           }
-                          placeholder="مثال: ترخيص مرشد سياحي"
+                          placeholder="مثال: خدمات السفر والسياحة"
+                          list="arees-tourism-license-types"
                           className={
                             inputClass
                           }
                         />
                       </Field>
 
+                      <datalist id="arees-tourism-license-types">
+                        <option value="خدمات السفر والسياحة" />
+                        <option value="خدمات السفر والسياحة العام" />
+                        <option value="الإرشاد السياحي" />
+                        <option value="الضيافة السياحية" />
+                      </datalist>
+                      <div className="md:col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                        <p className="font-semibold">الاستعلام من وزارة السياحة — بانتظار تفعيل التكامل</p>
+                        <p className="mt-1">أدخل نوع الترخيص ورقمه وتاريخ الإصدار والانتهاء وارفع المستند. يتم حفظ البيانات للمراجعة الإدارية حالياً؛ لم يتم التحقق منها لدى الوزارة.</p>
+                        <button type="button" disabled aria-disabled="true" className="mt-2 cursor-not-allowed rounded-lg border border-amber-300 px-4 py-2 opacity-60">الاستعلام من وزارة السياحة (قريباً)</button>
+                      </div>
                       <Field label="جهة الإصدار">
                         <input
                           value={
