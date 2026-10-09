@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: "desc" },
       select: {
         id: true, nameAr: true, nameEn: true, category: true, subCategory: true,
-        descriptionAr: true, city: true, locationName: true, formattedAddress: true,
+        descriptionAr: true, city: true, region: true, country: true, countryCode: true, locationName: true, formattedAddress: true,
         basePrice: true, vatRate: true, finalPrice: true, loyaltyPoints: true, latitude: true, longitude: true,
         capacity: true, cancellationPolicy: true, meetingInstructions: true,
         organizerType: true, organizerName: true, organizerLicenseNumber: true, organizerLicenseIssuer: true,
@@ -61,6 +61,9 @@ export async function GET(request: NextRequest) {
         subCategory: service.subCategory,
         descriptionAr: service.descriptionAr,
         city: service.city,
+        region: service.region,
+        country: service.country,
+        countryCode: service.countryCode,
         locationName: service.locationName,
         formattedAddress: service.formattedAddress,
         basePrice: Number(service.basePrice),
