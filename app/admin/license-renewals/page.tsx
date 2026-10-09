@@ -10,7 +10,7 @@ export default function AdminLicenseRenewals(){
  if(!notes||notes.trim().length<20)return;
  if(!window.confirm("هل تحققت من صحة المستند وتاريخ انتهاء الترخيص؟"))return;
  const r=await fetch("/api/admin/license-renewals",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,approved,notes,verifiedDocument:true})});
- const d=await r.json();setMessage(d.message||"تعذر تسجيل القرار");if(r.ok)await load();
+ const d=await r.json();setMessage((d.message||"تعذر تسجيل القرار")+(r.ok&&!d.applicantEmailSent?" — تنبيه: تعذر إرسال بريد الشريك.":""));if(r.ok)await load();
  }
  return <main dir="rtl" className="mx-auto min-h-screen max-w-5xl px-5 pt-36 text-[#0D3B34]"><h1 className="text-3xl font-black">تجديد تراخيص الشركاء</h1><p className="mt-3 text-sm">يجب مراجعة المستند والتحقق من الجهة المصدرة قبل الاعتماد.</p>{message&&<p role="status" className="mt-4">{message}</p>}{items.map(x=><article key={x.id} className="mt-5 rounded-2xl border bg-white p-5"><h2 className="font-bold">طلب تجديد الترخيص {x.licenseId}</h2><p className="mt-2 text-sm">تاريخ الانتهاء الجديد: {new Date(x.requestedExpiryDate).toLocaleDateString("ar-SA")}</p><a className="mt-3 inline-block underline" target="_blank" rel="noopener noreferrer" href={`/api/admin/license-renewals/document?id=${encodeURIComponent(x.id)}`}>عرض مستند التجديد</a><div className="mt-4 flex gap-3"><button className="rounded-lg bg-[#0D3B34] px-4 py-2 text-white" onClick={()=>void decide(x.id,true)}>اعتماد بعد التحقق</button><button className="rounded-lg bg-red-50 px-4 py-2 text-red-700" onClick={()=>void decide(x.id,false)}>رفض</button></div></article>)}</main>;
 }

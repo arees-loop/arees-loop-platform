@@ -1,3 +1,4 @@
+import {sendEmail} from "@/lib/notifications/email";
 import {NextResponse} from "next/server";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
@@ -24,5 +25,10 @@ export async function PATCH(request:Request){
   await tx.auditLog.create({data:{userId:session.user.id,action:"LICENSE_RENEWAL_REVIEWED",entityType:"License",entityId:renewal.licenseId,afterData:{requestId:id,approved,notes}}});
   return true;
  });
- return NextResponse.json({success:result,message:result?"تم تسجيل قرار المراجعة":"الطلب غير متاح"},{status:result?200:409});
+ if(!result)return NextResponse.json({success:false,message:"الطلب غير متاح"},{status:409});
+ const renewal=await prisma.licenseRenewalRequest.findUnique({where:{id},select:{submittedById:true,licenseId:true}});
+ const applicant=renewal?await prisma.user.findUnique({where:{id:renewal.submittedById},select:{email:true}}):null;
+ const safeNotes=notes.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+ const delivery=applicant?.email?await sendEmail({to:applicant.email,subject:approved?"أريس لوب | اعتماد تجديد الترخيص":"أريس لوب | مراجعة تجديد الترخيص",html:`<div dir="rtl"><p>${approved?"تم اعتماد تجديد الترخيص":"لم تتم الموافقة على تجديد الترخيص"}.</p><p>ملاحظات الإدارة: ${safeNotes}</p><p>يمكنك متابعة الحالة من لوحة الشريك.</p></div>`}):{sent:false as const};
+ return NextResponse.json({success:true,message:"تم تسجيل قرار المراجعة",applicantEmailSent:delivery.sent});
 }
