@@ -30,7 +30,7 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
       },include:{images:true}});
     });
     await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_UPDATED",entityType:"Service",entityId:id,beforeData:{nameAr:current.nameAr,status:current.status,finalPrice:String(current.finalPrice)},afterData:{nameAr:service.nameAr,status:service.status,finalPrice:String(service.finalPrice)}}});
-    return NextResponse.json({success:true,message:body.submitForReview?"تم حفظ التعديلات وإرسال الخدمة للمراجعة.":"تم حفظ التعديلات بنجاح.",service:{...service,basePrice:Number(service.basePrice),vatRate:Number(service.vatRate),finalPrice:Number(service.finalPrice)}});
+    return NextResponse.json({success:true,message:status==="UNDER_REVIEW"?"تم حفظ التعديلات وإرسال الخدمة للمراجعة.":"تم حفظ التعديلات بنجاح.",service:{...service,basePrice:Number(service.basePrice),vatRate:Number(service.vatRate),finalPrice:Number(service.finalPrice)}});
   }catch(error){console.error("PATCH partner service failed",error);return NextResponse.json({success:false,message:"تعذر حفظ تعديلات الخدمة."},{status:500});}
 }
 export async function POST(request:NextRequest,context:{params:Promise<{id:string}>}){
