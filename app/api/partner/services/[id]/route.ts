@@ -46,9 +46,9 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
     }
     if(action==="PUBLISH"){
       if(service.status!=="SUSPENDED") return NextResponse.json({success:false,message:"الخدمة ليست مخفية حالياً."},{status:409});
-      await prisma.service.update({where:{id},data:{status:"PUBLISHED"}});
-      await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_REPUBLISHED",entityType:"Service",entityId:id,beforeData:{status:service.status},afterData:{status:"PUBLISHED"}}});
-      return NextResponse.json({success:true,status:"PUBLISHED",message:"تم نشر الخدمة للعملاء من جديد."});
+      await prisma.service.update({where:{id},data:{status:"UNDER_REVIEW"}});
+      await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_REPUBLICATION_REQUESTED",entityType:"Service",entityId:id,beforeData:{status:service.status},afterData:{status:"UNDER_REVIEW"}}});
+      return NextResponse.json({success:true,status:"UNDER_REVIEW",message:"تم إرسال طلب إعادة نشر الخدمة لمراجعة الإدارة."});
     }
     return NextResponse.json({success:false,message:"إجراء غير مدعوم."},{status:400});
   }catch(error){console.error("POST partner service action failed",error);return NextResponse.json({success:false,message:"تعذر تنفيذ الإجراء."},{status:500});}
