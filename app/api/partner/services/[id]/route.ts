@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { canManagePartnerServices } from "@/lib/partner-permissions";
 
 async function ownedService(userId:string,id:string){
-  const membership=await prisma.partnerMember.findFirst({where:{userId,isActive:true},orderBy:{createdAt:"desc"},select:{partnerId:true,partner:{select:{status:true}}}});
-  if(!membership || membership.partner.status!=="ACTIVE") return null;
+  const membership=await prisma.partnerMember.findFirst({where:{userId,isActive:true},orderBy:{createdAt:"desc"},select:{partnerId:true,permissions:true,partner:{select:{status:true}}}});
+  if(!membership || membership.partner.status!=="ACTIVE" || !canManagePartnerServices(membership.permissions)) return null;
   return prisma.service.findFirst({where:{id,partnerId:membership.partnerId},include:{_count:{select:{bookings:true}}}});
 }
 export async function PATCH(request:NextRequest,context:{params:Promise<{id:string}>}){

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getAdminNotificationEmails, sendEmail } from "@/lib/notifications/email";
+import { canManagePartnerServices } from "@/lib/partner-permissions";
 
 async function getPartner(userId:string){
   return prisma.partnerMember.findFirst({
@@ -18,6 +19,7 @@ export async function POST(request:Request){
     const membership=await getPartner(session.user.id);
     if(!membership) return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});
     if(membership.partner.status!=="ACTIVE") return NextResponse.json({success:false,message:"حساب الشريك غير مفعل."},{status:403});
+    if(!canManagePartnerServices(membership.permissions)) return NextResponse.json({success:false,message:"ليس لديك صلاحية إدارة الخدمات."},{status:403});
     const body=await request.json();
     const basePrice=Number(body.basePrice||0);
     const vatIncluded=body.vatMode==="included";
