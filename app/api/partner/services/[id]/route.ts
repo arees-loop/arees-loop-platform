@@ -23,7 +23,7 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
     const status = current.status === "PUBLISHED" || body.submitForReview ? "UNDER_REVIEW" : current.status;
     const service=await prisma.$transaction(async(tx)=>{
       await tx.serviceImage.deleteMany({where:{serviceId:id}});
-      return tx.service.update({where:{id},data:{
+      const updated=await tx.service.update({where:{id},data:{
         licenseId:licenseId||null,
         nameAr:body.nameAr.trim(),nameEn:body.nameEn?.trim()||null,category:body.category.trim(),subCategory:body.subCategory?.trim()||null,
         descriptionAr:body.descriptionAr?.trim()||null,descriptionEn:body.descriptionEn?.trim()||null,city:body.city.trim(),region:body.region.trim(),country:body.country.trim(),countryCode:body.countryCode?.trim()||null,locationName:body.locationName?.trim()||null,
@@ -34,8 +34,9 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
         organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,programApprovalNumber:body.programApprovalNumber?.trim()||null,status,
         images:{create:images.map((x:any,index:number)=>({url:x.url,sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}
       },include:{images:true}});
+      await tx.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_UPDATED",entityType:"Service",entityId:id,beforeData:{nameAr:current.nameAr,status:current.status,finalPrice:String(current.finalPrice)},afterData:{nameAr:updated.nameAr,status:updated.status,finalPrice:String(updated.finalPrice)}}});
+      return updated;
     });
-    await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_UPDATED",entityType:"Service",entityId:id,beforeData:{nameAr:current.nameAr,status:current.status,finalPrice:String(current.finalPrice)},afterData:{nameAr:service.nameAr,status:service.status,finalPrice:String(service.finalPrice)}}});
     return NextResponse.json({success:true,message:status==="UNDER_REVIEW"?"تم حفظ التعديلات وإرسال الخدمة للمراجعة.":"تم حفظ التعديلات بنجاح.",service:{...service,basePrice:Number(service.basePrice),vatRate:Number(service.vatRate),finalPrice:Number(service.finalPrice)}});
   }catch(error){console.error("PATCH partner service failed",error);return NextResponse.json({success:false,message:"تعذر حفظ تعديلات الخدمة."},{status:500});}
 }
