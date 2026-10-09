@@ -35,6 +35,8 @@ jobs:
         run: npx prisma validate
       - name: Apply migrations to disposable CI database
         run: npx prisma migrate deploy
+      - name: Check migrated schema drift
+        run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
       - name: Unit and API security regression tests
         run: npm test
       - name: Disposable PostgreSQL constraint and concurrency tests
