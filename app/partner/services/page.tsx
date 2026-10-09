@@ -24,8 +24,6 @@ type Service = {
   subCategory: string;
   license: string;
   city: string;
-  region?: string;
-  country?: string;
   locationName: string;
   formattedAddress: string;
   placeId: string;
@@ -161,8 +159,6 @@ export default function PartnerServicesPage() {
     subCategory: "",
     license: "",
     city: "",
-    region: "",
-    country: "",
     locationName: "",
     formattedAddress: "",
     placeId: "",
@@ -214,8 +210,6 @@ export default function PartnerServicesPage() {
           subCategory: service.subCategory ?? "غير محدد",
           license: service.license ? `${service.license.type} - ${service.license.licenseNumber}` : "غير مرتبط",
           city: service.city ?? "",
-          region: service.region ?? "",
-          country: service.country ?? "",
           locationName: service.locationName ?? "",
           formattedAddress: service.formattedAddress ?? "",
           placeId: service.placeId ?? "",
@@ -241,10 +235,8 @@ export default function PartnerServicesPage() {
     if(!form.nameAr.trim()) missing.push("اسم الخدمة");
     if(!form.category) missing.push("التصنيف");
     if(!form.descriptionAr.trim()) missing.push("الوصف العربي");
-    if(!form.country.trim()) missing.push("الدولة");
-    if(!form.region.trim()) missing.push("المنطقة / الولاية");
     if(!form.city.trim()) missing.push("المدينة");
-    if((form.latitude===null)!==(form.longitude===null)|| (form.latitude!==null&&form.longitude!==null&&(!Number.isFinite(form.latitude)||!Number.isFinite(form.longitude)||form.latitude < -90||form.latitude > 90||form.longitude < -180||form.longitude > 180))) missing.push("إحداثيات الموقع الاختيارية");
+    if(!form.locationName.trim() || !Number.isFinite(form.latitude) || !Number.isFinite(form.longitude)) missing.push("موقع التنفيذ");
     if(!(Number(form.basePrice)>0)) missing.push("السعر");
     if(form.capacity.trim() !== "" && !(Number(form.capacity)>0)) missing.push("السعة (يجب أن تكون أكبر من صفر أو تُترك فارغة)");
     if(!form.cancellationPolicy.trim()) missing.push("سياسة الإلغاء");
@@ -294,8 +286,6 @@ export default function PartnerServicesPage() {
       subCategory: "",
       license: "",
       city: "",
-      region: "",
-      country: "",
       locationName: "",
       formattedAddress: "",
       placeId: "",
@@ -353,8 +343,6 @@ export default function PartnerServicesPage() {
       subCategory: service.subCategory,
       license: service.license,
       city: service.city,
-      region: service.region ?? "",
-      country: service.country ?? "",
       locationName: service.locationName,
       formattedAddress: service.formattedAddress,
       placeId: service.placeId,
@@ -431,7 +419,7 @@ export default function PartnerServicesPage() {
 
   const servicePayload = (submitForReview=false) => ({
     nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:stripProgramSections(form.descriptionAr)+sectionMarker("includes",form.programIncludes)+sectionMarker("excludes",form.programExcludes)+sectionMarker("notes",form.programNotes),descriptionEn:form.descriptionEn,
-    basePrice:form.basePrice,loyaltyPoints:Math.max(150,Number(form.loyaltyPoints)||150),vatMode:form.vatRate,capacity:form.capacity,city:form.city,region:form.region,country:form.country,locationName:form.locationName,formattedAddress:form.formattedAddress,
+    basePrice:form.basePrice,loyaltyPoints:Math.max(150,Number(form.loyaltyPoints)||150),vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
     placeId:form.placeId,latitude:form.latitude,longitude:form.longitude,meetingInstructions:form.meetingInstructions,cancellationPolicy:form.cancellationPolicy,
     organizerType:form.organizerType,organizerName:form.organizerName,organizerLicenseNumber:form.organizerLicenseNumber,organizerLicenseIssuer:form.organizerLicenseIssuer,programApprovalNumber:form.programApprovalNumber,
     images:form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})),submitForReview
@@ -460,6 +448,8 @@ export default function PartnerServicesPage() {
     Number(form.capacity || 0) !== Number(editingOriginalService.capacity || 0) ||
     form.city !== editingOriginalService.city ||
     form.locationName !== editingOriginalService.locationName ||
+    form.country.trim() !== (editingOriginalService.country ?? "").trim() ||
+    form.region.trim() !== (editingOriginalService.region ?? "").trim() ||
     form.cancellationPolicy.trim() !== (editingOriginalService.cancellationPolicy ?? "").trim() ||
     form.organizerType !== (editingOriginalService.organizerType ?? "SELF") ||
     form.organizerName.trim() !== (editingOriginalService.organizerName ?? "").trim() ||
@@ -507,7 +497,7 @@ export default function PartnerServicesPage() {
           nameAr: form.nameAr, nameEn: form.nameEn, category: form.category,
           subCategory: form.subCategory, descriptionAr: stripProgramSections(form.descriptionAr)+sectionMarker("includes",form.programIncludes)+sectionMarker("excludes",form.programExcludes)+sectionMarker("notes",form.programNotes),
           descriptionEn: form.descriptionEn, basePrice: form.basePrice,
-          vatMode: form.vatRate, capacity: form.capacity, city: form.city, region:form.region,country:form.country,
+          vatMode: form.vatRate, capacity: form.capacity, city: form.city,
           locationName: form.locationName, formattedAddress: form.formattedAddress,
           placeId: form.placeId, latitude: form.latitude, longitude: form.longitude,
           hasMeetingPoint: form.hasMeetingPoint, meetingPointName: form.meetingPointName,
@@ -1020,14 +1010,12 @@ export default function PartnerServicesPage() {
                   <b className="text-[#0D3B34]">الموقع أساسي في Arees Loop.</b> حدّد المدينة وموقع تنفيذ الخدمة ليتمكن النظام من معرفة التجارب القريبة من العميل. نقطة التجمع معلومة إضافية وليست بديلاً عن موقع الخدمة.
                 </div>
                 <div className="mb-4 grid gap-4 md:grid-cols-2">
-                  <Field label="الدولة *"><input value={form.country} onChange={(e)=>setForm((x)=>({...x,country:e.target.value}))} className={inputClass} placeholder="السعودية"/></Field>
-                  <Field label="المنطقة / الولاية *"><input value={form.region} onChange={(e)=>setForm((x)=>({...x,region:e.target.value}))} className={inputClass} placeholder="منطقة المدينة المنورة"/></Field>
                   <Field label="المدينة *"><input value={form.city} onChange={(e)=>setForm((x)=>({...x,city:e.target.value}))} className={inputClass} placeholder="مثال: العلا"/></Field>
-                  <Field label="اسم موقع تنفيذ الخدمة (اختياري)"><input value={form.locationName} onChange={(e)=>setForm((x)=>({...x,locationName:e.target.value}))} className={inputClass} placeholder="مثال: جبل الفيل، البلدة القديمة"/></Field>
+                  <Field label="اسم موقع تنفيذ الخدمة *"><input value={form.locationName} onChange={(e)=>setForm((x)=>({...x,locationName:e.target.value}))} className={inputClass} placeholder="مثال: جبل الفيل، البلدة القديمة"/></Field>
                 </div>
                 <Field label="العنوان التفصيلي / الحي"><input value={form.formattedAddress} onChange={(e)=>setForm((x)=>({...x,formattedAddress:e.target.value}))} className={inputClass} placeholder="اكتب الحي أو العنوان الوطني/المختصر إن توفر"/></Field>
                 <div className="mt-4 rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
-                  <p className="mb-2 text-xs font-bold">تحديد الموقع على الخريطة (اختياري)</p>
+                  <p className="mb-2 text-xs font-bold">تحديد الموقع على الخريطة *</p>
                   <div className="flex flex-col gap-2 md:flex-row">
                     <input value={locationQuery} onChange={(e)=>handleLocationQueryChange(e.target.value)} onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();void searchServiceLocation();}}} className={inputClass} placeholder="ابحث باسم المكان، الحي أو العنوان"/>
                     <button type="button" onClick={()=>void searchServiceLocation()} disabled={locationBusy} className="shrink-0 rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">بحث</button>
