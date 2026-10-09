@@ -34,9 +34,8 @@ export async function POST(request:Request){
  const pending=await prisma.licenseRenewalRequest.findFirst({where:{licenseId,status:"UNDER_REVIEW"}});
  if(pending)return NextResponse.json({success:false,message:"هناك طلب تجديد قيد المراجعة"},{status:409});
  const id=crypto.randomUUID();
- let uploadedPath:string|undefined;
  const blob=await put("licenses/renewals/"+id+"/document",file,{access:"private",contentType:file.type,addRandomSuffix:false});
- uploadedPath=blob.pathname;
+ const uploadedPath=blob.pathname;
  try{
  await prisma.$transaction(async tx=>{
   await tx.licenseRenewalRequest.create({data:{id,licenseId,partnerId:member.partnerId,submittedById:session.user.id,requestedExpiryDate:expiry,documentPath:blob.pathname}});
