@@ -236,7 +236,9 @@ export default function PartnerServicesPage() {
     if(!form.category) missing.push("التصنيف");
     if(!form.descriptionAr.trim()) missing.push("الوصف العربي");
     if(!form.city.trim()) missing.push("المدينة");
-    if(!form.locationName.trim() || !Number.isFinite(form.latitude) || !Number.isFinite(form.longitude)) missing.push("موقع التنفيذ");
+    if(!form.country.trim()) missing.push("الدولة");
+    if(!form.region.trim()) missing.push("المنطقة");
+    if((form.latitude === null) !== (form.longitude === null) || (form.latitude !== null && (!Number.isFinite(form.latitude) || !Number.isFinite(form.longitude)))) missing.push("إحداثيات الموقع الاختيارية");
     if(!(Number(form.basePrice)>0)) missing.push("السعر");
     if(form.capacity.trim() !== "" && !(Number(form.capacity)>0)) missing.push("السعة (يجب أن تكون أكبر من صفر أو تُترك فارغة)");
     if(!form.cancellationPolicy.trim()) missing.push("سياسة الإلغاء");
