@@ -1,3 +1,4 @@
+import {Prisma} from "@prisma/client";
 import {canManagePartnerServices,getPartnerAccessRole} from "@/lib/partner-permissions";
 import {getAdminNotificationEmails,sendEmail} from "@/lib/notifications/email";
 import {NextResponse} from "next/server";
@@ -46,5 +47,9 @@ export async function POST(request:Request){
  adminEmailSent=delivery.sent;
  }catch(error){console.error("Renewal admin notification failed",error);}
  return NextResponse.json({success:true,message:"تم إرسال التجديد للإدارة للمراجعة.",adminEmailSent:adminEmailSent});
- }catch(e){console.error("license renewal",e);return NextResponse.json({success:false,message:"تعذر إرسال طلب التجديد"},{status:500})}
+ }catch(e){
+ if(e instanceof Prisma.PrismaClientKnownRequestError&&e.code==="P2002")return NextResponse.json({success:false,message:"يوجد طلب تجديد قيد المراجعة بالفعل. انتظر قرار الإدارة قبل تقديم طلب جديد."},{status:409});
+ console.error("license renewal submission",e);
+ return NextResponse.json({success:false,message:"تعذر إرسال طلب التجديد"},{status:500});
+ }
 }
