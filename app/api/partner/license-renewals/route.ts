@@ -18,8 +18,9 @@ export async function POST(request:Request){
  try{
  const session=await getCurrentSession();
  if(!session)return NextResponse.json({success:false,message:"سجل الدخول أولاً"},{status:401});
- const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true}});
+ const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true,permissions:true,partner:{select:{status:true}}}});
  if(!member)return NextResponse.json({success:false,message:"حساب شريك مطلوب"},{status:403});
+ if(member.partner.status!=="ACTIVE"||!["OWNER","MANAGER"].includes(getPartnerAccessRole(member.permissions))||!canManagePartnerServices(member.permissions))return NextResponse.json({success:false,message:"ليس لديك صلاحية تجديد ترخيص المنشأة"},{status:403});
  const form=await request.formData();
  const licenseId=String(form.get("licenseId")||"");
  const expiry=new Date(String(form.get("expiryDate")||"")+"T00:00:00.000Z");
