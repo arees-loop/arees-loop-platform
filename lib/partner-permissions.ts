@@ -30,3 +30,23 @@ export function canViewPartnerTeam(permissions: unknown): boolean {
   if (!team || typeof team !== "object" || Array.isArray(team)) return true;
   return (team as Record<string, unknown>).view !== false;
 }
+
+/** Explicit roles stored in PartnerMember.permissions.role.
+ * Null/unknown roles remain LEGACY until membership ownership is verified. */
+export type PartnerAccessRole = "OWNER" | "MANAGER" | "EMPLOYEE" | "LEGACY";
+
+export function getPartnerAccessRole(permissions: unknown): PartnerAccessRole {
+  if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) return "LEGACY";
+  const role = (permissions as Record<string, unknown>).role;
+  return role === "OWNER" || role === "MANAGER" || role === "EMPLOYEE" ? role : "LEGACY";
+}
+
+/** A role alone never confers permission to manage other members. */
+export function canManagePartnerTeam(permissions: unknown): boolean {
+  const role = getPartnerAccessRole(permissions);
+  if (role === "OWNER") return true;
+  if (role !== "MANAGER") return false;
+  const team = (permissions as Record<string, unknown>).team;
+  return !!team && typeof team === "object" && !Array.isArray(team) &&
+    (team as Record<string, unknown>).manage === true;
+}
