@@ -19,6 +19,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
     return () => { document.removeEventListener("pointerdown", dismiss); document.removeEventListener("keydown", escape); };
   }, []);
   const [cartCount, setCartCount] = useState(0);
+  const [unreadInterests, setUnreadInterests] = useState(0);
   const [navVisible, setNavVisible] = useState<Record<string,boolean>>({});
   useEffect(() => { let mounted=true; fetch("/api/navigation",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(mounted&&d.success)setNavVisible(d.data)}).catch(()=>{});return()=>{mounted=false}; }, []);
   const text = "text-[#0D3B34]";
@@ -51,6 +52,19 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
     window.addEventListener("storage", syncCart);
     return () => { window.removeEventListener("arees-cart-updated", syncCart); window.removeEventListener("storage", syncCart); };
   }, []);
+  useEffect(() => {
+    if (!user) { setUnreadInterests(0); return; }
+    let active = true;
+    const refresh = () => fetch("/api/account/interest-suggestions", { cache: "no-store" })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (active && data?.success) setUnreadInterests(data.unreadCount || 0); })
+      .catch(() => {});
+    void refresh();
+    const onFocus = () => { void refresh(); };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("arees:interest-notifications-updated", onFocus);
+    return () => { active = false; window.removeEventListener("focus", onFocus); window.removeEventListener("arees:interest-notifications-updated", onFocus); };
+  }, [user]);
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() || "حسابي";
 
   async function logout() {
@@ -94,6 +108,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                 <span className="text-[20px] leading-none">🛒</span>
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-[#D4AF37] px-1 text-[10px] font-black text-[#0D3B34]">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
+              <Link href="/notifications" aria-label={`الإشعارات: ${unreadInterests} غير مقروءة`} className="relative grid h-11 w-11 place-items-center rounded-full border border-[#0D3B34]/15 bg-white text-[#0D3B34]"><span aria-hidden="true" className="text-xl">♧</span>{unreadInterests>0&&<span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{unreadInterests>99?"99+":unreadInterests}</span>}</Link>
               <div className="relative" ref={accountRef}>
                 <button type="button" aria-expanded={accountOpen} aria-haspopup="menu" aria-label="فتح قائمة حسابي" onClick={() => setAccountOpen((value) => !value)} className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
                   {user.profileImageUrl && <img src={user.profileImageUrl} alt="صورتي" className="h-8 w-8 rounded-full border border-white/25 object-cover" />}
