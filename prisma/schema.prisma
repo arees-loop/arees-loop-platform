@@ -947,3 +947,17 @@ model LicenseAlert {
  @@index([recipientUserId,readAt,createdAt])
  @@index([partnerId,createdAt])
 }
+
+model GuideLicenseAlert {
+ id String @id @default(cuid())
+ recipientUserId String
+ applicationId String
+ kind String
+ title String
+ message String
+ dayKey String
+ readAt DateTime?
+ createdAt DateTime @default(now())
+ @@unique([recipientUserId,applicationId,kind,dayKey])
+ @@index([recipientUserId,readAt,createdAt])
+}
