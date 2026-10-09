@@ -6,6 +6,22 @@ import { useEffect, useRef, useState } from "react";
 
 type HeaderUser = { firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null };
 
+type MenuIconName="bell"|"orders"|"clock"|"heart"|"wallet"|"star"|"user"|"settings"|"logout";
+function MenuIcon({name}:{name:MenuIconName}){
+ const paths={
+ bell:<><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></>,
+ orders:<><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></>,
+ clock:<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
+ heart:<path d="M20.8 8.7c0 4.6-8.8 10.1-8.8 10.1S3.2 13.3 3.2 8.7a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"/>,
+ wallet:<><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M6 6V4h12"/><path d="M16 15h2"/></>,
+ star:<path d="m12 2 3 6.2 6.8 1-4.9 4.8 1.2 6.8L12 17.6l-6.1 3.2 1.2-6.8-4.9-4.8 6.8-1Z"/>,
+ user:<><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-7 8-7s8 2.5 8 7"/></>,
+ settings:<><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></>,
+ logout:<><path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/><path d="M14 8l4 4-4 4m4-4H8"/></>
+ };
+ return <svg aria-hidden="true" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+}
+
 export default function GlobalHeader({ overlay = false }: { overlay?: boolean }) {
   const [language, setLanguage] = useState<"ar" | "en">("ar");
   const [user, setUser] = useState<HeaderUser | null>(null);
@@ -108,27 +124,27 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                 <span className="text-[20px] leading-none">🛒</span>
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-[#D4AF37] px-1 text-[10px] font-black text-[#0D3B34]">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
-              <Link href="/notifications" aria-label={`الإشعارات: ${unreadInterests} غير مقروءة`} className="relative grid h-11 w-11 place-items-center rounded-full border border-[#0D3B34]/15 bg-white text-[#0D3B34]"><span aria-hidden="true" className="text-xl">♧</span>{unreadInterests>0&&<span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{unreadInterests>99?"99+":unreadInterests}</span>}</Link>
+              <Link href="/notifications" aria-label={`الإشعارات: ${unreadInterests} غير مقروءة`} className="relative grid h-11 w-11 place-items-center rounded-full border border-[#0D3B34]/15 bg-white text-[#0D3B34]"><span aria-hidden="true" className="text-xl"><MenuIcon name="bell"/></span>{unreadInterests>0&&<span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{unreadInterests>99?"99+":unreadInterests}</span>}</Link>
               <div className="relative" ref={accountRef}>
-                <button type="button" aria-expanded={accountOpen} aria-haspopup="menu" aria-label="فتح قائمة حسابي" onClick={() => setAccountOpen((value) => !value)} className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
+                <button type="button" aria-expanded={accountOpen} aria-haspopup="menu" aria-label="فتح قائمة حسابي" onClick={() => setAccountOpen((value) => !value)} className="flex h-11 max-w-[140px] items-center gap-2 rounded-full bg-[#0D3B34] px-3 sm:max-w-none sm:px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
                   {user.profileImageUrl && <img src={user.profileImageUrl} alt="صورتي" className="h-8 w-8 rounded-full border border-white/25 object-cover" />}
-                  <span>مرحباً، {displayName}</span>
+                  <span className="hidden truncate sm:inline">مرحباً، {displayName}</span><span className="sm:hidden">حسابي</span>
                   <span className={`text-[#D4AF37] transition-transform ${accountOpen ? "rotate-180" : ""}`}>⌄</span>
                 </button>
                 {accountOpen && (
-                  <div dir="rtl" role="menu" aria-label="قائمة حساب العميل" className="absolute left-0 top-full z-[120] mt-2 w-[260px] overflow-hidden rounded-[20px] border border-[#D4AF37]/30 bg-white p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+                  <div dir="rtl" role="menu" aria-label="قائمة حساب العميل" className="absolute right-0 top-full z-[120] mt-2 w-[260px] overflow-hidden rounded-[20px] border border-[#D4AF37]/30 bg-white p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
                     {([
-                      {href:"/notifications",label:"الإشعارات",icon:"♧"},
-                      {href:"/bookings",label:"الطلبات",icon:"▤"},
-                      {href:"/bookings?payment=pending",label:"طلبات بانتظار الدفع",icon:"◷"},
-                      {href:"/interests",label:"اهتماماتي",icon:"♡"},
-                      {href:"/wallet",label:"محفظتي",icon:"▣"},
-                      {href:"/rewards",label:"نقاط الولاء",icon:"✧"},
-                      {href:"/profile",label:"حسابي",icon:"♙"},
-                      {href:"/account/settings",label:"الإعدادات",icon:"⚙"},
-                    ]).map(({href,label,icon})=><Link key={href} role="menuitem" href={href} onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#0D3B34] transition hover:bg-[#F6F0E2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B99124]"><span aria-hidden="true" className="grid h-6 w-6 place-items-center text-lg font-normal text-[#B99124]">{icon}</span><span>{label}</span></Link>)}
+                      {href:"/notifications",label:"الإشعارات",icon:"bell"},
+                      {href:"/bookings",label:"الطلبات",icon:"orders"},
+                      {href:"/bookings?payment=pending",label:"طلبات بانتظار الدفع",icon:"clock"},
+                      {href:"/interests",label:"اهتماماتي",icon:"heart"},
+                      {href:"/wallet",label:"محفظتي",icon:"wallet"},
+                      {href:"/rewards",label:"نقاط الولاء",icon:"star"},
+                      {href:"/profile",label:"حسابي",icon:"user"},
+                      {href:"/account/settings",label:"الإعدادات",icon:"settings"},
+                    ]).map(({href,label,icon})=><Link key={href} role="menuitem" href={href} onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#0D3B34] transition hover:bg-[#F6F0E2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B99124]"><span aria-hidden="true" className="grid h-6 w-6 place-items-center text-lg font-normal text-[#B99124]"><MenuIcon name={icon as MenuIconName}/></span><span>{label}</span></Link>)}
                     <div className="my-1 h-px bg-[#0D3B34]/10"/>
-                    <button role="menuitem" type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm font-semibold text-red-700 hover:bg-red-50"><span aria-hidden="true" className="grid h-6 w-6 place-items-center text-lg">↪</span><span>تسجيل الخروج</span></button>
+                    <button role="menuitem" type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm font-semibold text-red-700 hover:bg-red-50"><span aria-hidden="true" className="grid h-6 w-6 place-items-center text-red-700"><MenuIcon name="logout"/></span><span>تسجيل الخروج</span></button>
                   </div>
                 )}
               </div>
