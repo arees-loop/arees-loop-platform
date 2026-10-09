@@ -37,9 +37,14 @@ export async function POST(request:Request){
   await tx.licenseRenewalRequest.create({data:{id,licenseId,partnerId:member.partnerId,submittedById:session.user.id,requestedExpiryDate:expiry,documentPath:blob.pathname}});
   await tx.auditLog.create({data:{userId:session.user.id,action:"LICENSE_RENEWAL_SUBMITTED",entityType:"License",entityId:licenseId,afterData:{requestId:id,requestedExpiryDate:expiry.toISOString()}}});
  });
+ let adminEmailSent=false;
+ try{
  const admins=getAdminNotificationEmails();
  const origin=new URL(request.url).origin;
  const delivery=admins.length?await sendEmail({to:admins,subject:"أريس لوب | طلب تجديد ترخيص شريك",html:`<div dir="rtl"><h2>طلب تجديد ترخيص جديد</h2><p>رقم الترخيص: ${license.licenseNumber.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}</p><p>تاريخ الانتهاء المطلوب: ${expiry.toISOString().slice(0,10)}</p><p><a href="${origin}/admin/license-renewals">مراجعة طلبات التجديد</a></p></div>`}):{sent:false as const,reason:"ADMIN_EMAILS_NOT_CONFIGURED"};
- return NextResponse.json({success:true,message:"تم إرسال التجديد للإدارة للمراجعة.",adminEmailSent:delivery.sent});
+
+ adminEmailSent=delivery.sent;
+ }catch(error){console.error("Renewal admin notification failed",error);}
+ return NextResponse.json({success:true,message:"تم إرسال التجديد للإدارة للمراجعة.",adminEmailSent:adminEmailSent});
  }catch(e){console.error("license renewal",e);return NextResponse.json({success:false,message:"تعذر إرسال طلب التجديد"},{status:500})}
 }

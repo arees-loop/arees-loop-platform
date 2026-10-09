@@ -32,8 +32,13 @@ export async function POST(request:Request){
  await tx.guideLicenseRenewal.create({data:{id,applicationId,userId:session.user.id,licenseNumber,requestedExpiryDate:expiry,documentPath:blob.pathname}});
  await tx.auditLog.create({data:{userId:session.user.id,action:"GUIDE_LICENSE_RENEWAL_SUBMITTED",entityType:"GuideApplication",entityId:applicationId,afterData:{renewalId:id,expiryDate:dateText}}});
  });
+ let adminEmailSent=false;
+ try{
  const admins=getAdminNotificationEmails();
  const delivery=admins.length?await sendEmail({to:admins,subject:"أريس لوب | طلب تجديد ترخيص مرشد",html:`<div dir="rtl"><h2>طلب تجديد ترخيص مرشد</h2><p>طلب جديد بانتظار المراجعة.</p><a href="${new URL(request.url).origin}/admin/guide-license-renewals">مراجعة التجديد</a></div>`}):{sent:false as const};
- return NextResponse.json({success:true,message:"تم إرسال طلب التجديد للإدارة",adminEmailSent:delivery.sent});
+
+ adminEmailSent=delivery.sent;
+ }catch(error){console.error("Renewal admin notification failed",error);}
+ return NextResponse.json({success:true,message:"تم إرسال طلب التجديد للإدارة",adminEmailSent:adminEmailSent});
  }catch(e){console.error("guide renewal",e);return NextResponse.json({success:false,message:"تعذر إرسال التجديد"},{status:500})}
 }
