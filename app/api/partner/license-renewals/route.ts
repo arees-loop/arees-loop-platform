@@ -4,7 +4,7 @@ import {getAdminNotificationEmails,sendEmail} from "@/lib/notifications/email";
 import {NextResponse} from "next/server";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
-import {put} from "@vercel/blob";
+import {put,del} from "@vercel/blob";
 export const runtime="nodejs";
 export async function GET(){
  const session=await getCurrentSession();
@@ -33,11 +33,18 @@ export async function POST(request:Request){
  const pending=await prisma.licenseRenewalRequest.findFirst({where:{licenseId,status:"UNDER_REVIEW"}});
  if(pending)return NextResponse.json({success:false,message:"هناك طلب تجديد قيد المراجعة"},{status:409});
  const id=crypto.randomUUID();
+ let uploadedPath:string|undefined;
  const blob=await put("licenses/renewals/"+id+"/document",file,{access:"private",contentType:file.type,addRandomSuffix:false});
+ uploadedPath=blob.pathname;
+ try{
  await prisma.$transaction(async tx=>{
   await tx.licenseRenewalRequest.create({data:{id,licenseId,partnerId:member.partnerId,submittedById:session.user.id,requestedExpiryDate:expiry,documentPath:blob.pathname}});
   await tx.auditLog.create({data:{userId:session.user.id,action:"LICENSE_RENEWAL_SUBMITTED",entityType:"License",entityId:licenseId,afterData:{requestId:id,requestedExpiryDate:expiry.toISOString()}}});
  });
+ }catch(error){
+  try{if(uploadedPath)await del(uploadedPath);}catch(cleanupError){console.error("Renewal document cleanup failed",cleanupError);}
+  throw error;
+ }
  let adminEmailSent=false;
  try{
  const admins=getAdminNotificationEmails();

@@ -2,7 +2,7 @@ import {Prisma} from "@prisma/client";
 import {NextResponse} from "next/server";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
-import {put} from "@vercel/blob";
+import {put,del} from "@vercel/blob";
 import {getAdminNotificationEmails,sendEmail} from "@/lib/notifications/email";
 export const runtime="nodejs";
 export async function GET(){
@@ -28,11 +28,18 @@ export async function POST(request:Request){
  const pending=await prisma.guideLicenseRenewal.findFirst({where:{applicationId,status:"UNDER_REVIEW"},select:{id:true}});
  if(pending)return NextResponse.json({success:false,message:"يوجد طلب تجديد قيد المراجعة"},{status:409});
  const id=crypto.randomUUID();
+ let uploadedPath:string|undefined;
  const blob=await put("guides/renewals/"+id+"/license",file,{access:"private",contentType:file.type,addRandomSuffix:false});
+ uploadedPath=blob.pathname;
+ try{
  await prisma.$transaction(async tx=>{
  await tx.guideLicenseRenewal.create({data:{id,applicationId,userId:session.user.id,licenseNumber,requestedExpiryDate:expiry,documentPath:blob.pathname}});
  await tx.auditLog.create({data:{userId:session.user.id,action:"GUIDE_LICENSE_RENEWAL_SUBMITTED",entityType:"GuideApplication",entityId:applicationId,afterData:{renewalId:id,expiryDate:dateText}}});
  });
+ }catch(error){
+  try{if(uploadedPath)await del(uploadedPath);}catch(cleanupError){console.error("Renewal document cleanup failed",cleanupError);}
+  throw error;
+ }
  let adminEmailSent=false;
  try{
  const admins=getAdminNotificationEmails();
