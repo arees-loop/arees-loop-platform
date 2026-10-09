@@ -63,7 +63,10 @@ export async function DELETE(_request:NextRequest,context:{params:Promise<{id:st
   const session=await getCurrentSession(); if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
   const {id}=await context.params; const service=await ownedService(session.user.id,id); if(!service) return NextResponse.json({success:false,message:"الخدمة غير موجودة."},{status:404});
   if(service._count.bookings>0) return NextResponse.json({success:false,message:"لا يمكن حذف هذه الخدمة لأنها مرتبطة بحجوزات. استخدم الأرشفة/الإخفاء للحفاظ على السجل."},{status:409});
-  await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_DELETED",entityType:"Service",entityId:id,beforeData:{nameAr:service.nameAr,status:service.status}}});
-  await prisma.$transaction([prisma.serviceImage.deleteMany({where:{serviceId:id}}),prisma.service.delete({where:{id}})]);
+  await prisma.$transaction(async tx=>{
+    await tx.serviceImage.deleteMany({where:{serviceId:id}});
+    await tx.service.delete({where:{id}});
+    await tx.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_DELETED",entityType:"Service",entityId:id,beforeData:{nameAr:service.nameAr,status:service.status}}});
+  });
   return NextResponse.json({success:true,message:"تم حذف الخدمة نهائياً لعدم وجود حجوزات مرتبطة بها."});
 }
