@@ -6,8 +6,9 @@ export async function GET(){
  try{
   const session=await getCurrentSession();
   if(!session)return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
-  const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},orderBy:{createdAt:"desc"},select:{partnerId:true}});
+  const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},orderBy:{createdAt:"desc"},select:{partnerId:true,partner:{select:{status:true}}}});
   if(!member)return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});
+  if(member.partner.status!=="ACTIVE")return NextResponse.json({success:false,message:"حساب الشريك غير مفعل."},{status:403});
   const partnerId=member.partnerId;
   const [partner,services,bookings,invoices,settlements,licenses,members,agreements]=await Promise.all([
    prisma.partner.findUnique({where:{id:partnerId}}),
