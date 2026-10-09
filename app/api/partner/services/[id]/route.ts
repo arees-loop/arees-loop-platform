@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 
 async function ownedService(userId:string,id:string){
-  const membership=await prisma.partnerMember.findFirst({where:{userId,isActive:true},select:{partnerId:true}});
-  if(!membership) return null;
+  const membership=await prisma.partnerMember.findFirst({where:{userId,isActive:true},select:{partnerId:true,partner:{select:{status:true}}}});
+  if(!membership || membership.partner.status!=="ACTIVE") return null;
   return prisma.service.findFirst({where:{id,partnerId:membership.partnerId},include:{_count:{select:{bookings:true}}}});
 }
 export async function PATCH(request:NextRequest,context:{params:Promise<{id:string}>}){
