@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type HeaderUser = { firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null };
 
@@ -10,6 +10,14 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   const [language, setLanguage] = useState<"ar" | "en">("ar");
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const dismiss = (event: PointerEvent) => { if (!accountRef.current?.contains(event.target as Node)) setAccountOpen(false); };
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") setAccountOpen(false); };
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("pointerdown", dismiss); document.removeEventListener("keydown", escape); };
+  }, []);
   const [cartCount, setCartCount] = useState(0);
   const [navVisible, setNavVisible] = useState<Record<string,boolean>>({});
   useEffect(() => { let mounted=true; fetch("/api/navigation",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(mounted&&d.success)setNavVisible(d.data)}).catch(()=>{});return()=>{mounted=false}; }, []);
@@ -86,20 +94,26 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                 <span className="text-[20px] leading-none">🛒</span>
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-[#D4AF37] px-1 text-[10px] font-black text-[#0D3B34]">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
-              <div className="relative" onMouseLeave={() => setAccountOpen(false)}>
-                <button type="button" onClick={() => setAccountOpen((value) => !value)} className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
+              <div className="relative" ref={accountRef}>
+                <button type="button" aria-expanded={accountOpen} aria-haspopup="menu" aria-label="فتح قائمة حسابي" onClick={() => setAccountOpen((value) => !value)} className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
                   {user.profileImageUrl && <img src={user.profileImageUrl} alt="صورتي" className="h-8 w-8 rounded-full border border-white/25 object-cover" />}
                   <span>مرحباً، {displayName}</span>
                   <span className={`text-[#D4AF37] transition-transform ${accountOpen ? "rotate-180" : ""}`}>⌄</span>
                 </button>
                 {accountOpen && (
-                  <div dir="rtl" className="absolute left-0 top-full mt-1 w-52 overflow-hidden rounded-[18px] border border-[#D4AF37]/35 bg-white/95 p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-                    <Link href="/profile" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الملف الشخصي</Link>
-                    <Link href="/cart" onClick={() => setAccountOpen(false)} className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]"><span>السلة</span>{cartCount > 0 && <span className="rounded-full bg-[#D4AF37] px-2 py-0.5 text-[10px] font-black text-[#0D3B34]">{cartCount}</span>}</Link>
-                    <Link href="/bookings" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">حجوزاتي</Link>
-                    <Link href="/rewards" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">نقاطي ومكافآتي</Link>
-                    <div className="my-1 h-px bg-[#0D3B34]/10" />
-                    <button type="button" onClick={logout} className="block w-full rounded-xl px-4 py-2.5 text-right text-xs font-bold text-red-700 hover:bg-red-50">تسجيل الخروج</button>
+                  <div dir="rtl" role="menu" aria-label="قائمة حساب العميل" className="absolute left-0 top-full z-[120] mt-2 w-[260px] overflow-hidden rounded-[20px] border border-[#D4AF37]/30 bg-white p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+                    {([
+                      {href:"/notifications",label:"الإشعارات",icon:"♧"},
+                      {href:"/bookings",label:"الطلبات",icon:"▤"},
+                      {href:"/bookings?payment=pending",label:"طلبات بانتظار الدفع",icon:"◷"},
+                      {href:"/wishlist",label:"قائمة الأمنيات",icon:"♡"},
+                      {href:"/wallet",label:"محفظتي",icon:"▣"},
+                      {href:"/rewards",label:"نقاط الولاء",icon:"✧"},
+                      {href:"/profile",label:"حسابي",icon:"♙"},
+                      {href:"/account/settings",label:"الإعدادات",icon:"⚙"},
+                    ]).map(({href,label,icon})=><Link key={href} role="menuitem" href={href} onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#0D3B34] transition hover:bg-[#F6F0E2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B99124]"><span aria-hidden="true" className="grid h-6 w-6 place-items-center text-lg font-normal text-[#B99124]">{icon}</span><span>{label}</span></Link>)}
+                    <div className="my-1 h-px bg-[#0D3B34]/10"/>
+                    <button role="menuitem" type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm font-semibold text-red-700 hover:bg-red-50"><span aria-hidden="true" className="grid h-6 w-6 place-items-center text-lg">↪</span><span>تسجيل الخروج</span></button>
                   </div>
                 )}
               </div>

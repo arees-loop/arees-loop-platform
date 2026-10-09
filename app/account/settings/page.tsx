@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function Page(){return <main dir="rtl" className="mx-auto min-h-screen max-w-3xl px-6 pb-16 pt-36 text-[#0D3B34]"><section className="rounded-3xl border border-[#D4AF37]/25 bg-white p-8 shadow-sm"><h1 className="text-3xl font-bold">الإعدادات</h1><p className="mt-5 leading-8">يمكنك إدارة بيانات حسابك من الملف الشخصي. ستضاف تفضيلات الإشعارات والخصوصية هنا بعد ربط إعدادات الحساب.</p><Link href="/profile" className="mt-6 inline-flex rounded-xl bg-[#0D3B34] px-5 py-3 text-white">العودة إلى حسابي</Link></section></main>}
