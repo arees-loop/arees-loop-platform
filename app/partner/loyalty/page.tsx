@@ -29,7 +29,15 @@ export default function LoyaltyPage() {
       if(current){setScope(current.scope);setCategory(current.category||"");setServiceId(current.serviceId||"");}
     }
   }
-  useEffect(()=>{load();},[]);
+  useEffect(()=>{
+    const controller=new AbortController();
+    fetch("/api/partner/loyalty",{cache:"no-store",signal:controller.signal}).then(r=>r.json()).then(data=>{
+      if(!data.success){setLoadError(data.message||"تعذر تحميل إعدادات النقاط.");return;}
+      setServices(data.services||[]);const current=data.settings?.[0]||null;setSetting(current);
+      if(current){setScope(current.scope);setCategory(current.category||"");setServiceId(current.serviceId||"")}
+    }).catch(()=>{if(!controller.signal.aborted)setLoadError("تعذر تحميل إعدادات النقاط.")});
+    return ()=>controller.abort();
+  },[]);
 
   async function save(){
     setSaving(true);setMessage("");

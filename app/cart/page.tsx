@@ -1,13 +1,16 @@
 "use client";
 import Link from "next/link";
-import {useEffect,useState} from "react";
+import {useEffect,useMemo,useState} from "react";
+import {useBrowserStorage} from "@/lib/browser-storage";
 type Item={serviceId:string;quantity:number};
 type Service={id:string;nameAr:string;finalPrice:number;images:string[];loyaltyPoints:number};
 const KEY="arees-loop-cart-v1";
 export default function CartPage(){
- const [items,setItems]=useState<Item[]>([]),[services,setServices]=useState<Service[]>([]),[loading,setLoading]=useState(true); const [couponCode,setCouponCode]=useState(""); const [couponDiscount,setCouponDiscount]=useState(0); const [couponMessage,setCouponMessage]=useState(""); const [couponBusy,setCouponBusy]=useState(false); const [points,setPoints]=useState<number|null>(null); const [usePoints,setUsePoints]=useState(false);
- useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(saved))setItems(saved.filter(x=>typeof x.serviceId==="string"&&Number.isInteger(x.quantity)&&x.quantity>0))}catch{}fetch("/api/services",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success)setServices(d.data||[])}).finally(()=>setLoading(false));fetch("/api/loyalty/wallet",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.success)setPoints(Number(d.wallet?.balance||0))}).catch(()=>{})},[]);
- const save=(next:Item[])=>{setCouponDiscount(0);setCouponMessage("");setUsePoints(false);setItems(next);localStorage.setItem(KEY,JSON.stringify(next));window.dispatchEvent(new Event("arees-cart-updated"))};
+ const rawItems=useBrowserStorage(KEY);
+ const items=useMemo<Item[]>(()=>{try{const saved:unknown=JSON.parse(rawItems||"[]");return Array.isArray(saved)?saved.filter((x):x is Item=>!!x&&typeof x==="object"&&typeof x.serviceId==="string"&&Number.isInteger(x.quantity)&&x.quantity>0):[]}catch{return []}},[rawItems]);
+ const [services,setServices]=useState<Service[]>([]),[loading,setLoading]=useState(true); const [couponCode,setCouponCode]=useState(""); const [couponDiscount,setCouponDiscount]=useState(0); const [couponMessage,setCouponMessage]=useState(""); const [couponBusy,setCouponBusy]=useState(false); const [points,setPoints]=useState<number|null>(null); const [usePoints,setUsePoints]=useState(false);
+ useEffect(()=>{fetch("/api/services",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success)setServices(d.data||[])}).finally(()=>setLoading(false));fetch("/api/loyalty/wallet",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.success)setPoints(Number(d.wallet?.balance||0))}).catch(()=>{})},[]);
+ const save=(next:Item[])=>{setCouponDiscount(0);setCouponMessage("");setUsePoints(false);localStorage.setItem(KEY,JSON.stringify(next));window.dispatchEvent(new Event("arees-cart-updated"))};
  const rows=items.map(item=>({item,service:services.find(s=>s.id===item.serviceId)}));
  const total=rows.reduce((sum,row)=>sum+(row.service?Number(row.service.finalPrice)*row.item.quantity:0),0);
  const applyCoupon=async()=>{const code=couponCode.trim();if(!code){setCouponMessage("أدخل كود الكوبون.");return;}if(rows.length!==1){setCouponMessage("الكوبون متاح حالياً للسلة التي تحتوي على خدمة واحدة فقط، حتى ندعم التحقق من خصومات الخدمات المتعددة.");return;}setCouponBusy(true);try{const r=await fetch("/api/coupons/validate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code,serviceId:rows[0].item.serviceId,quantity:rows[0].item.quantity})});const d=await r.json();if(r.ok&&d.success){setCouponDiscount(Number(d.data.discountAmount||0));setCouponMessage("تم التحقق من الكوبون. الخصم تقديري حتى تأكيد الحجز.");}else{setCouponDiscount(0);setCouponMessage(d.message||"الكوبون غير صالح.");}}catch{setCouponDiscount(0);setCouponMessage("تعذر التحقق من الكوبون.");}finally{setCouponBusy(false)}};

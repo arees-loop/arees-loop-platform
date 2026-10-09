@@ -19,7 +19,14 @@ export default function TeamRoleHistory({members,refreshKey}:{members:Array<{id:
   }catch(e){setError(e instanceof Error?e.message:"تعذر تحميل السجل");}
   finally{setLoading(false);}
  },[]);
- useEffect(()=>{void load()},[load,refreshKey]);
+ useEffect(()=>{
+  const controller=new AbortController();
+  fetch("/api/partner/team/history",{credentials:"include",cache:"no-store",signal:controller.signal})
+   .then(async response=>{const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||"تعذر تحميل السجل");return data;})
+   .then(data=>{setEvents(Array.isArray(data.events)?data.events:[]);setError("")}).catch(e=>{if(!controller.signal.aborted)setError(e instanceof Error?e.message:"تعذر تحميل السجل")})
+   .finally(()=>{if(!controller.signal.aborted)setLoading(false)});
+  return ()=>controller.abort();
+ },[refreshKey]);
  const names=new Map(members.map(m=>[m.id,[m.user?.firstName,m.user?.lastName].filter(Boolean).join(" ")||"موظف"]));
  return <section className="mt-8 rounded-3xl bg-white p-5">
   <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-bold">سجل تغيير أدوار الموظفين</h2><button type="button" onClick={()=>void load()} disabled={loading} className="rounded-xl border border-[#0D3B34]/20 px-4 py-2 text-sm">تحديث السجل</button></div>

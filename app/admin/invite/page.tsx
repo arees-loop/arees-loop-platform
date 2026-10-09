@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import {useSearchParams} from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
 
-export default function AdminInvitePage(){
- const [token,setToken]=useState("");
- useEffect(()=>{setToken(new URLSearchParams(window.location.search).get("token")||"");},[]);
+export default function AdminInvitePage(){return <Suspense fallback={<p>جاري التحميل...</p>}><AdminInviteForm/></Suspense>}
+function AdminInviteForm(){
+ const token=useSearchParams().get("token")||"";
  const [password,setPassword]=useState("");
  const [confirm,setConfirm]=useState("");
  const [loading,setLoading]=useState(false);

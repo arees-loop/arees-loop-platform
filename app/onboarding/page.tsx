@@ -73,7 +73,6 @@ export default function OnboardingPage() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("mode") === "new") {
-      setStep(1);
       return () => {
         cancelled = true;
       };

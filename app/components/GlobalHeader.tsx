@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import {useBrowserStorage} from "@/lib/browser-storage";
 type HeaderUser = { firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null };
 
 type MenuIconName="bell"|"orders"|"clock"|"heart"|"wallet"|"star"|"user"|"settings"|"logout";
@@ -34,7 +35,9 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
     document.addEventListener("keydown", escape);
     return () => { document.removeEventListener("pointerdown", dismiss); document.removeEventListener("keydown", escape); };
   }, []);
-  const [cartCount, setCartCount] = useState(0);
+  const rawCart=useBrowserStorage("arees-loop-cart-v1");
+  let cartCount=0;
+  try{const saved:unknown=JSON.parse(rawCart||"[]");if(Array.isArray(saved))cartCount=saved.reduce((n:number,item:{quantity?:number})=>n+(Number.isInteger(item?.quantity)&&Number(item.quantity)>0?Number(item.quantity):0),0)}catch{}
   const [unreadInterests, setUnreadInterests] = useState(0);
   const [navVisible, setNavVisible] = useState<Record<string,boolean>>({});
   useEffect(() => { let mounted=true; fetch("/api/navigation",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(mounted&&d.success)setNavVisible(d.data)}).catch(()=>{});return()=>{mounted=false}; }, []);
@@ -57,19 +60,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
     return()=>window.removeEventListener("arees:avatar-updated",onAvatar);
   },[]);
   useEffect(() => {
-    const syncCart = () => {
-      try {
-        const saved = JSON.parse(localStorage.getItem("arees-loop-cart-v1") || "[]");
-        setCartCount(Array.isArray(saved) ? saved.reduce((n: number, item: {quantity?:number}) => n + (Number.isInteger(item.quantity) && Number(item.quantity)>0 ? Number(item.quantity) : 0), 0) : 0);
-      } catch { setCartCount(0); }
-    };
-    syncCart();
-    window.addEventListener("arees-cart-updated", syncCart);
-    window.addEventListener("storage", syncCart);
-    return () => { window.removeEventListener("arees-cart-updated", syncCart); window.removeEventListener("storage", syncCart); };
-  }, []);
-  useEffect(() => {
-    if (!user) { setUnreadInterests(0); return; }
+    if (!user) return;
     let active = true;
     const refresh = () => fetch("/api/account/interest-suggestions", { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
@@ -124,7 +115,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                 <span className="text-[20px] leading-none">🛒</span>
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-[#D4AF37] px-1 text-[10px] font-black text-[#0D3B34]">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
-              <Link href="/notifications" aria-label={`الإشعارات: ${unreadInterests} غير مقروءة`} className="relative grid h-11 w-11 place-items-center rounded-full border border-[#0D3B34]/15 bg-white text-[#0D3B34]"><span aria-hidden="true" className="text-xl"><MenuIcon name="bell"/></span>{unreadInterests>0&&<span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{unreadInterests>99?"99+":unreadInterests}</span>}</Link>
+              <Link href="/notifications" aria-label={`الإشعارات: ${user ? unreadInterests : 0} غير مقروءة`} className="relative grid h-11 w-11 place-items-center rounded-full border border-[#0D3B34]/15 bg-white text-[#0D3B34]"><span aria-hidden="true" className="text-xl"><MenuIcon name="bell"/></span>{user&&unreadInterests>0&&<span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{unreadInterests>99?"99+":unreadInterests}</span>}</Link>
               <div className="relative" ref={accountRef}>
                 <button type="button" aria-expanded={accountOpen} aria-haspopup="menu" aria-label="فتح قائمة حسابي" onClick={() => setAccountOpen((value) => !value)} className="flex h-11 max-w-[140px] items-center gap-2 rounded-full bg-[#0D3B34] px-3 sm:max-w-none sm:px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
                   {user.profileImageUrl && <img src={user.profileImageUrl} alt="صورتي" className="h-8 w-8 rounded-full border border-white/25 object-cover" />}

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import {useBrowserStorage} from "@/lib/browser-storage";
 import {
   getEarnedLoopPoints,
   getLoopProgress,
@@ -70,7 +71,8 @@ function formatArabicDate(value: string) {
 }
 
 export default function RewardsPage() {
-  const [progress, setProgress] = useState<LoopProgressState | null>(null);
+  const rawProgress=useBrowserStorage("arees_loop_progress");
+  const progress=useMemo<LoopProgressState|null>(()=>rawProgress?getLoopProgress():null,[rawProgress]);
   const [feedback, setFeedback] = useState("");
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [giftEmail, setGiftEmail] = useState("");
@@ -78,9 +80,7 @@ export default function RewardsPage() {
   const [giftMessage, setGiftMessage] = useState("");
   const [gifting, setGifting] = useState(false);
 
-  const refreshProgress = () => {
-    setProgress(getLoopProgress());
-  };
+
 
   async function loadWallet() {
     const res = await fetch("/api/loyalty/wallet", { cache: "no-store" });
@@ -90,8 +90,9 @@ export default function RewardsPage() {
   }
 
   useEffect(() => {
-    refreshProgress();
-    loadWallet();
+    const controller=new AbortController();
+    fetch("/api/loyalty/wallet",{cache:"no-store",signal:controller.signal}).then(r=>r.ok?r.json():null).then(data=>{if(data?.success)setWalletBalance(data.wallet.balance)}).catch(()=>{});
+    return ()=>controller.abort();
   }, []);
 
   const balance = walletBalance ?? (progress ? getTotalLoopPoints() : 0);
@@ -179,12 +180,10 @@ export default function RewardsPage() {
           ? "تم استبدال هذه المكافأة مسبقًا."
           : "رصيدك الحالي لا يكفي لاستبدال هذه المكافأة."
       );
-      refreshProgress();
-      return;
+        return;
     }
 
     setFeedback(`تم استبدال ${reward.title} بنجاح.`);
-    refreshProgress();
   }
 
   return (

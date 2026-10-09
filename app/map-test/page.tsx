@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
-    google: any;
+    google: typeof google;
   }
 }
 
@@ -20,10 +20,10 @@ export default function MapTestPage() {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const autocompleteContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
+  const mapInstanceRef = useRef<google.maps.Map|null>(null);
+  const markerRef = useRef<google.maps.Marker|null>(null);
 
-  const [status, setStatus] = useState("جاري تحميل Google Maps...");
+  const [status, setStatus] = useState(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? "جاري تحميل Google Maps..." : "خدمة الخرائط غير متاحة حالياً");
 
   const [selectedLocation, setSelectedLocation] =
     useState<SelectedLocation | null>(null);
@@ -32,7 +32,6 @@ export default function MapTestPage() {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
     if (!apiKey) {
-      setStatus("مفتاح Google Maps غير موجود في .env.local");
       return;
     }
 
@@ -55,7 +54,7 @@ export default function MapTestPage() {
         await window.google.maps.importLibrary("maps");
 
         const placesLibrary =
-          await window.google.maps.importLibrary("places");
+          await window.google.maps.importLibrary("places") as google.maps.PlacesLibrary;
 
         const { PlaceAutocompleteElement } = placesLibrary;
 
@@ -132,11 +131,11 @@ export default function MapTestPage() {
          */
         placeAutocomplete.addEventListener(
           "gmp-select",
-          async (event: any) => {
+          async (event: Event) => {
             try {
               setStatus("جاري تحميل بيانات المكان...");
 
-              const placePrediction = event.placePrediction;
+              const placePrediction = (event as google.maps.places.PlacePredictionSelectEvent).placePrediction;
 
               if (!placePrediction) {
                 setStatus("لم يتم استلام بيانات المكان");
@@ -215,7 +214,7 @@ export default function MapTestPage() {
          * ==================================================
          */
 
-        map.addListener("click", (event: any) => {
+        map.addListener("click", (event: google.maps.MapMouseEvent) => {
           if (!event.latLng) return;
 
           const lat = event.latLng.lat();
@@ -243,7 +242,7 @@ export default function MapTestPage() {
          * ==================================================
          */
 
-        marker.addListener("dragend", (event: any) => {
+        marker.addListener("dragend", (event: google.maps.MapMouseEvent) => {
           if (!event.latLng) return;
 
           const lat = event.latLng.lat();

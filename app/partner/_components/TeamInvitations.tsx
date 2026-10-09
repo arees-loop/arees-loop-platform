@@ -13,7 +13,13 @@ export default function TeamInvitations({owner}:{owner:boolean}){
   try{const response=await fetch("/api/partner/team/invitations",{credentials:"include",cache:"no-store"});const data=await response.json();if(!response.ok)throw new Error(data.message);setItems(data.invitations||[]);}
   catch(e){setMessage(e instanceof Error?e.message:"تعذر تحميل الدعوات");}
  },[]);
- useEffect(()=>{void load()},[load]);
+ useEffect(()=>{
+  const controller=new AbortController();
+  fetch("/api/partner/team/invitations",{credentials:"include",cache:"no-store",signal:controller.signal})
+   .then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message);return data;})
+   .then(data=>setItems(data.invitations||[])).catch(e=>{if(!controller.signal.aborted)setMessage(e instanceof Error?e.message:"تعذر تحميل الدعوات")});
+  return ()=>controller.abort();
+ },[]);
  const invite=async(e:React.FormEvent)=>{
   e.preventDefault();setBusy(true);setMessage("");
   try{

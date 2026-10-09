@@ -26,12 +26,12 @@ function allowedTypes(app:PartnerApplication|null):ServiceType[]{
 
 export default function NewPartnerServicePage() {
   const [step, setStep] = useState(1);
-  const [serviceType, setServiceType] = useState<ServiceType>("EXPERIENCE");
+  const [selectedServiceType, setServiceType] = useState<ServiceType>("EXPERIENCE");
   const [application,setApplication]=useState<PartnerApplication|null>(null);
   const [loadingEntitlements,setLoadingEntitlements]=useState(true);
   useEffect(()=>{fetch("/api/partner/application",{cache:"no-store"}).then(r=>r.json()).then(j=>setApplication(j.application||null)).finally(()=>setLoadingEntitlements(false));},[]);
   const permittedTypes=useMemo(()=>allowedTypes(application),[application]);
-  useEffect(()=>{if(permittedTypes.length&&!permittedTypes.includes(serviceType)) setServiceType(permittedTypes[0]);},[permittedTypes,serviceType]);
+  const serviceType = permittedTypes.includes(selectedServiceType) ? selectedServiceType : permittedTypes[0] ?? selectedServiceType;
   const verifiedLicenses=(application?.licenses||[]).filter(x=>x.status==="VERIFIED");
   const [priceMode, setPriceMode] = useState<PriceMode>("INCLUDED");
   const [location, setLocation] = useState<{lat:number;lng:number}|null>(null);
