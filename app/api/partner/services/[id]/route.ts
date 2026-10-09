@@ -23,7 +23,7 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
     if(!licenseId)return NextResponse.json({success:false,message:"يجب اختيار ترخيص ساري ومعتمد للخدمة."},{status:400});
     const activeLicense=await prisma.license.findFirst({where:{id:licenseId,partnerId:current.partnerId,status:"VERIFIED",expiryDate:{gte:new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")}},select:{id:true}});
     if(!activeLicense)return NextResponse.json({success:false,message:"الترخيص غير ساري أو لم يتم اعتماده."},{status:403});
-    const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
+    const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:unknown)=>typeof x==="object"&&x!==null&&"url" in x&&typeof x.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
     const status = current.status === "PUBLISHED" || body.submitForReview ? "UNDER_REVIEW" : current.status;
     const service=await prisma.$transaction(async(tx)=>{
       await tx.serviceImage.deleteMany({where:{serviceId:id}});
