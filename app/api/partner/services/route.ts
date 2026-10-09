@@ -25,10 +25,10 @@ export async function POST(request:Request){
     const finalPrice=vatIncluded?basePrice:basePrice*1.15;
     const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150)));
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
-    const latitude=Number(body.latitude);
-    const longitude=Number(body.longitude);
-    if(!body.city?.trim()||!body.locationName?.trim()||!Number.isFinite(latitude)||!Number.isFinite(longitude)){
-      return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة قبل الإرسال."},{status:400});
+    const latitude=body.latitude==null||body.latitude===""?null:Number(body.latitude);
+    const longitude=body.longitude==null||body.longitude===""?null:Number(body.longitude);
+    if(!body.country?.trim()||!body.region?.trim()||!body.city?.trim()||!((latitude===null&&longitude===null)||(latitude!==null&&longitude!==null&&Number.isFinite(latitude)&&Number.isFinite(longitude)&&latitude>=-90&&latitude<=90&&longitude>=-180&&longitude<=180))){
+      return NextResponse.json({success:false,message:"أكمل الدولة والمنطقة والمدينة وتحقق من الإحداثيات الاختيارية."},{status:400});
     }
     const service=await prisma.service.create({
       data:{
@@ -41,10 +41,11 @@ export async function POST(request:Request){
         descriptionAr:body.descriptionAr?.trim()||null,
         descriptionEn:body.descriptionEn?.trim()||null,
         city:body.city.trim(),
-        locationName:body.locationName.trim(),
-        formattedAddress:body.formattedAddress?.trim()||body.locationName.trim(),
+        region:body.region.trim(),
+        locationName:body.locationName?.trim()||null,
+        formattedAddress:body.formattedAddress?.trim()||null,
         placeId:body.placeId?.trim()||null,
-        country:body.country?.trim()||null,
+        country:body.country.trim(),
         countryCode:body.countryCode?.trim()||null,
         latitude,
         longitude,

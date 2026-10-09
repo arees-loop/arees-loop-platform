@@ -11,17 +11,17 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
   try{
     const session=await getCurrentSession(); if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
     const {id}=await context.params; const current=await ownedService(session.user.id,id); if(!current) return NextResponse.json({success:false,message:"الخدمة غير موجودة."},{status:404});
-    const body=await request.json(); const basePrice=Number(body.basePrice||0); const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150))); const latitude=Number(body.latitude); const longitude=Number(body.longitude);
+    const body=await request.json(); const basePrice=Number(body.basePrice||0); const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150))); const latitude=body.latitude==null||body.latitude===""?null:Number(body.latitude); const longitude=body.longitude==null||body.longitude===""?null:Number(body.longitude);
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
-    if(!body.city?.trim()||!body.locationName?.trim()||!Number.isFinite(latitude)||!Number.isFinite(longitude)) return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة."},{status:400});
+    if(!body.country?.trim()||!body.region?.trim()||!body.city?.trim()||!((latitude===null&&longitude===null)||(latitude!==null&&longitude!==null&&Number.isFinite(latitude)&&Number.isFinite(longitude)&&latitude>=-90&&latitude<=90&&longitude>=-180&&longitude<=180))) return NextResponse.json({success:false,message:"أكمل الدولة والمنطقة والمدينة، وتأكد من صحة إحداثيات الموقع الاختيارية."},{status:400});
     const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
     const status=body.submitForReview ? "UNDER_REVIEW" : current.status;
     const service=await prisma.$transaction(async(tx)=>{
       await tx.serviceImage.deleteMany({where:{serviceId:id}});
       return tx.service.update({where:{id},data:{
         nameAr:body.nameAr.trim(),nameEn:body.nameEn?.trim()||null,category:body.category.trim(),subCategory:body.subCategory?.trim()||null,
-        descriptionAr:body.descriptionAr?.trim()||null,descriptionEn:body.descriptionEn?.trim()||null,city:body.city.trim(),locationName:body.locationName.trim(),
-        formattedAddress:body.formattedAddress?.trim()||body.locationName.trim(),placeId:body.placeId?.trim()||null,latitude,longitude,basePrice,
+        descriptionAr:body.descriptionAr?.trim()||null,descriptionEn:body.descriptionEn?.trim()||null,city:body.city.trim(),region:body.region.trim(),country:body.country.trim(),countryCode:body.countryCode?.trim()||null,locationName:body.locationName?.trim()||null,
+        formattedAddress:body.formattedAddress?.trim()||null,placeId:body.placeId?.trim()||null,latitude,longitude,basePrice,
         vatRate:15,finalPrice:body.vatMode==="included"?basePrice:basePrice*1.15,loyaltyPoints,capacity:Number(body.capacity||0)||null,
         cancellationPolicy:body.cancellationPolicy?.trim()||null,meetingInstructions:body.meetingInstructions?.trim()||null,
         organizerType:body.organizerType==="OTHER"?"OTHER":"SELF",organizerName:body.organizerName?.trim()||null,organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null,

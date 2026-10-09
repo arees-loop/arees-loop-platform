@@ -510,6 +510,7 @@ model Service {
   descriptionEn String?
 
   city             String?
+  region           String?
   locationName     String?
   formattedAddress String?
   placeId          String?

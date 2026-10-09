@@ -39,6 +39,7 @@ export default function NewPartnerServicePage() {
   const [nameAr,setNameAr]=useState("");
   const [descriptionAr,setDescriptionAr]=useState("");
   const [city,setCity]=useState("");
+  const [region,setRegion]=useState("");
   const [locationName,setLocationName]=useState("");
   const [formattedAddress,setFormattedAddress]=useState("");
   const [placeId,setPlaceId]=useState("");
@@ -115,12 +116,12 @@ export default function NewPartnerServicePage() {
   const googleMapsUrl=(p:{lat:number;lng:number})=>`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
   const submitService=async()=>{
     setSubmitError("");setSubmitMessage("");
-    if(!nameAr.trim()||!city.trim()||!locationName.trim()||!location){setSubmitError("أكمل اسم الخدمة وحدد مكان تنفيذ الخدمة بدقة.");return;} if(hasMeetingPoint&&(!meetingPointName.trim()||!meetingLocation)){setSubmitError("حدد اسم وموقع نقطة التجمع أو ألغِ خيار نقطة التجمع.");return;}
+    if(!nameAr.trim()||!country.trim()||!region.trim()||!city.trim()){setSubmitError("أكمل اسم الخدمة والدولة والمنطقة والمدينة.");return;} if(hasMeetingPoint&&(!meetingPointName.trim()||!meetingLocation)){setSubmitError("حدد اسم وموقع نقطة التجمع أو ألغِ خيار نقطة التجمع.");return;}
     setSubmitting(true);
     try{
       const r=await fetch("/api/partner/services",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-        nameAr,descriptionAr,category:serviceType,city,locationName,formattedAddress,placeId,country,countryCode,
-        latitude:location.lat,longitude:location.lng,
+        nameAr,descriptionAr,category:serviceType,city,region,locationName,formattedAddress,placeId,country,countryCode,
+        latitude:location?.lat??null,longitude:location?.lng??null,
         hasMeetingPoint,meetingPointName,meetingPointAddress,meetingInstructions,
         meetingLatitude:meetingLocation?.lat,meetingLongitude:meetingLocation?.lng,
         licenseId,basePrice:price,vatMode:"included",loyaltyPoints,cancellationPolicy
@@ -168,11 +169,12 @@ export default function NewPartnerServicePage() {
           <Field label="وصف مختصر"><textarea value={descriptionAr} onChange={e=>setDescriptionAr(e.target.value)} className="input min-h-28" placeholder="صف الخدمة كما سيشاهدها العميل..."/></Field>
           <div className="rounded-[24px] border border-[#0D3B34]/8 bg-[#F8F6EF] p-5">
             <p className="text-[10px] font-bold tracking-[.16em] text-[#B99124]">LOCATION</p>
-            <p className="mt-2 text-sm font-bold">مكان تنفيذ الخدمة <span className="text-red-600">*</span></p>
-            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">ابحث عالمياً باسم المكان أو المدينة أو العنوان ثم اختر النتيجة الصحيحة. هذا الموقع هو المرجع الأساسي لـ Arees Loop لحساب القرب.</p>
+            <p className="mt-2 text-sm font-bold">موقع تنفيذ الخدمة</p>
+            <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">ابحث عالمياً باسم المكان أو المدينة أو العنوان ثم اختر النتيجة الصحيحة. تحديد نقطة دقيقة اختياري؛ الدولة والمنطقة والمدينة إلزامية. حساب المسافة الدقيقة يتطلب إحداثيات موثقة.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3"><Field label="الدولة *"><input className="input" value={country} onChange={e=>setCountry(e.target.value)} placeholder="السعودية"/></Field><Field label="المنطقة / الولاية *"><input className="input" value={region} onChange={e=>setRegion(e.target.value)} placeholder="منطقة المدينة المنورة"/></Field><Field label="المدينة *"><input className="input" value={city} onChange={e=>setCity(e.target.value)} placeholder="المدينة المنورة"/></Field></div>
             <div className="mt-4 flex gap-2"><input value={locationQuery} onChange={e=>setLocationQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void searchLocation();}}} className="input" placeholder="مثال: جبل الفيل العلا، برج لندن، متحف اللوفر"/><button type="button" disabled={searchingLocation} onClick={searchLocation} className="shrink-0 rounded-2xl border border-[#0D3B34]/10 bg-white px-4 text-xs font-bold disabled:opacity-50">{searchingLocation?"جاري البحث...":"بحث"}</button></div>
             {locationSuggestions.length>0&&<div className="mt-2 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-white">{locationSuggestions.map((item,i)=><button key={i} type="button" onClick={()=>selectExecutionLocation(item)} className="block w-full border-b border-[#0D3B34]/6 px-4 py-3 text-right last:border-0 hover:bg-[#FFF8E5]"><b className="text-xs">{item.name}</b><p className="mt-1 text-[11px] text-[#0D3B34]/55">{[item.address,item.city,item.country].filter(Boolean).join(" · ")}</p></button>)}</div>}
-            <div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={useCurrentLocation} className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white">استخدام موقعي الحالي</button>{location&&<button type="button" onClick={()=>{setLocation(null);setLocationName("");setFormattedAddress("");}} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">مسح الموقع</button>}</div>
+            <div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={useCurrentLocation} className="rounded-2xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white">استخدام موقعي الحالي</button>{location&&<button type="button" onClick={()=>{setLocation(null);setLocationName("");setFormattedAddress("");setPlaceId("");}} className="rounded-2xl border border-[#0D3B34]/10 bg-white px-4 py-3 text-xs font-bold">مسح الموقع</button>}</div>
             {location&&<div className="mt-4 rounded-2xl bg-white p-4 text-xs"><b>تم تثبيت مكان تنفيذ الخدمة ✓</b><p className="mt-1 font-bold">{locationName}</p>{formattedAddress&&<p className="mt-1 text-[#0D3B34]/60">{formattedAddress}</p>}<p className="mt-1 text-[#0D3B34]/50">{[city,country].filter(Boolean).join(" · ")}</p><div className="mt-3 flex items-center gap-3"><span dir="ltr" className="text-[#0D3B34]/45">{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</span><a href={googleMapsUrl(location)} target="_blank" rel="noreferrer" className="font-bold text-[#B99124]">عرض على Google Maps ↗</a></div></div>}
             {locationError&&<p className="mt-3 text-xs font-bold text-red-600">{locationError}</p>}
           </div>
