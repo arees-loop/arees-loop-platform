@@ -13,6 +13,6 @@ export async function GET() {
       prisma.service.findMany({where:{partnerId},include:{images:{orderBy:{sortOrder:"asc"}},license:true,_count:{select:{bookings:true}}},orderBy:{updatedAt:"desc"}}),
       prisma.booking.findMany({where:{partnerId},include:{service:{select:{id:true,nameAr:true,nameEn:true}}},orderBy:{createdAt:"desc"}})
     ]);
-    return NextResponse.json({success:true,services:services.map(s=>({...s,basePrice:Number(s.basePrice),vatRate:Number(s.vatRate),finalPrice:Number(s.finalPrice),latitude:s.latitude?Number(s.latitude):null,longitude:s.longitude?Number(s.longitude):null,bookingCount:s._count.bookings})),bookings:bookings.map(b=>({...b,baseAmount:Number(b.baseAmount),vatAmount:Number(b.vatAmount),totalAmount:Number(b.totalAmount)}))});
+    return NextResponse.json({success:true,services:services.map(s=>({...s,basePrice:Number(s.basePrice),vatRate:Number(s.vatRate),finalPrice:Number(s.finalPrice),latitude:s.latitude==null?null:Number(s.latitude),longitude:s.longitude==null?null:Number(s.longitude),bookingCount:s._count.bookings})),bookings:bookings.map(b=>({...b,baseAmount:Number(b.baseAmount),vatAmount:Number(b.vatAmount),totalAmount:Number(b.totalAmount)}))});
   } catch(error){console.error("GET /api/partner/operations failed:",error);return NextResponse.json({success:false,message:"تعذر تحميل بيانات الشريك."},{status:500});}
 }
