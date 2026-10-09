@@ -26,7 +26,7 @@ export async function POST(request:Request){
  const dateText=String(form.get("expiryDate")||"");
  const expiry=new Date(dateText+"T00:00:00.000Z");
  const file=form.get("document");
- if(!licenseId||!/^\d{4}-\d{2}-\d{2}$/.test(dateText)||!Number.isFinite(expiry.getTime())||expiry<new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")||!(file instanceof File)||file.size<1||file.size>5*1024*1024||!["application/pdf","image/png","image/jpeg","image/webp"].includes(file.type))return NextResponse.json({success:false,message:"أدخل تاريخاً سارياً وارفع الترخيص PDF أو صورة حتى 5 ميجابايت"},{status:400});
+ if(!licenseId||!/^\d{4}-\d{2}-\d{2}$/.test(dateText)||!Number.isFinite(expiry.getTime())||expiry.toISOString().slice(0,10)!==dateText||expiry<new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")||!(file instanceof File)||file.size<1||file.size>5*1024*1024||!["application/pdf","image/png","image/jpeg","image/webp"].includes(file.type))return NextResponse.json({success:false,message:"أدخل تاريخاً سارياً وارفع الترخيص PDF أو صورة حتى 5 ميجابايت"},{status:400});
  const license=await prisma.license.findFirst({where:{id:licenseId,partnerId:member.partnerId}});
  if(!license)return NextResponse.json({success:false,message:"الترخيص لا يتبع المنشأة"},{status:404});
  const pending=await prisma.licenseRenewalRequest.findFirst({where:{licenseId,status:"UNDER_REVIEW"}});
