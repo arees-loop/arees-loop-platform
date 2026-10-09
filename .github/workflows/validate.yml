@@ -5,16 +5,39 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: arees_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d arees_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/arees_ci
+      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm ci
-        env:
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      - run: npx prisma validate
-        env:
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      - run: npx tsc --noEmit
-      - run: npm run lint
+          cache: npm
+      - name: Install and generate Prisma client
+        run: npm ci
+      - name: Validate Prisma schema
+        run: npx prisma validate
+      - name: Apply migrations to disposable CI database
+        run: npx prisma migrate deploy
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: ESLint
+        run: npm run lint
+      - name: Production build without deployment
+        run: npm run build
