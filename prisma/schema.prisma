@@ -196,6 +196,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   partnerMemberships PartnerMember[]
+  sentPartnerInvitations PartnerInvitation[] @relation("PartnerInvitationInviter")
   bookings           Booking[]
   couponRedemptions  CouponRedemption[]
   loyaltyWallet      LoyaltyWallet?
@@ -363,6 +364,7 @@ model Partner {
 
   documents   PartnerDocument[]
   members     PartnerMember[]
+  invitations PartnerInvitation[]
   licenses    License[]
   categories  PartnerCategory[]
   services    Service[]
@@ -437,6 +439,27 @@ model PartnerMember {
 
   @@unique([partnerId, userId])
   @@index([userId])
+}
+
+model PartnerInvitation {
+  id String @id @default(cuid())
+  partnerId String
+  invitedByUserId String
+  email String
+  tokenHash String @unique
+  role String
+  jobTitle String?
+  expiresAt DateTime
+  acceptedAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  invitedBy User @relation("PartnerInvitationInviter", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId, email])
+  @@index([expiresAt])
 }
 
 model PartnerDocument {
