@@ -50,3 +50,24 @@ export function canManagePartnerTeam(permissions: unknown): boolean {
   return !!team && typeof team === "object" && !Array.isArray(team) &&
     (team as Record<string, unknown>).manage === true;
 }
+
+/** Explicit capability map for newly provisioned memberships.
+ * Existing LEGACY memberships must be reviewed, never silently promoted. */
+export type PartnerPermissionPreset = {
+  role: Exclude<PartnerAccessRole, "LEGACY">;
+  services: { manage: boolean };
+  finances: { view: boolean };
+  bookings: { view: boolean };
+  team: { view: boolean; manage: boolean };
+};
+
+export function partnerPermissionPreset(role: PartnerPermissionPreset["role"]): PartnerPermissionPreset {
+  switch (role) {
+    case "OWNER":
+      return { role, services: { manage: true }, finances: { view: true }, bookings: { view: true }, team: { view: true, manage: true } };
+    case "MANAGER":
+      return { role, services: { manage: true }, finances: { view: false }, bookings: { view: true }, team: { view: true, manage: false } };
+    case "EMPLOYEE":
+      return { role, services: { manage: false }, finances: { view: false }, bookings: { view: false }, team: { view: false, manage: false } };
+  }
+}
