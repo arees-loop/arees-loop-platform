@@ -18,10 +18,10 @@ export async function PATCH(request:Request){
  const result=await prisma.$transaction(async tx=>{
   const renewal=await tx.licenseRenewalRequest.findUnique({where:{id}});
   if(!renewal||renewal.status!=="UNDER_REVIEW")return false;
-  if(approved&&renewal.requestedExpiryDate<=new Date())return false;
+  if(approved&&renewal.requestedExpiryDate<new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z"))return false;
   const changed=await tx.licenseRenewalRequest.updateMany({where:{id,status:"UNDER_REVIEW"},data:{status:approved?"APPROVED":"REJECTED",reviewedAt:new Date(),reviewedById:session.user.id,reviewNotes:notes}});
   if(!changed.count)return false;
-  if(approved)await tx.license.updateMany({where:{id:renewal.licenseId,partnerId:renewal.partnerId},data:{expiryDate:renewal.requestedExpiryDate,status:"VERIFIED",documentUrl:renewal.documentPath}});
+  if(approved){const updated=await tx.license.updateMany({where:{id:renewal.licenseId,partnerId:renewal.partnerId},data:{expiryDate:renewal.requestedExpiryDate,status:"VERIFIED",documentUrl:renewal.documentPath}});if(updated.count!==1)throw new Error("LICENSE_NOT_FOUND");}
   await tx.auditLog.create({data:{userId:session.user.id,action:"LICENSE_RENEWAL_REVIEWED",entityType:"License",entityId:renewal.licenseId,afterData:{requestId:id,approved,notes}}});
   return true;
  });

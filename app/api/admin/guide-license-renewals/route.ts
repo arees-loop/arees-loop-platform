@@ -16,7 +16,7 @@ export async function PATCH(request:Request){
  if(!id||typeof approved!=="boolean"||notes.length<20||body?.verifiedLicense!==true)return NextResponse.json({success:false,message:"تحقق من الترخيص وسجل ملاحظاتك"},{status:400});
  const outcome=await prisma.$transaction(async tx=>{
  const renewal=await tx.guideLicenseRenewal.findUnique({where:{id}});
- if(!renewal||renewal.status!=="UNDER_REVIEW"||(approved&&renewal.requestedExpiryDate<=new Date()))return false;
+ if(!renewal||renewal.status!=="UNDER_REVIEW"||(approved&&renewal.requestedExpiryDate<new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")))return false;
  const changed=await tx.guideLicenseRenewal.updateMany({where:{id,status:"UNDER_REVIEW"},data:{status:approved?"APPROVED":"REJECTED",reviewedAt:new Date(),reviewedById:session.user.id,reviewNotes:notes}});
  if(!changed.count)return false;
  if(approved){
