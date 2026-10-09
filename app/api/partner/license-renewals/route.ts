@@ -1,4 +1,4 @@
-import {Prisma} from "@prisma/client";
+import {Prisma} from "@/app/generated/prisma/client";
 import {canManagePartnerServices,getPartnerAccessRole} from "@/lib/partner-permissions";
 import {getAdminNotificationEmails,sendEmail} from "@/lib/notifications/email";
 import {NextResponse} from "next/server";

@@ -24,6 +24,8 @@ type Service = {
   subCategory: string;
   license: string;
   city: string;
+  country?: string;
+  region?: string;
   locationName: string;
   formattedAddress: string;
   placeId: string;
@@ -159,6 +161,8 @@ export default function PartnerServicesPage() {
     subCategory: "",
     license: "",
     city: "",
+    country: "SA",
+    region: "",
     locationName: "",
     formattedAddress: "",
     placeId: "",

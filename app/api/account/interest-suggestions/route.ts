@@ -53,8 +53,8 @@ export async function PATCH(request:Request){
  if(!ids.length)return NextResponse.json({success:false,message:"حدد إشعاراً واحداً على الأقل."},{status:400});
  const suggested=await getSuggestions(session.user.id);
  const allowed=new Set(suggested.map(x=>x.id));
- const valid=ids.filter(id=>allowed.has(id));
+ const valid=ids.filter((id:string)=>allowed.has(id));
  if(!valid.length)return NextResponse.json({success:false,message:"الإشعارات المحددة غير متاحة."},{status:404});
- await prisma.$transaction(valid.map(serviceId=>prisma.interestNotificationRead.upsert({where:{userId_serviceId:{userId:session.user.id,serviceId}},update:{readAt:new Date()},create:{userId:session.user.id,serviceId}})));
+ await prisma.$transaction(valid.map((serviceId:string)=>prisma.interestNotificationRead.upsert({where:{userId_serviceId:{userId:session.user.id,serviceId}},update:{readAt:new Date()},create:{userId:session.user.id,serviceId}})));
  return NextResponse.json({success:true});
 }

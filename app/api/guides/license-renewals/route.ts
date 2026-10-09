@@ -1,4 +1,4 @@
-import {Prisma} from "@prisma/client";
+import {Prisma} from "@/app/generated/prisma/client";
 import {NextResponse} from "next/server";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
