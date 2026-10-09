@@ -7,3 +7,11 @@ export function canManagePartnerServices(permissions: unknown): boolean {
   if (!services || typeof services !== "object" || Array.isArray(services)) return true;
   return (services as Record<string, unknown>).manage !== false;
 }
+
+/** Explicit opt-out for financial data; legacy memberships retain access pending migration. */
+export function canViewPartnerFinances(permissions: unknown): boolean {
+  if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) return true;
+  const finances = (permissions as Record<string, unknown>).finances;
+  if (!finances || typeof finances !== "object" || Array.isArray(finances)) return true;
+  return (finances as Record<string, unknown>).view !== false;
+}
