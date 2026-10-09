@@ -25,7 +25,7 @@ export default function AdminUsersPage(){
  const [actionUserId,setActionUserId]=useState<string|null>(null);
  const [actionNotice,setActionNotice]=useState("");
  async function loadUsers(){try{const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json();if(r.ok&&d.success)setUsers(d.data||[]);}catch{}}
- useEffect(()=>{void loadUsers();},[]);
+ useEffect(()=>{let active=true;fetch("/api/admin/users",{cache:"no-store"}).then(async r=>{const d=await r.json();if(active&&r.ok&&d.success)setUsers(d.data||[])}).catch(()=>{});return ()=>{active=false};},[]);
  const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS"];
  async function setUserStatus(userId:string,action:"ACTIVATE"|"DISABLE"){
   setActionNotice("");
