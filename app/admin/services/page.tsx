@@ -26,6 +26,29 @@ export default function AdminServicesPage() {
   const [message,setMessage]=useState("");
   const [viewMode,setViewMode]=useState<"CARDS"|"LIST">("CARDS");
 
+  const [search,setSearch]=useState("");
+  const [filters,setFilters]=useState<Record<string,string>>({});
+  const [newestFirst,setNewestFirst]=useState(true);
+  const cols=[["nameAr","اسم البرنامج"],["partnerName","الشريك"],["category","التصنيف"],["city","المدينة"],["status","الحالة"],["finalPrice","السعر"],["updatedAt","التحديث"]] as const;
+  const display=(s:Service,key:string)=>key==="status"?(labels[s.status]||s.status):key==="updatedAt"?(s.updatedAt?new Date(s.updatedAt).toLocaleDateString("ar-SA"):"—"):String(s[key as keyof Service]??"—");
+  const visible=useMemo(()=>items.filter(s=>{
+    if(search&&![s.nameAr,s.nameEn,s.partnerName,s.category,s.city,s.status].join(" ").toLowerCase().includes(search.toLowerCase()))return false;
+    return cols.every(([key])=>!filters[key]||display(s,key).toLowerCase().includes(filters[key].toLowerCase()));
+  }).sort((a,b)=>(newestFirst?-1:1)*(new Date(b.updatedAt).getTime()-new Date(a.updatedAt).getTime())),[items,search,filters,newestFirst]);
+  const exportCsv=()=>{
+    const rows=[cols.map(([,name])=>name),...visible.map(s=>cols.map(([key])=>display(s,key)))];
+    const csv="\\uFEFF"+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\\r\\n");
+    const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+    const a=document.createElement("a");a.href=url;a.download="arees-loop-services.csv";a.click();URL.revokeObjectURL(url);
+  };
+  const printPdf=()=>{
+    const clean=(v:string)=>v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const head=cols.map(([,label])=>"<th>"+clean(label)+"</th>").join("");
+    const rows=visible.map(s=>"<tr>"+cols.map(([key])=>"<td>"+clean(display(s,key))+"</td>").join("")+"</tr>").join("");
+    const html='<html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير الخدمات</title><style>body{font-family:Arial}table{width:100%;border-collapse:collapse}td,th{border:1px solid #bbb;padding:8px;text-align:right}@page{size:landscape}</style></head><body><h2>تقرير خدمات أريس لوب</h2><table><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></body></html>';
+    const w=window.open("","_blank");if(!w){setMessage("يرجى السماح بالنوافذ المنبثقة.");return;}w.document.write(html);w.document.close();w.focus();w.print();
+  };
+
   const load=async()=>{
     setLoading(true);
     try {
