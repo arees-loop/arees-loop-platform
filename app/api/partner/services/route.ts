@@ -37,6 +37,9 @@ export async function POST(request:Request){
       const license=await prisma.license.findFirst({where:{id:licenseId,partnerId:membership.partnerId},select:{id:true}});
       if(!license) return NextResponse.json({success:false,message:"الترخيص المحدد لا يتبع منشأتك."},{status:400});
     }
+    if(!licenseId)return NextResponse.json({success:false,message:"يجب ربط الخدمة بترخيص ساري ومعتمد."},{status:400});
+    const activeLicense=await prisma.license.findFirst({where:{id:licenseId,partnerId:membership.partnerId,status:"VERIFIED",expiryDate:{gte:new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")}},select:{id:true}});
+    if(!activeLicense)return NextResponse.json({success:false,message:"الترخيص غير معتمد أو منتهي الصلاحية. يرجى تجديده."},{status:403});
     const service=await prisma.service.create({
       data:{
         partnerId:membership.partnerId,

@@ -914,3 +914,20 @@ model GuideApplication {
  @@index([userId])
  @@index([status])
 }
+
+model LicenseRenewalRequest {
+ id String @id @default(cuid())
+ licenseId String
+ partnerId String
+ submittedById String
+ requestedExpiryDate DateTime
+ documentPath String
+ status String @default("UNDER_REVIEW")
+ reviewedById String?
+ reviewedAt DateTime?
+ reviewNotes String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([licenseId,status])
+ @@index([partnerId,status])
+}
