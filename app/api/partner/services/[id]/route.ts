@@ -47,14 +47,20 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
     const body=await request.json(); const action=body?.action;
     if(action==="HIDE"){
       if(service.status!=="PUBLISHED") return NextResponse.json({success:false,message:"يمكن إخفاء الخدمة بعد نشرها فقط."},{status:409});
-      await prisma.service.update({where:{id},data:{status:"SUSPENDED"}});
-      await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_HIDDEN",entityType:"Service",entityId:id,beforeData:{status:service.status},afterData:{status:"SUSPENDED"}}});
+      await prisma.$transaction(async tx=>{
+        const changed=await tx.service.updateMany({where:{id,status:"PUBLISHED"},data:{status:"SUSPENDED"}});
+        if(changed.count!==1) throw new Error("SERVICE_STATUS_CHANGED");
+        await tx.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_HIDDEN",entityType:"Service",entityId:id,beforeData:{status:service.status},afterData:{status:"SUSPENDED"}}});
+      });
       return NextResponse.json({success:true,status:"SUSPENDED",message:"تم إخفاء الخدمة من العملاء مؤقتاً."});
     }
     if(action==="PUBLISH"){
       if(service.status!=="SUSPENDED") return NextResponse.json({success:false,message:"الخدمة ليست مخفية حالياً."},{status:409});
-      await prisma.service.update({where:{id},data:{status:"UNDER_REVIEW"}});
-      await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_REPUBLICATION_REQUESTED",entityType:"Service",entityId:id,beforeData:{status:service.status},afterData:{status:"UNDER_REVIEW"}}});
+      await prisma.$transaction(async tx=>{
+        const changed=await tx.service.updateMany({where:{id,status:"SUSPENDED"},data:{status:"UNDER_REVIEW"}});
+        if(changed.count!==1) throw new Error("SERVICE_STATUS_CHANGED");
+        await tx.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_REPUBLICATION_REQUESTED",entityType:"Service",entityId:id,beforeData:{status:service.status},afterData:{status:"UNDER_REVIEW"}}});
+      });
       return NextResponse.json({success:true,status:"UNDER_REVIEW",message:"تم إرسال طلب إعادة نشر الخدمة لمراجعة الإدارة."});
     }
     return NextResponse.json({success:false,message:"إجراء غير مدعوم."},{status:400});
