@@ -1,3 +1,4 @@
+import {reviewRenewalWithAi} from "@/lib/partners/renewal-ai-review";
 import {Prisma} from "@/app/generated/prisma/client";
 import {NextResponse} from "next/server";
 import {getCurrentSession} from "@/lib/session";
@@ -40,6 +41,8 @@ export async function POST(request:Request){
   try{if(uploadedPath)await del(uploadedPath);}catch(cleanupError){console.error("Renewal document cleanup failed",cleanupError);}
   throw error;
  }
+ const aiReview=await reviewRenewalWithAi({documentPath:blob.pathname,mimeType:file.type,licenseNumber,expiryDate:dateText,holderName:application.fullName,kind:"GUIDE"});
+ await prisma.auditLog.create({data:{userId:session.user.id,action:"GUIDE_LICENSE_RENEWAL_AI_REVIEW",entityType:"GuideLicenseRenewal",entityId:id,afterData:aiReview}}).catch(error=>console.error("AI audit failed",error));
  let adminEmailSent=false;
  try{
  const admins=getAdminNotificationEmails();

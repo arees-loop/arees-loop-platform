@@ -6,7 +6,9 @@ export async function GET(){
  const session=await getCurrentSession();
  if(!session||!["ADMIN","SUPER_ADMIN"].includes(session.user.role))return NextResponse.json({success:false},{status:403});
  const requests=await prisma.licenseRenewalRequest.findMany({where:{status:"UNDER_REVIEW"},orderBy:{createdAt:"asc"},take:100});
- return NextResponse.json({success:true,requests});
+ const audits=await prisma.auditLog.findMany({where:{entityType:"LicenseRenewalRequest",action:"LICENSE_RENEWAL_AI_REVIEW",entityId:{in:requests.map(x=>x.id)}},orderBy:{createdAt:"desc"}});
+ const aiById=new Map(audits.map(x=>[x.entityId,x.afterData]));
+ return NextResponse.json({success:true,requests:requests.map(x=>({...x,aiReview:aiById.get(x.id)||null}))});
 }
 export async function PATCH(request:Request){
  const session=await getCurrentSession();
@@ -14,7 +16,7 @@ export async function PATCH(request:Request){
  const body=await request.json().catch(()=>null);
  const id=typeof body?.id==="string"?body.id:"",approved=body?.approved;
  const notes=typeof body?.notes==="string"?body.notes.trim():"";
- if(!id||typeof approved!=="boolean"||notes.length<20||body?.verifiedDocument!==true)return NextResponse.json({success:false,message:"يجب فحص المستند وتسجيل ملاحظات المراجعة"},{status:400});
+ if(!id||typeof approved!=="boolean"||notes.length<20||(approved&&body?.verifiedDocument!==true))return NextResponse.json({success:false,message:"يجب فحص المستند وتسجيل ملاحظات المراجعة"},{status:400});
  const result=await prisma.$transaction(async tx=>{
   const renewal=await tx.licenseRenewalRequest.findUnique({where:{id}});
   if(!renewal||renewal.status!=="UNDER_REVIEW")return false;

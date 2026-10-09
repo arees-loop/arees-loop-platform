@@ -6,14 +6,15 @@ export async function GET(){
  const session=await getCurrentSession();
  if(!session||!["ADMIN","SUPER_ADMIN"].includes(session.user.role))return NextResponse.json({success:false},{status:403});
  const requests=await prisma.guideLicenseRenewal.findMany({where:{status:"UNDER_REVIEW"},orderBy:{createdAt:"asc"},take:100});
- return NextResponse.json({success:true,requests});
+ const audits=await prisma.auditLog.findMany({where:{entityType:"GuideLicenseRenewal",action:"GUIDE_LICENSE_RENEWAL_AI_REVIEW",entityId:{in:requests.map(x=>x.id)}}});
+ return NextResponse.json({success:true,requests:requests.map(x=>({...x,aiReview:audits.find(a=>a.entityId===x.id)?.afterData||null}))});
 }
 export async function PATCH(request:Request){
  const session=await getCurrentSession();
  if(!session||!["ADMIN","SUPER_ADMIN"].includes(session.user.role))return NextResponse.json({success:false},{status:403});
  const body=await request.json().catch(()=>null);
  const id=typeof body?.id==="string"?body.id:"",approved=body?.approved,notes=typeof body?.notes==="string"?body.notes.trim():"";
- if(!id||typeof approved!=="boolean"||notes.length<20||body?.verifiedLicense!==true)return NextResponse.json({success:false,message:"تحقق من الترخيص وسجل ملاحظاتك"},{status:400});
+ if(!id||typeof approved!=="boolean"||notes.length<20||(approved&&body?.verifiedLicense!==true))return NextResponse.json({success:false,message:"تحقق من الترخيص وسجل ملاحظاتك"},{status:400});
  const outcome=await prisma.$transaction(async tx=>{
  const renewal=await tx.guideLicenseRenewal.findUnique({where:{id}});
  if(!renewal||renewal.status!=="UNDER_REVIEW"||(approved&&renewal.requestedExpiryDate<new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")))return false;

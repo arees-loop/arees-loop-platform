@@ -1,3 +1,4 @@
+import {reviewRenewalWithAi} from "@/lib/partners/renewal-ai-review";
 import {Prisma} from "@/app/generated/prisma/client";
 import {canManagePartnerServices,getPartnerAccessRole} from "@/lib/partner-permissions";
 import {getAdminNotificationEmails,sendEmail} from "@/lib/notifications/email";
@@ -45,6 +46,8 @@ export async function POST(request:Request){
   try{if(uploadedPath)await del(uploadedPath);}catch(cleanupError){console.error("Renewal document cleanup failed",cleanupError);}
   throw error;
  }
+ const aiReview=await reviewRenewalWithAi({documentPath:blob.pathname,mimeType:file.type,licenseNumber:license.licenseNumber,expiryDate:dateText,holderName:member.partner.status==="ACTIVE"?license.issuer||"منشأة شريكة":"منشأة شريكة",kind:"PARTNER"});
+ try{await prisma.auditLog.create({data:{userId:session.user.id,action:"LICENSE_RENEWAL_AI_REVIEW",entityType:"LicenseRenewalRequest",entityId:id,afterData:aiReview}});}catch(error){console.error("Renewal AI result audit failed",error);}
  let adminEmailSent=false;
  try{
  const admins=getAdminNotificationEmails();
