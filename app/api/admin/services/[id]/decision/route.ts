@@ -40,10 +40,17 @@ export async function POST(
   }
 
   if (action === "APPROVE") {
-    const updated = await prisma.service.update({
-      where: { id },
-      data: { status: "PUBLISHED" },
-    });
+    if (service.status !== "UNDER_REVIEW") {
+      return NextResponse.json({success:false,message:"لا يمكن اعتماد خدمة ليست تحت المراجعة."},{status:409});
+    }
+    const today=new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z");
+    const license=service.licenseId?await prisma.license.findFirst({where:{id:service.licenseId,partnerId:service.partnerId,status:"VERIFIED",expiryDate:{gte:today}},select:{id:true}}):null;
+    if(service.partner.status!=="ACTIVE"||!license){
+      return NextResponse.json({success:false,message:"لا يمكن نشر الخدمة: المنشأة غير نشطة أو الترخيص غير معتمد أو منتهي الصلاحية."},{status:403});
+    }
+    const changed=await prisma.service.updateMany({where:{id,status:"UNDER_REVIEW",licenseId:license.id},data:{status:"PUBLISHED"}});
+    if(changed.count!==1)return NextResponse.json({success:false,message:"تغيرت حالة الخدمة أثناء المراجعة."},{status:409});
+    const updated=await prisma.service.findUniqueOrThrow({where:{id}});
 
     await prisma.auditLog.create({
       data: {

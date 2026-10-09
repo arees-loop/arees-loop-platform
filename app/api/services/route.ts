@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const partnerId = searchParams.get("partnerId");
 
     const services = await prisma.service.findMany({
-      where: { status: "PUBLISHED", ...(partnerId ? { partnerId } : {}), partner:{status:"ACTIVE"}, license:{status:"VERIFIED",expiryDate:{gte:new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")}} },
+      where: { status: "PUBLISHED", ...(partnerId ? { partnerId } : {}), partner:{status:"ACTIVE"}, license:{is:{status:"VERIFIED",expiryDate:{gte:new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")}}} },
       orderBy: { updatedAt: "desc" },
       select: {
         id: true, nameAr: true, nameEn: true, category: true, subCategory: true,
