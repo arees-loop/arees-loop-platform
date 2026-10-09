@@ -10,6 +10,21 @@ export default function PartnerDataPage({kind}:{kind:Kind}){
  useEffect(()=>{fetch("/api/partner/portal",{credentials:"include",cache:"no-store"}).then(r=>r.json()).then(x=>x.success?setD(x):setError(x.message||"تعذر تحميل البيانات")).catch(()=>setError("تعذر تحميل البيانات"));},[]);
  const [bookingQuery,setBookingQuery]=useState("");
  const [bookingStatus,setBookingStatus]=useState("ALL");
+ const [teamBusy,setTeamBusy]=useState<string|null>(null);
+ const [teamMessage,setTeamMessage]=useState("");
+ const updateTeamRole=async(memberId:string,role:"MANAGER"|"EMPLOYEE")=>{
+  if(!window.confirm("تأكيد تغيير دور الموظف؟"))return;
+  setTeamBusy(memberId);setTeamMessage("");
+  try{
+   const response=await fetch("/api/partner/team",{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,role})});
+   const result=await response.json();
+   if(!response.ok||!result.success)throw new Error(result.message||"تعذر تعديل الدور");
+   const refreshed=await fetch("/api/partner/portal",{credentials:"include",cache:"no-store"}).then(r=>r.json());
+   if(!refreshed.success)throw new Error("تم الحفظ، لكن تعذر تحديث القائمة.");
+   setD(refreshed);setTeamMessage("تم تحديث دور الموظف.");
+  }catch(e){setTeamMessage(e instanceof Error?e.message:"تعذر تعديل الدور");}
+  finally{setTeamBusy(null);}
+ };
  const stats=useMemo(()=>{if(!d)return null;const sales=d.bookings.reduce((a:number,b:any)=>a+Number(b.totalAmount||0),0);return{sales,bookings:d.bookings.length,services:d.services.length,settlements:d.settlements.reduce((a:number,s:any)=>a+Number(s.netAmount||0),0)}},[d]);
  if(error)return <main className="p-8"><div className="rounded-3xl bg-white p-8 text-red-700">{error}</div></main>;
  if(!d)return <main className="p-8">جاري تحميل بيانات الشريك...</main>;
@@ -23,7 +38,7 @@ export default function PartnerDataPage({kind}:{kind:Kind}){
  {kind==="settlements"&&(d.settlements.length?table(["رقم التسوية","الفترة","المبيعات","عمولة المنصة","الاستردادات","الصافي","الحالة"],d.settlements.map((s:any)=>[s.settlementNumber,date(s.periodStart)+" - "+date(s.periodEnd),money(s.grossSales),money(s.platformCommission),money(s.refunds),money(s.netAmount),s.status])):empty("تسويات"))}
  {kind==="invoices"&&(d.invoices.length?table(["الفاتورة","الحجز","العميل","الخدمة","الإجمالي","الحالة"],d.invoices.map((i:any)=>[i.invoiceNumber,i.booking?.reference,i.booking?.customerName,i.booking?.service?.nameAr,money(i.totalAmount)+" ر.س",i.status])):empty("فواتير"))}
  {kind==="reports"&&<div className="my-7 grid gap-4 md:grid-cols-4">{[["الحجوزات",stats?.bookings],["الخدمات",stats?.services],["إجمالي المبيعات",access?.finances?.view?money(stats?.sales)+" ر.س":"غير مصرح"],["صافي التسويات",access?.finances?.view?money(stats?.settlements)+" ر.س":"غير مصرح"]].map(x=><div key={x[0] as string} className="rounded-3xl bg-white p-6"><p className="text-xs opacity-55">{x[0]}</p><b className="mt-2 block text-2xl">{x[1]}</b></div>)}</div>}
- {kind==="team"&&(d.members.length?table(["المستخدم","البريد","الجوال","المسمى","الحالة"],d.members.map((m:any)=>[[m.user?.firstName,m.user?.lastName].filter(Boolean).join(" ")||"—",m.user?.email,m.user?.phone,m.jobTitle,m.isActive?"نشط":"غير نشط"])):empty("موظفين"))}
+ {kind==="team"&&<section className="mt-7 space-y-4">{teamMessage&&<p role="status" className="rounded-xl bg-white p-4">{teamMessage}</p>}{d.members.length?<div className="overflow-x-auto rounded-3xl bg-white"><table className="w-full text-sm"><thead className="bg-[#0D3B34] text-white"><tr>{["المستخدم","البريد","الجوال","المسمى","الدور","الحالة","الإجراء"].map(h=><th key={h} className="p-4 text-right">{h}</th>)}</tr></thead><tbody>{d.members.map((m:any)=>{const role=m.permissions?.role||"LEGACY";const editable=d.access?.team?.manage&&m.isActive&&(role==="EMPLOYEE"||(role==="MANAGER"&&d.access?.role==="OWNER"))&&m.userId!==d.access?.userId;return <tr key={m.id} className="border-b border-black/5"><td className="p-4">{[m.user?.firstName,m.user?.lastName].filter(Boolean).join(" ")||"—"}</td><td className="p-4">{m.user?.email||"—"}</td><td className="p-4">{m.user?.phone||"—"}</td><td className="p-4">{m.jobTitle||"—"}</td><td className="p-4">{({OWNER:"مالك",MANAGER:"مدير",EMPLOYEE:"موظف",LEGACY:"غير مصنف"} as Record<string,string>)[role]||"غير مصنف"}</td><td className="p-4">{m.isActive?"نشط":"غير نشط"}</td><td className="p-4">{editable?<select aria-label="تعديل دور الموظف" disabled={teamBusy===m.id} value={role} onChange={e=>updateTeamRole(m.id,e.target.value as "MANAGER"|"EMPLOYEE")} className="rounded-lg border p-2"><option value="EMPLOYEE">موظف</option>{d.access?.role==="OWNER"&&<option value="MANAGER">مدير</option>}</select>:<span className="opacity-60">محمي</span>}</td></tr>})}</tbody></table></div>:empty("موظفين")}</section>}
  {kind==="team"&&<ServiceHistory/>}
  {kind==="business"&&<><div className="my-7 grid gap-4 md:grid-cols-2"><div className="rounded-3xl bg-white p-6"><h2 className="font-bold">بيانات المنشأة</h2><div className="mt-4 space-y-3 text-sm"><p>الاسم: <b>{d.partner?.legalNameAr||"—"}</b></p><p>الاسم التجاري: <b>{d.partner?.tradeNameAr||"—"}</b></p><p>الرقم الموحد: <b>{d.partner?.unifiedNumber||"—"}</b></p><p>السجل التجاري: <b>{d.partner?.commercialRegister||"—"}</b></p><p>الرقم الضريبي: <b>{d.partner?.vatNumber||"—"}</b></p><p>المدينة: <b>{d.partner?.city||"—"}</b></p></div></div><div className="rounded-3xl bg-white p-6"><h2 className="font-bold">الحساب والتواصل</h2><div className="mt-4 space-y-3 text-sm"><p>البريد: <b>{d.partner?.businessEmail||"—"}</b></p><p>الجوال: <b>{d.partner?.businessPhone||"—"}</b></p><p>البنك: <b>{d.partner?.bankName||"—"}</b></p><p>IBAN: <b>{d.partner?.iban||"—"}</b></p></div></div></div>{d.licenses.length?table(["الترخيص","الجهة","الرقم","الانتهاء","الحالة"],d.licenses.map((l:any)=>[l.type,l.issuer,l.licenseNumber,date(l.expiryDate),l.status])):empty("تراخيص")}</>}
  </div></main>
