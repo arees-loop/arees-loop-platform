@@ -1,3 +1,4 @@
+import {sendGuideStatusEmail} from "@/lib/guides/status-email";
 import {NextResponse} from "next/server";
 import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
@@ -23,5 +24,7 @@ export async function PATCH(request:Request){
   return change.count;
  });
  if(!updated)return NextResponse.json({success:false,message:"تمت مراجعة الطلب بالفعل"},{status:409});
- return NextResponse.json({success:true});
+ let emailSent=true;
+ try{await sendGuideStatusEmail(current.email,current.fullName,status,reviewNotes)}catch(error){console.error("Guide status email failed",error);emailSent=false;}
+ return NextResponse.json({success:true,emailSent,message:emailSent?"تم تحديث الطلب وإرسال البريد.":"تم تحديث الطلب لكن تعذر إرسال البريد؛ يلزم إعادة الإشعار."});
 }
