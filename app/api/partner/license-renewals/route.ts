@@ -1,3 +1,4 @@
+import {canManagePartnerServices} from "@/lib/partner-permissions";
 import {getAdminNotificationEmails,sendEmail} from "@/lib/notifications/email";
 import {NextResponse} from "next/server";
 import {getCurrentSession} from "@/lib/session";
@@ -7,8 +8,9 @@ export const runtime="nodejs";
 export async function GET(){
  const session=await getCurrentSession();
  if(!session)return NextResponse.json({success:false,message:"سجل الدخول أولاً"},{status:401});
- const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true}});
+ const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true,permissions:true}});
  if(!member)return NextResponse.json({success:false,message:"حساب شريك مطلوب"},{status:403});
+ if(!canManagePartnerServices(member.permissions))return NextResponse.json({success:false,message:"ليست لديك صلاحية إدارة تراخيص المنشأة"},{status:403});
  const requests=await prisma.licenseRenewalRequest.findMany({where:{partnerId:member.partnerId},select:{id:true,licenseId:true,requestedExpiryDate:true,status:true,reviewNotes:true,createdAt:true,reviewedAt:true},orderBy:{createdAt:"desc"},take:50});
  return NextResponse.json({success:true,requests});
 }
