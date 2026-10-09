@@ -30,10 +30,15 @@ export async function POST(request:Request){
     if(!body.country?.trim()||!body.region?.trim()||!body.city?.trim()||!((latitude===null&&longitude===null)||(latitude!==null&&longitude!==null&&Number.isFinite(latitude)&&Number.isFinite(longitude)&&latitude>=-90&&latitude<=90&&longitude>=-180&&longitude<=180))){
       return NextResponse.json({success:false,message:"أكمل الدولة والمنطقة والمدينة وتحقق من الإحداثيات الاختيارية."},{status:400});
     }
+    const licenseId=typeof body.licenseId==="string"?body.licenseId.trim():"";
+    if(licenseId){
+      const license=await prisma.license.findFirst({where:{id:licenseId,partnerId:membership.partnerId},select:{id:true}});
+      if(!license) return NextResponse.json({success:false,message:"الترخيص المحدد لا يتبع منشأتك."},{status:400});
+    }
     const service=await prisma.service.create({
       data:{
         partnerId:membership.partnerId,
-        licenseId:body.licenseId?.trim()||null,
+        licenseId:licenseId||null,
         nameAr:body.nameAr.trim(),
         nameEn:body.nameEn?.trim()||null,
         category:body.category.trim(),
