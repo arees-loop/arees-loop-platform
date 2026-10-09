@@ -20,7 +20,7 @@ export async function POST(request:Request){
  try{
  const session=await getCurrentSession();
  if(!session)return NextResponse.json({success:false,message:"سجل الدخول أولاً"},{status:401});
- const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true,permissions:true,partner:{select:{status:true}}}});
+ const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true,permissions:true,partner:{select:{status:true,legalNameAr:true}}}});
  if(!member)return NextResponse.json({success:false,message:"حساب شريك مطلوب"},{status:403});
  if(member.partner.status!=="ACTIVE"||!["OWNER","MANAGER"].includes(getPartnerAccessRole(member.permissions))||!canManagePartnerServices(member.permissions))return NextResponse.json({success:false,message:"ليس لديك صلاحية تجديد ترخيص المنشأة"},{status:403});
  const form=await request.formData();
@@ -45,7 +45,7 @@ export async function POST(request:Request){
   try{if(uploadedPath)await del(uploadedPath);}catch(cleanupError){console.error("Renewal document cleanup failed",cleanupError);}
   throw error;
  }
- const aiReview=await reviewRenewalWithAi({documentPath:blob.pathname,mimeType:file.type,licenseNumber:license.licenseNumber,expiryDate:dateText,holderName:member.partner.status==="ACTIVE"?license.issuer||"منشأة شريكة":"منشأة شريكة",kind:"PARTNER"});
+ const aiReview=await reviewRenewalWithAi({documentPath:blob.pathname,mimeType:file.type,licenseNumber:license.licenseNumber,expiryDate:dateText,holderName:member.partner.legalNameAr,kind:"PARTNER"});
  try{await prisma.auditLog.create({data:{userId:session.user.id,action:"LICENSE_RENEWAL_AI_REVIEW",entityType:"LicenseRenewalRequest",entityId:id,afterData:aiReview}});}catch(error){console.error("Renewal AI result audit failed",error);}
  let adminEmailSent=false;
  try{
