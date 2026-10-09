@@ -4,7 +4,7 @@ type Guide={id:string;fullName:string;email:string;phone:string;countries:string
 export default function GuideApplicationsAdmin(){
  const [items,setItems]=useState<Guide[]>([]),[error,setError]=useState(""),[loading,setLoading]=useState(true);
  async function refresh(){try{const r=await fetch("/api/admin/guides",{cache:"no-store"});const d=await r.json();if(!r.ok)throw new Error(d.message||"غير مصرح");setItems(d.data||[])}catch(e){setError(e instanceof Error?e.message:"تعذر التحميل")}finally{setLoading(false)}}
- useEffect(()=>{void refresh()},[]);
+ useEffect(()=>{let active=true;fetch("/api/admin/guides",{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.message||"غير مصرح");if(active)setItems(d.data||[])}).catch(e=>{if(active)setError(e instanceof Error?e.message:"تعذر التحميل")}).finally(()=>{if(active)setLoading(false)});return ()=>{active=false};},[]);
  async function review(id:string,status:"APPROVED"|"REJECTED"|"NEEDS_COMPLETION"){
   const note=window.prompt("سجل نتيجة فحص الترخيص وملاحظات القرار (20 حرفاً على الأقل):");
   if(!note||note.trim().length<20)return;

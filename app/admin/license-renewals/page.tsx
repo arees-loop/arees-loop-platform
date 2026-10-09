@@ -4,7 +4,7 @@ type Renewal={id:string;licenseId:string;partnerId:string;requestedExpiryDate:st
 export default function AdminLicenseRenewals(){
  const [items,setItems]=useState<Renewal[]>([]),[message,setMessage]=useState("");
  async function load(){const r=await fetch("/api/admin/license-renewals",{cache:"no-store"});const d=await r.json();if(r.ok)setItems(d.requests||[]);else setMessage("غير مصرح أو تعذر تحميل الطلبات")}
- useEffect(()=>{void load()},[]);
+ useEffect(()=>{let active=true;fetch("/api/admin/license-renewals",{cache:"no-store"}).then(async r=>{const d=await r.json();if(!active)return;if(r.ok)setItems(d.requests||[]);else setMessage("غير مصرح أو تعذر تحميل الطلبات")}).catch(()=>{if(active)setMessage("غير مصرح أو تعذر تحميل الطلبات")});return ()=>{active=false};},[]);
  async function decide(id:string,approved:boolean){
  const notes=window.prompt("سجل نتيجة التحقق من الترخيص والجهة المصدرة (20 حرفاً على الأقل)");
  if(!notes||notes.trim().length<20)return;

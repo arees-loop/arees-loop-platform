@@ -4,7 +4,7 @@ type Renewal={id:string;applicationId:string;licenseNumber:string;requestedExpir
 export default function GuideRenewalsAdmin(){
  const [items,setItems]=useState<Renewal[]>([]),[message,setMessage]=useState("");
  async function load(){const r=await fetch("/api/admin/guide-license-renewals",{cache:"no-store"});const d=await r.json();if(r.ok)setItems(d.requests||[]);else setMessage("تعذر تحميل الطلبات")}
- useEffect(()=>{void load()},[]);
+ useEffect(()=>{let active=true;fetch("/api/admin/guide-license-renewals",{cache:"no-store"}).then(async r=>{const d=await r.json();if(!active)return;if(r.ok)setItems(d.requests||[]);else setMessage("تعذر تحميل الطلبات")}).catch(()=>{if(active)setMessage("تعذر تحميل الطلبات")});return ()=>{active=false};},[]);
  async function decide(id:string,approved:boolean){
  const notes=window.prompt("أدخل ملاحظات فحص الترخيص (20 حرفاً على الأقل)");
  if(!notes||notes.trim().length<20||(approved&&!window.confirm("هل تحققت من صحة الترخيص لدى الجهة المختصة؟")))return;
