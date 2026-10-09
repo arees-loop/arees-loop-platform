@@ -36,7 +36,7 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
         cancellationPolicy:body.cancellationPolicy?.trim()||null,meetingInstructions:body.meetingInstructions?.trim()||null,
         organizerType:body.organizerType==="OTHER"?"OTHER":"SELF",organizerName:body.organizerName?.trim()||null,organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null,
         organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,programApprovalNumber:body.programApprovalNumber?.trim()||null,status,
-        images:{create:images.map((x:any,index:number)=>({url:x.url,sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}
+        images:{create:images.map((x:{url:string;sortOrder?:unknown},index:number)=>({url:x.url,sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}
       },include:{images:true}});
       await tx.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_UPDATED",entityType:"Service",entityId:id,beforeData:{nameAr:current.nameAr,status:current.status,finalPrice:String(current.finalPrice)},afterData:{nameAr:updated.nameAr,status:updated.status,finalPrice:String(updated.finalPrice)}}});
       return updated;
