@@ -75,6 +75,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: partners,
+      canVerifyOwners: session.user.role === "SUPER_ADMIN",
     });
   } catch (error) {
     console.error(
