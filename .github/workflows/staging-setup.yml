@@ -37,6 +37,7 @@ jobs:
     outputs:
       postgres_major: ${{ steps.identity.outputs.postgres_major }}
       operation: ${{ steps.request.outputs.operation }}
+      verified: ${{ steps.identity.outputs.verified }}
     env:
       AREES_DATABASE_ENV: staging
       AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
@@ -73,12 +74,29 @@ jobs:
             *) echo 'Invalid Staging operation request.' >&2; exit 1 ;;
           esac
           printf 'operation=%s\n' "$operation" >> "$GITHUB_OUTPUT"
+      - name: Check required Staging identity settings
+        id: preflight
+        env:
+          DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
+          EXPECTED_DATABASE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+          EXPECTED_ROLE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_ROLE }}
+        run: |
+          if [ -z "$DIRECT_URL" ] || [ -z "$EXPECTED_DATABASE" ] || [ -z "$EXPECTED_ROLE" ]; then
+            echo 'configured=false' >> "$GITHUB_OUTPUT"
+            echo 'Live Staging verification was skipped because its protected Environment connection settings are not configured. No database connection or write was attempted.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo 'configured=true' >> "$GITHUB_OUTPUT"
       - name: Verify live Staging identity and connection security
-        run: node scripts/staging/verify-staging-direct.mjs | tee "$RUNNER_TEMP/staging-verification.json"
+        if: steps.preflight.outputs.configured == 'true'
+        run: |
+          set -o pipefail
+          node scripts/staging/verify-staging-direct.mjs | tee "$RUNNER_TEMP/staging-verification.json"
       - name: Record safe PostgreSQL major version
         id: identity
+        if: steps.preflight.outputs.configured == 'true'
         run: |
-          node -e 'const fs=require("node:fs"); const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/staging-verification.json","utf8")); const n=Number(r.serverVersion); const major=n>=100000?Math.floor(n/10000):Math.floor(n/1000); if (!Number.isInteger(major) || major < 14) throw new Error("Unsupported PostgreSQL major version"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `postgres_major=${major}\n`);'
+          node -e 'const fs=require("node:fs"); const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/staging-verification.json","utf8")); const n=Number(r.serverVersion); const major=n>=100000?Math.floor(n/10000):Math.floor(n/1000); if (!Number.isInteger(major) || major < 14) throw new Error("Unsupported PostgreSQL major version"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `postgres_major=${major}\nverified=true\n`);'
       - name: Summarize verification
         if: always()
         run: |
@@ -87,7 +105,7 @@ jobs:
             if [ -f "$RUNNER_TEMP/staging-verification.json" ]; then
               node -e 'const r=require(process.env.RUNNER_TEMP+"/staging-verification.json"); console.log(`- Resource: ${r.resourceId}`); console.log(`- Database and role match expected identity: ${r.databaseIdentityMatchesExpected && r.roleIdentityMatchesExpected}`); console.log(`- TLS encryption and certificate validation: ${r.tlsEncrypted && r.tlsCertificateVerified}`); console.log(`- Live database OID: ${r.databaseOid}`); console.log(`- PostgreSQL server version: ${r.serverVersion}`); console.log(`- No writes performed: ${r.writesPerformed === false}`);'
             else
-              echo '- Verification did not complete; no migration job can proceed.'
+              echo '- Live identity verification did not run; no connection, backup, migration, or seed operation ran.'
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -96,6 +114,7 @@ jobs:
     if: >-
       github.repository == 'arees-loop/arees-loop-platform' &&
       github.ref == 'refs/heads/ci/license-review-validation' &&
+      needs.verify-staging.outputs.verified == 'true' &&
       needs.verify-staging.outputs.operation == 'backup-migrate-seed'
     needs: verify-staging
     runs-on: ubuntu-latest
@@ -174,3 +193,5 @@ jobs:
             echo '- Pre-migration backup was encrypted and restored into disposable PostgreSQL before migrations.'
             echo '- Synthetic account credentials are not included in logs or artifacts.'
           } >> "$GITHUB_STEP_SUMMARY"
+cb251bda87d41c004c96cfd5ca01708bf5c5e755
+254a24e9bb550ffbbbb4b0015c1158001603574f
