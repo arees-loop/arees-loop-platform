@@ -74,8 +74,8 @@ try {
   const liveSource = await verifyLiveConnection(client, sourceUrl, "source");
   await assertReadOnlySourceRole(client);
   await stagingClient.connect();
-  const liveStaging = await verifyLiveConnection(stagingClient, stagingUrl, "staging");
-  if (liveSource.identityFingerprint === liveStaging.identityFingerprint) {
+  await verifyLiveConnection(stagingClient, stagingUrl, "staging");
+  if (databaseIdentityFingerprint(sourceUrl) === databaseIdentityFingerprint(stagingUrl)) {
     throw new Error("Source and Staging live connection fingerprints match; export stopped");
   }
   await stagingClient.end();

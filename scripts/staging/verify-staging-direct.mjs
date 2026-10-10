@@ -3,7 +3,6 @@ import { getMigrationDatabaseUrl, STAGING_PRISMA_STORE_ID, STAGING_VERCEL_PROJEC
 import { verifyLiveConnection } from "./pg-safety.mjs";
 
 const expectedDatabase = process.env.AREES_STAGING_DATABASE_EXPECTED_NAME;
-const expectedRole = process.env.AREES_STAGING_DATABASE_EXPECTED_ROLE;
 const directUrl = getMigrationDatabaseUrl();
 const parsed = new URL(directUrl);
 
@@ -16,11 +15,11 @@ if (process.env.AREES_DATABASE_ENV !== "staging") {
 if (process.env.AREES_STAGING_DATABASE_STORE_ID !== STAGING_PRISMA_STORE_ID) {
   throw new Error("Staging verification resource ID does not match the approved Prisma store");
 }
-if (!expectedDatabase || !expectedRole || parsed.hostname !== "db.prisma.io") {
-  throw new Error("Set the approved Staging database name and role, and use Prisma's direct endpoint");
+if (!expectedDatabase || parsed.hostname !== "db.prisma.io") {
+  throw new Error("Set the approved Staging database name and use Prisma's direct endpoint");
 }
-if (decodeURIComponent(parsed.pathname.slice(1)) !== expectedDatabase || decodeURIComponent(parsed.username) !== expectedRole) {
-  throw new Error("Staging connection does not match the approved database name and role");
+if (decodeURIComponent(parsed.pathname.slice(1)) !== expectedDatabase) {
+  throw new Error("Staging connection does not match the approved database name");
 }
 
 // Enforce certificate validation. Prisma's URL may contain sslmode=require,
@@ -38,8 +37,8 @@ const client = new Client({
 try {
   await client.connect();
   const live = await verifyLiveConnection(client, directUrl, "staging");
-  if (live.database !== expectedDatabase || live.role !== expectedRole) {
-    throw new Error("Live PostgreSQL identity does not match the approved Staging identity");
+  if (live.database !== expectedDatabase || live.roleIdentityMatchesCredential !== true) {
+    throw new Error("Live PostgreSQL database or credential identity check failed");
   }
   const permissions = await client.query(`
     SELECT r.rolsuper AS is_superuser,
@@ -67,7 +66,7 @@ try {
     target: "staging",
     resourceId: STAGING_PRISMA_STORE_ID,
     databaseIdentityMatchesExpected: true,
-    roleIdentityMatchesExpected: true,
+    roleIdentityVerified: live.roleIdentityMatchesCredential,
     databaseOid: live.databaseOid,
     serverVersion: live.serverVersion,
     tlsEncrypted: true,

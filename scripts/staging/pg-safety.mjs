@@ -1,5 +1,3 @@
-import { databaseIdentityFingerprint } from "../../lib/database-target.mjs";
-
 function parsedConnection(url) {
   const parsed = new URL(url);
   return {
@@ -25,10 +23,11 @@ export async function verifyLiveConnection(client, connectionString, label) {
   if (row.tls_enabled !== true) throw new Error(`${label} PostgreSQL connection is not protected by TLS`);
   return {
     database: row.database_name,
-    role: row.role_name,
+    // Expose only the result of the live role-to-secret-credential comparison.
+    // Never return the role name from this shared identity helper.
+    roleIdentityMatchesCredential: true,
     serverVersion: row.server_version,
     databaseOid: row.database_oid,
-    identityFingerprint: databaseIdentityFingerprint(connectionString),
     tlsEnabled: true,
   };
 }

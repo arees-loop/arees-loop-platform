@@ -13,6 +13,7 @@ import {
 } from "../lib/database-target.mjs";
 import { publicServiceEligibilityWhere } from "../lib/services/public-eligibility.mjs";
 import { isAiDocumentProcessingApproved } from "../lib/partners/ai-data-processing.mjs";
+import { verifyLiveConnection } from "../scripts/staging/pg-safety.mjs";
 
 const stageEnv = {
   VERCEL_PROJECT_ID: STAGING_VERCEL_PROJECT_ID,
@@ -79,13 +80,12 @@ test("Staging accepts the Prisma integration's generated database URL key", () =
   assert.equal(getDatabaseUrl(generatedKeyEnv), generatedKeyEnv.AREES_STAGING_DATABASE_DATABASE_URL);
 });
 
-test("Prisma commands use only a matching direct Staging connection", () => {
+test("Prisma commands validate direct Staging identity without a public role variable", () => {
   const directOnlyEnv = {
     VERCEL_PROJECT_ID: STAGING_VERCEL_PROJECT_ID,
     AREES_DATABASE_ENV: "staging",
     AREES_STAGING_DATABASE_STORE_ID: STAGING_PRISMA_STORE_ID,
     AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres",
-    AREES_STAGING_DATABASE_EXPECTED_ROLE: "stage",
     AREES_STAGING_DATABASE_DIRECT_URL: "postgresql://stage:secret@db.prisma.io:5432/postgres?sslmode=require",
   };
   assert.equal(getMigrationDatabaseUrl(directOnlyEnv), directOnlyEnv.AREES_STAGING_DATABASE_DIRECT_URL);
@@ -98,12 +98,32 @@ test("Prisma commands use only a matching direct Staging connection", () => {
   assert.throws(() => getMigrationDatabaseUrl(stageEnv), /dedicated direct database URL/);
   assert.throws(() => getMigrationDatabaseUrl({
     ...directOnlyEnv,
-    AREES_STAGING_DATABASE_DIRECT_URL: "postgresql://other:secret@db.prisma.io:5432/postgres?sslmode=require",
+    AREES_STAGING_DATABASE_DIRECT_URL: "postgresql://other:secret@db.prisma.io:5432/otherdb?sslmode=require",
   }), /approved database identity/);
   assert.throws(() => getMigrationDatabaseUrl({
     ...directOnlyEnv,
     AREES_STAGING_DATABASE_STORE_ID: PRODUCTION_PRISMA_STORE_ID,
   }), /does not match the approved Vercel resource/);
+});
+
+test("live role verification compares against the secret URL without returning the role name", async () => {
+  const client = {
+    query: async () => ({ rows: [{
+      database_name: "postgres",
+      role_name: "stage-sensitive-user",
+      server_version: "160004",
+      database_oid: "16384",
+      tls_enabled: true,
+    }] }),
+  };
+  const result = await verifyLiveConnection(
+    client,
+    "postgresql://stage-sensitive-user:secret@db.prisma.io:5432/postgres?sslmode=require",
+    "staging-test",
+  );
+  assert.equal(result.roleIdentityMatchesCredential, true);
+  assert.equal(JSON.stringify(result).includes("stage-sensitive-user"), false);
+  assert.equal(JSON.stringify(result).includes("secret"), false);
 });
 
 test("database availability checks use the same isolated Staging target", () => {

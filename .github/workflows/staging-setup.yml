@@ -48,7 +48,6 @@ jobs:
       AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
       AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
       AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
-      AREES_STAGING_DATABASE_EXPECTED_ROLE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_ROLE }}
       AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
       VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
     steps:
@@ -86,9 +85,8 @@ jobs:
         env:
           DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
           EXPECTED_DATABASE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
-          EXPECTED_ROLE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_ROLE }}
         run: |
-          if [ -z "$DIRECT_URL" ] || [ -z "$EXPECTED_DATABASE" ] || [ -z "$EXPECTED_ROLE" ]; then
+          if [ -z "$DIRECT_URL" ] || [ -z "$EXPECTED_DATABASE" ]; then
             echo 'configured=false' >> "$GITHUB_OUTPUT"
             echo 'Live Staging verification was skipped because its protected Environment connection settings are not configured. No database connection or write was attempted.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -113,7 +111,7 @@ jobs:
           const verified = result.target === 'staging' &&
             result.resourceId === process.env.AREES_STAGING_DATABASE_STORE_ID &&
             result.databaseIdentityMatchesExpected === true &&
-            result.roleIdentityMatchesExpected === true &&
+            result.roleIdentityVerified === true &&
             result.tlsEncrypted === true &&
             result.tlsCertificateVerified === true &&
             result.productionCredentialsUsed === false &&
@@ -146,7 +144,7 @@ jobs:
             typeof result.resourceId === 'string' && result.resourceId.length > 0 &&
             result.target === 'staging' &&
             typeof result.databaseIdentityMatchesExpected === 'boolean' &&
-            typeof result.roleIdentityMatchesExpected === 'boolean' &&
+            typeof result.roleIdentityVerified === 'boolean' &&
             typeof result.tlsEncrypted === 'boolean' &&
             typeof result.tlsCertificateVerified === 'boolean' &&
             (typeof result.databaseOid === 'string' || typeof result.databaseOid === 'number') &&
@@ -158,7 +156,7 @@ jobs:
             process.exit(0);
           }
           console.log(`- Resource: ${result.resourceId}`);
-          console.log(`- Database and role match expected identity: ${result.databaseIdentityMatchesExpected && result.roleIdentityMatchesExpected}`);
+          console.log(`- Database name and live credential role verified: ${result.databaseIdentityMatchesExpected && result.roleIdentityVerified}`);
           console.log(`- TLS encryption and certificate validation: ${result.tlsEncrypted && result.tlsCertificateVerified}`);
           console.log(`- Live database OID: ${result.databaseOid}`);
           console.log(`- PostgreSQL server version: ${result.serverVersion}`);
@@ -203,7 +201,6 @@ jobs:
       AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
       AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
       AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
-      AREES_STAGING_DATABASE_EXPECTED_ROLE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_ROLE }}
       AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
       AREES_STAGING_BACKUP_PASSPHRASE: ${{ secrets.AREES_STAGING_BACKUP_PASSPHRASE }}
       AREES_STAGING_TEST_PASSWORD: ${{ secrets.AREES_STAGING_TEST_PASSWORD }}

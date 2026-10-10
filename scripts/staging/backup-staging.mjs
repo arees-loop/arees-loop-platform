@@ -7,13 +7,14 @@ import { getMigrationDatabaseUrl, STAGING_PRISMA_STORE_ID } from "../../lib/data
 const maxBytes = 50 * 1024 * 1024;
 const storeId = process.env.AREES_STAGING_DATABASE_STORE_ID;
 const expectedDatabase = process.env.AREES_STAGING_DATABASE_EXPECTED_NAME;
-const expectedRole = process.env.AREES_STAGING_DATABASE_EXPECTED_ROLE;
 const passphrase = process.env.AREES_STAGING_BACKUP_PASSPHRASE;
 const url = new URL(getMigrationDatabaseUrl());
 if (storeId !== STAGING_PRISMA_STORE_ID || url.hostname !== "db.prisma.io") {
   throw new Error("Backup target is not the approved direct Staging database");
 }
-if (!expectedDatabase || !expectedRole || decodeURIComponent(url.pathname.slice(1)) !== expectedDatabase || decodeURIComponent(url.username) !== expectedRole) {
+const databaseName = decodeURIComponent(url.pathname.slice(1));
+const databaseRole = decodeURIComponent(url.username);
+if (!expectedDatabase || databaseName !== expectedDatabase || !databaseRole) {
   throw new Error("Backup target does not match the approved Staging database identity");
 }
 if (!passphrase || passphrase.length < 32) throw new Error("Set a unique backup encryption passphrase of at least 32 characters");
@@ -25,25 +26,26 @@ const dumpPath = path.join(tempDir, "staging.dump");
 const artifactDir = path.resolve(process.env.RUNNER_TEMP || os.tmpdir(), "arees-stage-backup");
 const encryptedPath = path.join(artifactDir, "staging-pre-migration.dump.gpg");
 await mkdir(artifactDir, { recursive: true });
-await writeFile(pgpassPath, `${escapePgpass(url.hostname)}:${url.port || "5432"}:${escapePgpass(expectedDatabase)}:${escapePgpass(expectedRole)}:${escapePgpass(decodeURIComponent(url.password))}\n`, { mode: 0o600 });
+await writeFile(pgpassPath, `${escapePgpass(url.hostname)}:${url.port || "5432"}:${escapePgpass(databaseName)}:${escapePgpass(databaseRole)}:${escapePgpass(decodeURIComponent(url.password))}\n`, { mode: 0o600 });
 await chmod(pgpassPath, 0o600);
 
 function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const { stdinText, ...spawnOptions } = options;
     const child = spawn(command, args, { stdio: ["pipe", "ignore", "pipe"], ...spawnOptions });
-    let stderr = "";
-    child.stderr.on("data", (part) => { stderr += part.toString(); });
+    // libpq tools may include the active database role in diagnostics. Do not
+    // forward stderr to GitHub logs; report only the tool name and exit code.
+    child.stderr.resume();
     child.on("error", reject);
-    child.on("close", (code) => code === 0 ? resolve() : reject(new Error(`${command} failed (${code}): ${stderr.slice(-2000)}`)));
+    child.on("close", (code) => code === 0 ? resolve() : reject(new Error(`${command} failed (${code ?? "unknown"}); diagnostic output was suppressed`)));
     if (stdinText) child.stdin.end(stdinText);
     else child.stdin.end();
   });
 }
 
 try {
-  await run("pg_dump", ["--host", url.hostname, "--port", url.port || "5432", "--username", expectedRole, "--dbname", expectedDatabase, "--format=custom", "--no-owner", "--no-acl", "--file", dumpPath], {
-    env: { PATH: process.env.PATH, HOME: process.env.HOME, PGPASSFILE: pgpassPath, PGSSLMODE: "verify-full", PGCONNECT_TIMEOUT: "10", PGAPPNAME: "arees-staging-pre-migration-backup" },
+  await run("pg_dump", ["--host", url.hostname, "--port", url.port || "5432", "--dbname", databaseName, "--format=custom", "--no-owner", "--no-acl", "--file", dumpPath], {
+    env: { PATH: process.env.PATH, HOME: process.env.HOME, PGUSER: databaseRole, PGPASSFILE: pgpassPath, PGSSLMODE: "verify-full", PGCONNECT_TIMEOUT: "10", PGAPPNAME: "arees-staging-pre-migration-backup" },
   });
   const { stat } = await import("node:fs/promises");
   const info = await stat(dumpPath);

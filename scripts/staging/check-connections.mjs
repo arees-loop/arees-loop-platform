@@ -1,6 +1,7 @@
 import pg from "pg";
 import {
   assertSeparateDatabases,
+  databaseIdentityFingerprint,
   getMigrationDatabaseUrl,
   getStagingDatabaseUrl,
 } from "../../lib/database-target.mjs";
@@ -21,6 +22,10 @@ const resources = assertSeparateDatabases(sourceUrl, stagingUrl, expectedHost, {
   sourceStoreId: process.env.AREES_SOURCE_DATABASE_STORE_ID,
   targetStoreId: process.env.AREES_STAGING_DATABASE_STORE_ID,
 });
+const stagingRoleMatchesDirect = decodeURIComponent(new URL(stagingUrl).username) === decodeURIComponent(new URL(migrationUrl).username);
+if (!stagingRoleMatchesDirect) {
+  throw new Error("Pooled and direct Staging connections are configured for different database roles");
+}
 const { Client } = pg;
 
 async function probe(label, connectionString) {
@@ -48,10 +53,10 @@ try {
   const source = await probe("source", sourceUrl);
   const staging = await probe("staging", stagingUrl);
   const migration = await probe("staging-direct", migrationUrl);
-  if (source.identityFingerprint === staging.identityFingerprint) {
+  if (databaseIdentityFingerprint(sourceUrl) === databaseIdentityFingerprint(stagingUrl)) {
     throw new Error("Source and Staging live connection fingerprints match; isolation is not proven");
   }
-  if (staging.databaseOid !== migration.databaseOid || staging.database !== migration.database || staging.role !== migration.role) {
+  if (staging.databaseOid !== migration.databaseOid || staging.database !== migration.database || !staging.roleIdentityMatchesCredential || !migration.roleIdentityMatchesCredential) {
     throw new Error("Pooled and direct Staging connections do not resolve to the same live database identity");
   }
   console.log(JSON.stringify({ source, staging, migration, resourceIdsDiffer: source.resourceId !== staging.resourceId, writesPerformed: false, queries: "read-only identity/privilege checks only" }));
