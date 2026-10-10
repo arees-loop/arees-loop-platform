@@ -77,27 +77,58 @@ const images = catalog.images.map((image) => ({
 }));
 
 if (mode === "--dry-run") {
-  console.log(JSON.stringify({ mode, partnerId: partner.id, services: services.length, images: images.length, targetHost: target.hostname, targetDatabase: decodeURIComponent(target.pathname.slice(1)) }wâÚ$z{-®éÜj×stableJson(permissions))) {
-      throw new Error(`Test membership ${userId} conflicts with existing staging permissions`);
-    }
-  }
+  console.log(JSON.stringify({ mode, partnerId: partner.id, services: services.length, images: images.length, targetHost: target.hostname, targetDatabase: decodeURIComponent(target.pathname.slice(1)) }));
+  process.exit(0);
+}
 
-  await client.query(
-    `INSERT INTO "Service" ("id", "partnerId", "nameAr", "category", "descriptionAr", "basePrice", "vatRate", "finalPrice", "status", "createdAt", "updatedAt")
-     VALUES ($1, $2, $3, $4, $5, $6::numeric, 0, $6::numeric, 'PUBLISHED'::"ServiceStatus", $7, $7)
-     ON CONFLICT ("id") DO NOTHING`,
-    [fixtures.service.id, fixtures.partner.id, fixtures.service.nameAr, fixtures.service.category, fixtures.service.descriptionAr, fixtures.service.price, now],
+if (process.env.AREES_ALLOW_STAGING_CATALOG_IMPORT !== "YES") {
+  throw new Error("Staging catalog writes require AREES_ALLOW_STAGING_CATALOG_IMPORT=YES after explicit approval");
+}
+const backupPath = process.env.AREES_STAGING_PREIMPORT_BACKUP;
+const backupSha = process.env.AREES_STAGING_PREIMPORT_BACKUP_SHA256;
+if (!backupPath || !backupSha) throw new Error("A verified pre-import staging backup path and SHA-256 are required");
+const backupHash = createHash("sha256").update(await readFile(backupPath)).digest("hex");
+if (backupHash !== backupSha.toLowerCase()) throw new Error("Staging backup checksum does not match");
+await execFileAsync("pg_restore", ["--list", backupPath], { maxBuffer: 1024 * 1024 });
+
+const { Client } = pg;
+const client = new Client({ connectionString: targetUrl, connectionTimeoutMillis: 8000, query_timeout: 15000 });
+const inserted = { Partner: 0, Service: 0, ServiceImage: 0 };
+
+async function insertOrCheck(table, columns, row) {
+  const values = columns.map((column) => row[column] ?? null);
+  const quotedColumns = columns.map((column) => `"${column}"`).join(", ");
+  const placeholders = values.map((_, index) => `$${index + 1}`).join(", ");
+  const result = await client.query(
+    `INSERT INTO "${table}" (${quotedColumns}) VALUES (${placeholders}) ON CONFLICT ("id") DO NOTHING RETURNING "id"`,
+    values,
   );
-  const service = await client.query(`SELECT "partnerId", "nameAr" FROM "Service" WHERE "id" = $1`, [fixtures.service.id]);
-  if (service.rows[0]?.partnerId !== fixtures.partner.id || service.rows[0]?.nameAr !== fixtures.service.nameAr) {
-    throw new Error("Staging test service ID is already used by different data");
+  if (result.rowCount === 1) {
+    inserted[table] += 1;
+    return;
   }
 
+  const existing = await client.query(`SELECT ${quotedColumns} FROM "${table}" WHERE "id" = $1`, [row.id]);
+  if (existing.rowCount !== 1) throw new Error(`${table} conflict changed during import; transaction stopped`);
+  const normalize = (value) => value instanceof Date ? value.toISOString() : value;
+  const same = columns.every((column) => JSON.stringify(normalize(existing.rows[0][column])) === JSON.stringify(normalize(row[column] ?? null)));
+  if (!same) throw new Error(`${table} ${row.id} already exists with different content; refusing to overwrite`);
+}
+
+try {
+  await client.connect();
+  await client.query("BEGIN");
+  const identity = await client.query("SELECT current_database() AS database_name, current_setting('transaction_read_only') AS read_only");
+  if (identity.rows[0]?.read_only !== "off") throw new Error("Staging database is unexpectedly read-only");
+  if (identity.rows[0]?.database_name.toLowerCase().includes("production")) throw new Error("Refusing a database whose name identifies it as production");
+  await insertOrCheck("Partner", partnerColumns, partner);
+  for (const service of services) await insertOrCheck("Service", serviceColumns, service);
+  for (const image of images) await insertOrCheck("ServiceImage", imageColumns, image);
   await client.query("COMMIT");
-  console.log(JSON.stringify({ mode, partnerId: fixtures.partner.id, serviceId: fixtures.service.id, accountCount: fixtures.users.length, passwordProvidedBy: "AREES_STAGING_TEST_PASSWORD", secretsPrinted: false }));
+  console.log(JSON.stringify({ mode, inserted, verifiedExisting: { Partner: 1 - inserted.Partner, Service: services.length - inserted.Service, ServiceImage: images.length - inserted.ServiceImage }, backupSha256: backupHash }));
 } catch (error) {
   await client.query("ROLLBACK").catch(() => {});
-  console.error(error instanceof Error ? error.message : "Staging fixtures failed");
+  console.error(error instanceof Error ? error.message : "Staging import failed");
   process.exitCode = 1;
 } finally {
   await client.end().catch(() => {});
