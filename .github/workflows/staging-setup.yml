@@ -19,6 +19,11 @@ on:
           - verify-only
           - backup-migrate-seed
         default: verify-only
+      approve_staging_migrations:
+        description: Explicitly authorize the Staging backup, migration, and synthetic seed job
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -67,7 +72,9 @@ jobs:
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             operation="$DISPATCH_OPERATION"
           else
-            operation="$(tr -d '\r\n' < .github/staging-setup-request.txt)"
+            # Push-triggered runs are preflight-only. A repository file change
+            # must never be able to authorize a backup, migration, or seed.
+            operation="verify-only"
           fi
           case "$operation" in
             verify-only|backup-migrate-seed) ;;
@@ -96,16 +103,71 @@ jobs:
         id: identity
         if: steps.preflight.outputs.configured == 'true'
         run: |
-          node -e 'const fs=require("node:fs"); const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/staging-verification.json","utf8")); const n=Number(r.serverVersion); const major=n>=100000?Math.floor(n/10000):Math.floor(n/1000); if (!Number.isInteger(major) || major < 14) throw new Error("Unsupported PostgreSQL major version"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `postgres_major=${major}\nverified=true\n`);'
+          node - "$RUNNER_TEMP/staging-verification.json" <<'NODE'
+          const fs = require('node:fs');
+          const result = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const serverVersion = Number(result.serverVersion);
+          const major = serverVersion >= 100000
+            ? Math.floor(serverVersion / 10000)
+            : Math.floor(serverVersion / 1000);
+          const verified = result.target === 'staging' &&
+            result.resourceId === process.env.AREES_STAGING_DATABASE_STORE_ID &&
+            result.databaseIdentityMatchesExpected === true &&
+            result.roleIdentityMatchesExpected === true &&
+            result.tlsEncrypted === true &&
+            result.tlsCertificateVerified === true &&
+            result.productionCredentialsUsed === false &&
+            result.writesPerformed === false &&
+            Number.isInteger(major) && major >= 14;
+          if (!verified) {
+            throw new Error('Staging identity, TLS, privileges, and no-write checks did not all pass');
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `postgres_major=${major}\nverified=true\n`);
+          NODE
       - name: Summarize verification
         if: always()
         run: |
           {
             echo '### Staging preflight'
-            if [ -f "$RUNNER_TEMP/staging-verification.json" ]; then
-              node -e 'const r=require(process.env.RUNNER_TEMP+"/staging-verification.json"); console.log(`- Resource: ${r.resourceId}`); console.log(`- Database and role match expected identity: ${r.databaseIdentityMatchesExpected && r.roleIdentityMatchesExpected}`); console.log(`- TLS encryption and certificate validation: ${r.tlsEncrypted && r.tlsCertificateVerified}`); console.log(`- Live database OID: ${r.databaseOid}`); console.log(`- PostgreSQL server version: ${r.serverVersion}`); console.log(`- No writes performed: ${r.writesPerformed === false}`);'
+            if [ ! -s "$RUNNER_TEMP/staging-verification.json" ]; then
+              echo '- Verification output is missing or empty; identity was not verified and no backup, migration, or seed was authorized.'
             else
-              echo '- Live identity verification did not run; no connection, backup, migration, or seed operation ran.'
+              node - "$RUNNER_TEMP/staging-verification.json" <<'NODE'
+          const fs = require('node:fs');
+          const file = process.argv[2];
+          let result;
+          try {
+            result = JSON.parse(fs.readFileSync(file, 'utf8'));
+          } catch {
+            console.log('- Verification output is incomplete or invalid JSON; identity was not verified and no backup, migration, or seed was authorized.');
+            process.exit(0);
+          }
+          const valid = result &&
+            typeof result.resourceId === 'string' && result.resourceId.length > 0 &&
+            result.target === 'staging' &&
+            typeof result.databaseIdentityMatchesExpected === 'boolean' &&
+            typeof result.roleIdentityMatchesExpected === 'boolean' &&
+            typeof result.tlsEncrypted === 'boolean' &&
+            typeof result.tlsCertificateVerified === 'boolean' &&
+            (typeof result.databaseOid === 'string' || typeof result.databaseOid === 'number') &&
+            Number.isFinite(Number(result.serverVersion)) &&
+            typeof result.productionCredentialsUsed === 'boolean' &&
+            typeof result.writesPerformed === 'boolean';
+          if (!valid) {
+            console.log('- Verification output is missing required fields; identity was not verified and no backup, migration, or seed was authorized.');
+            process.exit(0);
+          }
+          console.log(`- Resource: ${result.resourceId}`);
+          console.log(`- Database and role match expected identity: ${result.databaseIdentityMatchesExpected && result.roleIdentityMatchesExpected}`);
+          console.log(`- TLS encryption and certificate validation: ${result.tlsEncrypted && result.tlsCertificateVerified}`);
+          console.log(`- Live database OID: ${result.databaseOid}`);
+          console.log(`- PostgreSQL server version: ${result.serverVersion}`);
+          console.log(`- Production credentials used: ${result.productionCredentialsUsed}`);
+          console.log(`- No writes performed: ${result.writesPerformed === false}`);
+          if (result.writesPerformed !== false) {
+            console.log('- WARNING: verification reported writes; this run must not continue to Staging setup.');
+          }
+          NODE
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -114,6 +176,8 @@ jobs:
     if: >-
       github.repository == 'arees-loop/arees-loop-platform' &&
       github.ref == 'refs/heads/ci/license-review-validation' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.approve_staging_migrations == true &&
       needs.verify-staging.outputs.verified == 'true' &&
       needs.verify-staging.outputs.operation == 'backup-migrate-seed'
     needs: verify-staging
@@ -162,7 +226,9 @@ jobs:
       - name: Verify Staging identity again immediately before backup
         run: node scripts/staging/verify-staging-direct.mjs
       - name: Create encrypted pre-migration backup
-        run: node scripts/staging/backup-staging.mjs | tee "$RUNNER_TEMP/staging-backup-metadata.json"
+        run: |
+          set -o pipefail
+          node scripts/staging/backup-staging.mjs | tee "$RUNNER_TEMP/staging-backup-metadata.json"
       - name: Test encrypted backup restore in disposable PostgreSQL
         env:
           RESTORE_PASSWORD: ci_restore_only
@@ -193,5 +259,3 @@ jobs:
             echo '- Pre-migration backup was encrypted and restored into disposable PostgreSQL before migrations.'
             echo '- Synthetic account credentials are not included in logs or artifacts.'
           } >> "$GITHUB_STEP_SUMMARY"
-cb251bda87d41c004c96cfd5ca01708bf5c5e755
-254a24e9bb550ffbbbb4b0015c1158001603574f
