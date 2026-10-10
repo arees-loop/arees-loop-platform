@@ -43,7 +43,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   useEffect(() => { let mounted=true; fetch("/api/navigation",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(mounted&&d.success)setNavVisible(d.data)}).catch(()=>{});return()=>{mounted=false}; }, []);
   const text = "text-[#0D3B34]";
   const border = overlay ? "border-white/35" : "border-[#0D3B34]/15";
-  const glass = "bg-white/90";
+  const glass = "bg-white/95";
 
   useEffect(() => {
     let active = true;
@@ -82,8 +82,8 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   return (
     <header className="pointer-events-none fixed inset-x-0 top-2 z-[100] px-4 md:px-8">
       <nav className={`pointer-events-auto mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border ${border} ${glass} px-4 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-xl backdrop-saturate-150 md:h-[82px] md:px-6`}>
-        <Link href="/" aria-label="Arees Loop">
-          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[132px] md:w-[154px]" />
+        <Link href="/" aria-label="Arees Loop" className="inline-flex shrink-0 items-center rounded-[18px] p-1 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[#D4AF37]">
+          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="block h-auto w-[132px] md:w-[154px]" />
         </Link>
 
         <div dir="rtl" className={`hidden items-center gap-5 text-[13px] font-bold lg:flex xl:gap-7 ${text}`}>
@@ -91,12 +91,12 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           {navVisible.how !== false && (<Link href="/#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</Link>)}
           {navVisible.programs !== false && <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">برامج سياحية <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span></button>
-            <div className="invisible absolute right-1/2 top-[64px] w-52 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-              <Link href="/discover?type=domestic" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">سياحة محلية</Link>
-              <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">سياحة عالمية</Link>
+            <div className="invisible absolute right-1/2 top-[64px] w-52 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/45 bg-white/95 p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-xl transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+              <Link href="/discover?type=domestic" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#F8F5ED]">سياحة محلية</Link>
+              <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#F8F5ED]">سياحة عالمية</Link>
             </div>
           </div>}
-          {navVisible.guides !== false && (<Link href="/guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
+          {navVisible.guides !== false && (<Link href="/guides/directory" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
           {navVisible.hotels !== false && (<Link href="/hotels" className="transition hover:text-[#D4AF37]">الفنادق</Link>)}
           {navVisible.flights !== false && (<Link href="/flights" className="transition hover:text-[#D4AF37]">الطيران</Link>)}
           {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}

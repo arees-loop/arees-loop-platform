@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type Whe
 import { getCurrentLocation } from "../lib/location";
 import { getTotalLoopPoints, getLoopProgress } from "../lib/loop-progress";
 
-type LiveService = { id:string; nameAr:string; descriptionAr?:string|null; city?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string; latitude?:number|null; longitude?:number|null };
+type LiveService = { id:string; nameAr:string; nameEn?:string|null; descriptionAr?:string|null; city?:string|null; region?:string|null; country?:string|null; countryCode?:string|null; subCategory?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string; latitude?:number|null; longitude?:number|null };
 const steps = [
   {
     number: "01",
@@ -155,14 +155,17 @@ const heroScenes = [
 ];
 
 
-const featuredWorldDestinations = [
-  { id: "georgia", nameAr: "جورجيا", nameEn: "Georgia", position: "18% center" },
-  { id: "turkey", nameAr: "تركيا", nameEn: "Türkiye", position: "38% center" },
-  { id: "malaysia", nameAr: "ماليزيا", nameEn: "Malaysia", position: "82% center" },
-  { id: "thailand", nameAr: "تايلاند", nameEn: "Thailand", position: "72% center" },
-  { id: "bali", nameAr: "بالي", nameEn: "Bali", position: "88% bottom" },
-  { id: "london", nameAr: "لندن", nameEn: "London", position: "4% center" },
-];
+function isInternationalTourismProgram(service: LiveService) {
+  const text = `${service.category} ${service.subCategory ?? ""}`.trim().toLowerCase();
+  const isTourism = ["برنامج", "برامج", "سياحية", "سياحي", "tour", "travel"].some((term) => text.includes(term));
+  if (!isTourism) return false;
+
+  const country = (service.country ?? "").trim().toLowerCase();
+  const countryCode = (service.countryCode ?? "").trim().toLowerCase();
+  const isSaudi = ["sa", "sau", "السعودية", "المملكة العربية السعودية", "saudi arabia", "ksa"].includes(countryCode || country);
+  const hasCountry = Boolean(country || countryCode);
+  return hasCountry ? !isSaudi : ["عالمية", "دولي", "دولية", "international", "global"].some((term) => text.includes(term));
+}
 
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
@@ -213,6 +216,14 @@ export default function Home() {
   const currentScene = heroScenes[activeScene];
   const isArabic = heroLanguage === "ar";
   const isLastScene = activeScene === heroScenes.length - 1;
+  const internationalProgramCards = Array.from(
+    new Map(
+      liveServices
+        .filter(isInternationalTourismProgram)
+        .filter((service) => service.images?.[0])
+        .map((service) => [service.images[0], service]),
+    ).values(),
+  );
   const nearbyDiscoverHref = userCoords
     ? `/discover?lat=${userCoords.lat.toFixed(6)}&lng=${userCoords.lng.toFixed(6)}&source=location`
     : "/discover";
@@ -582,26 +593,31 @@ export default function Home() {
                       ref={worldDestinationsRef}
                       className="flex flex-1 snap-x gap-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     >
-                      {featuredWorldDestinations.map((destination) => (
+                      {internationalProgramCards.map((program) => (
                         <Link
-                          key={destination.id}
-                          href={`/discover?destination=${destination.id}`}
+                          key={program.id}
+                          href={`/services/${program.id}`}
                           className="group relative h-[82px] min-w-[150px] flex-1 snap-start overflow-hidden rounded-[20px] border border-white/28 bg-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#D4AF37]/80"
                         >
                           <Image
-                            src="/Image/hero/world-destinations-hero.webp"
-                            alt={isArabic ? destination.nameAr : destination.nameEn}
+                            src={program.images[0]}
+                            alt={isArabic ? program.nameAr : program.nameEn || program.nameAr}
                             fill
                             sizes="150px"
+                            unoptimized={!program.images[0].startsWith("/")}
                             className="object-cover transition duration-500 group-hover:scale-105"
-                            style={{ objectPosition: destination.position }}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
                           <span className="absolute bottom-2.5 right-3 left-3 text-xs font-black text-white drop-shadow">
-                            {isArabic ? destination.nameAr : destination.nameEn}
+                            {isArabic ? program.nameAr : program.nameEn || program.nameAr}
                           </span>
                         </Link>
                       ))}
+                      {!internationalProgramCards.length && (
+                        <div className="flex h-[82px] min-w-[260px] flex-1 items-center justify-center rounded-[20px] border border-white/25 bg-[#0D3B34]/65 px-4 text-center text-xs font-bold text-white/90">
+                          تظهر هنا صور البرامج السياحية الدولية المنشورة عند توفر بيانات المنصة.
+                        </div>
+                      )}
                     </div>
                     <button
                       type="button"
