@@ -3,6 +3,7 @@ import {
   randomBytes,
   randomInt,
 } from "crypto";
+import { isDatabaseConfigured } from "@/lib/database-target.mjs";
 
 type VerificationTokenType =
   | "EMAIL_VERIFICATION"
@@ -32,7 +33,7 @@ const PASSWORD_RESET_EXPIRY_MS =
 const MAX_ATTEMPTS = 5;
 
 function ensureDatabaseConfigured() {
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     throw new Error("DATABASE_URL is not defined");
   }
 }

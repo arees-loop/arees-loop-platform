@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "crypto";
 import { cookies } from "next/headers";
+import { isDatabaseConfigured } from "@/lib/database-target.mjs";
 
 const SESSION_COOKIE_NAME = "arees_loop_session";
 
@@ -20,7 +21,7 @@ export async function createSession(
   userId: string,
   request?: Request,
 ) {
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     throw new Error("DATABASE_URL is not defined");
   }
 
@@ -72,7 +73,7 @@ export async function createSession(
 }
 
 export async function getCurrentSession() {
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     return null;
   }
 
@@ -167,7 +168,7 @@ export async function deleteCurrentSession() {
 
   if (
     token &&
-    process.env.DATABASE_URL
+    isDatabaseConfigured()
   ) {
     const tokenHash = hashSessionToken(token);
 
@@ -186,7 +187,7 @@ export async function deleteCurrentSession() {
 export async function deleteAllUserSessions(
   userId: string,
 ) {
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     throw new Error("DATABASE_URL is not defined");
   }
 

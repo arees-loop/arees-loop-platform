@@ -10,6 +10,7 @@ import {
 
 import { sendVerificationEmail } from "@/lib/email";
 import { createVerificationToken } from "@/lib/verification-token";
+import { isDatabaseConfigured } from "@/lib/database-target.mjs";
 
 function databaseNotConfigured() {
   return NextResponse.json(
@@ -65,7 +66,7 @@ function rateLimitExceeded(
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     return databaseNotConfigured();
   }
 

@@ -5,6 +5,8 @@ import {getCurrentSession} from "@/lib/session";
 import {hasAdminPermission} from "@/lib/admin-permissions";
 import {canManagePartnerServices} from "@/lib/partner-permissions";
 import {serviceEligibilityWhere} from "@/lib/services/eligibility";
+import {isAreesStagingProject} from "@/lib/database-target.mjs";
+import {publicServiceEligibilityWhere} from "@/lib/services/public-eligibility.mjs";
 export const runtime="nodejs";
 export async function GET(request:NextRequest){
  const pathname=request.nextUrl.searchParams.get("pathname");
@@ -14,7 +16,7 @@ export async function GET(request:NextRequest){
   const activePartner=await prisma.partner.findFirst({where:{status:"ACTIVE",logoUrl:url},select:{id:true}});
   if(!activePartner)return new Response("Not found",{status:404});
  }else{
-  const published=await prisma.service.findFirst({where:{status:"PUBLISHED",...serviceEligibilityWhere(),images:{some:{url}}},select:{id:true}});
+  const published=await prisma.service.findFirst({where:{status:"PUBLISHED",...publicServiceEligibilityWhere(isAreesStagingProject(),serviceEligibilityWhere()),images:{some:{url}}},select:{id:true}});
   if(!published){
   const session=await getCurrentSession();
   let allowed=hasAdminPermission(session?.user,"CONTENT_EXPERIENCES");

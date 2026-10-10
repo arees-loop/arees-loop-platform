@@ -1,6 +1,8 @@
 import {serviceEligibilityWhere} from "@/lib/services/eligibility";
 import {sanitizeServiceHtml} from "@/lib/service-html";
 import { NextRequest, NextResponse } from "next/server";
+import { isAreesStagingProject, isDatabaseConfigured } from "@/lib/database-target.mjs";
+import { publicServiceEligibilityWhere } from "@/lib/services/public-eligibility.mjs";
 
 function databaseNotConfigured() {
   return NextResponse.json(
@@ -14,7 +16,7 @@ function databaseNotConfigured() {
 }
 
 export async function GET(request: NextRequest) {
-  if (!process.env.DATABASE_URL) return databaseNotConfigured();
+  if (!isDatabaseConfigured()) return databaseNotConfigured();
 
   try {
     const { prisma } = await import("@/lib/prisma");
@@ -22,7 +24,11 @@ export async function GET(request: NextRequest) {
     const partnerId = searchParams.get("partnerId");
 
     const services = await prisma.service.findMany({
-      where: { status: "PUBLISHED", ...(partnerId ? { partnerId } : {}), ...serviceEligibilityWhere() },
+      where: {
+        status: "PUBLISHED",
+        ...(partnerId ? { partnerId } : {}),
+        ...publicServiceEligibilityWhere(isAreesStagingProject(), serviceEligibilityWhere()),
+      },
       orderBy: { updatedAt: "desc" },
       select: {
         id: true, nameAr: true, nameEn: true, category: true, subCategory: true,
@@ -63,6 +69,7 @@ export async function GET(request: NextRequest) {
         organizerName: service.organizerName,
         organizerLicenseNumber: service.organizerLicenseNumber,
         organizerLicenseIssuer: service.organizerLicenseIssuer,
+        licenseTestOnly: isAreesStagingProject(),
         partnerName: service.partner.tradeNameAr || service.partner.legalNameAr,
         images: service.images.map((image) => image.url),
       })),

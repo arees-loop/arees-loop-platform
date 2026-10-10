@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isDatabaseConfigured } from "@/lib/database-target.mjs";
 
 function money(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     return NextResponse.json({ success: false, error: "DATABASE_NOT_CONFIGURED" }, { status: 503 });
   }
 
