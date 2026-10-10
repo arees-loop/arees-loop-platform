@@ -1,0 +1,174 @@
+name: Staging Setup
+
+on:
+  # Safe branch alternative: the workflow runs only for an explicit request
+  # file change on the isolated review branch; it is never added to main.
+  push:
+    branches:
+      - ci/license-review-validation
+    paths:
+      - .github/workflows/staging-setup.yml
+      - .github/staging-setup-request.txt
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Verify the isolated Staging database, or back it up and apply Staging migrations/fixtures
+        required: true
+        type: choice
+        options:
+          - verify-only
+          - backup-migrate-seed
+        default: verify-only
+
+permissions:
+  contents: read
+
+concurrency:
+  group: arees-loop-staging-setup
+  cancel-in-progress: false
+
+jobs:
+  verify-staging:
+    name: Verify Staging identity, TLS, and privileges
+    if: github.repository == 'arees-loop/arees-loop-platform' && github.ref == 'refs/heads/ci/license-review-validation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: arees-loop-staging
+    outputs:
+      postgres_major: ${{ steps.identity.outputs.postgres_major }}
+      operation: ${{ steps.request.outputs.operation }}
+    env:
+      AREES_DATABASE_ENV: staging
+      AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
+      AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
+      AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+      AREES_STAGING_DATABASE_EXPECTED_ROLE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_ROLE }}
+      AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
+      VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Read explicitly requested Staging operation
+        id: request
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_OPERATION: ${{ inputs.operation }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            operation="$DISPATCH_OPERATION"
+          else
+            operation="$(tr -d '\r\n' < .github/staging-setup-request.txt)"
+          fi
+          case "$operation" in
+            verify-only|backup-migrate-seed) ;;
+            *) echo 'Invalid Staging operation request.' >&2; exit 1 ;;
+          esac
+          printf 'operation=%s\n' "$operation" >> "$GITHUB_OUTPUT"
+      - name: Verify live Staging identity and connection security
+        run: node scripts/staging/verify-staging-direct.mjs | tee "$RUNNER_TEMP/staging-verification.json"
+      - name: Record safe PostgreSQL major version
+        id: identity
+        run: |
+          node -e 'const fs=require("node:fs"); const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/staging-verification.json","utf8")); const n=Number(r.serverVersion); const major=n>=100000?Math.floor(n/10000):Math.floor(n/1000); if (!Number.isInteger(major) || major < 14) throw new Error("Unsupported PostgreSQL major version"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `postgres_major=${major}\n`);'
+      - name: Summarize verification
+        if: always()
+        run: |
+          {
+            echo '### Staging preflight'
+            if [ -f "$RUNNER_TEMP/staging-verification.json" ]; then
+              node -e 'const r=require(process.env.RUNNER_TEMP+"/staging-verification.json"); console.log(`- Resource: ${r.resourceId}`); console.log(`- Database and role match expected identity: ${r.databaseIdentityMatchesExpected && r.roleIdentityMatchesExpected}`); console.log(`- TLS encryption and certificate validation: ${r.tlsEncrypted && r.tlsCertificateVerified}`); console.log(`- Live database OID: ${r.databaseOid}`); console.log(`- PostgreSQL server version: ${r.serverVersion}`); console.log(`- No writes performed: ${r.writesPerformed === false}`);'
+            else
+              echo '- Verification did not complete; no migration job can proceed.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  migrate-staging:
+    name: Encrypted backup, restore check, Staging migrations, and synthetic fixtures
+    if: >-
+      github.repository == 'arees-loop/arees-loop-platform' &&
+      github.ref == 'refs/heads/ci/license-review-validation' &&
+      needs.verify-staging.outputs.operation == 'backup-migrate-seed'
+    needs: verify-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: arees-loop-staging
+    services:
+      postgres:
+        image: postgres:${{ needs.verify-staging.outputs.postgres_major }}
+        env:
+          POSTGRES_USER: ci_restore
+          POSTGRES_PASSWORD: ci_restore_only
+          POSTGRES_DB: restore_check
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_restore -d restore_check"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      AREES_DATABASE_ENV: staging
+      AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
+      AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
+      AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+      AREES_STAGING_DATABASE_EXPECTED_ROLE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_ROLE }}
+      AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
+      AREES_STAGING_BACKUP_PASSPHRASE: ${{ secrets.AREES_STAGING_BACKUP_PASSPHRASE }}
+      AREES_STAGING_TEST_PASSWORD: ${{ secrets.AREES_STAGING_TEST_PASSWORD }}
+      VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
+      AREES_ALLOW_STAGING_SEED: YES
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies and backup tools
+        run: |
+          npm ci
+          sudo apt-get update
+          sudo apt-get install --yes gnupg postgresql-client-${{ needs.verify-staging.outputs.postgres_major }}
+      - name: Verify Staging identity again immediately before backup
+        run: node scripts/staging/verify-staging-direct.mjs
+      - name: Create encrypted pre-migration backup
+        run: node scripts/staging/backup-staging.mjs | tee "$RUNNER_TEMP/staging-backup-metadata.json"
+      - name: Test encrypted backup restore in disposable PostgreSQL
+        env:
+          RESTORE_PASSWORD: ci_restore_only
+        run: |
+          set -o pipefail
+          test -s "$RUNNER_TEMP/arees-stage-backup/staging-pre-migration.dump.gpg"
+          printf '%s\n' "$AREES_STAGING_BACKUP_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --decrypt "$RUNNER_TEMP/arees-stage-backup/staging-pre-migration.dump.gpg" | pg_restore --exit-on-error --no-owner --no-acl --dbname="postgresql://ci_restore:${RESTORE_PASSWORD}@127.0.0.1:5432/restore_check"
+          psql "postgresql://ci_restore:${RESTORE_PASSWORD}@127.0.0.1:5432/restore_check" -Atc "SELECT count(*) FROM pg_class WHERE relkind IN ('r','p') AND relnamespace NOT IN (SELECT oid FROM pg_namespace WHERE nspname LIKE 'pg_%' OR nspname = 'information_schema')" > "$RUNNER_TEMP/restored-table-count.txt"
+          echo 'Encrypted Staging backup decrypted and restored successfully into disposable PostgreSQL.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain encrypted backup artifact for one day
+        uses: actions/upload-artifact@v4
+        with:
+          name: arees-staging-pre-migration-${{ github.run_id }}
+          path: ${{ runner.temp }}/arees-stage-backup/staging-pre-migration.dump.gpg
+          if-no-files-found: error
+          retention-days: 1
+      - name: Apply Prisma migrations to Staging only
+        run: npx prisma migrate deploy
+      - name: Create synthetic Staging accounts
+        run: npm run staging:seed-test-fixtures -- --apply
+      - name: Summarize Staging setup
+        if: always()
+        run: |
+          {
+            echo '### Staging setup'
+            echo '- Scope: approved Staging Prisma resource only.'
+            echo '- Production database credentials were not supplied to this workflow.'
+            echo '- Pre-migration backup was encrypted and restored into disposable PostgreSQL before migrations.'
+            echo '- Synthetic account credentials are not included in logs or artifacts.'
+          } >> "$GITHUB_STEP_SUMMARY"

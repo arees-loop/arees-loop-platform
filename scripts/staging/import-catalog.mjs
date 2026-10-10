@@ -3,6 +3,13 @@ import { readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import pg from "pg";
+import {
+  databaseIdentityFingerprint,
+  getMigrationDatabaseUrl,
+  PRODUCTION_PRISMA_STORE_ID,
+  STAGING_PRISMA_STORE_ID,
+} from "../../lib/database-target.mjs";
+import { verifyLiveConnection } from "./pg-safety.mjs";
 
 const execFileAsync = promisify(execFile);
 const STAGING_PROJECT_ID = "prj_gkTSFNIfCgVwslbCUHsKtNhuwULk";
@@ -15,8 +22,8 @@ if (process.env.VERCEL_PROJECT_ID !== STAGING_PROJECT_ID || process.env.AREES_DA
   throw new Error("Catalog import is allowed only in the isolated Arees Staging project context");
 }
 
-const targetUrl = process.env.AREES_STAGING_DATABASE_URL;
-const expectedHost = process.env.AREES_STAGING_DATABASE_HOST?.toLowerCase();
+const targetUrl = getMigrationDatabaseUrl();
+const expectedHost = process.env.AREES_STAGING_DATABASE_DIRECT_HOST?.toLowerCase();
 if (!targetUrl || !expectedHost) throw new Error("Dedicated staging database URL and host allowlist are required");
 const target = new URL(targetUrl);
 if (target.hostname.toLowerCase() !== expectedHost) throw new Error("Staging database host does not match the allowlist");
@@ -38,10 +45,16 @@ if (
   media.format !== "arees-staging-media-v1" ||
   media.catalogSha256 !== catalogSha256 ||
   media.targetStoreId !== STAGING_BLOB_STORE_ID ||
-  catalog.staging.blobStoreId !== STAGING_BLOB_STORE_ID
+  catalog.staging.blobStoreId !== STAGING_BLOB_STORE_ID ||
+  catalog.source.databaseStoreId !== PRODUCTION_PRISMA_STORE_ID ||
+  catalog.staging.databaseStoreId !== STAGING_PRISMA_STORE_ID ||
+  process.env.AREES_STAGING_DATABASE_STORE_ID !== STAGING_PRISMA_STORE_ID
 ) throw new Error("Catalog/media manifests do not match the dedicated staging resources");
-if (target.hostname.toLowerCase() === catalog.source.databaseHost.toLowerCase()) {
-  throw new Error("Source and staging database hosts must be independent");
+if (
+  !catalog.source.databaseIdentityFingerprint ||
+  databaseIdentityFingerprint(targetUrl) === catalog.source.databaseIdentityFingerprint
+) {
+  throw new Error("Source and staging database connection identities must be different");
 }
 
 const imageAssets = media.assets.filter((asset) => asset.kind === "serviceImage");
@@ -117,6 +130,7 @@ async function insertOrCheck(table, columns, row) {
 
 try {
   await client.connect();
+  const live = await verifyLiveConnection(client, targetUrl, "staging-import");
   await client.query("BEGIN");
   const identity = await client.query("SELECT current_database() AS database_name, current_setting('transaction_read_only') AS read_only");
   if (identity.rows[0]?.read_only !== "off") throw new Error("Staging database is unexpectedly read-only");
@@ -125,7 +139,7 @@ try {
   for (const service of services) await insertOrCheck("Service", serviceColumns, service);
   for (const image of images) await insertOrCheck("ServiceImage", imageColumns, image);
   await client.query("COMMIT");
-  console.log(JSON.stringify({ mode, inserted, verifiedExisting: { Partner: 1 - inserted.Partner, Service: services.length - inserted.Service, ServiceImage: images.length - inserted.ServiceImage }, backupSha256: backupHash }));
+  console.log(JSON.stringify({ mode, inserted, verifiedExisting: { Partner: 1 - inserted.Partner, Service: services.length - inserted.Service, ServiceImage: images.length - inserted.ServiceImage }, targetDatabaseOid: live.databaseOid, tlsEnabled: live.tlsEnabled, backupSha256: backupHash }));
 } catch (error) {
   await client.query("ROLLBACK").catch(() => {});
   console.error(error instanceof Error ? error.message : "Staging import failed");

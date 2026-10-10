@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
-import { getDatabaseUrl, STAGING_VERCEL_PROJECT_ID } from "./lib/database-target.mjs";
+import { getMigrationDatabaseUrl, STAGING_VERCEL_PROJECT_ID } from "./lib/database-target.mjs";
 
 const isPreviewDeployment =
   process.env.VERCEL_ENV === "preview" &&
@@ -14,7 +14,7 @@ if (
   config({ path: ".env.local" });
 }
 
-const databaseUrl = getDatabaseUrl();
+const databaseUrl = getMigrationDatabaseUrl();
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

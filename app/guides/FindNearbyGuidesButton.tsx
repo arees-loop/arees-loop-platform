@@ -32,6 +32,10 @@ export default function FindNearbyGuidesButton({ className }: { className?: stri
   }
 
   return <button type="button" onClick={findNearby} disabled={busy} className={className}>
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]">
+      <circle cx="10.8" cy="10.8" r="6.3" stroke="currentColor" strokeWidth="2" />
+      <path d="m15.5 15.5 4.2 4.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
     {busy ? "جارٍ تحديد موقعك…" : "ابحث عن مرشد سياحي"}
   </button>;
 }

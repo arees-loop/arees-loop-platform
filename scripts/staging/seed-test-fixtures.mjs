@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import pg from "pg";
-import { getDatabaseUrl, STAGING_VERCEL_PROJECT_ID } from "../../lib/database-target.mjs";
+import { getMigrationDatabaseUrl, STAGING_VERCEL_PROJECT_ID } from "../../lib/database-target.mjs";
+import { verifyLiveConnection } from "./pg-safety.mjs";
 
 const [mode = "--dry-run"] = process.argv.slice(2);
 if (!["--dry-run", "--apply"].includes(mode)) throw new Error("Use --dry-run or --apply");
@@ -11,7 +12,7 @@ if (mode === "--apply" && process.env.AREES_ALLOW_STAGING_SEED !== "YES") {
   throw new Error("Test fixture writes require AREES_ALLOW_STAGING_SEED=YES after approval");
 }
 
-const connectionString = getDatabaseUrl();
+const connectionString = getMigrationDatabaseUrl();
 if (!connectionString) throw new Error("Dedicated Staging database is not configured");
 const password = process.env.AREES_STAGING_TEST_PASSWORD;
 if (mode === "--apply" && (!password || password.length < 16)) {
@@ -49,6 +50,7 @@ const now = new Date();
 
 try {
   await client.connect();
+  const live = await verifyLiveConnection(client, connectionString, "staging-fixtures");
   await client.query("BEGIN");
   const identity = await client.query("SELECT current_database() AS database_name, current_setting('transaction_read_only') AS read_only");
   if (identity.rows[0]?.read_only !== "off" || identity.rows[0]?.database_name.toLowerCase().includes("production")) {
@@ -111,7 +113,7 @@ try {
   }
 
   await client.query("COMMIT");
-  console.log(JSON.stringify({ mode, partnerId: fixtures.partner.id, serviceId: fixtures.service.id, accountCount: fixtures.users.length, passwordProvidedBy: "AREES_STAGING_TEST_PASSWORD", secretsPrinted: false }));
+  console.log(JSON.stringify({ mode, partnerId: fixtures.partner.id, serviceId: fixtures.service.id, accountCount: fixtures.users.length, targetDatabaseOid: live.databaseOid, tlsEnabled: live.tlsEnabled, passwordProvidedBy: "AREES_STAGING_TEST_PASSWORD", secretsPrinted: false }));
 } catch (error) {
   await client.query("ROLLBACK").catch(() => {});
   console.error(error instanceof Error ? error.message : "Staging fixtures failed");

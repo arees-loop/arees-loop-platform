@@ -2,18 +2,27 @@ import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import pg from "pg";
-import { assertSeparateDatabases } from "../../lib/database-target.mjs";
+import {
+  assertSeparateDatabases,
+  databaseIdentityFingerprint,
+  getStagingDatabaseUrl,
+  PRODUCTION_PRISMA_STORE_ID,
+  STAGING_PRISMA_STORE_ID,
+} from "../../lib/database-target.mjs";
+import { assertReadOnlySourceRole, verifyLiveConnection } from "./pg-safety.mjs";
 
 const { Client } = pg;
 const sourceUrl = process.env.SOURCE_READ_ONLY_DATABASE_URL;
-const stagingUrl = process.env.AREES_STAGING_DATABASE_URL;
+const stagingUrl = getStagingDatabaseUrl();
 const stagingHost = process.env.AREES_STAGING_DATABASE_HOST;
 const partnerId = process.env.AREES_SOURCE_PARTNER_ID;
 const sourceBlobStoreId = process.env.AREES_SOURCE_BLOB_STORE_ID;
 const stagingBlobStoreId = process.env.AREES_STAGING_BLOB_STORE_ID;
+const sourceStoreId = process.env.AREES_SOURCE_DATABASE_STORE_ID;
+const stagingStoreId = process.env.AREES_STAGING_DATABASE_STORE_ID;
 
-if (!sourceUrl || !stagingUrl || !stagingHost || !partnerId) {
-  throw new Error("Provide source read-only URL, staging URL/host, and exact source partner ID");
+if (!sourceUrl || !stagingUrl || !stagingHost || !partnerId || !sourceStoreId || !stagingStoreId) {
+  throw new Error("Provide restricted source URL, Staging URL/host/resource IDs, and exact source partner ID");
 }
 if (!sourceBlobStoreId || !stagingBlobStoreId || sourceBlobStoreId === stagingBlobStoreId) {
   throw new Error("Source and staging Blob store IDs must be provided and different");
@@ -21,7 +30,7 @@ if (!sourceBlobStoreId || !stagingBlobStoreId || sourceBlobStoreId === stagingBl
 if (process.env.VERCEL_PROJECT_ID !== "prj_gkTSFNIfCgVwslbCUHsKtNhuwULk") {
   throw new Error("Run catalog export only from the isolated Arees Staging project context");
 }
-assertSeparateDatabases(sourceUrl, stagingUrl, stagingHost);
+assertSeparateDatabases(sourceUrl, stagingUrl, stagingHost, { sourceStoreId, targetStoreId: stagingStoreId });
 
 const localAssetPath = (rawUrl) => {
   let parsed;
@@ -58,9 +67,18 @@ const localAssetPath = (rawUrl) => {
 const exportDir = path.resolve(process.env.AREES_CATALOG_EXPORT_DIR || "./artifacts/staging");
 const outputPath = path.join(exportDir, `catalog-${partnerId}.json`);
 const client = new Client({ connectionString: sourceUrl, connectionTimeoutMillis: 8000, query_timeout: 15000 });
+const stagingClient = new Client({ connectionString: stagingUrl, connectionTimeoutMillis: 8000, query_timeout: 15000 });
 
 try {
   await client.connect();
+  const liveSource = await verifyLiveConnection(client, sourceUrl, "source");
+  await assertReadOnlySourceRole(client);
+  await stagingClient.connect();
+  const liveStaging = await verifyLiveConnection(stagingClient, stagingUrl, "staging");
+  if (liveSource.identityFingerprint === liveStaging.identityFingerprint) {
+    throw new Error("Source and Staging live connection fingerprints match; export stopped");
+  }
+  await stagingClient.end();
   await client.query("BEGIN READ ONLY");
   const { rows: readOnlyRows } = await client.query("SHOW transaction_read_only");
   if (readOnlyRows[0]?.transaction_read_only !== "on") {
@@ -126,9 +144,18 @@ try {
     source: {
       databaseHost: new URL(sourceUrl).hostname,
       databaseName: decodeURIComponent(new URL(sourceUrl).pathname.slice(1)),
+      databaseStoreId: sourceStoreId,
+      liveDatabaseOid: liveSource.databaseOid,
+      liveServerVersion: liveSource.serverVersion,
+      databaseIdentityFingerprint: databaseIdentityFingerprint(sourceUrl),
       blobStoreId: sourceBlobStoreId,
     },
-    staging: { databaseHost: new URL(stagingUrl).hostname, blobStoreId: stagingBlobStoreId },
+    staging: {
+      databaseHost: new URL(stagingUrl).hostname,
+      databaseStoreId: stagingStoreId,
+      databaseIdentityFingerprint: databaseIdentityFingerprint(stagingUrl),
+      blobStoreId: stagingBlobStoreId,
+    },
     partner: {
       ...partner,
       logoSourceAsset: partner.logoUrl ? localAssetPath(partner.logoUrl) : null,
@@ -144,6 +171,9 @@ try {
       "service license IDs and license/approval numbers",
     ],
   };
+  if (catalog.source.databaseStoreId !== PRODUCTION_PRISMA_STORE_ID || catalog.staging.databaseStoreId !== STAGING_PRISMA_STORE_ID) {
+    throw new Error("Catalog database resource IDs are not the approved Production/ Staging resources");
+  }
   const json = `${JSON.stringify(catalog, null, 2)}\n`;
   const checksum = createHash("sha256").update(json).digest("hex");
   await client.query("COMMIT");
@@ -156,5 +186,6 @@ try {
   console.error(error instanceof Error ? error.message : "Catalog export failed");
   process.exitCode = 1;
 } finally {
+  await stagingClient.end().catch(() => {});
   await client.end().catch(() => {});
 }
