@@ -8,7 +8,7 @@ const mocks={
  '@/lib/prisma':'export const prisma=new Proxy({}, {get:(_,key)=>globalThis.areesTest.prisma[key]})',
  '@/lib/notifications/email':'export async function sendEmail(){return {sent:true}}; export function getAdminNotificationEmails(){return []}',
  '@/lib/partners/renewal-ai-review':'export async function reviewRenewalWithAi(){return {outcome:"MANUAL_REVIEW",summary:"test",issues:[],model:"test"}}',
- '@vercel/blob':'export async function get(){throw new Error("Unexpected blob access")}; export async function put(){throw new Error("Unexpected blob write")}; export async function del(){throw new Error("Unexpected blob deletion")}',
+ '@vercel/blob':'export async function get(...args){const fn=globalThis.areesTest?.blobGet;if(fn)return fn(...args);throw new Error("Unexpected blob access")}; export async function put(){throw new Error("Unexpected blob write")}; export async function del(){throw new Error("Unexpected blob deletion")}',
 };
 registerHooks({
  resolve(specifier,context,next){

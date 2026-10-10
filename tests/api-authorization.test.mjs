@@ -62,6 +62,16 @@ test('media rejects traversal before database or blob access',async()=>{
  globalThis.areesTest={session:null,prisma:new Proxy({}, {get(){throw new Error('Unexpected DB read')}})};
  assert.equal((await media.GET(new NextRequest('http://localhost/api/media?pathname=services%2F..%2Fprivate'))).status,404);
 });
+test('active partner logo is served only when its stored URL matches the requested private path',async()=>{
+ let lookedUpUrl;
+ globalThis.areesTest={session:null,prisma:{partner:{findFirst:async({where})=>{lookedUpUrl=where.logoUrl;return {id:'active-partner'}}}},blobGet:async()=>({statusCode:200,blob:{contentType:'image/png'},stream:new ReadableStream({start(controller){controller.enqueue(new Uint8Array([1]));controller.close()}})})};
+ const response=await media.GET(new NextRequest('http://localhost/api/media?pathname=partners%2Fpartner-id%2Flogo%2Fpartner.png'));
+ assert.equal(response.status,200);assert.equal(lookedUpUrl,'/api/media?pathname=partners%2Fpartner-id%2Flogo%2Fpartner.png');assert.equal(response.headers.get('cache-control'),'private, no-store');
+});
+test('unknown partner logo is denied without reading Blob',async()=>{
+ globalThis.areesTest={session:null,prisma:{partner:{findFirst:async()=>null}},blobGet:async()=>{throw new Error('Unexpected blob read')}};
+ assert.equal((await media.GET(new NextRequest('http://localhost/api/media?pathname=partners%2Fother%2Flogo%2Fphoto.png'))).status,404);
+});
 const imageUpload=await import('../app/api/partner/services/images/route.ts');
 test('ordinary customer cannot upload service images',async()=>{
  globalThis.areesTest={session:{user:{id:'customer'}},prisma:{partnerMember:{findFirst:async()=>null}}};
