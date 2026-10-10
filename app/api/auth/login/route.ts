@@ -12,6 +12,7 @@ import {
   getRateLimitHeaders,
 } from "@/lib/rate-limit";
 import { createSession } from "@/lib/session";
+import { isDatabaseConfigured } from "@/lib/database-target.mjs";
 
 function databaseNotConfigured() {
   return NextResponse.json(
@@ -86,7 +87,7 @@ export async function POST(
     );
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     return databaseNotConfigured();
   }
 

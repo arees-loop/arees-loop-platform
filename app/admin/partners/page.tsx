@@ -4,6 +4,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import OwnerVerification from "./OwnerVerification";
 
 
 
@@ -125,6 +126,7 @@ type ApiPartner = {
 
 type AdminPartnersResponse = {
   success: boolean;
+  canVerifyOwners?: boolean;
   data?: ApiPartner[];
   message?: string;
 };
@@ -306,6 +308,7 @@ function AdminPartnersContent() {
   const activeView = searchParams.get("view") === "active";
 
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [canVerifyOwners, setCanVerifyOwners] = useState(false);
 
   const [selectedId, setSelectedId] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -373,6 +376,7 @@ function AdminPartnersContent() {
         if (cancelled) return;
 
         setPartners(mapped);
+        setCanVerifyOwners(payload.canVerifyOwners === true);
         setSelectedId((current) => current && mapped.some((partner) => partner.id === current) ? current : "");
       } catch (error) {
         if (cancelled) return;
@@ -380,6 +384,7 @@ function AdminPartnersContent() {
           error instanceof Error ? error.message : "تعذر تحميل طلبات الشركاء."
         );
         setPartners([]);
+        setCanVerifyOwners(false);
         setSelectedId("");
       } finally {
         if (!cancelled) setLoading(false);
@@ -1086,6 +1091,8 @@ function AdminPartnersContent() {
 
 
           {/* REVIEW PANEL */}
+
+          {canVerifyOwners&&selectedPartner?.status==="ACTIVE"&&<OwnerVerification partnerId={selectedPartner.id}/>}
 
           {selectedPartner && <section className="overflow-hidden rounded-[30px] border border-white/80 bg-white/72 backdrop-blur-xl">
 

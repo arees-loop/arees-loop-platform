@@ -1,0 +1,3 @@
+CREATE TABLE "GuideLicenseRenewal" ("id" TEXT NOT NULL,"applicationId" TEXT NOT NULL,"userId" TEXT NOT NULL,"licenseNumber" TEXT NOT NULL,"requestedExpiryDate" TIMESTAMP(3) NOT NULL,"documentPath" TEXT NOT NULL,"status" TEXT NOT NULL DEFAULT 'UNDER_REVIEW',"reviewedById" TEXT,"reviewedAt" TIMESTAMP(3),"reviewNotes" TEXT,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL,CONSTRAINT "GuideLicenseRenewal_pkey" PRIMARY KEY ("id"));
+CREATE INDEX "GuideLicenseRenewal_applicationId_status_idx" ON "GuideLicenseRenewal"("applicationId","status");
+CREATE INDEX "GuideLicenseRenewal_userId_createdAt_idx" ON "GuideLicenseRenewal"("userId","createdAt");

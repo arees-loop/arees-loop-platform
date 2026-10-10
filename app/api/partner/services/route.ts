@@ -1,7 +1,9 @@
+import {sanitizeServiceHtml} from "@/lib/service-html";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getAdminNotificationEmails, sendEmail } from "@/lib/notifications/email";
+import { canManagePartnerServices } from "@/lib/partner-permissions";
 
 async function getPartner(userId:string){
   return prisma.partnerMember.findFirst({
@@ -18,33 +20,43 @@ export async function POST(request:Request){
     const membership=await getPartner(session.user.id);
     if(!membership) return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});
     if(membership.partner.status!=="ACTIVE") return NextResponse.json({success:false,message:"حساب الشريك غير مفعل."},{status:403});
+    if(!canManagePartnerServices(membership.permissions)) return NextResponse.json({success:false,message:"ليس لديك صلاحية إدارة الخدمات."},{status:403});
     const body=await request.json();
     const basePrice=Number(body.basePrice||0);
     const vatIncluded=body.vatMode==="included";
     const vatRate=15;
     const finalPrice=vatIncluded?basePrice:basePrice*1.15;
     const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150)));
-    if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
-    const latitude=Number(body.latitude);
-    const longitude=Number(body.longitude);
-    if(!body.city?.trim()||!body.locationName?.trim()||!Number.isFinite(latitude)||!Number.isFinite(longitude)){
-      return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة قبل الإرسال."},{status:400});
+    if(!body.nameAr?.trim()||!body.category?.trim()||!Number.isFinite(basePrice)||basePrice<=0||!Number.isSafeInteger(loyaltyPoints)) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
+    const latitude=body.latitude==null||body.latitude===""?null:Number(body.latitude);
+    const longitude=body.longitude==null||body.longitude===""?null:Number(body.longitude);
+    if(!body.country?.trim()||!body.region?.trim()||!body.city?.trim()||!((latitude===null&&longitude===null)||(latitude!==null&&longitude!==null&&Number.isFinite(latitude)&&Number.isFinite(longitude)&&latitude>=-90&&latitude<=90&&longitude>=-180&&longitude<=180))){
+      return NextResponse.json({success:false,message:"أكمل الدولة والمنطقة والمدينة وتحقق من الإحداثيات الاختيارية."},{status:400});
     }
+    const licenseId=typeof body.licenseId==="string"?body.licenseId.trim():"";
+    if(licenseId){
+      const license=await prisma.license.findFirst({where:{id:licenseId,partnerId:membership.partnerId},select:{id:true}});
+      if(!license) return NextResponse.json({success:false,message:"الترخيص المحدد لا يتبع منشأتك."},{status:400});
+    }
+    if(!licenseId)return NextResponse.json({success:false,message:"يجب ربط الخدمة بترخيص ساري ومعتمد."},{status:400});
+    const activeLicense=await prisma.license.findFirst({where:{id:licenseId,partnerId:membership.partnerId,status:"VERIFIED",expiryDate:{gte:new Date(new Date().toISOString().slice(0,10)+"T00:00:00.000Z")}},select:{id:true}});
+    if(!activeLicense)return NextResponse.json({success:false,message:"الترخيص غير معتمد أو منتهي الصلاحية. يرجى تجديده."},{status:403});
     const service=await prisma.service.create({
       data:{
         partnerId:membership.partnerId,
-        licenseId:body.licenseId?.trim()||null,
+        licenseId:licenseId||null,
         nameAr:body.nameAr.trim(),
         nameEn:body.nameEn?.trim()||null,
         category:body.category.trim(),
         subCategory:body.subCategory?.trim()||null,
-        descriptionAr:body.descriptionAr?.trim()||null,
-        descriptionEn:body.descriptionEn?.trim()||null,
+        descriptionAr:sanitizeServiceHtml(body.descriptionAr)||null,
+        descriptionEn:sanitizeServiceHtml(body.descriptionEn)||null,
         city:body.city.trim(),
-        locationName:body.locationName.trim(),
-        formattedAddress:body.formattedAddress?.trim()||body.locationName.trim(),
+        region:body.region.trim(),
+        locationName:body.locationName?.trim()||null,
+        formattedAddress:body.formattedAddress?.trim()||null,
         placeId:body.placeId?.trim()||null,
-        country:body.country?.trim()||null,
+        country:body.country.trim(),
         countryCode:body.countryCode?.trim()||null,
         latitude,
         longitude,
@@ -53,7 +65,7 @@ export async function POST(request:Request){
         finalPrice,
         loyaltyPoints,
         capacity:Number(body.capacity||0)||null,
-        cancellationPolicy:body.cancellationPolicy?.trim()||null,
+        cancellationPolicy:sanitizeServiceHtml(body.cancellationPolicy)||null,
         meetingInstructions:body.meetingInstructions?.trim()||null,
         meetingPointName:body.hasMeetingPoint?body.meetingPointName?.trim()||null:null,
         meetingPointAddress:body.hasMeetingPoint?body.meetingPointAddress?.trim()||null:null,
@@ -63,7 +75,7 @@ export async function POST(request:Request){
         organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null, organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,
         programApprovalNumber:body.programApprovalNumber?.trim()||null,
         status:"UNDER_REVIEW",
-        images:{ create:(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((image:any)=>typeof image?.url==="string" && (image.url.startsWith("https://") || image.url.startsWith("/api/media?pathname="))).map((image:any,index:number)=>({ url:image.url, sortOrder:Number.isFinite(Number(image.sortOrder))?Number(image.sortOrder):index })) }
+        images:{ create:(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((image:unknown):image is {url:string;sortOrder?:unknown}=>typeof image==="object" && image!==null && "url" in image && typeof image.url==="string" && (image.url.startsWith("https://") || image.url.startsWith("/api/media?pathname="))).map((image:{url:string;sortOrder?:unknown},index:number)=>({ url:image.url, sortOrder:Number.isFinite(Number(image.sortOrder))?Number(image.sortOrder):index })) }
       },
       include:{images:true}
     });

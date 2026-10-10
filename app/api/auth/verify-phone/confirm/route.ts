@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentSession } from "@/lib/session";
 import { verifyVerificationToken } from "@/lib/verification-token";
+import { isDatabaseConfigured } from "@/lib/database-target.mjs";
 
 function databaseNotConfigured() {
   return NextResponse.json(
@@ -39,7 +40,7 @@ function isValidVerificationCode(code: string) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     return databaseNotConfigured();
   }
 

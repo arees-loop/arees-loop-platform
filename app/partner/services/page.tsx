@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 declare global {
   interface Window {
-    google: any;
+    google: typeof google;
   }
 }
 
@@ -23,7 +23,10 @@ type Service = {
   category: string;
   subCategory: string;
   license: string;
+  licenseId?:string|null;
   city: string;
+  country?: string;
+  region?: string;
   locationName: string;
   formattedAddress: string;
   placeId: string;
@@ -46,10 +49,14 @@ type Service = {
   organizerType?: string; organizerName?: string; organizerLicenseNumber?: string; organizerLicenseIssuer?: string; programApprovalNumber?: string;
 };
 
+type ApiService = Omit<Service, "license" | "bookings" | "imageCount" | "basePrice" | "vatRate" | "finalPrice"> & {
+ license?: {type:string; licenseNumber:string}|null;
+ bookingCount?:number|null; basePrice:number|null; vatRate:number|null; finalPrice:number|null;
+};
 type PartnerApplication = {
   status: string;
   categories: Array<{ name: string }>;
-  licenses: Array<{ id: string; type: string; issuer: string; licenseNumber: string; status: string }>;
+  licenses: Array<{ id: string; type: string; issuer: string; licenseNumber: string; status: string; expiryDate:string|null }>;
 };
 
 type LocationValue = {
@@ -152,13 +159,19 @@ export default function PartnerServicesPage() {
   const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
   const [editingOriginalService, setEditingOriginalService] = useState<Service | null>(null);
   const [actionMenuId, setActionMenuId] = useState<string | number | null>(null);
+  const [application,setApplication]=useState<PartnerApplication|null>(null);
+  useEffect(()=>{const controller=new AbortController();fetch("/api/partner/application",{cache:"no-store",signal:controller.signal}).then(r=>r.json()).then(d=>setApplication(d.application||null)).catch(()=>{});return ()=>controller.abort()},[]);
+  const availableLicenses=(application?.licenses||[]).filter(l=>l.status==="VERIFIED");
   const [form, setForm] = useState({
     nameAr: "",
     nameEn: "",
     category: "",
     subCategory: "",
     license: "",
+    licenseId:"",
     city: "",
+    country: "SA",
+    region: "",
     locationName: "",
     formattedAddress: "",
     placeId: "",
@@ -202,8 +215,10 @@ export default function PartnerServicesPage() {
       .then((response) => response.json())
       .then((data) => {
         if (!alive || !data?.success) return;
-        setServices((data.services ?? []).map((service: any) => ({
+        setServices((data.services ?? []).map((service: ApiService) => ({
           id: service.id,
+          licenseId:service.licenseId,
+          country:service.country??"",region:service.region??"",
           nameAr: service.nameAr ?? "",
           nameEn: service.nameEn ?? "",
           category: service.category ?? "غير محدد",
@@ -236,7 +251,10 @@ export default function PartnerServicesPage() {
     if(!form.category) missing.push("التصنيف");
     if(!form.descriptionAr.trim()) missing.push("الوصف العربي");
     if(!form.city.trim()) missing.push("المدينة");
-    if(!form.locationName.trim() || !Number.isFinite(form.latitude) || !Number.isFinite(form.longitude)) missing.push("موقع التنفيذ");
+    if(!form.licenseId)missing.push("الترخيص");
+    if(!form.country.trim()) missing.push("الدولة");
+    if(!form.region.trim()) missing.push("المنطقة");
+    if((form.latitude === null) !== (form.longitude === null) || (form.latitude !== null && (!Number.isFinite(form.latitude) || !Number.isFinite(form.longitude)))) missing.push("إحداثيات الموقع الاختيارية");
     if(!(Number(form.basePrice)>0)) missing.push("السعر");
     if(form.capacity.trim() !== "" && !(Number(form.capacity)>0)) missing.push("السعة (يجب أن تكون أكبر من صفر أو تُترك فارغة)");
     if(!form.cancellationPolicy.trim()) missing.push("سياسة الإلغاء");
@@ -285,7 +303,10 @@ export default function PartnerServicesPage() {
       category: "",
       subCategory: "",
       license: "",
+    licenseId:"",
       city: "",
+      country: "SA",
+      region: "",
       locationName: "",
       formattedAddress: "",
       placeId: "",
@@ -342,7 +363,10 @@ export default function PartnerServicesPage() {
       category: service.category,
       subCategory: service.subCategory,
       license: service.license,
+      licenseId:service.licenseId||"",
       city: service.city,
+      country: service.country ?? "SA",
+      region: service.region ?? "",
       locationName: service.locationName,
       formattedAddress: service.formattedAddress,
       placeId: service.placeId,
@@ -400,6 +424,7 @@ export default function PartnerServicesPage() {
     category: form.category || "غير محدد",
     subCategory: form.subCategory || "",
     license: form.license || "غير مرتبط",
+    licenseId:form.licenseId,
     city: form.city || "غير محدد",
     locationName: form.locationName || "غير محدد",
     formattedAddress: form.formattedAddress || "",
@@ -418,6 +443,7 @@ export default function PartnerServicesPage() {
   });
 
   const servicePayload = (submitForReview=false) => ({
+    licenseId:form.licenseId,country:form.country,region:form.region,
     nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:stripProgramSections(form.descriptionAr)+sectionMarker("includes",form.programIncludes)+sectionMarker("excludes",form.programExcludes)+sectionMarker("notes",form.programNotes),descriptionEn:form.descriptionEn,
     basePrice:form.basePrice,loyaltyPoints:Math.max(150,Number(form.loyaltyPoints)||150),vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
     placeId:form.placeId,latitude:form.latitude,longitude:form.longitude,meetingInstructions:form.meetingInstructions,cancellationPolicy:form.cancellationPolicy,
@@ -427,9 +453,9 @@ export default function PartnerServicesPage() {
 
   const refreshServices = async () => {
     const refreshed=await fetch("/api/partner/operations",{credentials:"include",cache:"no-store"}).then(r=>r.json());
-    if(refreshed?.success) setServices((refreshed.services??[]).map((service:any)=>({
-      id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",subCategory:service.subCategory??"",
-      license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",city:service.city??"",locationName:service.locationName??"",
+    if(refreshed?.success) setServices((refreshed.services??[]).map((service:ApiService)=>({
+      id:service.id,licenseId:service.licenseId,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",subCategory:service.subCategory??"",
+      license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",city:service.city??"",region:service.region??"",country:service.country??"",locationName:service.locationName??"",
       formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),
       vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),loyaltyPoints:Number(service.loyaltyPoints??150),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
       imageCount:Array.isArray(service.images)?service.images.length:0,descriptionAr:service.descriptionAr??"",descriptionEn:service.descriptionEn??"",
@@ -438,6 +464,7 @@ export default function PartnerServicesPage() {
   };
 
   const hasMaterialChanges = Boolean(editingOriginalService && (
+    form.licenseId !== (editingOriginalService.licenseId??"") ||
     form.nameAr.trim() !== (editingOriginalService.nameAr ?? "").trim() ||
     form.nameEn.trim() !== (editingOriginalService.nameEn ?? "").trim() ||
     form.category !== editingOriginalService.category ||
@@ -448,6 +475,8 @@ export default function PartnerServicesPage() {
     Number(form.capacity || 0) !== Number(editingOriginalService.capacity || 0) ||
     form.city !== editingOriginalService.city ||
     form.locationName !== editingOriginalService.locationName ||
+    form.country.trim() !== (editingOriginalService.country ?? "").trim() ||
+    form.region.trim() !== (editingOriginalService.region ?? "").trim() ||
     form.cancellationPolicy.trim() !== (editingOriginalService.cancellationPolicy ?? "").trim() ||
     form.organizerType !== (editingOriginalService.organizerType ?? "SELF") ||
     form.organizerName.trim() !== (editingOriginalService.organizerName ?? "").trim() ||
@@ -463,7 +492,7 @@ export default function PartnerServicesPage() {
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر حفظ التعديلات.");
       await refreshServices(); closeServiceForm(); setSubmitMessage("✓ تم حفظ التعديلات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
       window.setTimeout(()=>setSubmitMessage(""),6000);
-    }catch(error:any){setSubmitMessage(error?.message||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
+    }catch(error){setSubmitMessage((error instanceof Error ? error.message : "")||"تعذر حفظ التعديلات.");}finally{setSubmitting(false);}
   };
 
   const saveSection = async (label:string) => {
@@ -474,7 +503,7 @@ export default function PartnerServicesPage() {
       const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(false),submitForReview:false})});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||`تعذر حفظ ${label}.`);
       await refreshServices(); setSubmitMessage(`✓ تم حفظ ${label} بنجاح.`); window.setTimeout(()=>setSubmitMessage(""),4500);
-    }catch(error:any){setSubmitMessage(error?.message||`تعذر حفظ ${label}.`);}finally{setSubmitting(false);}
+    }catch(error){setSubmitMessage((error instanceof Error ? error.message : "")||`تعذر حفظ ${label}.`);}finally{setSubmitting(false);}
   };
 
   const submitForReview = async () => {
@@ -492,6 +521,7 @@ export default function PartnerServicesPage() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          licenseId:form.licenseId,country:form.country,region:form.region,loyaltyPoints:form.loyaltyPoints,
           nameAr: form.nameAr, nameEn: form.nameEn, category: form.category,
           subCategory: form.subCategory, descriptionAr: stripProgramSections(form.descriptionAr)+sectionMarker("includes",form.programIncludes)+sectionMarker("excludes",form.programExcludes)+sectionMarker("notes",form.programNotes),
           descriptionEn: form.descriptionEn, basePrice: form.basePrice,
@@ -510,8 +540,8 @@ export default function PartnerServicesPage() {
       if (!response.ok || !data?.success) throw new Error(data?.message || "تعذر حفظ الخدمة.");
       setSubmitMessage(editingServiceId ? "✓ تم حفظ تعديلات الخدمة بنجاح." : "✓ تم إرسال الخدمة إلى إدارة Arees Loop للمراجعة والموافقة بنجاح.");
       const refreshed = await fetch("/api/partner/operations", { credentials:"include", cache:"no-store" }).then(r=>r.json());
-      if (refreshed?.success) setServices((refreshed.services ?? []).map((service:any)=>({
-        id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",
+      if (refreshed?.success) setServices((refreshed.services ?? []).map((service:ApiService)=>({
+        id:service.id,licenseId:service.licenseId,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",
         subCategory:service.subCategory??"",license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",
         city:service.city??"",locationName:service.locationName??"",formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",
         latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),vatRate:Number(service.vatRate??0),
@@ -519,8 +549,8 @@ export default function PartnerServicesPage() {
         status:service.status,imageCount:Array.isArray(service.images)?service.images.length:0,descriptionAr:service.descriptionAr??"",descriptionEn:service.descriptionEn??"",cancellationPolicy:service.cancellationPolicy??"",meetingInstructions:service.meetingInstructions??"",organizerType:service.organizerType??"SELF",organizerName:service.organizerName??"",organizerLicenseNumber:service.organizerLicenseNumber??"",organizerLicenseIssuer:service.organizerLicenseIssuer??"",programApprovalNumber:service.programApprovalNumber??"",images:service.images??[]
       })));
       closeServiceForm();
-    } catch (error:any) {
-      setSubmitMessage(error?.message || "تعذر حفظ الخدمة.");
+    } catch (error) {
+      setSubmitMessage((error instanceof Error ? error.message : "") || "تعذر حفظ الخدمة.");
     } finally { setSubmitting(false); }
   };
 
@@ -531,7 +561,7 @@ export default function PartnerServicesPage() {
       const response=await fetch(`/api/partner/services/${service.id}`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({action})});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر تنفيذ الإجراء.");
       setServices((current)=>current.map((item)=>item.id===service.id?{...item,status:data.status}:item)); setSubmitMessage(data.message);
-    }catch(error:any){setSubmitMessage(error?.message||"تعذر تنفيذ الإجراء.");}
+    }catch(error){setSubmitMessage((error instanceof Error ? error.message : "")||"تعذر تنفيذ الإجراء.");}
   };
 
   const requestDeleteService = async (service: Service) => {
@@ -543,7 +573,7 @@ export default function PartnerServicesPage() {
       if (!response.ok || !data?.success) throw new Error(data?.message || "تعذر حذف الخدمة.");
       setServices((current)=>current.filter((item)=>item.id!==service.id));
       setSubmitMessage(data.message || "تم حذف الخدمة.");
-    } catch(error:any) { setSubmitMessage(error?.message || "تعذر حذف الخدمة."); }
+    } catch(error) { setSubmitMessage((error instanceof Error ? error.message : "") || "تعذر حذف الخدمة."); }
   };
 
   const updateLocation = (location: LocationValue) => {
@@ -937,6 +967,12 @@ export default function PartnerServicesPage() {
                 eyebrow="BASIC INFORMATION"
                 title="معلومات الخدمة"
               >
+                <Field label="الترخيص المعتمد للخدمة" invalid={invalidFields.includes("الترخيص")}>
+                  <select value={form.licenseId} onChange={e=>setForm(current=>({...current,licenseId:e.target.value}))} className={inputClass} required>
+                    <option value="">اختر ترخيصاً معتمداً</option>
+                    {availableLicenses.map(l=><option key={l.id} value={l.id}>{l.type} — {l.licenseNumber}</option>)}
+                  </select>
+                </Field>
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="اسم الخدمة بالعربية" invalid={invalidFields.includes("اسم الخدمة")}>
                     <input
@@ -1209,7 +1245,7 @@ export default function PartnerServicesPage() {
                         const result=await response.json();
                         if(!response.ok||!result?.success) throw new Error(result?.message||"تعذر رفع الصورة.");
                         return {name:file.name,url:result.url as string};
-                      })).then((uploaded)=>{ setForm((current)=>({...current,images:[...current.images,...uploaded]})); setPendingImageFiles([]); setSubmitMessage("✓ تم رفع الصورة بنجاح. اضغط «حفظ التعديلات» لتثبيتها في الخدمة."); }).catch((error)=>{ setForm((current)=>({...current,imagePreviews:current.imagePreviews.filter((p)=>!previews.some((x)=>x.url===p.url))})); setPendingImageFiles([]); setSubmitMessage(error?.message||"تعذر رفع الصورة. لم يتم حفظها."); }).finally(()=>setUploadingImages(false));
+                      })).then((uploaded)=>{ setForm((current)=>({...current,images:[...current.images,...uploaded]})); setPendingImageFiles([]); setSubmitMessage("✓ تم رفع الصورة بنجاح. اضغط «حفظ التعديلات» لتثبيتها في الخدمة."); }).catch((error)=>{ setForm((current)=>({...current,imagePreviews:current.imagePreviews.filter((p)=>!previews.some((x)=>x.url===p.url))})); setPendingImageFiles([]); setSubmitMessage((error instanceof Error ? error.message : "")||"تعذر رفع الصورة. لم يتم حفظها."); }).finally(()=>setUploadingImages(false));
                       e.currentTarget.value="";
                     }}
                   />
@@ -1360,15 +1396,15 @@ function ServiceLocationPicker({
   const mapRef = useRef<HTMLDivElement | null>(null);
   const autocompleteContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
-  const geocoderRef = useRef<any>(null);
+  const mapInstanceRef = useRef<google.maps.Map|null>(null);
+  const markerRef = useRef<google.maps.Marker|null>(null);
+  const geocoderRef = useRef<google.maps.Geocoder|null>(null);
 
   const valueRef = useRef(value);
   const onChangeRef = useRef(onChange);
 
   const [status, setStatus] = useState(
-    "جاري تشغيل محرك الموقع..."
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? "جاري تشغيل محرك الموقع..." : "خدمة الخرائط غير متاحة حالياً"
   );
 
   const [ready, setReady] = useState(false);
@@ -1381,7 +1417,7 @@ function ServiceLocationPicker({
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  const extractCity = (components: any[] = []) => {
+  const extractCity = (components: Array<google.maps.GeocoderAddressComponent | google.maps.places.AddressComponent> = []) => {
     const priorities = [
       "locality",
       "administrative_area_level_2",
@@ -1389,17 +1425,13 @@ function ServiceLocationPicker({
     ];
 
     for (const type of priorities) {
-      const component = components.find((item: any) =>
+      const component = components.find((item) =>
         item.types?.includes(type)
       );
 
       if (component) {
         return (
-          component.long_name ||
-          component.longText ||
-          component.short_name ||
-          component.shortText ||
-          ""
+          ("long_name" in component ? component.long_name || component.short_name : component.longText || component.shortText) || ""
         );
       }
     }
@@ -1485,9 +1517,6 @@ function ServiceLocationPicker({
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
     if (!apiKey) {
-      setStatus(
-        "مفتاح Google Maps غير موجود في .env.local"
-      );
       return;
     }
 
@@ -1507,7 +1536,7 @@ function ServiceLocationPicker({
         await window.google.maps.importLibrary("maps");
 
         const placesLibrary =
-          await window.google.maps.importLibrary("places");
+          await window.google.maps.importLibrary("places") as google.maps.PlacesLibrary;
 
         const { PlaceAutocompleteElement } = placesLibrary;
 
@@ -1564,11 +1593,11 @@ function ServiceLocationPicker({
 
         autocomplete.addEventListener(
           "gmp-select",
-          async (event: any) => {
+          async (event: Event) => {
             try {
               setStatus("جاري تحميل بيانات المكان...");
 
-              const prediction = event.placePrediction;
+              const prediction = (event as google.maps.places.PlacePredictionSelectEvent).placePrediction;
 
               if (!prediction) {
                 setStatus("تعذر قراءة نتيجة البحث");
@@ -1638,7 +1667,7 @@ function ServiceLocationPicker({
           }
         );
 
-        map.addListener("click", async (event: any) => {
+        map.addListener("click", async (event: google.maps.MapMouseEvent) => {
           if (!event.latLng) return;
 
           const lat = event.latLng.lat();
@@ -1651,7 +1680,7 @@ function ServiceLocationPicker({
 
         marker.addListener(
           "dragend",
-          async (event: any) => {
+          async (event: google.maps.MapMouseEvent) => {
             if (!event.latLng) return;
 
             const lat = event.latLng.lat();

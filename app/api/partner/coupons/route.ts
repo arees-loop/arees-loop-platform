@@ -58,7 +58,7 @@ export async function PATCH(request:Request){
   const body=await request.json();
   const coupon=await prisma.coupon.findFirst({where:{id:String(body.id||""),service:{partnerId:membership.partnerId}}});
   if(!coupon)return NextResponse.json({success:false,message:"الكوبون غير موجود."},{status:404});
-  let data:any={};
+  let data: {isActive?:boolean;code?:string;discountType?:"FIXED"|"PERCENTAGE";discountValue?:number;startsAt?:Date|null;expiresAt?:Date|null}={};
   if(typeof body.isActive==="boolean")data.isActive=body.isActive;
   if(body.edit===true){
    const value=Number(body.discountValue);

@@ -948,9 +948,7 @@ export default function BookingDetailsPage() {
                       className="mt-1 text-sm font-bold"
                       dir="ltr"
                     >
-                      SUP-{Date.now()
-                        .toString()
-                        .slice(-6)}
+                      SUP-{booking.id}
                     </p>
                   </div>
 

@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import FavoriteHeart from "@/app/components/FavoriteHeart";
 import {useParams} from "next/navigation";
 import {useEffect,useState} from "react";
-type Service={id:string;nameAr:string;nameEn?:string|null;category:string;subCategory?:string|null;descriptionAr?:string|null;city?:string|null;locationName?:string|null;finalPrice:number;loyaltyPoints:number;capacity?:number|null;cancellationPolicy?:string|null;meetingInstructions?:string|null;partnerName?:string|null;organizerType?:string|null;organizerName?:string|null;organizerLicenseNumber?:string|null;organizerLicenseIssuer?:string|null;images:string[]};
+type Service={id:string;nameAr:string;nameEn?:string|null;category:string;subCategory?:string|null;descriptionAr?:string|null;city?:string|null;locationName?:string|null;finalPrice:number;loyaltyPoints:number;capacity?:number|null;cancellationPolicy?:string|null;meetingInstructions?:string|null;partnerName?:string|null;organizerType?:string|null;organizerName?:string|null;organizerLicenseNumber?:string|null;organizerLicenseIssuer?:string|null;licenseTestOnly?:boolean;images:string[]};
 export default function ServiceDetails(){
  const {id}=useParams<{id:string}>(); const [service,setService]=useState<Service|null>(null); const [loading,setLoading]=useState(true); const [qty,setQty]=useState(1); const [imageIndex,setImageIndex]=useState(0); const [cartNotice,setCartNotice]=useState("");
  useEffect(()=>{fetch("/api/services",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d?.success)setService((d.data||[]).find((x:Service)=>x.id===id)||null)}).finally(()=>setLoading(false))},[id]);
@@ -16,7 +17,8 @@ export default function ServiceDetails(){
  const next=()=>setImageIndex(i=>(i+1)%images.length), prev=()=>setImageIndex(i=>(i-1+images.length)%images.length);
  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] text-[#0D3B34]">
   <div className="mx-auto max-w-6xl px-5 py-8">
-   <div className="mb-6 text-right"><p className="text-xs font-bold opacity-50">{service.category}{service.subCategory&&` · ${service.subCategory}`}</p><h1 className="mt-2 text-3xl font-bold leading-tight">{service.nameAr}</h1><p className="mt-2 text-sm opacity-55">{service.city}{service.locationName&&` · ${service.locationName}`}</p></div>
+   {service.licenseTestOnly&&<p role="status" className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-950">نسخة اختبارية: بيانات الترخيص غير معتمدة، ولا تمثل تحققاً أو صلاحية ترخيص فعلية.</p>}
+   <div className="mb-6 text-right"><p className="text-xs font-bold opacity-50">{service.category}{service.subCategory&&` · ${service.subCategory}`}</p><div className="mt-2 flex items-center gap-3"><h1 className="text-3xl font-bold leading-tight">{service.nameAr}</h1><FavoriteHeart serviceId={service.id}/></div><p className="mt-2 text-sm opacity-55">{service.city}{service.locationName&&` · ${service.locationName}`}</p></div>
    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]" dir="ltr">
     <section dir="rtl" className="arees-service-content rounded-[24px] bg-white p-6 shadow-sm md:p-7">
      <h2 className="arees-body flex items-center gap-2 text-xl font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0D3B34] text-white" aria-hidden="true">☷</span> تفاصيل البرنامج</h2>

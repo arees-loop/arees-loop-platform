@@ -76,6 +76,7 @@ function saveLoopProgress(state: LoopProgressState) {
   }
 
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  window.dispatchEvent(new Event("arees-loop-progress-updated"));
 }
 
 export function addVerifiedVisit(

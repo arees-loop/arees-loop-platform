@@ -1,14 +1,13 @@
+import {sanitizeServiceHtml} from "@/lib/service-html";
+import {hasAdminPermission} from "@/lib/admin-permissions";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 
-function isAdmin(role?: string) {
-  return role === "ADMIN" || role === "SUPER_ADMIN";
-}
 
 export async function GET() {
   const session = await getCurrentSession();
-  if (!session || !isAdmin(session.user.role)) {
+  if (!session || !hasAdminPermission(session.user,"CONTENT_EXPERIENCES")) {
     return NextResponse.json({ success: false, message: "غير مصرح." }, { status: 401 });
   }
 
@@ -26,6 +25,7 @@ export async function GET() {
     success: true,
     data: services.map((service) => ({
       ...service,
+      descriptionAr:sanitizeServiceHtml(service.descriptionAr),descriptionEn:sanitizeServiceHtml(service.descriptionEn),cancellationPolicy:sanitizeServiceHtml(service.cancellationPolicy),
       basePrice: Number(service.basePrice),
       vatRate: Number(service.vatRate),
       finalPrice: Number(service.finalPrice),

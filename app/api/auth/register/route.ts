@@ -10,6 +10,7 @@ import {
   createIpRateLimitKey,
   getRateLimitHeaders,
 } from "@/lib/rate-limit";
+import { isDatabaseConfigured } from "@/lib/database-target.mjs";
 
 const ALLOWED_PUBLIC_ROLES = [
   "CUSTOMER",
@@ -184,7 +185,7 @@ export async function POST(
     );
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!isDatabaseConfigured()) {
     return databaseNotConfigured();
   }
 

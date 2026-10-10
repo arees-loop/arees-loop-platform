@@ -196,6 +196,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   partnerMemberships PartnerMember[]
+  sentPartnerInvitations PartnerInvitation[] @relation("PartnerInvitationInviter")
   bookings           Booking[]
   couponRedemptions  CouponRedemption[]
   loyaltyWallet      LoyaltyWallet?
@@ -204,6 +205,8 @@ model User {
   verificationTokens VerificationToken[]
   partnerContactVerification PartnerContactVerification?
   interests          UserInterest[]
+  favoriteServices   UserFavoriteService[]
+  interestNotificationReads InterestNotificationRead[]
   auditLogs          AuditLog[]          @relation("AuditUser")
 }
 
@@ -363,6 +366,7 @@ model Partner {
 
   documents   PartnerDocument[]
   members     PartnerMember[]
+  invitations PartnerInvitation[]
   licenses    License[]
   categories  PartnerCategory[]
   services    Service[]
@@ -439,6 +443,27 @@ model PartnerMember {
   @@index([userId])
 }
 
+model PartnerInvitation {
+  id String @id @default(cuid())
+  partnerId String
+  invitedByUserId String
+  email String
+  tokenHash String @unique
+  role String
+  jobTitle String?
+  expiresAt DateTime
+  acceptedAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  invitedBy User @relation("PartnerInvitationInviter", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId, email])
+  @@index([expiresAt])
+}
+
 model PartnerDocument {
   id String @id @default(cuid())
 
@@ -510,6 +535,7 @@ model Service {
   descriptionEn String?
 
   city             String?
+  region           String?
   locationName     String?
   formattedAddress String?
   placeId          String?
@@ -546,6 +572,8 @@ model Service {
   partner Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   license License? @relation(fields: [licenseId], references: [id], onDelete: SetNull)
 
+  favorites UserFavoriteService[]
+  interestNotificationReads InterestNotificationRead[]
   images   ServiceImage[]
   bookings Booking[]
   coupons  Coupon[]
@@ -835,4 +863,118 @@ model NavigationVisibility {
   key String @id
   visible Boolean @default(true)
   updatedAt DateTime @updatedAt
+}
+
+model UserFavoriteService {
+  id String @id @default(cuid())
+  userId String
+  serviceId String
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  @@unique([userId, serviceId])
+  @@index([serviceId])
+}
+
+model InterestNotificationRead {
+  id String @id @default(cuid())
+  userId String
+  serviceId String
+  readAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  @@unique([userId, serviceId])
+  @@index([serviceId])
+}
+
+model GuideApplication {
+ id String @id @default(cuid())
+ userId String
+ fullName String
+ email String
+ phone String
+ gender String
+ countries String[]
+ city String
+ licenseCategory String
+ licenseNumber String
+ licenseExpiresAt DateTime
+ specialization String?
+ languages String[]
+ bio String?
+ photoPath String?
+ licensePath String
+ photoPublicationConsent Boolean @default(false)
+ policyAcceptedAt DateTime
+ status String @default("UNDER_REVIEW")
+ reviewedAt DateTime?
+ reviewNotes String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([userId])
+ @@index([status])
+}
+
+model LicenseRenewalRequest {
+ id String @id @default(cuid())
+ licenseId String
+ partnerId String
+ submittedById String
+ requestedExpiryDate DateTime
+ documentPath String
+ status String @default("UNDER_REVIEW")
+ reviewedById String?
+ reviewedAt DateTime?
+ reviewNotes String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([licenseId,status])
+ @@index([partnerId,status])
+}
+
+model LicenseAlert {
+ id String @id @default(cuid())
+ recipientUserId String
+ licenseId String
+ partnerId String
+ kind String
+ title String
+ message String
+ dayKey String
+ readAt DateTime?
+ createdAt DateTime @default(now())
+ @@unique([recipientUserId,licenseId,kind,dayKey])
+ @@index([recipientUserId,readAt,createdAt])
+ @@index([partnerId,createdAt])
+}
+
+model GuideLicenseAlert {
+ id String @id @default(cuid())
+ recipientUserId String
+ applicationId String
+ kind String
+ title String
+ message String
+ dayKey String
+ readAt DateTime?
+ createdAt DateTime @default(now())
+ @@unique([recipientUserId,applicationId,kind,dayKey])
+ @@index([recipientUserId,readAt,createdAt])
+}
+
+model GuideLicenseRenewal {
+ id String @id @default(cuid())
+ applicationId String
+ userId String
+ licenseNumber String
+ requestedExpiryDate DateTime
+ documentPath String
+ status String @default("UNDER_REVIEW")
+ reviewedById String?
+ reviewedAt DateTime?
+ reviewNotes String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([applicationId,status])
+ @@index([userId,createdAt])
 }

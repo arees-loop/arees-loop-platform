@@ -466,3 +466,22 @@ function escapeHtml(value: string) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+export async function sendPartnerTeamInvitationEmail(input:{to:string;partnerName:string;inviteUrl:string;expiresAt:Date}){
+  const resend=getResendClient();
+  const partnerName=escapeHtml(input.partnerName);
+  const url=escapeHtml(input.inviteUrl);
+  const expiry=escapeHtml(input.expiresAt.toLocaleDateString("ar-SA"));
+  const {data,error}=await resend.emails.send({
+    from:getEmailFrom(),to:[input.to],
+    subject:"دعوة للانضمام إلى فريق شريك | Arees Loop",
+    html:`<div dir="rtl" style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#0d3b34">
+      <h1>دعوة للانضمام إلى فريق العمل</h1>
+      <p>تمت دعوتك للانضمام إلى فريق <strong>${partnerName}</strong> على منصة Arees Loop.</p>
+      <p>تنتهي صلاحية الدعوة بتاريخ ${expiry}.</p>
+      <p><a href="${url}" style="display:inline-block;background:#0d3b34;color:white;padding:14px 22px;border-radius:12px;text-decoration:none">قبول الدعوة</a></p>
+      <p>إذا لم تكن تتوقع هذه الدعوة، تجاهل الرسالة.</p>
+    </div>`
+  });
+  if(error)throw new Error(`Resend team invitation failed: ${error.message}`);
+  return {id:data?.id??null};
+}

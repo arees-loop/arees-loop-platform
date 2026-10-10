@@ -1,10 +1,11 @@
+import {hasAdminPermission} from "@/lib/admin-permissions";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 
 export async function GET() {
   const session = await getCurrentSession();
-  if (!session || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
+  if (!session || !hasAdminPermission(session.user,"REPORTS_ANALYTICS")) {
     return NextResponse.json({success:false,message:"غير مصرح"}, {status:401});
   }
   const [wallets, totals, transactions] = await Promise.all([

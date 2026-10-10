@@ -8,7 +8,15 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma migrate deploy && next build"
+    "vercel-build": "next build",
+    "test": "AREES_TEST_MOCKS=1 node --import ./tests/register.mjs --test tests/*.test.mjs",
+    "test:db": "node --test tests/integration/*.test.mjs",
+    "staging:check": "node scripts/staging/check-connections.mjs",
+    "staging:export-catalog": "node scripts/staging/export-catalog.mjs",
+    "staging:copy-media": "node scripts/staging/copy-catalog-media.mjs",
+    "staging:import-catalog": "node scripts/staging/import-catalog.mjs",
+    "staging:seed-test-fixtures": "node scripts/staging/seed-test-fixtures.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
@@ -16,21 +24,27 @@
     "@vercel/blob": "^2.8.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
-    "next": "16.3.4",
+    "next": "16.3.8",
     "pg": "^8.23.0",
     "prisma": "^7.10.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "resend": "^6.28.1"
+    "resend": "^6.28.1",
+    "sanitize-html": "^2.18.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/google.maps": "^3.66.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sanitize-html": "^2.16.2",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.4.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "mysql2": "3.24.5"
   }
 }

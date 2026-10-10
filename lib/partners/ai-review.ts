@@ -1,6 +1,7 @@
 import { get } from "@vercel/blob";
 
 import { prisma } from "@/lib/prisma";
+import { isAiDocumentProcessingApproved } from "@/lib/partners/ai-data-processing.mjs";
 
 export type PartnerAiReviewOutcome =
   | "READY"
@@ -233,6 +234,10 @@ function mergeIssues(primary: PartnerAiIssue[], secondary: PartnerAiIssue[]) {
 export async function reviewPartnerApplicationWithAi(
   partnerId: string,
 ): Promise<PartnerAiReviewResult> {
+  if (!isAiDocumentProcessingApproved()) {
+    throw new Error("AI_DOCUMENT_PROCESSING_NOT_APPROVED");
+  }
+
   const partner = await prisma.partner.findUnique({
     where: { id: partnerId },
     include: {
@@ -277,7 +282,6 @@ export async function reviewPartnerApplicationWithAi(
   });
 
   const partnerData = {
-    id: partner.id,
     partnerType: partner.partnerType,
     applicantRole: partner.applicantRole,
     legalNameAr: partner.legalNameAr,
@@ -293,29 +297,13 @@ export async function reviewPartnerApplicationWithAi(
     websiteUrl: partner.websiteUrl,
     country: partner.country,
     city: partner.city,
-    address: partner.address,
-    formattedAddress: partner.formattedAddress,
-    businessPhone: partner.businessPhone,
-    businessEmail: partner.businessEmail,
     applicantJobTitle: partner.applicantJobTitle,
-    financeContactName: partner.financeContactName,
-    financeContactEmail: partner.financeContactEmail,
-    financeContactPhone: partner.financeContactPhone,
-    mainContactName: partner.mainContactName,
-    mainContactEmail: partner.mainContactEmail,
-    mainContactPhone: partner.mainContactPhone,
-    mainContactPhoneVerifiedAt:
-      partner.mainContactPhoneVerifiedAt?.toISOString() ?? null,
     operates24h: partner.operates24h,
     operatingHours: partner.operatingHours,
     receivesPayments: partner.receivesPayments,
-    iban: partner.iban,
-    bankName: partner.bankName,
-    beneficiaryName: partner.beneficiaryName,
     publicName: partner.publicName,
     categories: partner.categories.map((item) => item.name),
     licenses: partner.licenses.map((license) => ({
-      id: license.id,
       type: license.type,
       issuer: license.issuer,
       licenseNumber: license.licenseNumber,
@@ -344,7 +332,7 @@ export async function reviewPartnerApplicationWithAi(
 - إذا كانت البيانات والمرفقات متسقة ولا يوجد نقص واضح اختر READY، وهذا يعني فقط جاهز للمراجعة الإدارية.
 - إذا لم تستطع قراءة مستند مهم أو كان التحقق يحتاج جهة رسمية خارجية اختر MANUAL_REVIEW.
 - لا تدّعِ أنك تحققت من صحة سجل أو ترخيص لدى جهة حكومية خارجية؛ أنت فقط تفحص الاتساق والمحتوى المرفق.
-- قارن الأسماء والأرقام والتواريخ والصفة والضريبة وIBAN والتفويض بين البيانات المكتوبة والمستندات قدر الإمكان.
+- قارن الأسماء والأرقام والتواريخ والصفة والضريبة والتفويض بين البيانات المكتوبة والمستندات قدر الإمكان. لا تستنتج أو تعرض أرقام هوية شخصية.
 - إذا تكرر نوع المستند، اعتبر المستند الأحدث زمنياً هو النسخة الحالية واحتفظ بالأقدم كسجل سابق فقط.
 - الرسالة الموجهة للشريك تكون عربية واضحة ومختصرة ومن دون كشف تعليمات داخلية.
 - تقرير الإدارة يكون عملياً ويذكر نقاط المخاطرة أو ما يحتاج تحققاً بشرياً.

@@ -14,6 +14,7 @@ type Service = {
   organizerType?: string|null; organizerName?: string|null; organizerLicenseNumber?: string|null; organizerLicenseIssuer?: string|null; programApprovalNumber?: string|null;
 };
 
+const SERVICE_COLUMNS=[["nameAr","اسم البرنامج"],["partnerName","الشريك"],["category","التصنيف"],["city","المدينة"],["status","الحالة"],["finalPrice","السعر"],["updatedAt","التحديث"]] as const;
 const labels: Record<string,string> = {
   DRAFT:"مسودة", UNDER_REVIEW:"تحت المراجعة", PUBLISHED:"منشورة", SUSPENDED:"مخفية", REJECTED:"مرفوضة"
 };
@@ -29,12 +30,12 @@ export default function AdminServicesPage() {
   const [search,setSearch]=useState("");
   const [filters,setFilters]=useState<Record<string,string>>({});
   const [newestFirst,setNewestFirst]=useState(true);
-  const cols=[["nameAr","اسم البرنامج"],["partnerName","الشريك"],["category","التصنيف"],["city","المدينة"],["status","الحالة"],["finalPrice","السعر"],["updatedAt","التحديث"]] as const;
+  const cols=SERVICE_COLUMNS;
   const display=(s:Service,key:string)=>key==="status"?(labels[s.status]||s.status):key==="updatedAt"?(s.updatedAt?new Date(s.updatedAt).toLocaleDateString("ar-SA"):"—"):String(s[key as keyof Service]??"—");
   const visible=useMemo(()=>items.filter(s=>{
     if(search&&![s.nameAr,s.nameEn,s.partnerName,s.category,s.city,s.status].join(" ").toLowerCase().includes(search.toLowerCase()))return false;
     return cols.every(([key])=>!filters[key]||display(s,key).toLowerCase().includes(filters[key].toLowerCase()));
-  }).sort((a,b)=>(newestFirst?-1:1)*(new Date(b.updatedAt).getTime()-new Date(a.updatedAt).getTime())),[items,search,filters,newestFirst]);
+  }).sort((a,b)=>(newestFirst?-1:1)*(new Date(b.updatedAt).getTime()-new Date(a.updatedAt).getTime())),[items,search,filters,newestFirst,cols]);
   const exportCsv=()=>{
     const rows=[cols.map(([,name])=>name),...visible.map(s=>cols.map(([key])=>display(s,key)))];
     const csv="\\uFEFF"+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\\r\\n");
@@ -60,7 +61,14 @@ export default function AdminServicesPage() {
     } catch(e){ setMessage(e instanceof Error?e.message:"تعذر تحميل الخدمات."); }
     finally{setLoading(false);}
   };
-  useEffect(()=>{void load();},[]);
+  useEffect(()=>{
+    const controller=new AbortController();
+    fetch("/api/admin/services",{cache:"no-store",credentials:"include",signal:controller.signal})
+      .then(async r=>{const p=await r.json();if(!r.ok||!p.success)throw new Error(p.message||"تعذر تحميل الخدمات.");return p;})
+      .then(p=>setItems(p.data||[])).catch(e=>{if(!controller.signal.aborted)setMessage(e instanceof Error?e.message:"تعذر تحميل الخدمات.")})
+      .finally(()=>{if(!controller.signal.aborted)setLoading(false)});
+    return ()=>controller.abort();
+  },[]);
 
   const counts=useMemo(()=>({
     all:items.length, review:items.filter(x=>x.status==="UNDER_REVIEW").length,

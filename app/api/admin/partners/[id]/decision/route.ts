@@ -1,3 +1,4 @@
+import {hasAdminPermission} from "@/lib/admin-permissions";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -50,8 +51,7 @@ export async function POST(
     }
 
     if (
-      session.user.role !== "ADMIN" &&
-      session.user.role !== "SUPER_ADMIN"
+      !hasAdminPermission(session.user,"PARTNER_REQUESTS")
     ) {
       return NextResponse.json(
         {
