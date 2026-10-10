@@ -348,7 +348,7 @@ a.arees-primary-action[href]:active {
 }
 
 button:not(:disabled):hover,
-a[href]:hover {
+a[href]:not(.arees-header-logo):hover {
   box-shadow:
     0 0 0 1px rgba(212, 175, 55, 0.18),
     0 8px 24px var(--arees-hover-gold-soft);
@@ -409,8 +409,17 @@ textarea:focus-visible {
 }
 
 .arees-header-logo:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px rgba(212, 175, 55, 0.9);
+  outline: 2px solid rgba(212, 175, 55, 0.9);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.arees-header-logo:hover,
+.arees-header-logo:active {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .guides-hero {
@@ -468,7 +477,7 @@ textarea:focus-visible {
   text-align: right;
   border: 1px solid rgba(255, 255, 255, .82);
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, .72), rgba(239, 247, 236, .58));
+  background: linear-gradient(135deg, rgba(255, 255, 255, .39), rgba(239, 247, 236, .28));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 18px 48px rgba(7, 29, 23, .24), 0 0 24px rgba(255, 255, 255, .10);
   -webkit-backdrop-filter: blur(22px) saturate(155%);
   backdrop-filter: blur(22px) saturate(155%);
@@ -479,7 +488,7 @@ textarea:focus-visible {
 
 .guide-feature-card-gold {
   border-color: rgba(240, 216, 157, .92);
-  background: linear-gradient(135deg, rgba(255, 253, 247, .73), rgba(247, 238, 213, .59));
+  background: linear-gradient(135deg, rgba(255, 253, 247, .43), rgba(247, 238, 213, .30));
 }
 
 .guide-feature-heading {
@@ -501,18 +510,18 @@ textarea:focus-visible {
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, .96);
   border-radius: 50%;
-  background-image: url("/Image/guides/arees-loop-guide-team-portraits.png");
+  background-position: center 38%;
   background-repeat: no-repeat;
-  background-size: 205% auto;
+  background-size: cover;
   box-shadow: 0 5px 15px rgba(7, 29, 23, .19);
 }
 
 .guide-portrait-man {
-  background-position: 0% 38%;
+  background-image: url("/Image/guides/arees-guide-portrait-man.jpg");
 }
 
 .guide-portrait-woman {
-  background-position: 100% 38%;
+  background-image: url("/Image/guides/arees-guide-portrait-woman.jpg");
 }
 
 .guide-feature-visual-search > .guide-portrait {
@@ -644,7 +653,7 @@ textarea:focus-visible {
   .guide-feature-card:hover,
   .guide-feature-card:focus-within {
     border-color: rgba(255, 255, 255, .98);
-    background: linear-gradient(135deg, rgba(255, 255, 255, .87), rgba(242, 248, 237, .76));
+    background: linear-gradient(135deg, rgba(255, 255, 255, .48), rgba(242, 248, 237, .35));
     box-shadow: inset 0 1px 0 #fff, 0 23px 52px rgba(7, 29, 23, .30), 0 0 27px rgba(232, 198, 110, .24);
     transform: translate3d(var(--guide-card-x), calc(var(--guide-card-y) - 5px), 0) scale(1.012);
   }
@@ -762,11 +771,11 @@ textarea:focus-visible {
   }
 
   .guide-feature-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, .82), rgba(239, 247, 236, .72));
+    background: linear-gradient(135deg, rgba(255, 255, 255, .56), rgba(239, 247, 236, .42));
   }
 
   .guide-feature-card-gold {
-    background: linear-gradient(135deg, rgba(255, 253, 247, .84), rgba(247, 238, 213, .72));
+    background: linear-gradient(135deg, rgba(255, 253, 247, .58), rgba(247, 238, 213, .43));
   }
 }
 

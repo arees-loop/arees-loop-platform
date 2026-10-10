@@ -42,8 +42,8 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   const [navVisible, setNavVisible] = useState<Record<string,boolean>>({});
   useEffect(() => { let mounted=true; fetch("/api/navigation",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(mounted&&d.success)setNavVisible(d.data)}).catch(()=>{});return()=>{mounted=false}; }, []);
   const text = "text-[#0D3B34]";
-  const border = overlay ? "border-white/35" : "border-[#0D3B34]/15";
-  const glass = "bg-white/95";
+  const border = overlay ? "border-white/55" : "border-white/70";
+  const glass = overlay ? "bg-white/[0.38]" : "bg-white/[0.56]";
 
   useEffect(() => {
     let active = true;
@@ -81,9 +81,9 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
 
   return (
     <header className="pointer-events-none fixed inset-x-0 top-2 z-[100] px-4 md:px-8">
-      <nav className={`pointer-events-auto mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border ${border} ${glass} px-4 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-xl backdrop-saturate-150 md:h-[82px] md:px-6`}>
-        <Link href="/" aria-label="Arees Loop" className="arees-header-logo inline-flex h-14 w-[132px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] p-0 md:h-[68px] md:w-[150px]">
-          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="block h-full w-full object-contain" />
+      <nav className={`pointer-events-auto mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border ${border} ${glass} px-4 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-2xl backdrop-saturate-150 md:h-[82px] md:px-6`}>
+        <Link href="/" aria-label="Arees Loop" className="arees-header-logo inline-flex h-[62px] w-[164px] shrink-0 items-center justify-center overflow-hidden rounded-full p-0 md:h-[70px] md:w-[180px]">
+          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="block h-full w-full object-cover object-[center_53%]" />
         </Link>
 
         <div dir="rtl" className={`hidden items-center gap-5 text-[13px] font-bold lg:flex xl:gap-7 ${text}`}>
