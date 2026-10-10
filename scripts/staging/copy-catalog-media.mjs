@@ -38,14 +38,14 @@ if (mode === "--dry-run") {
   process.exit(0);
 }
 
-if (process.env.VERCEL_PROJECT_ID !== STAGING_PROJECT_ID || process.env.AREES_STAGING_BLOB_STORE_ID !== STAGING_BLOB_STORE_ID) {
+if (process.env.VERCEL_PROJECT_ID !== STAGING_PROJECT_ID) {
   throw new Error("Blob copy is allowed only with the dedicated Arees Staging project and store");
 }
 if (process.env.AREES_ALLOW_STAGING_BLOB_WRITES !== "YES") {
   throw new Error("Blob writes require AREES_ALLOW_STAGING_BLOB_WRITES=YES after cost approval");
 }
 const sourceToken = process.env.AREES_SOURCE_BLOB_TOKEN;
-const targetToken = process.env.AREES_STAGING_BLOB_WRITE_TOKEN;
+const targetToken = process.env.AREES_STAGING_BLOB_WRITE_TOKEN || process.env.BLOB_READ_WRITE_TOKEN;
 if (!sourceToken || !targetToken) throw new Error("Source Blob token and staging Blob token are required");
 assertBlobTokenStore(sourceToken, SOURCE_BLOB_STORE_ID);
 assertBlobTokenStore(targetToken, STAGING_BLOB_STORE_ID);
