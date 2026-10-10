@@ -11,21 +11,32 @@ export async function verifyLiveConnection(client, connectionString, label) {
   const expected = parsedConnection(connectionString);
   const result = await client.query(`
     SELECT current_database() AS database_name,
-           current_user AS role_name,
+           current_database()::text = $2::text AS database_matches_connection,
+           session_user::text = $1::text AS login_user_matches_credential,
+           current_user::text = session_user::text AS effective_role_matches_login,
+           (current_user = session_user OR pg_has_role(session_user, current_user, 'MEMBER')) AS effective_role_authorized,
            current_setting('server_version_num') AS server_version,
            (SELECT oid::text FROM pg_database WHERE datname = current_database()) AS database_oid,
            COALESCE((SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()), false) AS tls_enabled
-  `);
+  `, [expected.username, expected.database]);
   const row = result.rows[0];
-  if (!row || row.database_name !== expected.database || row.role_name !== expected.username) {
-    throw new Error(`${label} live database identity does not match its configured connection`);
+  if (!row || !row.database_matches_connection || !row.login_user_matches_credential || !row.effective_role_authorized) {
+    const diagnostics = {
+      databaseMatchesConnection: row?.database_matches_connection === true,
+      sessionUserMatchesCredential: row?.login_user_matches_credential === true,
+      currentUserMatchesSessionUser: row?.effective_role_matches_login === true,
+      currentUserAuthorizedForSession: row?.effective_role_authorized === true,
+    };
+    throw new Error(`${label} live identity check failed: ${JSON.stringify(diagnostics)}`);
   }
   if (row.tls_enabled !== true) throw new Error(`${label} PostgreSQL connection is not protected by TLS`);
   return {
     database: row.database_name,
-    // Expose only the result of the live role-to-secret-credential comparison.
-    // Never return the role name from this shared identity helper.
-    roleIdentityMatchesCredential: true,
+    // These booleans distinguish the authenticated Prisma URL user from the
+    // effective PostgreSQL role without ever returning either role name.
+    roleIdentityMatchesCredential: row.login_user_matches_credential === true,
+    effectiveRoleMatchesLogin: row.effective_role_matches_login === true,
+    effectiveRoleAuthorized: row.effective_role_authorized === true,
     serverVersion: row.server_version,
     databaseOid: row.database_oid,
     tlsEnabled: true,

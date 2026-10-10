@@ -37,22 +37,36 @@ const client = new Client({
 try {
   await client.connect();
   const live = await verifyLiveConnection(client, directUrl, "staging");
-  if (live.database !== expectedDatabase || live.roleIdentityMatchesCredential !== true) {
-    throw new Error("Live PostgreSQL database or credential identity check failed");
+  if (live.database !== expectedDatabase || live.roleIdentityMatchesCredential !== true || live.effectiveRoleAuthorized !== true) {
+    throw new Error(`Live PostgreSQL identity check failed: ${JSON.stringify({
+      databaseNameMatchesExpected: live.database === expectedDatabase,
+      sessionUserMatchesCredential: live.roleIdentityMatchesCredential === true,
+      currentUserMatchesSessionUser: live.effectiveRoleMatchesLogin === true,
+      currentUserAuthorizedForSession: live.effectiveRoleAuthorized === true,
+    })}`);
   }
   const permissions = await client.query(`
-    SELECT r.rolsuper AS is_superuser,
-           r.rolcreatedb AS can_create_database,
-           r.rolcreaterole AS can_create_roles,
-           r.rolreplication AS can_replicate,
-           r.rolbypassrls AS bypasses_row_security,
+    WITH reachable_roles AS (
+      SELECT r.rolsuper, r.rolcreatedb, r.rolcreaterole, r.rolreplication, r.rolbypassrls
+        FROM pg_roles r
+       WHERE r.rolname = session_user OR pg_has_role(session_user, r.oid, 'MEMBER')
+    ), effective_role AS (
+      SELECT r.rolsuper, r.rolcreatedb, r.rolcreaterole, r.rolreplication, r.rolbypassrls
+        FROM pg_roles r WHERE r.rolname = current_user
+    )
+    SELECT COALESCE(bool_or(rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls), false) AS login_role_has_elevated_membership,
+           (SELECT rolsuper FROM effective_role) AS is_superuser,
+           (SELECT rolcreatedb FROM effective_role) AS can_create_database,
+           (SELECT rolcreaterole FROM effective_role) AS can_create_roles,
+           (SELECT rolreplication FROM effective_role) AS can_replicate,
+           (SELECT rolbypassrls FROM effective_role) AS bypasses_row_security,
            has_database_privilege(current_user, current_database(), 'CONNECT') AS can_connect,
            has_schema_privilege(current_user, 'public', 'USAGE') AS public_schema_usage,
            has_schema_privilege(current_user, 'public', 'CREATE') AS public_schema_create
-      FROM pg_roles r WHERE r.rolname = current_user
+      FROM reachable_roles
   `);
   const role = permissions.rows[0];
-  if (!role || role.is_superuser || role.can_create_database || role.can_create_roles || role.can_replicate || role.bypasses_row_security) {
+  if (!role || role.login_role_has_elevated_membership || role.is_superuser || role.can_create_database || role.can_create_roles || role.can_replicate || role.bypasses_row_security) {
     throw new Error("Staging role has elevated privileges; refusing migrations");
   }
   if (!role.can_connect || !role.public_schema_usage || !role.public_schema_create) {
@@ -66,7 +80,9 @@ try {
     target: "staging",
     resourceId: STAGING_PRISMA_STORE_ID,
     databaseIdentityMatchesExpected: true,
-    roleIdentityVerified: live.roleIdentityMatchesCredential,
+    roleIdentityVerified: live.roleIdentityMatchesCredential && live.effectiveRoleAuthorized,
+    effectiveRoleMatchesLogin: live.effectiveRoleMatchesLogin,
+    effectiveRoleAuthorized: live.effectiveRoleAuthorized,
     databaseOid: live.databaseOid,
     serverVersion: live.serverVersion,
     tlsEncrypted: true,

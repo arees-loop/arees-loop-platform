@@ -112,6 +112,7 @@ jobs:
             result.resourceId === process.env.AREES_STAGING_DATABASE_STORE_ID &&
             result.databaseIdentityMatchesExpected === true &&
             result.roleIdentityVerified === true &&
+            result.effectiveRoleAuthorized === true &&
             result.tlsEncrypted === true &&
             result.tlsCertificateVerified === true &&
             result.productionCredentialsUsed === false &&
@@ -145,6 +146,8 @@ jobs:
             result.target === 'staging' &&
             typeof result.databaseIdentityMatchesExpected === 'boolean' &&
             typeof result.roleIdentityVerified === 'boolean' &&
+            typeof result.effectiveRoleMatchesLogin === 'boolean' &&
+            typeof result.effectiveRoleAuthorized === 'boolean' &&
             typeof result.tlsEncrypted === 'boolean' &&
             typeof result.tlsCertificateVerified === 'boolean' &&
             (typeof result.databaseOid === 'string' || typeof result.databaseOid === 'number') &&
@@ -157,6 +160,8 @@ jobs:
           }
           console.log(`- Resource: ${result.resourceId}`);
           console.log(`- Database name and live credential role verified: ${result.databaseIdentityMatchesExpected && result.roleIdentityVerified}`);
+          console.log(`- Effective role matches login identity: ${result.effectiveRoleMatchesLogin}`);
+          console.log(`- Effective role is authorized for the login identity: ${result.effectiveRoleAuthorized}`);
           console.log(`- TLS encryption and certificate validation: ${result.tlsEncrypted && result.tlsCertificateVerified}`);
           console.log(`- Live database OID: ${result.databaseOid}`);
           console.log(`- PostgreSQL server version: ${result.serverVersion}`);

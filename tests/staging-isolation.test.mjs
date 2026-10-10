@@ -110,7 +110,10 @@ test("live role verification compares against the secret URL without returning t
   const client = {
     query: async () => ({ rows: [{
       database_name: "postgres",
-      role_name: "stage-sensitive-user",
+      database_matches_connection: true,
+      login_user_matches_credential: true,
+      effective_role_matches_login: false,
+      effective_role_authorized: true,
       server_version: "160004",
       database_oid: "16384",
       tls_enabled: true,
@@ -122,8 +125,34 @@ test("live role verification compares against the secret URL without returning t
     "staging-test",
   );
   assert.equal(result.roleIdentityMatchesCredential, true);
+  assert.equal(result.effectiveRoleMatchesLogin, false);
+  assert.equal(result.effectiveRoleAuthorized, true);
   assert.equal(JSON.stringify(result).includes("stage-sensitive-user"), false);
   assert.equal(JSON.stringify(result).includes("secret"), false);
+});
+
+test("live identity diagnostics identify failed comparisons without disclosing role names", async () => {
+  const client = {
+    query: async () => ({ rows: [{
+      database_name: "postgres",
+      database_matches_connection: true,
+      login_user_matches_credential: false,
+      effective_role_matches_login: false,
+      effective_role_authorized: true,
+      tls_enabled: true,
+    }] }),
+  };
+  await assert.rejects(
+    verifyLiveConnection(client, "postgresql://secret-user:secret@db.prisma.io:5432/postgres", "staging-test"),
+    (error) => {
+      assert.match(error.message, /databaseMatchesConnection":true/);
+      assert.match(error.message, /sessionUserMatchesCredential":false/);
+      assert.match(error.message, /currentUserMatchesSessionUser":false/);
+      assert.equal(error.message.includes("secret-user"), false);
+      assert.equal(error.message.includes("secret@"), false);
+      return true;
+    },
+  );
 });
 
 test("database availability checks use the same isolated Staging target", () => {
