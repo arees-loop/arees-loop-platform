@@ -1,11 +1,12 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/app/generated/prisma/client";
+import { getDatabaseUrl } from "@/lib/database-target.mjs";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = getDatabaseUrl();
 
 if (!connectionString) {
   throw new Error("DATABASE_URL is not defined");

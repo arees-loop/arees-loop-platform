@@ -1,9 +1,11 @@
 import {get} from "@vercel/blob";
+import {isAiDocumentProcessingApproved} from "@/lib/partners/ai-data-processing.mjs";
 export type RenewalAiResult={outcome:"READY"|"NEEDS_COMPLETION"|"MANUAL_REVIEW";summary:string;issues:string[];model:string};
 export async function reviewRenewalWithAi(input:{documentPath:string;mimeType:string;licenseNumber:string;expiryDate:string;holderName:string;kind:"PARTNER"|"GUIDE"}):Promise<RenewalAiResult>{
  const model=process.env.GEMINI_MODEL?.trim()||"gemini-2.5-flash";
  const key=process.env.GEMINI_API_KEY?.trim();
  const fallback=(reason:string):RenewalAiResult=>({outcome:"MANUAL_REVIEW",summary:reason,issues:[reason],model});
+ if(!isAiDocumentProcessingApproved())return fallback("المراجعة الآلية للمستندات غير مفعلة؛ أُحيل الطلب للمراجعة البشرية.");
  if(!key)return fallback("مفتاح خدمة المراجعة الآلية غير مهيأ.");
  try{
  const blob=await get(input.documentPath,{access:"private",useCache:false});

@@ -8,10 +8,14 @@ import {serviceEligibilityWhere} from "@/lib/services/eligibility";
 export const runtime="nodejs";
 export async function GET(request:NextRequest){
  const pathname=request.nextUrl.searchParams.get("pathname");
- if(!pathname||!pathname.startsWith("services/")||pathname.includes("..")||pathname.length>1000)return new Response("Not found",{status:404});
+ if(!pathname||(!pathname.startsWith("services/")&&!pathname.startsWith("partners/"))||pathname.includes("..")||pathname.includes("\\")||pathname.length>1000)return new Response("Not found",{status:404});
  const url="/api/media?pathname="+encodeURIComponent(pathname);
- const published=await prisma.service.findFirst({where:{status:"PUBLISHED",...serviceEligibilityWhere(),images:{some:{url}}},select:{id:true}});
- if(!published){
+ if(pathname.startsWith("partners/")){
+  const activePartner=await prisma.partner.findFirst({where:{status:"ACTIVE",logoUrl:url},select:{id:true}});
+  if(!activePartner)return new Response("Not found",{status:404});
+ }else{
+  const published=await prisma.service.findFirst({where:{status:"PUBLISHED",...serviceEligibilityWhere(),images:{some:{url}}},select:{id:true}});
+  if(!published){
   const session=await getCurrentSession();
   let allowed=hasAdminPermission(session?.user,"CONTENT_EXPERIENCES");
   if(!allowed&&session){
@@ -21,6 +25,7 @@ export async function GET(request:NextRequest){
    }
   }
   if(!allowed)return new Response("Not found",{status:404});
+  }
  }
  const file=await get(pathname,{access:"private"});
  if(!file||file.statusCode!==200||!["image/jpeg","image/png","image/webp"].includes(file.blob.contentType))return new Response("Not found",{status:404});

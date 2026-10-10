@@ -11,6 +11,11 @@
     "vercel-build": "next build",
     "test": "AREES_TEST_MOCKS=1 node --import ./tests/register.mjs --test tests/*.test.mjs",
     "test:db": "node --test tests/integration/*.test.mjs",
+    "staging:check": "node scripts/staging/check-connections.mjs",
+    "staging:export-catalog": "node scripts/staging/export-catalog.mjs",
+    "staging:copy-media": "node scripts/staging/copy-catalog-media.mjs",
+    "staging:import-catalog": "node scripts/staging/import-catalog.mjs",
+    "staging:seed-test-fixtures": "node scripts/staging/seed-test-fixtures.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
