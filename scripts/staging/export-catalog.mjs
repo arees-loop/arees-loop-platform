@@ -97,6 +97,7 @@ try {
             "organizerName", "status"::text, "createdAt", "updatedAt"
        FROM "Service"
       WHERE "partnerId" = $1
+        AND "status" = 'PUBLISHED'::"ServiceStatus"
       ORDER BY "createdAt", "id"`,
     [partnerId],
   );

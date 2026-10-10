@@ -7,6 +7,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
+import FindNearbyGuidesButton from "./guides/FindNearbyGuidesButton";
 import { getTotalLoopPoints, getLoopProgress } from "../lib/loop-progress";
 
 type LiveService = { id:string; nameAr:string; nameEn?:string|null; descriptionAr?:string|null; city?:string|null; region?:string|null; country?:string|null; countryCode?:string|null; subCategory?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string; latitude?:number|null; longitude?:number|null };
@@ -1203,7 +1204,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="tour-guides" dir="rtl" className="scroll-mt-24 bg-[#F8F5ED]">
+      <section id="tour-guides" dir="rtl" className="scroll-mt-24 bg-[#F8F5ED] pb-12">
         <div className="relative w-full overflow-hidden bg-[#382C20]">
           <img
             src="/Image/guides/arees-loop-guides-heritage-banner.png"
@@ -1216,18 +1217,18 @@ export default function Home() {
             <p className="mt-2 text-sm text-white/90 md:text-base">خبرة محلية تقودك لتجارب أصيلة في المملكة</p>
           </div>
         </div>
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-0 border-x border-b border-[#D4AF37]/25 bg-white md:grid-cols-2">
-          <div className="flex flex-col items-center px-6 py-8 text-center md:px-9">
+        <div className="relative z-10 mx-auto -mt-12 grid max-w-[1440px] grid-cols-1 gap-5 px-5 md:grid-cols-2 md:px-8">
+          <div className="flex flex-col items-center rounded-[28px] border border-white/85 bg-white/65 px-6 py-8 text-center shadow-[0_18px_60px_rgba(13,59,52,.16),inset_0_1px_0_rgba(255,255,255,.92)] backdrop-blur-2xl md:px-9">
             <span className="text-xs font-bold text-[#A87917]">للزوار والسياح</span>
             <h3 className="mt-2 text-xl font-black text-[#0D3B34]">اكتشف المكان مع المرشد المناسب</h3>
             <p className="mt-3 max-w-md flex-1 text-sm leading-7 text-[#0D3B34]/70">وين ما تكون وجهتك، أريس لوب بتوصلك بالمرشد السياحي المناسب في المكان المناسب، وتوفر عليك وقت وجهد البحث، عشان تعيش تجربة أغنى وأسهل.</p>
-            <Link href="/guides/directory" className="mt-5 rounded-full bg-[#0D3B34] px-7 py-3 text-sm font-black text-white transition hover:bg-[#175A50]">ابحث عن مرشد سياحي</Link>
+            <FindNearbyGuidesButton className="mt-5 rounded-full bg-[#0D3B34] px-7 py-3 text-sm font-black text-white transition hover:bg-[#175A50] disabled:cursor-wait disabled:opacity-60" />
           </div>
-          <div className="flex flex-col items-center border-t border-[#D4AF37]/25 bg-[#FBF7EC] px-6 py-8 text-center md:border-r md:border-t-0 md:px-9">
+          <div className="flex flex-col items-center rounded-[28px] border border-[#E5D4A9]/75 bg-[#FFFDF7]/70 px-6 py-8 text-center shadow-[0_18px_60px_rgba(13,59,52,.15),inset_0_1px_0_rgba(255,255,255,.95)] backdrop-blur-2xl md:px-9">
             <span className="text-xs font-bold text-[#A87917]">للمرشدين السياحيين</span>
             <h3 className="mt-2 text-xl font-black text-[#0D3B34]">خبرتك تستحق الوصول</h3>
             <p className="mt-3 max-w-md flex-1 text-sm leading-7 text-[#0D3B34]/70">حوّل خبرتك السياحية إلى فرص حقيقية. انضم إلى أريس لوب، وخلّي العملاء يكتشفوا خدماتك في الوجهة والوقت المناسبين.</p>
-            <Link href="/guides/register" className="mt-5 rounded-full border border-[#C5A052] bg-white px-7 py-3 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF3D3]">انضم كمرشد سياحي</Link>
+            <Link href="/guides/register" className="mt-5 rounded-full border border-[#C5A052]/90 bg-white/80 px-7 py-3 text-sm font-black text-[#0D3B34] shadow-sm transition hover:bg-[#FFF3D3]">انضم كمرشد سياحي</Link>
           </div>
         </div>
       </section>

@@ -1,15 +1,16 @@
 import GuideAvatar from "@/app/components/GuideAvatar";
 import NearbyGuideControls from "./NearbyGuideControls";
-import { SAUDI_CITY_SUGGESTIONS, GUIDE_LICENSE_CATEGORIES } from "@/lib/guides/reference-data";
+import GuideDirectoryFilters from "./GuideDirectoryFilters";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default async function GuidesPage({ searchParams }: { searchParams: Promise<{ city?: string; specialty?: string; lat?: string; lng?: string }> }) {
+export default async function GuidesPage({ searchParams }: { searchParams: Promise<{ city?: string; specialty?: string; lat?: string; lng?: string; welcome?: string; area?: string; locationDenied?: string; filters?: string }> }) {
   const params = await searchParams;
   const city = (params.city || "").trim().slice(0, 80);
   const specialty = (params.specialty || "").trim().slice(0, 80);
+  const area = (params.area || "موقعك الحالي").trim().slice(0, 80) || "موقعك الحالي";
   const lat = params.lat ? Number(params.lat) : NaN;
   const lng = params.lng ? Number(params.lng) : NaN;
   const nearby = Number.isFinite(lat) && Number.isFinite(lng) && lat >= 16 && lat <= 33 && lng >= 34 && lng <= 56;
@@ -33,14 +34,8 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
   return <main dir="rtl" className="min-h-screen bg-[#F8F5ED] px-5 pb-24 pt-36 text-[#0D3B34]">
     <div className="mx-auto max-w-7xl">
       <div className="mb-9 text-center"><p className="text-xs font-bold tracking-[.15em] text-[#A87917]">AREES LOOP GUIDES</p><h1 className="mt-2 text-4xl font-black md:text-5xl">المرشدون السياحيون</h1><p className="mx-auto mt-4 max-w-2xl leading-8 text-[#0D3B34]/65">اكتشف المرشدين المعتمدين حسب المنطقة والتخصص والمسار السياحي. تظهر هنا الملفات التي اعتمدتها المنصة وتراخيصها سارية فقط.</p></div>
-      <NearbyGuideControls active={nearby}/>
-      <form action="/guides/directory" className="mb-9 grid gap-3 rounded-[26px] border border-[#D4AF37]/25 bg-white/80 p-5 shadow-sm md:grid-cols-[1fr_1fr_auto]" >
-        <label className="flex flex-col gap-2 text-sm font-bold">المنطقة أو المدينة<input list="guide-cities" name="city" defaultValue={city} placeholder="اختر مدينة أو اكتب للبحث" className="rounded-xl border border-[#0D3B34]/15 bg-[#FAF9F5] px-4 py-3 font-normal outline-none focus:border-[#C49A37]"/></label>
-        <label className="flex flex-col gap-2 text-sm font-bold">التخصص أو المسار<input list="guide-categories" name="specialty" defaultValue={specialty} placeholder="اختر فئة الترخيص أو ابحث" className="rounded-xl border border-[#0D3B34]/15 bg-[#FAF9F5] px-4 py-3 font-normal outline-none focus:border-[#C49A37]"/></label>
-        <button type="submit" className="self-end rounded-xl bg-[#0D3B34] px-8 py-3.5 font-bold text-white transition hover:bg-[#165B50]">ابحث عن مرشد</button>
-        <datalist id="guide-cities">{SAUDI_CITY_SUGGESTIONS.map(c=><option key={c} value={c}/>)}</datalist>
-        <datalist id="guide-categories">{GUIDE_LICENSE_CATEGORIES.map(c=><option key={c} value={c}/>)}</datalist>
-      </form>
+      <NearbyGuideControls active={nearby} welcome={params.welcome === "1"} locationDenied={params.locationDenied === "1"} area={area}/>
+      <GuideDirectoryFilters city={city} specialty={specialty} initiallyOpen={params.filters === "1" || Boolean(city || specialty)}/>
       {approvedApplications.length>0&&<div className="mb-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{approvedApplications.map(g=><article key={g.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-sm"><div className="mx-auto aspect-[4/3] max-w-xs">{g.photoPublicationConsent&&g.photoPath?<img src={`/api/guides/photo?id=${encodeURIComponent(g.id)}`} alt={g.fullName} className="h-full w-full object-cover"/>:<GuideAvatar gender={g.gender==="FEMALE"?"FEMALE":"MALE"}/>}</div><div className="p-5"><p className="text-xs font-bold text-[#A87917]">مرشد سياحي معتمد من المنصة</p><h2 className="mt-2 text-xl font-black">{g.fullName}</h2><p className="mt-2 text-sm">{g.licenseCategory} · {g.city}</p><p className="mt-2 text-sm">{g.countries.join("، ")}</p><p className="mt-2 text-sm">{g.specialization||g.bio||"مرشد سياحي"}</p></div></article>)}</div>}
       {visibleGuides.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{visibleGuides.map(guide => <article key={guide.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_12px_35px_rgba(13,59,52,.07)] transition hover:-translate-y-1 hover:shadow-xl">
         <div className="flex aspect-[4/3] items-center justify-center bg-[#EDE9DC]">{guide.logoUrl ? <img src={guide.logoUrl} alt={guide.publicName || guide.legalNameAr} className="h-full w-full object-contain"/> : <span className="text-6xl font-bold text-[#0D3B34]/25" aria-label="لا توجد صورة شخصية">◉</span>}</div>

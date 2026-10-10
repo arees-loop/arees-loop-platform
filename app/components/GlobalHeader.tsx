@@ -82,8 +82,8 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   return (
     <header className="pointer-events-none fixed inset-x-0 top-2 z-[100] px-4 md:px-8">
       <nav className={`pointer-events-auto mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border ${border} ${glass} px-4 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-xl backdrop-saturate-150 md:h-[82px] md:px-6`}>
-        <Link href="/" aria-label="Arees Loop" className="inline-flex shrink-0 items-center rounded-[18px] p-1 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[#D4AF37]">
-          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="block h-auto w-[132px] md:w-[154px]" />
+        <Link href="/" aria-label="Arees Loop" className="arees-header-logo inline-flex h-14 w-[132px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] p-0 md:h-[68px] md:w-[150px]">
+          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="block h-full w-full object-contain" />
         </Link>
 
         <div dir="rtl" className={`hidden items-center gap-5 text-[13px] font-bold lg:flex xl:gap-7 ${text}`}>
@@ -96,7 +96,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
               <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#F8F5ED]">سياحة عالمية</Link>
             </div>
           </div>}
-          {navVisible.guides !== false && (<Link href="/guides/directory" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
+          {navVisible.guides !== false && (<Link href="/#tour-guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
           {navVisible.hotels !== false && (<Link href="/hotels" className="transition hover:text-[#D4AF37]">الفنادق</Link>)}
           {navVisible.flights !== false && (<Link href="/flights" className="transition hover:text-[#D4AF37]">الطيران</Link>)}
           {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}
