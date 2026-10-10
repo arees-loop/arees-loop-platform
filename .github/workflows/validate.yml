@@ -1,5 +1,10 @@
 name: Validate
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - ci/license-review-validation
 permissions:
   contents: read
 jobs:
