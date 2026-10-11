@@ -13,6 +13,12 @@ export async function verifyLiveConnection(client, connectionString, label) {
     SELECT current_database() AS database_name,
            current_database()::text = $2::text AS database_matches_connection,
            session_user::text = $1::text AS login_user_matches_credential,
+           octet_length($1::text) = char_length($1::text) AS credential_username_is_ascii,
+           octet_length($1::text) > current_setting('max_identifier_length')::int AS credential_username_exceeds_identifier_limit,
+           octet_length(session_user::text) = current_setting('max_identifier_length')::int AS session_user_at_identifier_limit,
+           (octet_length($1::text) = char_length($1::text) AND
+            octet_length($1::text) > current_setting('max_identifier_length')::int AND
+            session_user::text = left($1::text, current_setting('max_identifier_length')::int)) AS session_user_matches_truncated_credential,
            current_user::text = session_user::text AS effective_role_matches_login,
            (current_user = session_user OR pg_has_role(session_user, current_user, 'MEMBER')) AS effective_role_authorized,
            current_setting('server_version_num') AS server_version,
@@ -20,10 +26,16 @@ export async function verifyLiveConnection(client, connectionString, label) {
            COALESCE((SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()), false) AS tls_enabled
   `, [expected.username, expected.database]);
   const row = result.rows[0];
-  if (!row || !row.database_matches_connection || !row.login_user_matches_credential || !row.effective_role_authorized) {
+  const roleIdentityMatchesCredential = row?.login_user_matches_credential === true ||
+    row?.session_user_matches_truncated_credential === true;
+  if (!row || !row.database_matches_connection || !roleIdentityMatchesCredential || !row.effective_role_authorized) {
     const diagnostics = {
       databaseMatchesConnection: row?.database_matches_connection === true,
       sessionUserMatchesCredential: row?.login_user_matches_credential === true,
+      credentialUsernameIsAscii: row?.credential_username_is_ascii === true,
+      credentialUsernameExceedsPostgresIdentifierLimit: row?.credential_username_exceeds_identifier_limit === true,
+      sessionUserAtPostgresIdentifierLimit: row?.session_user_at_identifier_limit === true,
+      sessionUserMatchesCredentialAfterPostgresTruncation: row?.session_user_matches_truncated_credential === true,
       currentUserMatchesSessionUser: row?.effective_role_matches_login === true,
       currentUserAuthorizedForSession: row?.effective_role_authorized === true,
     };
@@ -34,7 +46,8 @@ export async function verifyLiveConnection(client, connectionString, label) {
     database: row.database_name,
     // These booleans distinguish the authenticated Prisma URL user from the
     // effective PostgreSQL role without ever returning either role name.
-    roleIdentityMatchesCredential: row.login_user_matches_credential === true,
+    roleIdentityMatchesCredential,
+    credentialUsernameTruncatedByPostgres: row.session_user_matches_truncated_credential === true,
     effectiveRoleMatchesLogin: row.effective_role_matches_login === true,
     effectiveRoleAuthorized: row.effective_role_authorized === true,
     serverVersion: row.server_version,

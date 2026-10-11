@@ -155,6 +155,35 @@ test("live identity diagnostics identify failed comparisons without disclosing r
   );
 });
 
+
+test("live identity accepts only PostgreSQL's verified truncation of a long credential username", async () => {
+  const client = {
+    query: async () => ({ rows: [{
+      database_name: "postgres",
+      database_matches_connection: true,
+      login_user_matches_credential: false,
+      credential_username_is_ascii: true,
+      credential_username_exceeds_identifier_limit: true,
+      session_user_at_identifier_limit: true,
+      session_user_matches_truncated_credential: true,
+      effective_role_matches_login: true,
+      effective_role_authorized: true,
+      server_version: "160004",
+      database_oid: "16384",
+      tls_enabled: true,
+    }] }),
+  };
+  const result = await verifyLiveConnection(
+    client,
+    "postgresql://credential-username-deliberately-longer-than-postgresql-limit-sixty-three-bytes-123:secret@db.prisma.io:5432/postgres",
+    "staging-test",
+  );
+  assert.equal(result.roleIdentityMatchesCredential, true);
+  assert.equal(result.credentialUsernameTruncatedByPostgres, true);
+  assert.equal(JSON.stringify(result).includes("credential-username-deliberately-longer-than-postgresql-limit-sixty-three-bytes-123"), false);
+  assert.equal(JSON.stringify(result).includes("secret"), false);
+});
+
 test("database availability checks use the same isolated Staging target", () => {
   assert.equal(isDatabaseConfigured({}), false);
   assert.equal(isDatabaseConfigured({ DATABASE_URL: "postgresql://app:secret@prod.example.test/app" }), true);

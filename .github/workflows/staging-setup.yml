@@ -146,6 +146,7 @@ jobs:
             result.target === 'staging' &&
             typeof result.databaseIdentityMatchesExpected === 'boolean' &&
             typeof result.roleIdentityVerified === 'boolean' &&
+            typeof result.credentialUsernameTruncatedByPostgres === 'boolean' &&
             typeof result.effectiveRoleMatchesLogin === 'boolean' &&
             typeof result.effectiveRoleAuthorized === 'boolean' &&
             typeof result.tlsEncrypted === 'boolean' &&
@@ -160,6 +161,7 @@ jobs:
           }
           console.log(`- Resource: ${result.resourceId}`);
           console.log(`- Database name and live credential role verified: ${result.databaseIdentityMatchesExpected && result.roleIdentityVerified}`);
+          console.log(`- Credential username matched after PostgreSQL identifier handling: ${result.credentialUsernameTruncatedByPostgres}`);
           console.log(`- Effective role matches login identity: ${result.effectiveRoleMatchesLogin}`);
           console.log(`- Effective role is authorized for the login identity: ${result.effectiveRoleAuthorized}`);
           console.log(`- TLS encryption and certificate validation: ${result.tlsEncrypted && result.tlsCertificateVerified}`);

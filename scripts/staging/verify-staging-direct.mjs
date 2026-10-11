@@ -81,6 +81,7 @@ try {
     resourceId: STAGING_PRISMA_STORE_ID,
     databaseIdentityMatchesExpected: true,
     roleIdentityVerified: live.roleIdentityMatchesCredential && live.effectiveRoleAuthorized,
+    credentialUsernameTruncatedByPostgres: live.credentialUsernameTruncatedByPostgres,
     effectiveRoleMatchesLogin: live.effectiveRoleMatchesLogin,
     effectiveRoleAuthorized: live.effectiveRoleAuthorized,
     databaseOid: live.databaseOid,
