@@ -42,9 +42,13 @@ export async function verifyLiveConnection(client, connectionString, label) {
   if (Number(row.server_version) >= 160000) {
     try {
       const auth = await client.query(`
-        SELECT system_user IS NOT NULL AS authentication_identity_available
-      `);
+        SELECT system_user IS NOT NULL AS authentication_identity_available,
+               CASE WHEN position(':' in system_user::text) > 0
+                    THEN substring(system_user::text from position(':' in system_user::text) + 1) = $1::text
+                    ELSE false END AS authentication_identity_matches_credential
+      `, [expected.username]);
       authenticationIdentityAvailable = auth.rows[0]?.authentication_identity_available === true;
+      row.authentication_identity_matches_credential = auth.rows[0]?.authentication_identity_matches_credential === true;
     } catch {
       // The provider may restrict this diagnostic. PostgreSQL defines
       // system_user as the authentication identity presented before a role is
@@ -59,6 +63,7 @@ export async function verifyLiveConnection(client, connectionString, label) {
     // or system_user equals the URL username. Both comparisons are diagnostic.
     credentialUsernameMatchesSessionRole: row.login_user_matches_credential === true,
     authenticationIdentityAvailable,
+    authenticationIdentityMatchesCredential: row.authentication_identity_matches_credential === true,
     effectiveRoleMatchesLogin: row.effective_role_matches_login === true,
     effectiveRoleAuthorized: row.effective_role_authorized === true,
     serverVersion: row.server_version,

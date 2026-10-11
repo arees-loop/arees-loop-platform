@@ -134,6 +134,7 @@ test("live connection treats PostgreSQL authentication identity as diagnostic, n
   assert.equal(result.effectiveRoleMatchesLogin, true);
   assert.equal(result.effectiveRoleAuthorized, true);
   assert.equal(result.authenticationIdentityAvailable, true);
+  assert.equal(result.authenticationIdentityMatchesCredential, false);
   assert.equal(JSON.stringify(result).includes("opaque-generated-user"), false);
   assert.equal(JSON.stringify(result).includes("secret"), false);
 });
@@ -193,6 +194,7 @@ test("system_user mismatch does not block Prisma Staging when the authorized ses
   };
   const live = await verifyLiveConnection(client, "postgresql://opaque-user:secret@db.prisma.io:5432/postgres", "staging-test");
   assert.equal(live.credentialUsernameMatchesSessionRole, false);
+  assert.equal(live.authenticationIdentityMatchesCredential, false);
   assert.equal(assertExpectedStagingIdentity(live, { AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres" }).sessionRoleAuthorized, true);
 });
 
