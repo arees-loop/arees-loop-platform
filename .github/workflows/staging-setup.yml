@@ -119,6 +119,7 @@ jobs:
             result.resourceIdMatchesApprovedConfiguration === true &&
             result.databaseNameMatchesExpected === true &&
             (result.databaseOidMatchesExpected === null || result.databaseOidMatchesExpected === true) &&
+            result.authenticationIdentityMatchesCredential === true &&
             result.sessionRoleAuthorized === true &&
             result.effectiveRoleAuthorized === true &&
             result.tlsEncrypted === true &&
@@ -177,8 +178,8 @@ jobs:
           console.log(`- URL username equals PostgreSQL session role (diagnostic only): ${result.credentialUsernameMatchesSessionRole}`);
           console.log(`- Optional same-cluster database OID corroboration: ${result.databaseOidMatchesExpected === null ? 'not configured' : result.databaseOidMatchesExpected}`);
           console.log(`- PostgreSQL reports an authentication identity (value withheld, diagnostic only): ${result.authenticationIdentityAvailable}`);
-          console.log(`- PostgreSQL system_user identity matches URL username (diagnostic only): ${result.authenticationIdentityMatchesCredential}`);
-          console.log('- PostgreSQL system_user is not treated as proof of the Prisma resource ID.');
+          console.log(`- PostgreSQL system_user identity matches URL username: ${result.authenticationIdentityMatchesCredential}`);
+          console.log('- Live auth identity match is required before any Staging backup, migration, import, or seed.');
           console.log(`- Effective role matches login identity: ${result.effectiveRoleMatchesLogin}`);
           console.log(`- Session role is authorized: ${result.sessionRoleAuthorized && result.effectiveRoleAuthorized}`);
           console.log(`- TLS encryption and certificate validation: ${result.tlsEncrypted && result.tlsCertificateVerified}`);

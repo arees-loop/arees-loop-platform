@@ -85,9 +85,13 @@ export function assertExpectedStagingIdentity(live, env = process.env) {
     // If supplied, use one only as a secondary same-cluster corroboration.
     databaseOidMatchesExpected: expectedDatabaseOid ? String(live?.databaseOid) === expectedDatabaseOid : null,
     credentialUsernameMatchesSessionRole: live?.credentialUsernameMatchesSessionRole === true,
+    // PostgreSQL documents system_user as the identity presented during
+    // authentication. Require the live Prisma-issued URL username to match it
+    // before any Staging backup, migration, import, or seed can proceed.
+    authenticationIdentityMatchesCredential: live?.authenticationIdentityMatchesCredential === true,
     sessionRoleAuthorized: live?.effectiveRoleAuthorized === true,
   };
-  if (!checks.databaseNameMatchesExpected || (expectedDatabaseOid && !checks.databaseOidMatchesExpected) || !checks.sessionRoleAuthorized) {
+  if (!checks.databaseNameMatchesExpected || (expectedDatabaseOid && !checks.databaseOidMatchesExpected) || !checks.authenticationIdentityMatchesCredential || !checks.sessionRoleAuthorized) {
     throw new Error(`Live Staging identity attestation failed: ${JSON.stringify(checks)}`);
   }
   return checks;
