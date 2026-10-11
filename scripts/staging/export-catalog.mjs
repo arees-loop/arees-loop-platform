@@ -9,7 +9,7 @@ import {
   PRODUCTION_PRISMA_STORE_ID,
   STAGING_PRISMA_STORE_ID,
 } from "../../lib/database-target.mjs";
-import { assertReadOnlySourceRole, verifyLiveConnection } from "./pg-safety.mjs";
+import { assertExpectedStagingIdentity, assertReadOnlySourceRole, verifyLiveConnection } from "./pg-safety.mjs";
 
 const { Client } = pg;
 const sourceUrl = process.env.SOURCE_READ_ONLY_DATABASE_URL;
@@ -74,7 +74,8 @@ try {
   const liveSource = await verifyLiveConnection(client, sourceUrl, "source");
   await assertReadOnlySourceRole(client);
   await stagingClient.connect();
-  await verifyLiveConnection(stagingClient, stagingUrl, "staging");
+  const liveStaging = await verifyLiveConnection(stagingClient, stagingUrl, "staging");
+  assertExpectedStagingIdentity(liveStaging);
   if (databaseIdentityFingerprint(sourceUrl) === databaseIdentityFingerprint(stagingUrl)) {
     throw new Error("Source and Staging live connection fingerprints match; export stopped");
   }

@@ -43,13 +43,6 @@ jobs:
       postgres_major: ${{ steps.identity.outputs.postgres_major }}
       operation: ${{ steps.request.outputs.operation }}
       verified: ${{ steps.identity.outputs.verified }}
-    env:
-      AREES_DATABASE_ENV: staging
-      AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
-      AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
-      AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
-      AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
-      VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
     steps:
       - uses: actions/checkout@v4
         with:
@@ -85,15 +78,28 @@ jobs:
         env:
           DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
           EXPECTED_DATABASE: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+          EXPECTED_DATABASE_OID: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_OID }}
         run: |
           if [ -z "$DIRECT_URL" ] || [ -z "$EXPECTED_DATABASE" ]; then
             echo 'configured=false' >> "$GITHUB_OUTPUT"
-            echo 'Live Staging verification was skipped because its protected Environment connection settings are not configured. No database connection or write was attempted.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Live Staging verification was skipped because its protected direct connection or approved database name is missing. No database connection or write was attempted.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
+          fi
+          if [ -n "$EXPECTED_DATABASE_OID" ] && ! [[ "$EXPECTED_DATABASE_OID" =~ ^[0-9]+$ ]]; then
+            echo 'The optional Staging database OID corroboration is malformed. No database connection or write was attempted.' >&2
+            exit 1
           fi
           echo 'configured=true' >> "$GITHUB_OUTPUT"
       - name: Verify live Staging identity and connection security
         if: steps.preflight.outputs.configured == 'true'
+        env:
+          AREES_DATABASE_ENV: staging
+          AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
+          AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
+          AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+          AREES_STAGING_DATABASE_EXPECTED_OID: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_OID }}
+          AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
+          VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
         run: |
           set -o pipefail
           node scripts/staging/verify-staging-direct.mjs | tee "$RUNNER_TEMP/staging-verification.json"
@@ -109,9 +115,11 @@ jobs:
             ? Math.floor(serverVersion / 10000)
             : Math.floor(serverVersion / 1000);
           const verified = result.target === 'staging' &&
-            result.resourceId === process.env.AREES_STAGING_DATABASE_STORE_ID &&
-            result.databaseIdentityMatchesExpected === true &&
-            result.roleIdentityVerified === true &&
+            result.configuredResourceId === process.env.AREES_STAGING_DATABASE_STORE_ID &&
+            result.resourceIdMatchesApprovedConfiguration === true &&
+            result.databaseNameMatchesExpected === true &&
+            (result.databaseOidMatchesExpected === null || result.databaseOidMatchesExpected === true) &&
+            result.sessionRoleAuthorized === true &&
             result.effectiveRoleAuthorized === true &&
             result.tlsEncrypted === true &&
             result.tlsCertificateVerified === true &&
@@ -142,13 +150,17 @@ jobs:
             process.exit(0);
           }
           const valid = result &&
-            typeof result.resourceId === 'string' && result.resourceId.length > 0 &&
+            typeof result.configuredResourceId === 'string' && result.configuredResourceId.length > 0 &&
+            typeof result.resourceIdMatchesApprovedConfiguration === 'boolean' &&
             result.target === 'staging' &&
-            typeof result.databaseIdentityMatchesExpected === 'boolean' &&
-            typeof result.roleIdentityVerified === 'boolean' &&
-            typeof result.credentialUsernameTruncatedByPostgres === 'boolean' &&
+            typeof result.databaseNameMatchesExpected === 'boolean' &&
+            typeof result.sessionRoleAuthorized === 'boolean' &&
+            typeof result.credentialUsernameMatchesSessionRole === 'boolean' &&
             typeof result.effectiveRoleMatchesLogin === 'boolean' &&
             typeof result.effectiveRoleAuthorized === 'boolean' &&
+            typeof result.databaseNameMatchesExpected === 'boolean' &&
+            typeof result.authenticationIdentityAvailable === 'boolean' &&
+            (result.databaseOidMatchesExpected === null || typeof result.databaseOidMatchesExpected === 'boolean') &&
             typeof result.tlsEncrypted === 'boolean' &&
             typeof result.tlsCertificateVerified === 'boolean' &&
             (typeof result.databaseOid === 'string' || typeof result.databaseOid === 'number') &&
@@ -159,13 +171,15 @@ jobs:
             console.log('- Verification output is missing required fields; identity was not verified and no backup, migration, or seed was authorized.');
             process.exit(0);
           }
-          console.log(`- Resource: ${result.resourceId}`);
-          console.log(`- Database name and live credential role verified: ${result.databaseIdentityMatchesExpected && result.roleIdentityVerified}`);
-          console.log(`- Credential username matched after PostgreSQL identifier handling: ${result.credentialUsernameTruncatedByPostgres}`);
+          console.log(`- Configured Prisma resource matches the approved Staging resource ID: ${result.resourceIdMatchesApprovedConfiguration}`);
+          console.log(`- Expected database name matched: ${result.databaseNameMatchesExpected}`);
+          console.log(`- URL username equals PostgreSQL session role (diagnostic only): ${result.credentialUsernameMatchesSessionRole}`);
+          console.log(`- Optional same-cluster database OID corroboration: ${result.databaseOidMatchesExpected === null ? 'not configured' : result.databaseOidMatchesExpected}`);
+          console.log(`- PostgreSQL reports an authentication identity (value withheld, diagnostic only): ${result.authenticationIdentityAvailable}`);
+          console.log('- PostgreSQL system_user is not treated as proof of the Prisma URL credential or resource ID.');
           console.log(`- Effective role matches login identity: ${result.effectiveRoleMatchesLogin}`);
-          console.log(`- Effective role is authorized for the login identity: ${result.effectiveRoleAuthorized}`);
+          console.log(`- Session role is authorized: ${result.sessionRoleAuthorized && result.effectiveRoleAuthorized}`);
           console.log(`- TLS encryption and certificate validation: ${result.tlsEncrypted && result.tlsCertificateVerified}`);
-          console.log(`- Live database OID: ${result.databaseOid}`);
           console.log(`- PostgreSQL server version: ${result.serverVersion}`);
           console.log(`- Production credentials used: ${result.productionCredentialsUsed}`);
           console.log(`- No writes performed: ${result.writesPerformed === false}`);
@@ -203,17 +217,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
-    env:
-      AREES_DATABASE_ENV: staging
-      AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
-      AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
-      AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
-      AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
-      AREES_STAGING_BACKUP_PASSPHRASE: ${{ secrets.AREES_STAGING_BACKUP_PASSPHRASE }}
-      AREES_STAGING_TEST_PASSWORD: ${{ secrets.AREES_STAGING_TEST_PASSWORD }}
-      VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
-      AREES_ALLOW_STAGING_SEED: YES
-      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -224,17 +227,34 @@ jobs:
           cache: npm
       - name: Install dependencies and backup tools
         run: |
-          npm ci
+          npm ci --ignore-scripts
           sudo apt-get update
           sudo apt-get install --yes gnupg postgresql-client-${{ needs.verify-staging.outputs.postgres_major }}
       - name: Verify Staging identity again immediately before backup
+        env:
+          AREES_DATABASE_ENV: staging
+          AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
+          AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
+          AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+          AREES_STAGING_DATABASE_EXPECTED_OID: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_OID }}
+          AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
+          VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
         run: node scripts/staging/verify-staging-direct.mjs
       - name: Create encrypted pre-migration backup
+        env:
+          AREES_DATABASE_ENV: staging
+          AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
+          AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+          AREES_STAGING_DATABASE_EXPECTED_OID: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_OID }}
+          AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
+          AREES_STAGING_BACKUP_PASSPHRASE: ${{ secrets.AREES_STAGING_BACKUP_PASSPHRASE }}
+          VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
         run: |
           set -o pipefail
           node scripts/staging/backup-staging.mjs | tee "$RUNNER_TEMP/staging-backup-metadata.json"
       - name: Test encrypted backup restore in disposable PostgreSQL
         env:
+          AREES_STAGING_BACKUP_PASSPHRASE: ${{ secrets.AREES_STAGING_BACKUP_PASSPHRASE }}
           RESTORE_PASSWORD: ci_restore_only
         run: |
           set -o pipefail
@@ -250,8 +270,27 @@ jobs:
           if-no-files-found: error
           retention-days: 1
       - name: Apply Prisma migrations to Staging only
-        run: npx prisma migrate deploy
+        env:
+          AREES_DATABASE_ENV: staging
+          AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
+          AREES_STAGING_DATABASE_DIRECT_HOST: db.prisma.io
+          AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+          AREES_STAGING_DATABASE_EXPECTED_OID: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_OID }}
+          AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
+          VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
+        run: |
+          node scripts/staging/verify-staging-direct.mjs
+          npx prisma migrate deploy
       - name: Create synthetic Staging accounts
+        env:
+          AREES_DATABASE_ENV: staging
+          AREES_STAGING_DATABASE_STORE_ID: store_fpCPANjbF7V7x3tT
+          AREES_STAGING_DATABASE_EXPECTED_NAME: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_NAME }}
+          AREES_STAGING_DATABASE_EXPECTED_OID: ${{ vars.AREES_STAGING_DATABASE_EXPECTED_OID }}
+          AREES_STAGING_DATABASE_DIRECT_URL: ${{ secrets.AREES_STAGING_DATABASE_DIRECT_URL }}
+          AREES_STAGING_TEST_PASSWORD: ${{ secrets.AREES_STAGING_TEST_PASSWORD }}
+          VERCEL_PROJECT_ID: prj_gkTSFNIfCgVwslbCUHsKtNhuwULk
+          AREES_ALLOW_STAGING_SEED: YES
         run: npm run staging:seed-test-fixtures -- --apply
       - name: Summarize Staging setup
         if: always()

@@ -5,7 +5,7 @@ import {
   getMigrationDatabaseUrl,
   getStagingDatabaseUrl,
 } from "../../lib/database-target.mjs";
-import { assertReadOnlySourceRole, verifyLiveConnection } from "./pg-safety.mjs";
+import { assertExpectedStagingIdentity, assertReadOnlySourceRole, verifyLiveConnection } from "./pg-safety.mjs";
 
 const sourceUrl = process.env.SOURCE_READ_ONLY_DATABASE_URL;
 const stagingUrl = getStagingDatabaseUrl();
@@ -42,6 +42,7 @@ async function probe(label, connectionString) {
     } else if (identity.database.toLowerCase().includes("production")) {
       throw new Error("Staging connection resolves to a database named as production");
     }
+    if (label !== "source") assertExpectedStagingIdentity(identity);
     await client.query("ROLLBACK").catch(() => {});
     return { label, resourceId: label === "source" ? resources.sourceStoreId : resources.targetStoreId, ...identity, connected: true };
   } finally {
@@ -56,7 +57,7 @@ try {
   if (databaseIdentityFingerprint(sourceUrl) === databaseIdentityFingerprint(stagingUrl)) {
     throw new Error("Source and Staging live connection fingerprints match; isolation is not proven");
   }
-  if (staging.databaseOid !== migration.databaseOid || staging.database !== migration.database || !staging.roleIdentityMatchesCredential || !migration.roleIdentityMatchesCredential) {
+  if (staging.databaseOid !== migration.databaseOid || staging.database !== migration.database) {
     throw new Error("Pooled and direct Staging connections do not resolve to the same live database identity");
   }
   console.log(JSON.stringify({ source, staging, migration, resourceIdsDiffer: source.resourceId !== staging.resourceId, writesPerformed: false, queries: "read-only identity/privilege checks only" }));

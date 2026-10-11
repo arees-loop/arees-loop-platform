@@ -9,7 +9,7 @@ import {
   PRODUCTION_PRISMA_STORE_ID,
   STAGING_PRISMA_STORE_ID,
 } from "../../lib/database-target.mjs";
-import { verifyLiveConnection } from "./pg-safety.mjs";
+import { assertExpectedStagingIdentity, verifyLiveConnection } from "./pg-safety.mjs";
 
 const execFileAsync = promisify(execFile);
 const STAGING_PROJECT_ID = "prj_gkTSFNIfCgVwslbCUHsKtNhuwULk";
@@ -131,6 +131,7 @@ async function insertOrCheck(table, columns, row) {
 try {
   await client.connect();
   const live = await verifyLiveConnection(client, targetUrl, "staging-import");
+  assertExpectedStagingIdentity(live);
   await client.query("BEGIN");
   const identity = await client.query("SELECT current_database() AS database_name, current_setting('transaction_read_only') AS read_only");
   if (identity.rows[0]?.read_only !== "off") throw new Error("Staging database is unexpectedly read-only");

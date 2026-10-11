@@ -13,7 +13,7 @@ import {
 } from "../lib/database-target.mjs";
 import { publicServiceEligibilityWhere } from "../lib/services/public-eligibility.mjs";
 import { isAiDocumentProcessingApproved } from "../lib/partners/ai-data-processing.mjs";
-import { verifyLiveConnection } from "../scripts/staging/pg-safety.mjs";
+import { assertExpectedStagingIdentity, verifyLiveConnection } from "../scripts/staging/pg-safety.mjs";
 
 const stageEnv = {
   VERCEL_PROJECT_ID: STAGING_VERCEL_PROJECT_ID,
@@ -106,66 +106,18 @@ test("Prisma commands validate direct Staging identity without a public role var
   }), /does not match the approved Vercel resource/);
 });
 
-test("live role verification compares against the secret URL without returning the role name", async () => {
+test("live connection treats PostgreSQL authentication identity as diagnostic, not Prisma credential proof", async () => {
   const client = {
-    query: async () => ({ rows: [{
-      database_name: "postgres",
-      database_matches_connection: true,
-      login_user_matches_credential: true,
-      effective_role_matches_login: false,
-      effective_role_authorized: true,
-      server_version: "160004",
-      database_oid: "16384",
-      tls_enabled: true,
-    }] }),
-  };
-  const result = await verifyLiveConnection(
-    client,
-    "postgresql://stage-sensitive-user:secret@db.prisma.io:5432/postgres?sslmode=require",
-    "staging-test",
-  );
-  assert.equal(result.roleIdentityMatchesCredential, true);
-  assert.equal(result.effectiveRoleMatchesLogin, false);
-  assert.equal(result.effectiveRoleAuthorized, true);
-  assert.equal(JSON.stringify(result).includes("stage-sensitive-user"), false);
-  assert.equal(JSON.stringify(result).includes("secret"), false);
-});
-
-test("live identity diagnostics identify failed comparisons without disclosing role names", async () => {
-  const client = {
-    query: async () => ({ rows: [{
-      database_name: "postgres",
-      database_matches_connection: true,
-      login_user_matches_credential: false,
-      effective_role_matches_login: false,
-      effective_role_authorized: true,
-      tls_enabled: true,
-    }] }),
-  };
-  await assert.rejects(
-    verifyLiveConnection(client, "postgresql://secret-user:secret@db.prisma.io:5432/postgres", "staging-test"),
-    (error) => {
-      assert.match(error.message, /databaseMatchesConnection":true/);
-      assert.match(error.message, /sessionUserMatchesCredential":false/);
-      assert.match(error.message, /currentUserMatchesSessionUser":false/);
-      assert.equal(error.message.includes("secret-user"), false);
-      assert.equal(error.message.includes("secret@"), false);
-      return true;
-    },
-  );
-});
-
-
-test("live identity accepts only PostgreSQL's verified truncation of a long credential username", async () => {
-  const client = {
-    query: async () => ({ rows: [{
+    query: async (sql) => sql.includes("system_user")
+      ? ({ rows: [{ authentication_identity_available: true }] })
+      : ({ rows: [{
       database_name: "postgres",
       database_matches_connection: true,
       login_user_matches_credential: false,
       credential_username_is_ascii: true,
       credential_username_exceeds_identifier_limit: true,
-      session_user_at_identifier_limit: true,
-      session_user_matches_truncated_credential: true,
+      session_user_at_identifier_limit: false,
+      session_user_matches_truncated_credential: false,
       effective_role_matches_login: true,
       effective_role_authorized: true,
       server_version: "160004",
@@ -175,13 +127,73 @@ test("live identity accepts only PostgreSQL's verified truncation of a long cred
   };
   const result = await verifyLiveConnection(
     client,
-    "postgresql://credential-username-deliberately-longer-than-postgresql-limit-sixty-three-bytes-123:secret@db.prisma.io:5432/postgres",
+    "postgresql://opaque-generated-user-longer-than-the-role-limit:secret@db.prisma.io:5432/postgres?sslmode=require",
     "staging-test",
   );
-  assert.equal(result.roleIdentityMatchesCredential, true);
-  assert.equal(result.credentialUsernameTruncatedByPostgres, true);
-  assert.equal(JSON.stringify(result).includes("credential-username-deliberately-longer-than-postgresql-limit-sixty-three-bytes-123"), false);
+  assert.equal(result.credentialUsernameMatchesSessionRole, false);
+  assert.equal(result.effectiveRoleMatchesLogin, true);
+  assert.equal(result.effectiveRoleAuthorized, true);
+  assert.equal(result.authenticationIdentityAvailable, true);
+  assert.equal(JSON.stringify(result).includes("opaque-generated-user"), false);
   assert.equal(JSON.stringify(result).includes("secret"), false);
+});
+
+test("Staging requires expected database name and authorized session; OID is optional corroboration", async () => {
+  const client = {
+    query: async (sql) => sql.includes("system_user")
+      ? ({ rows: [{ authentication_identity_available: true }] })
+      : ({ rows: [{
+          database_name: "postgres",
+          database_matches_connection: true,
+          login_user_matches_credential: false,
+          effective_role_matches_login: true,
+          effective_role_authorized: true,
+          server_version: "160004",
+          database_oid: "16384",
+          tls_enabled: true,
+        }] }),
+  };
+  const live = await verifyLiveConnection(
+    client,
+    "postgresql://opaque-generated-user:secret@db.prisma.io:5432/postgres",
+    "staging-test",
+  );
+  assert.deepEqual(assertExpectedStagingIdentity(live, {
+    AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres",
+    AREES_STAGING_DATABASE_EXPECTED_OID: "16384",
+  }), {
+    databaseNameMatchesExpected: true,
+    databaseOidMatchesExpected: true,
+    credentialUsernameMatchesSessionRole: false,
+    sessionRoleAuthorized: true,
+  });
+  assert.deepEqual(assertExpectedStagingIdentity(live, {
+    AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres",
+  }), {
+    databaseNameMatchesExpected: true,
+    databaseOidMatchesExpected: null,
+    credentialUsernameMatchesSessionRole: false,
+    sessionRoleAuthorized: true,
+  });
+  assert.throws(() => assertExpectedStagingIdentity(live, {
+    AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres",
+    AREES_STAGING_DATABASE_EXPECTED_OID: "16385",
+  }), /identity attestation failed/);
+  assert.throws(() => assertExpectedStagingIdentity(live, {}), /approved database name/);
+  assert.throws(() => assertExpectedStagingIdentity({ ...live, effectiveRoleAuthorized: false }, {
+    AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres",
+  }), /sessionRoleAuthorized/);
+});
+
+test("system_user mismatch does not block Prisma Staging when the authorized session is live", async () => {
+  const client = {
+    query: async (sql) => sql.includes("system_user")
+      ? ({ rows: [{ authentication_identity_available: true }] })
+      : ({ rows: [{ database_name: "postgres", database_matches_connection: true, login_user_matches_credential: false, effective_role_matches_login: true, effective_role_authorized: true, server_version: "160004", database_oid: "16384", tls_enabled: true }] }),
+  };
+  const live = await verifyLiveConnection(client, "postgresql://opaque-user:secret@db.prisma.io:5432/postgres", "staging-test");
+  assert.equal(live.credentialUsernameMatchesSessionRole, false);
+  assert.equal(assertExpectedStagingIdentity(live, { AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres" }).sessionRoleAuthorized, true);
 });
 
 test("database availability checks use the same isolated Staging target", () => {

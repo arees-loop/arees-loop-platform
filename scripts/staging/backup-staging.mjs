@@ -3,6 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { getMigrationDatabaseUrl, STAGING_PRISMA_STORE_ID } from "../../lib/database-target.mjs";
+import pg from "pg";
+import { assertExpectedStagingIdentity, verifyLiveConnection } from "./pg-safety.mjs";
 
 const maxBytes = 50 * 1024 * 1024;
 const storeId = process.env.AREES_STAGING_DATABASE_STORE_ID;
@@ -44,6 +46,20 @@ function run(command, args, options = {}) {
 }
 
 try {
+  const client = new pg.Client({
+    connectionString: getMigrationDatabaseUrl(),
+    ssl: { rejectUnauthorized: true },
+    connectionTimeoutMillis: 10000,
+    query_timeout: 10000,
+    application_name: "arees-loop-staging-backup-preflight",
+  });
+  try {
+    await client.connect();
+    const live = await verifyLiveConnection(client, getMigrationDatabaseUrl(), "staging-backup");
+    assertExpectedStagingIdentity(live);
+  } finally {
+    await client.end().catch(() => {});
+  }
   await run("pg_dump", ["--host", url.hostname, "--port", url.port || "5432", "--dbname", databaseName, "--format=custom", "--no-owner", "--no-acl", "--file", dumpPath], {
     env: { PATH: process.env.PATH, HOME: process.env.HOME, PGUSER: databaseRole, PGPASSFILE: pgpassPath, PGSSLMODE: "verify-full", PGCONNECT_TIMEOUT: "10", PGAPPNAME: "arees-staging-pre-migration-backup" },
   });

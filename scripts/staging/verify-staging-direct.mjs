@@ -1,6 +1,6 @@
 import pg from "pg";
 import { getMigrationDatabaseUrl, STAGING_PRISMA_STORE_ID, STAGING_VERCEL_PROJECT_ID } from "../../lib/database-target.mjs";
-import { verifyLiveConnection } from "./pg-safety.mjs";
+import { assertExpectedStagingIdentity, verifyLiveConnection } from "./pg-safety.mjs";
 
 const expectedDatabase = process.env.AREES_STAGING_DATABASE_EXPECTED_NAME;
 const directUrl = getMigrationDatabaseUrl();
@@ -37,10 +37,11 @@ const client = new Client({
 try {
   await client.connect();
   const live = await verifyLiveConnection(client, directUrl, "staging");
-  if (live.database !== expectedDatabase || live.roleIdentityMatchesCredential !== true || live.effectiveRoleAuthorized !== true) {
+  const independentIdentity = assertExpectedStagingIdentity(live);
+  if (live.database !== expectedDatabase || live.effectiveRoleAuthorized !== true) {
     throw new Error(`Live PostgreSQL identity check failed: ${JSON.stringify({
       databaseNameMatchesExpected: live.database === expectedDatabase,
-      sessionUserMatchesCredential: live.roleIdentityMatchesCredential === true,
+      credentialUsernameMatchesSessionRole: live.credentialUsernameMatchesSessionRole,
       currentUserMatchesSessionUser: live.effectiveRoleMatchesLogin === true,
       currentUserAuthorizedForSession: live.effectiveRoleAuthorized === true,
     })}`);
@@ -78,12 +79,15 @@ try {
   }
   const result = {
     target: "staging",
-    resourceId: STAGING_PRISMA_STORE_ID,
-    databaseIdentityMatchesExpected: true,
-    roleIdentityVerified: live.roleIdentityMatchesCredential && live.effectiveRoleAuthorized,
-    credentialUsernameTruncatedByPostgres: live.credentialUsernameTruncatedByPostgres,
+    configuredResourceId: STAGING_PRISMA_STORE_ID,
+    resourceIdMatchesApprovedConfiguration: process.env.AREES_STAGING_DATABASE_STORE_ID === STAGING_PRISMA_STORE_ID,
+    databaseNameMatchesExpected: live.database === expectedDatabase,
+    sessionRoleAuthorized: live.effectiveRoleAuthorized,
+    credentialUsernameMatchesSessionRole: live.credentialUsernameMatchesSessionRole,
+    authenticationIdentityAvailable: live.authenticationIdentityAvailable,
     effectiveRoleMatchesLogin: live.effectiveRoleMatchesLogin,
     effectiveRoleAuthorized: live.effectiveRoleAuthorized,
+    ...independentIdentity,
     databaseOid: live.databaseOid,
     serverVersion: live.serverVersion,
     tlsEncrypted: true,

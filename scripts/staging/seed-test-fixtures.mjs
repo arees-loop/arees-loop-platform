@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import pg from "pg";
 import { getMigrationDatabaseUrl, STAGING_VERCEL_PROJECT_ID } from "../../lib/database-target.mjs";
-import { verifyLiveConnection } from "./pg-safety.mjs";
+import { assertExpectedStagingIdentity, verifyLiveConnection } from "./pg-safety.mjs";
 
 const [mode = "--dry-run"] = process.argv.slice(2);
 if (!["--dry-run", "--apply"].includes(mode)) throw new Error("Use --dry-run or --apply");
@@ -51,6 +51,7 @@ const now = new Date();
 try {
   await client.connect();
   const live = await verifyLiveConnection(client, connectionString, "staging-fixtures");
+  assertExpectedStagingIdentity(live);
   await client.query("BEGIN");
   const identity = await client.query("SELECT current_database() AS database_name, current_setting('transaction_read_only') AS read_only");
   if (identity.rows[0]?.read_only !== "off" || identity.rows[0]?.database_name.toLowerCase().includes("production")) {
