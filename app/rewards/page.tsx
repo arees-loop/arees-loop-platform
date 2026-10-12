@@ -99,20 +99,34 @@ export default function RewardsPage() {
   const balance = walletBalance ?? (progress ? getTotalLoopPoints() : 0);
 
   async function sendGift() {
+    if (gifting) return;
+    const amount = Number(giftPoints);
+    if (!giftEmail.trim() || !Number.isSafeInteger(amount) || amount <= 0) {
+      setGiftMessage("أدخل بريداً إلكترونياً صحيحاً وعدداً موجباً من النقاط.");
+      return;
+    }
     setGifting(true);
     setGiftMessage("");
-    const res = await fetch("/api/loyalty/gift", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: giftEmail, points: Number(giftPoints) }),
-    });
-    const data = await res.json();
-    setGifting(false);
-    setGiftMessage(data.message || (data.success ? "تم الإهداء." : "تعذر الإهداء."));
-    if (data.success) {
+    try {
+      const res = await fetch("/api/loyalty/gift", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: giftEmail.trim(), points: amount }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        setGiftMessage(data?.message || "تعذر إهداء النقاط. حاول لاحقاً.");
+        return;
+      }
+      setGiftMessage(data.message || "تم إهداء النقاط بنجاح.");
       setGiftEmail("");
       setGiftPoints("");
+      setCelebrationTrigger(value => value + 1);
       await loadWallet();
+    } catch {
+      setGiftMessage("تعذر الاتصال بالخدمة. لم نتأكد من تنفيذ العملية؛ تحقق من سجل المحفظة قبل المحاولة مجدداً.");
+    } finally {
+      setGifting(false);
     }
   }
   const earnedPoints = progress ? getEarnedLoopPoints() : 0;
