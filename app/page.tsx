@@ -156,15 +156,11 @@ const heroScenes = [
 ];
 
 
-const featuredWorldDestinations = [
-  { id: "georgia", nameAr: "جورجيا", nameEn: "Georgia", position: "18% center" },
-  { id: "turkey", nameAr: "تركيا", nameEn: "Türkiye", position: "38% center" },
-  { id: "malaysia", nameAr: "ماليزيا", nameEn: "Malaysia", position: "82% center" },
-  { id: "thailand", nameAr: "تايلاند", nameEn: "Thailand", position: "72% center" },
-  { id: "bali", nameAr: "بالي", nameEn: "Bali", position: "88% bottom" },
-  { id: "london", nameAr: "لندن", nameEn: "London", position: "4% center" },
-];
-
+const destinationCountries: Record<string,string> = {
+  "طوكيو": "اليابان", "ميلان": "إيطاليا", "جزيرة سيشل": "سيشل",
+  "لندن": "المملكة المتحدة", "برشلونة": "إسبانيا", "القاهرة": "مصر",
+};
+const saudiCities = new Set(["الشرقية", "جدة", "جزيرة فرسان", "العلا", "الطائف", "المدينة", "مكة", "الرياض"]);
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
@@ -211,6 +207,13 @@ export default function Home() {
     const distance=distanceKm(userCoords.lat,userCoords.lng,service.latitude,service.longitude);
     return {...service,distance};
   }).filter((s):s is LiveService & {distance:number}=>s!==null&&s.distance<=50).sort((a,b)=>a.distance-b.distance) : [];
+  const featuredWorldDestinations = liveServices
+    .filter(service => service.category.includes("عالمية") && Boolean(service.city))
+    .filter((service, index, all) => all.findIndex(item => item.city === service.city) === index)
+    .map(service => ({...service, displayName: destinationCountries[service.city || ""] || service.city || service.nameAr}));
+  const featuredSaudiDestinations = liveServices
+    .filter(service => saudiCities.has(service.city || ""))
+    .filter((service, index, all) => all.findIndex(item => item.city === service.city) === index);
   const currentScene = heroScenes[activeScene];
   const isArabic = heroLanguage === "ar";
   const isLastScene = activeScene === heroScenes.length - 1;
@@ -586,20 +589,20 @@ export default function Home() {
                       {featuredWorldDestinations.map((destination) => (
                         <Link
                           key={destination.id}
-                          href={`/discover?destination=${destination.id}`}
+                          href={`/services/${destination.id}`}
                           className="group relative h-[82px] min-w-[150px] flex-1 snap-start overflow-hidden rounded-[20px] border border-white/28 bg-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#D4AF37]/80"
                         >
                           <Image
-                            src="/Image/hero/world-destinations-hero.webp"
-                            alt={isArabic ? destination.nameAr : destination.nameEn}
+                            src={destination.images?.[0] || "/Image/hero/world-destinations-hero.webp"}
+                            alt={destination.nameAr}
                             fill
                             sizes="150px"
                             className="object-cover transition duration-500 group-hover:scale-105"
-                            style={{ objectPosition: destination.position }}
+                            
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
                           <span className="absolute bottom-2.5 right-3 left-3 text-xs font-black text-white drop-shadow">
-                            {isArabic ? destination.nameAr : destination.nameEn}
+                            {destination.displayName}
                           </span>
                         </Link>
                       ))}
