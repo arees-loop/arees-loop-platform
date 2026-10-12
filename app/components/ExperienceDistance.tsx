@@ -10,14 +10,14 @@ function getLocation(): Promise<{ lat: number; lng: number } | null> {
   if (cachedLocation) return Promise.resolve(cachedLocation);
   if (pendingLocation) return pendingLocation;
   if (typeof navigator === "undefined" || !navigator.geolocation) return Promise.resolve(null);
-  pendingLocation = new Promise(resolve => {
+  pendingLocation = new Promise<{ lat: number; lng: number } | null>(resolve => {
     navigator.geolocation.getCurrentPosition(
       position => { cachedLocation = { lat: position.coords.latitude, lng: position.coords.longitude }; resolve(cachedLocation); },
       () => resolve(null),
       { timeout: 8000, maximumAge: 60000, enableHighAccuracy: false },
     );
   }).finally(() => { pendingLocation = null; });
-  return pendingLocation;
+  return pendingLocation!;
 }
 
 function kilometers(lat1: number, lon1: number, lat2: number, lon2: number) {
