@@ -725,4 +725,7 @@ a.arees-primary-action[href]:active {
     will-change: auto;
   }
 }
-\n/* Normalize fonts pasted into service rich text, including nested headings. */\n.arees-service-content,\n.arees-service-content * { font-family: var(--font-ibm-plex-arabic), Arial, sans-serif !important; }\n
+
+/* Normalize fonts pasted into service rich text, including nested headings. */
+.arees-service-content,
+.arees-service-content * { font-family: var(--font-ibm-plex-arabic), Arial, sans-serif !important; }
