@@ -108,6 +108,7 @@ test("Prisma commands validate direct Staging identity without a public role var
 
 test("live connection treats PostgreSQL authentication identity as diagnostic, not Prisma credential proof", async () => {
   const client = {
+    connection: { stream: { encrypted: true, authorized: true } },
     query: async (sql) => sql.includes("system_user")
       ? ({ rows: [{ authentication_identity_available: true, authentication_identity_matches_credential: true }] })
       : ({ rows: [{
@@ -141,6 +142,7 @@ test("live connection treats PostgreSQL authentication identity as diagnostic, n
 
 test("Staging requires expected database name and authorized session; OID is optional corroboration", async () => {
   const client = {
+    connection: { stream: { encrypted: true, authorized: true } },
     query: async (sql) => sql.includes("system_user")
       ? ({ rows: [{ authentication_identity_available: true, authentication_identity_matches_credential: true }] })
       : ({ rows: [{
@@ -166,7 +168,9 @@ test("Staging requires expected database name and authorized session; OID is opt
     databaseNameMatchesExpected: true,
     databaseOidMatchesExpected: true,
     credentialUsernameMatchesSessionRole: false,
+    credentialUsernameTruncatedByPostgres: false,
     authenticationIdentityMatchesCredential: true,
+    roleIdentityMatchesCredential: true,
     sessionRoleAuthorized: true,
   });
   assert.deepEqual(assertExpectedStagingIdentity(live, {
@@ -175,7 +179,9 @@ test("Staging requires expected database name and authorized session; OID is opt
     databaseNameMatchesExpected: true,
     databaseOidMatchesExpected: null,
     credentialUsernameMatchesSessionRole: false,
+    credentialUsernameTruncatedByPostgres: false,
     authenticationIdentityMatchesCredential: true,
+    roleIdentityMatchesCredential: true,
     sessionRoleAuthorized: true,
   });
   assert.throws(() => assertExpectedStagingIdentity(live, {
@@ -188,8 +194,9 @@ test("Staging requires expected database name and authorized session; OID is opt
   }), /sessionRoleAuthorized/);
 });
 
-test("system_user must match the Prisma URL credential before Staging writes are allowed", async () => {
+test("Staging refuses a credential that matches neither the PostgreSQL login role nor its authentication identity", async () => {
   const client = {
+    connection: { stream: { encrypted: true, authorized: true } },
     query: async (sql) => sql.includes("system_user")
       ? ({ rows: [{ authentication_identity_available: true, authentication_identity_matches_credential: false }] })
       : ({ rows: [{ database_name: "postgres", database_matches_connection: true, login_user_matches_credential: false, effective_role_matches_login: true, effective_role_authorized: true, server_version: "160004", database_oid: "16384", tls_enabled: true }] }),
@@ -197,7 +204,109 @@ test("system_user must match the Prisma URL credential before Staging writes are
   const live = await verifyLiveConnection(client, "postgresql://opaque-user:secret@db.prisma.io:5432/postgres", "staging-test");
   assert.equal(live.credentialUsernameMatchesSessionRole, false);
   assert.equal(live.authenticationIdentityMatchesCredential, false);
-  assert.throws(() => assertExpectedStagingIdentity(live, { AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres" }), /authenticationIdentityMatchesCredential/);
+  assert.throws(() => assertExpectedStagingIdentity(live, { AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres" }), /roleIdentityMatchesCredential/);
+});
+
+test("Staging accepts PostgreSQL's verified truncation of an overlong ASCII credential username", async () => {
+  const username = "a".repeat(70);
+  const client = {
+    connection: { stream: { encrypted: true, authorized: true } },
+    query: async (sql) => sql.includes("system_user")
+      ? ({ rows: [{ authentication_identity_available: true, authentication_identity_matches_credential: false }] })
+      : ({ rows: [{
+          database_name: "postgres",
+          database_matches_connection: true,
+          login_user_matches_credential: false,
+          credential_username_is_ascii: true,
+          credential_username_exceeds_identifier_limit: true,
+          session_user_at_identifier_limit: true,
+          session_user_matches_truncated_credential: true,
+          effective_role_matches_login: true,
+          effective_role_authorized: true,
+          server_version: "160004",
+          database_oid: "16384",
+          tls_enabled: true,
+        }] }),
+  };
+  const live = await verifyLiveConnection(client, `postgresql://${username}:secret@db.prisma.io:5432/postgres`, "staging-test");
+  assert.equal(live.credentialUsernameTruncatedByPostgres, true);
+  assert.equal(live.roleIdentityMatchesCredential, true);
+  assert.deepEqual(assertExpectedStagingIdentity(live, { AREES_STAGING_DATABASE_EXPECTED_NAME: "postgres" }), {
+    databaseNameMatchesExpected: true,
+    databaseOidMatchesExpected: null,
+    credentialUsernameMatchesSessionRole: false,
+    credentialUsernameTruncatedByPostgres: true,
+    authenticationIdentityMatchesCredential: false,
+    roleIdentityMatchesCredential: true,
+    sessionRoleAuthorized: true,
+  });
+  assert.equal(JSON.stringify(live).includes(username), false);
+  assert.equal(JSON.stringify(live).includes("secret"), false);
+});
+
+test("TLS requires an encrypted client socket with a verified certificate before any query", async () => {
+  let queryCount = 0;
+  const insecureClient = {
+    connection: { stream: { encrypted: true, authorized: false } },
+    query: async () => { queryCount++; return { rows: [] }; },
+  };
+  await assert.rejects(
+    verifyLiveConnection(insecureClient, "postgresql://opaque-user:secret@db.prisma.io:5432/postgres", "staging-test"),
+    /client TLS verification failed.*clientTlsCertificateVerified.*false/,
+  );
+  assert.equal(queryCount, 0, "an unverified transport must not send database queries");
+});
+
+test("a verified Prisma proxy client hop is distinct from PostgreSQL backend TLS statistics", async () => {
+  const proxiedClient = {
+    connection: { stream: { encrypted: true, authorized: true } },
+    query: async (sql) => sql.includes("system_user")
+      ? ({ rows: [{ authentication_identity_available: true, authentication_identity_matches_credential: true }] })
+      : ({ rows: [{
+          database_name: "postgres", database_matches_connection: true,
+          login_user_matches_credential: true, effective_role_matches_login: true,
+          effective_role_authorized: true, server_version: "160004", database_oid: "16384",
+          tls_enabled: false,
+        }] }),
+  };
+  const live = await verifyLiveConnection(
+    proxiedClient,
+    "postgresql://opaque-user:secret@db.prisma.io:5432/postgres",
+    "staging-test",
+    { serverTlsPolicy: "prisma-proxy" },
+  );
+  assert.equal(live.clientTlsEncrypted, true);
+  assert.equal(live.clientTlsCertificateVerified, true);
+  assert.equal(live.tlsEnabled, true);
+  assert.equal(live.serverReportedTls, false);
+  assert.equal(JSON.stringify(live).includes("opaque-user"), false);
+  assert.equal(JSON.stringify(live).includes("secret"), false);
+});
+
+test("non-proxy connections still fail closed when PostgreSQL does not confirm TLS", async () => {
+  const tlsMismatchClient = {
+    connection: { stream: { encrypted: true, authorized: true } },
+    query: async (sql) => sql.includes("system_user")
+      ? ({ rows: [{ authentication_identity_available: true, authentication_identity_matches_credential: false }] })
+      : ({ rows: [{
+          database_name: "postgres", database_matches_connection: true,
+          login_user_matches_credential: false, effective_role_matches_login: true,
+          effective_role_authorized: true, server_version: "160004", database_oid: "16384",
+          tls_enabled: false,
+        }] }),
+  };
+  await assert.rejects(
+    verifyLiveConnection(tlsMismatchClient, "postgresql://opaque-user:secret@db.prisma.io:5432/postgres", "staging-test"),
+    error => {
+      assert.match(error.message, /backend TLS evidence is inconsistent/);
+      assert.match(error.message, /"clientTlsEncrypted":true/);
+      assert.match(error.message, /"clientTlsCertificateVerified":true/);
+      assert.match(error.message, /"serverReportedTls":false/);
+      assert.equal(error.message.includes("opaque-user"), false);
+      assert.equal(error.message.includes("secret"), false);
+      return true;
+    },
+  );
 });
 
 test("database availability checks use the same isolated Staging target", () => {
