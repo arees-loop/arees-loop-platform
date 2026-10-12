@@ -592,10 +592,10 @@ export default function Home() {
                         <Link
                           key={destination.id}
                           href={`/services/${destination.id}`}
-                          className="group relative h-[82px] min-w-[150px] flex-1 snap-start overflow-hidden rounded-[20px] border border-white/28 bg-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#D4AF37]/80"
+                          className="group relative h-[82px] min-w-[150px] flex-1 snap-start overflow-hidden rounded-[20px] border border-white/60 bg-white/[0.10] shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_8px_26px_rgba(0,0,0,0.15)] backdrop-blur-xl backdrop-saturate-150 transition hover:-translate-y-0.5 hover:border-[#D4AF37]/90 hover:bg-white/20"
                         >
-                          <div className="absolute inset-0"><ExperiencePhoto src={destination.images?.[0]} alt={destination.nameAr} className="transition duration-500 group-hover:scale-105"/></div>
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
+                          <div className="absolute inset-0 opacity-35 transition-opacity duration-300 group-hover:opacity-60"><ExperiencePhoto src={destination.images?.[0]} alt={destination.nameAr} className="transition duration-500 group-hover:scale-105"/></div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#062A24]/55 via-white/[0.025] to-white/[0.10]" />
                           <span className="absolute bottom-2.5 right-3 left-3 text-xs font-black text-white drop-shadow">
                             {destination.displayName}
                           </span>
