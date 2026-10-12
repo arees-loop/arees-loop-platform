@@ -204,7 +204,23 @@ model User {
   verificationTokens VerificationToken[]
   partnerContactVerification PartnerContactVerification?
   interests          UserInterest[]
+  savedExperiences   SavedExperience[]
   auditLogs          AuditLog[]          @relation("AuditUser")
+}
+
+// Customer-saved individual services; independent of onboarding interest categories.
+model SavedExperience {
+  id        String   @id @default(cuid())
+  userId    String
+  serviceId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, serviceId])
+  @@index([userId, createdAt])
+  @@index([serviceId])
 }
 
 model UserInterest {
@@ -546,6 +562,7 @@ model Service {
   partner Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   license License? @relation(fields: [licenseId], references: [id], onDelete: SetNull)
 
+  savedBy  SavedExperience[]
   images   ServiceImage[]
   bookings Booking[]
   coupons  Coupon[]
