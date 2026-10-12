@@ -94,10 +94,12 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
                 </button>
                 {accountOpen && (
                   <div dir="rtl" className="absolute left-0 top-full mt-1 w-52 overflow-hidden rounded-[18px] border border-[#D4AF37]/35 bg-white/95 p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-                    <Link href="/profile" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الملف الشخصي</Link>
+                    <Link href="/notifications" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الإشعارات</Link>
+                    <Link href="/bookings" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الطلبات والحجوزات</Link>
+                    <Link href="/favorites" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الاهتمامات</Link>
+                    <Link href="/rewards" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">المكافآت والنقاط</Link>
                     <Link href="/cart" onClick={() => setAccountOpen(false)} className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]"><span>السلة</span>{cartCount > 0 && <span className="rounded-full bg-[#D4AF37] px-2 py-0.5 text-[10px] font-black text-[#0D3B34]">{cartCount}</span>}</Link>
-                    <Link href="/bookings" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">حجوزاتي</Link>
-                    <Link href="/rewards" className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">نقاطي ومكافآتي</Link>
+                    <Link href="/profile" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">حسابي وإعداداتي</Link>
                     <div className="my-1 h-px bg-[#0D3B34]/10" />
                     <button type="button" onClick={logout} className="block w-full rounded-xl px-4 py-2.5 text-right text-xs font-bold text-red-700 hover:bg-red-50">تسجيل الخروج</button>
                   </div>
