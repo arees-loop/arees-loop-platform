@@ -36,7 +36,12 @@ const client = new Client({
 
 try {
   await client.connect();
-  const live = await verifyLiveConnection(client, directUrl, "staging");
+  // The approved Prisma Postgres endpoint is a Postgres-aware proxy. Prisma
+  // documents that the proxy terminates the client handshake and opens a
+  // separate upstream DB connection, so pg_stat_ssl is reported as diagnostic
+  // evidence for that backend hop. Client TLS and certificate checks remain
+  // mandatory in verifyLiveConnection.
+  const live = await verifyLiveConnection(client, directUrl, "staging", { serverTlsPolicy: "prisma-proxy" });
   const independentIdentity = assertExpectedStagingIdentity(live);
   if (live.database !== expectedDatabase || live.effectiveRoleAuthorized !== true) {
     throw new Error(`Live PostgreSQL identity check failed: ${JSON.stringify({
@@ -90,8 +95,9 @@ try {
     ...independentIdentity,
     databaseOid: live.databaseOid,
     serverVersion: live.serverVersion,
-    tlsEncrypted: true,
-    tlsCertificateVerified: true,
+    tlsEncrypted: live.clientTlsEncrypted,
+    tlsCertificateVerified: live.clientTlsCertificateVerified,
+    serverReportedTls: live.serverReportedTls,
     privileges: role,
     productionCredentialsUsed: false,
     writesPerformed: false,
