@@ -743,23 +743,31 @@ export default function PartnerServicesPage() {
               <SummaryCard
                 label="إجمالي الخدمات"
                 value={String(summary.total)}
+                onClick={() => setStatusFilter("ALL")}
+                selected={statusFilter === "ALL"}
               />
 
               <SummaryCard
                 label="منشورة"
                 value={String(summary.published)}
+                onClick={() => setStatusFilter("PUBLISHED")}
+                selected={statusFilter === "PUBLISHED"}
                 success
               />
 
               <SummaryCard
                 label="تحت المراجعة"
                 value={String(summary.review)}
+                onClick={() => setStatusFilter("UNDER_REVIEW")}
+                selected={statusFilter === "UNDER_REVIEW"}
                 highlight
               />
 
               <SummaryCard
                 label="مسودات"
                 value={String(summary.draft)}
+                onClick={() => setStatusFilter("DRAFT")}
+                selected={statusFilter === "DRAFT"}
               />
             </section>
 
@@ -2010,15 +2018,23 @@ function SummaryCard({
   value,
   highlight = false,
   success = false,
+  onClick,
+  selected = false,
 }: {
   label: string;
   value: string;
   highlight?: boolean;
   success?: boolean;
+  onClick: () => void;
+  selected?: boolean;
 }) {
   return (
-    <div
-      className={`rounded-[26px] border p-5 ${
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      title={`عرض الخدمات: ${label}`}
+      className={`rounded-[26px] border p-5 text-right transition hover:-translate-y-1 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${selected ? "ring-2 ring-[#D4AF37]" : ""} ${
         highlight
           ? "border-[#D4AF37]/25 bg-[#FFF8E4]"
           : success
@@ -2039,7 +2055,7 @@ function SummaryCard({
       >
         {value}
       </p>
-    </div>
+    </button>
   );
 }
 
