@@ -1,0 +1,31 @@
+name: Customer feature safe checks
+
+on:
+  push:
+    branches:
+      - feature/customer-experience-r07-r09-r10-20261012
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://unused:unused@127.0.0.1:5432/unused
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install pinned dependencies
+        run: npm ci
+      - name: Generate Prisma client only (no database connection or migration)
+        run: npx prisma generate
+      - name: TypeScript checks
+        run: npx tsc --noEmit
+      - name: ESLint checks
+        run: npm run lint
