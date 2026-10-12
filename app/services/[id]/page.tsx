@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import ExperiencePhoto from "@/app/components/ExperiencePhoto";
 import ExperienceDistance from "@/app/components/ExperienceDistance";
 import {useParams} from "next/navigation";
 import {useEffect,useState} from "react";
@@ -32,7 +33,7 @@ export default function ServiceDetails(){
     </section>
     <div dir="rtl" className="lg:sticky lg:top-6">
      <div className="relative mx-auto aspect-square w-full max-w-[520px] overflow-hidden rounded-[24px] border border-[#0D3B34]/8 bg-white shadow-sm">
-      {images.length?<img src={images[imageIndex]} alt={service.nameAr} className="h-full w-full object-contain"/>:<div className="flex h-full items-center justify-center text-sm font-bold opacity-35">لا توجد صورة مرفوعة لهذه الخدمة</div>}
+      <ExperiencePhoto src={images[imageIndex]} alt={service.nameAr} className="object-contain"/>
       {images.length>1&&<><button onClick={prev} aria-label="الصورة السابقة" className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-xl shadow-md">›</button><button onClick={next} aria-label="الصورة التالية" className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-xl shadow-md">‹</button><div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#0D3B34]/85 px-3 py-1 text-[10px] font-bold text-white">{imageIndex+1} / {images.length}</div></>}
      </div>
      {images.length>1&&<div className="mx-auto mt-2 flex max-w-[520px] justify-center gap-2 overflow-x-auto py-1">{images.map((src,i)=><button key={src+i} onClick={()=>setImageIndex(i)} className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 ${i===imageIndex?"border-[#B99124]":"border-transparent"}`}><img src={src} alt="" className="h-full w-full object-contain"/></button>)}</div>}
