@@ -3,6 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import SaveExperienceButton from "./components/SaveExperienceButton";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
@@ -903,6 +904,7 @@ export default function Home() {
             {nearbyServices.slice(0,8).map((service) => (
               <article key={service.id} className="group flex h-full flex-col overflow-hidden rounded-[30px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_45px_rgba(13,59,52,0.10)] transition hover:-translate-y-1">
                 <div className="relative mb-5 overflow-hidden rounded-[22px] bg-[#F1EEE5]">
+                  <SaveExperienceButton experience={{ id: service.id, name: service.nameAr, city: service.city || "", image: service.images?.[0] || null, category: service.category }} />
                   {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="block h-auto w-full bg-[#F5EFE2]"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
                 </div>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
