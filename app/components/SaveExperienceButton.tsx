@@ -3,55 +3,72 @@
 import { useEffect, useState } from "react";
 
 export type SavedExperience = {
-  id: string;
-  name: string;
-  city: string;
-  image: string | null;
-  category: string;
+  id: string; name: string; city: string; image: string | null; category: string;
 };
 
-const STORAGE_PREFIX = "arees-loop-customer-saved-experiences-";
 export const savedExperiencesEvent = "arees:saved-experiences-updated";
 
-export function readSavedExperiences(userId: string): SavedExperience[] {
-  try {
-    const value: unknown = JSON.parse(localStorage.getItem(STORAGE_PREFIX + userId) || "[]");
-    if (!Array.isArray(value)) return [];
-    return value.filter((item): item is SavedExperience => Boolean(item) && typeof item.id === "string" && typeof item.name === "string" && typeof item.city === "string" && (item.image === null || typeof item.image === "string") && typeof item.category === "string").slice(0, 200);
-  } catch { return []; }
-}
-
-export function writeSavedExperiences(userId: string, items: SavedExperience[]) {
-  localStorage.setItem(STORAGE_PREFIX + userId, JSON.stringify(items.slice(0, 200)));
-  window.dispatchEvent(new Event(savedExperiencesEvent));
-}
-
-/** Local-browser save only, never represented as cloud-synced customer data. */
+/** Server-authoritative saved programs. No local fallback that could mislead customers. */
 export default function SaveExperienceButton({ experience }: { experience: SavedExperience }) {
-  const [userId, setUserId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(true);
+  const [available, setAvailable] = useState(true);
+  const [error, setError] = useState("");
+
   useEffect(() => {
     let active = true;
-    fetch("/api/auth/me", { cache: "no-store" }).then(async r => r.ok ? r.json() : null)
-      .then(data => { if (!active) return; const id = data?.data?.user?.id; setUserId(typeof id === "string" ? id : null); setBusy(false); })
-      .catch(() => { if (active) setBusy(false); });
+    fetch("/api/customer/saved-experiences", { cache: "no-store" })
+      .then(async response => {
+        if (response.status === 401) return { unauthenticated: true };
+        if (!response.ok) throw new Error("UNAVAILABLE");
+        return response.json();
+      })
+      .then(result => {
+        if (!active) return;
+        if (result.unauthenticated) {
+          setAvailable(true);
+          return;
+        }
+        if (!result.success || !Array.isArray(result.data)) throw new Error("UNAVAILABLE");
+        setSaved(result.data.some((item: { id: string }) => item.id === experience.id));
+      })
+      .catch(() => { if (active) { setAvailable(false); setError("الاهتمامات غير متاحة حالياً"); } })
+      .finally(() => { if (active) setBusy(false); });
     return () => { active = false; };
-  }, []);
-  useEffect(() => {
-    if (!userId) return;
-    setSaved(readSavedExperiences(userId).some(item => item.id === experience.id));
-  }, [userId, experience.id]);
+  }, [experience.id]);
 
-  function toggle() {
-    if (!userId) {
-      window.location.assign("/login");
-      return;
+  async function toggle() {
+    if (busy || !available) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/customer/saved-experiences", {
+        method: saved ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceId: experience.id }),
+      });
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success) throw new Error("SAVE_FAILED");
+      setSaved(result.saved === true);
+      window.dispatchEvent(new Event(savedExperiencesEvent));
+    } catch {
+      setError("تعذر حفظ الاهتمام، حاول لاحقاً");
+    } finally {
+      setBusy(false);
     }
-    const items = readSavedExperiences(userId);
-    const exists = items.some(item => item.id === experience.id);
-    writeSavedExperiences(userId, exists ? items.filter(item => item.id !== experience.id) : [experience, ...items]);
-    setSaved(!exists);
   }
-  return <button type="button" disabled={busy} onClick={toggle} aria-pressed={saved} aria-label={saved ? "إزالة من الاهتمامات" : "إضافة إلى الاهتمامات"} title={saved ? "إزالة من الاهتمامات" : "حفظ ضمن الاهتمامات على هذا الجهاز"} className="absolute left-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-white/95 text-xl text-[#0D3B34] shadow-md transition hover:scale-105 disabled:opacity-60">{saved ? "♥" : "♡"}</button>;
+
+  return <div className="absolute left-3 top-3 z-10">
+    <button type="button" disabled={busy || !available} onClick={toggle}
+      aria-pressed={saved} aria-label={saved ? "إزالة من الاهتمامات" : "إضافة إلى الاهتمامات"}
+      title={error || (saved ? "إزالة من الاهتمامات" : "إضافة إلى الاهتمامات")}
+      className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-xl text-[#0D3B34] shadow-md transition hover:scale-105 disabled:opacity-60">
+      {saved ? "♥" : "♡"}
+    </button>
+    {error && <span role="status" className="mt-1 block w-28 rounded bg-white p-1 text-center text-[9px] text-red-700 shadow">{error}</span>}
+  </div>;
 }
