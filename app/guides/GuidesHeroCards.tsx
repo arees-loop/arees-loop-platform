@@ -50,10 +50,8 @@ export default function GuidesHeroCards() {
     >
       <article data-guide-card className="guide-feature-card">
         <div className="guide-feature-heading">
-          <span className="guide-feature-visual guide-feature-visual-search" aria-hidden="true">
-            <GuidePortrait person="man" />
-            <span className="guide-location-badge"><LocationPinIcon /></span>
-            <span className="guide-search-badge"><svg viewBox="0 0 24 24" fill="none" className="h-4 w-4"><circle cx="10.8" cy="10.8" r="6.3" stroke="currentColor" strokeWidth="2"/><path d="m15.5 15.5 4.2 4.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></span>
+          <span className="guide-feature-visual guide-feature-visual-search grid place-items-center rounded-full border border-white/60 bg-white/30 text-[#0D3B34]" aria-hidden="true">
+            <LocationPinIcon />
           </span>
           <div>
             <p className="guide-feature-eyebrow">للزوار والسياح</p>
@@ -67,8 +65,8 @@ export default function GuidesHeroCards() {
       <article data-guide-card className="guide-feature-card guide-feature-card-gold">
         <div className="guide-feature-heading">
           <span className="guide-team-portraits" aria-label="مرشد ومرشدة سياحيان" role="group">
-            <GuidePortrait person="man" className="guide-team-portrait-front" />
-            <GuidePortrait person="woman" className="guide-team-portrait-back" />
+            <GuidePortrait person="woman" className="guide-team-portrait-front" />
+            <GuidePortrait person="man" className="guide-team-portrait-back" />
           </span>
           <div>
             <p className="guide-feature-eyebrow">للمرشدين السياحيين</p>
