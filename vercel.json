@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx prisma generate && npx next build"
+  "buildCommand": "npx prisma generate && DATABASE_URL=postgresql://preview_build_only:blocked@127.0.0.1:5432/arees_preview npx next build"
 }
