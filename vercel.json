@@ -1,6 +1,3 @@
 {
-  "buildCommand": "npm run build",
-  "env": {
-    "DATABASE_URL": "postgresql://preview:preview@127.0.0.1:5432/preview"
-  }
+  "buildCommand": "npm run build"
 }
