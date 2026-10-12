@@ -594,14 +594,7 @@ export default function Home() {
                           href={`/services/${destination.id}`}
                           className="group relative h-[82px] min-w-[150px] flex-1 snap-start overflow-hidden rounded-[20px] border border-white/28 bg-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#D4AF37]/80"
                         >
-                          <Image
-                            src={destination.images?.[0] || "/Image/hero/world-destinations-hero.webp"}
-                            alt={destination.nameAr}
-                            fill
-                            sizes="150px"
-                            className="object-cover transition duration-500 group-hover:scale-105"
-                            
-                          />
+                          <div className="absolute inset-0"><ExperiencePhoto src={destination.images?.[0]} alt={destination.nameAr} className="transition duration-500 group-hover:scale-105"/></div>
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
                           <span className="absolute bottom-2.5 right-3 left-3 text-xs font-black text-white drop-shadow">
                             {destination.displayName}
