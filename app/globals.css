@@ -729,3 +729,19 @@ a.arees-primary-action[href]:active {
 /* Normalize fonts pasted into service rich text, including nested headings. */
 .arees-service-content,
 .arees-service-content * { font-family: var(--font-ibm-plex-arabic), Arial, sans-serif !important; }
+
+/* The partner rich-text editor embeds inline fonts and sizes. Customer-facing
+   service details use one consistent body scale while retaining bold emphasis. */
+.arees-service-content .arees-service-copy,
+.arees-service-content .arees-service-copy :where(p, span, div, li, ul, ol, font, em, strong, b, i, h1, h2, h3, h4, a) {
+  font-family: var(--font-ibm-plex-arabic), Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  line-height: 1.9 !important;
+  letter-spacing: normal !important;
+}
+.arees-service-content .arees-service-copy :where(p, li, span, div) {
+  font-weight: 400;
+}
+.arees-service-content .arees-service-copy :where(strong, b) {
+  font-weight: 700 !important;
+}
