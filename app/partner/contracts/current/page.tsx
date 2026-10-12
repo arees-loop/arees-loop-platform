@@ -62,7 +62,7 @@ export default function PartnerContractPage() {
       <Link href="/partner/dashboard" className="rounded-xl border border-[#0D3B34]/15 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34]">العودة للوحة الشريك</Link>
       <button onClick={()=>window.print()} className="rounded-xl bg-[#0D3B34] px-5 py-2.5 text-sm font-bold text-white">تحميل / حفظ PDF</button>
     </div>
-    <style>{`@media print { @page { size: A4; margin: 12mm; } article { width: 100%; } section, header, footer, .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; } h1,h2,h3 { break-after: avoid; page-break-after: avoid; } }`}</style><article className="mx-auto max-w-5xl bg-white p-8 shadow-sm print:max-w-none print:p-0 print:shadow-none md:p-12">
+    <style>{`@media print { @page { size: A4 landscape; margin: 10mm; } article { width: 100%; } section, header, footer, .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; } h1,h2,h3 { break-after: avoid; page-break-after: avoid; } }`}</style><article className="mx-auto max-w-5xl bg-white p-8 shadow-sm print:max-w-none print:p-0 print:shadow-none md:p-12">
       <header className="border-b-2 border-[#B99124] pb-7 text-center">
         <img src="/Logo/arees-integrated-solutions-logo.png" alt="شركة أريس الحلول المتكاملة المحدودة" className="mx-auto h-24 w-auto object-contain print:h-20" />
         <h1 className="mt-3 text-3xl font-bold text-[#0D3B34]">عقد شراكة وتسويق إلكتروني</h1>
