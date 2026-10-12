@@ -94,7 +94,7 @@ export default function FavoritesPage() {
                   "var(--font-el-messiri), sans-serif",
               }}
             >
-              المفضلة
+              الاهتمامات
             </h1>
 
             <p className="mt-2 max-w-xl text-xs leading-6 text-[#0D3B34]/65">
@@ -151,7 +151,7 @@ export default function FavoritesPage() {
                     "var(--font-el-messiri), sans-serif",
                 }}
               >
-                محفوظاتك
+                اهتماماتك
               </h2>
             </div>
           </div>
@@ -293,7 +293,7 @@ function FavoriteCard({
         <button
           type="button"
           onClick={onRemove}
-          title="إزالة من المفضلة"
+          title="إزالة من الاهتمامات"
           className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#D4AF37] text-[#0D3B34] shadow-sm backdrop-blur-xl transition hover:scale-105"
         >
           <HeartIcon filled />
@@ -373,7 +373,7 @@ function EmptyState() {
             "var(--font-el-messiri), sans-serif",
         }}
       >
-        قائمة المفضلة فارغة
+        قائمة الاهتمامات فارغة
       </h3>
 
       <p className="mx-auto mt-2 max-w-md text-[10px] leading-5 text-[#0D3B34]/60">
