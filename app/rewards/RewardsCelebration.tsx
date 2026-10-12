@@ -10,7 +10,7 @@ const particles = Array.from({ length: 24 }, (_, index) => ({
 }));
 
 /** Decorative celebration: never grants points or implies that a reward was earned. */
-export default function RewardsCelebration() {
+export default function RewardsCelebration({ trigger = 0 }: { trigger?: number }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function RewardsCelebration() {
     setVisible(true);
     const timeout = window.setTimeout(() => setVisible(false), 3600);
     return () => window.clearTimeout(timeout);
-  }, []);
+  }, [trigger]);
 
   if (!visible) return null;
 
