@@ -73,6 +73,7 @@ function formatArabicDate(value: string) {
 export default function RewardsPage() {
   const [progress, setProgress] = useState<LoopProgressState | null>(null);
   const [feedback, setFeedback] = useState("");
+  const [celebrationTrigger, setCelebrationTrigger] = useState(0);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [giftEmail, setGiftEmail] = useState("");
   const [giftPoints, setGiftPoints] = useState("");
@@ -185,6 +186,7 @@ export default function RewardsPage() {
     }
 
     setFeedback(`تم استبدال ${reward.title} بنجاح.`);
+    setCelebrationTrigger(value => value + 1);
     refreshProgress();
   }
 
@@ -194,7 +196,7 @@ export default function RewardsPage() {
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
       style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
     >
-      <RewardsCelebration />
+      <RewardsCelebration trigger={celebrationTrigger} />
       {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_10%,rgba(212,175,55,0.11),transparent_25%),radial-gradient(circle_at_7%_80%,rgba(13,59,52,0.08),transparent_30%),linear-gradient(135deg,#FAF8F2_0%,#F4F1E8_52%,#F8F6F0_100%)]" />
