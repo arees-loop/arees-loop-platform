@@ -119,7 +119,7 @@ jobs:
             result.resourceIdMatchesApprovedConfiguration === true &&
             result.databaseNameMatchesExpected === true &&
             (result.databaseOidMatchesExpected === null || result.databaseOidMatchesExpected === true) &&
-            result.authenticationIdentityMatchesCredential === true &&
+            result.roleIdentityMatchesCredential === true &&
             result.sessionRoleAuthorized === true &&
             result.effectiveRoleAuthorized === true &&
             result.tlsEncrypted === true &&
@@ -157,6 +157,8 @@ jobs:
             typeof result.databaseNameMatchesExpected === 'boolean' &&
             typeof result.sessionRoleAuthorized === 'boolean' &&
             typeof result.credentialUsernameMatchesSessionRole === 'boolean' &&
+            typeof result.credentialUsernameTruncatedByPostgres === 'boolean' &&
+            typeof result.roleIdentityMatchesCredential === 'boolean' &&
             typeof result.effectiveRoleMatchesLogin === 'boolean' &&
             typeof result.effectiveRoleAuthorized === 'boolean' &&
             typeof result.databaseNameMatchesExpected === 'boolean' &&
@@ -165,6 +167,7 @@ jobs:
             (result.databaseOidMatchesExpected === null || typeof result.databaseOidMatchesExpected === 'boolean') &&
             typeof result.tlsEncrypted === 'boolean' &&
             typeof result.tlsCertificateVerified === 'boolean' &&
+            (result.serverReportedTls === null || typeof result.serverReportedTls === 'boolean') &&
             (typeof result.databaseOid === 'string' || typeof result.databaseOid === 'number') &&
             Number.isFinite(Number(result.serverVersion)) &&
             typeof result.productionCredentialsUsed === 'boolean' &&
@@ -178,11 +181,12 @@ jobs:
           console.log(`- URL username equals PostgreSQL session role (diagnostic only): ${result.credentialUsernameMatchesSessionRole}`);
           console.log(`- Optional same-cluster database OID corroboration: ${result.databaseOidMatchesExpected === null ? 'not configured' : result.databaseOidMatchesExpected}`);
           console.log(`- PostgreSQL reports an authentication identity (value withheld, diagnostic only): ${result.authenticationIdentityAvailable}`);
-          console.log(`- PostgreSQL system_user identity matches URL username: ${result.authenticationIdentityMatchesCredential}`);
-          console.log('- Live auth identity match is required before any Staging backup, migration, import, or seed.');
+          console.log(`- URL role identity verified directly or by PostgreSQL's ASCII identifier truncation: ${result.roleIdentityMatchesCredential}`);
+          console.log('- A live credential-role match is required before any Staging backup, migration, import, or seed.');
           console.log(`- Effective role matches login identity: ${result.effectiveRoleMatchesLogin}`);
           console.log(`- Session role is authorized: ${result.sessionRoleAuthorized && result.effectiveRoleAuthorized}`);
           console.log(`- TLS encryption and certificate validation: ${result.tlsEncrypted && result.tlsCertificateVerified}`);
+          console.log(`- PostgreSQL backend TLS view (diagnostic; client TLS above is enforced): ${result.serverReportedTls === null ? 'not reported' : result.serverReportedTls}`);
           console.log(`- PostgreSQL server version: ${result.serverVersion}`);
           console.log(`- Production credentials used: ${result.productionCredentialsUsed}`);
           console.log(`- No writes performed: ${result.writesPerformed === false}`);
