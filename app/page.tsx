@@ -904,10 +904,13 @@ export default function Home() {
               <article key={service.id} className="group flex h-full flex-col overflow-hidden rounded-[30px] border border-[#0D3B34]/10 bg-white p-6 shadow-[0_18px_45px_rgba(13,59,52,0.10)] transition hover:-translate-y-1">
                 <div className="relative mb-5 overflow-hidden rounded-[22px] bg-[#F1EEE5]">
                   {service.images?.[0] ? <img src={service.images[0]} alt={service.nameAr} className="block h-auto w-full bg-[#F5EFE2]"/> : <div className="flex h-full items-center justify-center text-sm font-bold text-[#0D3B34]/35">لا توجد صورة</div>}
-                  <div className="absolute bottom-4 right-4 rounded-full bg-[#0D3B34]/75 px-3 py-1 text-xs font-bold text-white">{service.category}</div>
+                </div>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+                  <span className="text-[#A87917]">{service.category}</span>
+                  <span className="inline-flex items-center gap-1 text-[#0D3B34]/70" aria-label="المسافة التقريبية من موقعك">📍 على بعد {service.distance < 1 ? Math.round(service.distance * 1000) + " متر" : service.distance.toFixed(1) + " كم"}</span>
                 </div>
                 <h3 className="text-xl font-black text-[#0D3B34]">{service.nameAr}</h3>
-                <p className="mt-2 text-xs text-[#0D3B34]/50">{[service.city,service.locationName].filter(Boolean).join(" · ")} · على بعد {service.distance<1?Math.round(service.distance*1000)+" متر":service.distance.toFixed(1)+" كم"}</p>
+                <p className="mt-2 text-xs text-[#0D3B34]/50">{[service.city, service.locationName].filter(Boolean).join(" · ")}</p>
                 <div className="mt-4 flex items-center justify-between gap-3"><b>{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</b><span className="flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-3 py-2 text-xs font-bold text-[#9A741B]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-6 w-auto"/> احجز واحصل على {service.loyaltyPoints || 150} نقطة</span></div>
                 <Link href={`/services/${service.id}`} className="mt-6 flex w-full items-center justify-center rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white">عرض البرنامج ←</Link>
               </article>
