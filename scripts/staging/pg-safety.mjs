@@ -6,20 +6,37 @@ function parsedConnection(url) {
   };
 }
 
-/** Verify a live TLS PostgreSQL session without returning credentials. */
-export async function verifyLiveConnection(client, connectionString, label) {
+/** Verify the client TLS hop and, when applicable, PostgreSQL's backend TLS view. */
+export async function verifyLiveConnection(client, connectionString, label, { serverTlsPolicy = "required" } = {}) {
   const expected = parsedConnection(connectionString);
+  const tlsSocket = client.connection?.stream;
+  const clientTlsEncrypted = tlsSocket?.encrypted === true;
+  const clientTlsCertificateVerified = tlsSocket?.authorized === true;
+  if (!clientTlsEncrypted || !clientTlsCertificateVerified) {
+    throw new Error(`${label} client TLS verification failed: ${JSON.stringify({
+      clientTlsEncrypted,
+      clientTlsCertificateVerified,
+      serverReportedTls: null,
+    })}`);
+  }
   let result;
   try {
     result = await client.query(`
     SELECT current_database() AS database_name,
            current_database()::text = $2::text AS database_matches_connection,
            session_user::text = $1::text AS login_user_matches_credential,
+           octet_length($1::text) = char_length($1::text) AS credential_username_is_ascii,
+           octet_length($1::text) > current_setting('max_identifier_length')::int AS credential_username_exceeds_identifier_limit,
+           octet_length(session_user::text) = current_setting('max_identifier_length')::int AS session_user_at_identifier_limit,
+           (octet_length($1::text) = char_length($1::text) AND
+            octet_length($1::text) > current_setting('max_identifier_length')::int AND
+            octet_length(session_user::text) = current_setting('max_identifier_length')::int AND
+            session_user::text = left($1::text, current_setting('max_identifier_length')::int)) AS session_user_matches_truncated_credential,
            current_user::text = session_user::text AS effective_role_matches_login,
            (current_user = session_user OR pg_has_role(session_user, current_user, 'MEMBER')) AS effective_role_authorized,
            current_setting('server_version_num') AS server_version,
            (SELECT oid::text FROM pg_database WHERE datname = current_database()) AS database_oid,
-           COALESCE((SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()), false) AS tls_enabled
+           (SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()) AS tls_enabled
     `, [expected.username, expected.database]);
   } catch {
     // Never surface provider/driver errors verbatim: some clients include the
@@ -27,18 +44,28 @@ export async function verifyLiveConnection(client, connectionString, label) {
     throw new Error(`${label} could not read the live PostgreSQL session identity`);
   }
   const row = result.rows[0];
+  const roleIdentityMatchesCredential = row?.login_user_matches_credential === true || (
+    row?.credential_username_is_ascii === true &&
+    row?.credential_username_exceeds_identifier_limit === true &&
+    row?.session_user_at_identifier_limit === true &&
+    row?.session_user_matches_truncated_credential === true
+  );
   if (!row || !row.database_matches_connection || !row.effective_role_authorized || !row.database_oid) {
     const diagnostics = {
       databaseMatchesConnection: row?.database_matches_connection === true,
       credentialUsernameMatchesSessionRole: row?.login_user_matches_credential === true,
+      credentialUsernameTruncatedByPostgres: row?.session_user_matches_truncated_credential === true && row?.credential_username_is_ascii === true && row?.credential_username_exceeds_identifier_limit === true && row?.session_user_at_identifier_limit === true,
       currentUserMatchesSessionUser: row?.effective_role_matches_login === true,
       currentUserAuthorizedForSession: row?.effective_role_authorized === true,
       liveDatabaseIdentityAvailable: Boolean(row?.database_oid),
+      clientTlsEncrypted,
+      clientTlsCertificateVerified,
+      serverReportedTls: row?.tls_enabled === true,
     };
     throw new Error(`${label} live identity check failed: ${JSON.stringify(diagnostics)}`);
   }
-  if (row.tls_enabled !== true) throw new Error(`${label} PostgreSQL connection is not protected by TLS`);
   let authenticationIdentityAvailable = false;
+  let authenticationIdentityMatchesCredential = false;
   if (Number(row.server_version) >= 160000) {
     try {
       const auth = await client.query(`
@@ -48,7 +75,7 @@ export async function verifyLiveConnection(client, connectionString, label) {
                     ELSE false END AS authentication_identity_matches_credential
       `, [expected.username]);
       authenticationIdentityAvailable = auth.rows[0]?.authentication_identity_available === true;
-      row.authentication_identity_matches_credential = auth.rows[0]?.authentication_identity_matches_credential === true;
+      authenticationIdentityMatchesCredential = auth.rows[0]?.authentication_identity_matches_credential === true;
     } catch {
       // The provider may restrict this diagnostic. PostgreSQL defines
       // system_user as the authentication identity presented before a role is
@@ -56,19 +83,47 @@ export async function verifyLiveConnection(client, connectionString, label) {
       // It is not a resource-binding proof, and its raw value is never returned.
     }
   }
+  const tlsDiagnostics = {
+    clientTlsEncrypted,
+    clientTlsCertificateVerified,
+    serverReportedTls: row.tls_enabled === true ? true : row.tls_enabled === false ? false : null,
+    databaseMatchesConnection: row.database_matches_connection === true,
+    credentialUsernameMatchesSessionRole: row.login_user_matches_credential === true,
+    credentialUsernameTruncatedByPostgres: row.session_user_matches_truncated_credential === true && row.credential_username_is_ascii === true && row.credential_username_exceeds_identifier_limit === true && row.session_user_at_identifier_limit === true,
+    roleIdentityMatchesCredential,
+    currentUserMatchesSessionUser: row.effective_role_matches_login === true,
+    currentUserAuthorizedForSession: row.effective_role_authorized === true,
+    authenticationIdentityAvailable,
+    authenticationIdentityMatchesCredential,
+  };
+  const serverReportedTls = row.tls_enabled === true ? true : row.tls_enabled === false ? false : null;
+  if (serverTlsPolicy === "required" && serverReportedTls !== true) {
+    throw new Error(`${label} backend TLS evidence is inconsistent; refusing database operations: ${JSON.stringify(tlsDiagnostics)}`);
+  }
+  if (serverTlsPolicy !== "required" && serverTlsPolicy !== "prisma-proxy") {
+    throw new Error(`${label} has an unsupported TLS topology policy`);
+  }
   return {
     database: row.database_name,
     // Prisma documents URL credentials as generated database-user credentials,
     // but does not document a guarantee that either PostgreSQL's assigned role
     // or system_user equals the URL username. Both comparisons are diagnostic.
     credentialUsernameMatchesSessionRole: row.login_user_matches_credential === true,
+    credentialUsernameTruncatedByPostgres: row.session_user_matches_truncated_credential === true && row.credential_username_is_ascii === true && row.credential_username_exceeds_identifier_limit === true && row.session_user_at_identifier_limit === true,
+    roleIdentityMatchesCredential,
     authenticationIdentityAvailable,
-    authenticationIdentityMatchesCredential: row.authentication_identity_matches_credential === true,
+    authenticationIdentityMatchesCredential,
     effectiveRoleMatchesLogin: row.effective_role_matches_login === true,
     effectiveRoleAuthorized: row.effective_role_authorized === true,
     serverVersion: row.server_version,
     databaseOid: row.database_oid,
-    tlsEnabled: true,
+    // Prisma's Postgres-aware proxy terminates the client protocol connection
+    // and opens a separate upstream connection. This is the verified client
+    // hop; serverReportedTls below describes PostgreSQL's backend hop.
+    tlsEnabled: clientTlsEncrypted && clientTlsCertificateVerified,
+    serverReportedTls,
+    clientTlsEncrypted,
+    clientTlsCertificateVerified,
   };
 }
 
@@ -85,13 +140,12 @@ export function assertExpectedStagingIdentity(live, env = process.env) {
     // If supplied, use one only as a secondary same-cluster corroboration.
     databaseOidMatchesExpected: expectedDatabaseOid ? String(live?.databaseOid) === expectedDatabaseOid : null,
     credentialUsernameMatchesSessionRole: live?.credentialUsernameMatchesSessionRole === true,
-    // PostgreSQL documents system_user as the identity presented during
-    // authentication. Require the live Prisma-issued URL username to match it
-    // before any Staging backup, migration, import, or seed can proceed.
+    credentialUsernameTruncatedByPostgres: live?.credentialUsernameTruncatedByPostgres === true,
     authenticationIdentityMatchesCredential: live?.authenticationIdentityMatchesCredential === true,
+    roleIdentityMatchesCredential: live?.roleIdentityMatchesCredential === true || live?.authenticationIdentityMatchesCredential === true,
     sessionRoleAuthorized: live?.effectiveRoleAuthorized === true,
   };
-  if (!checks.databaseNameMatchesExpected || (expectedDatabaseOid && !checks.databaseOidMatchesExpected) || !checks.authenticationIdentityMatchesCredential || !checks.sessionRoleAuthorized) {
+  if (!checks.databaseNameMatchesExpected || (expectedDatabaseOid && !checks.databaseOidMatchesExpected) || !checks.roleIdentityMatchesCredential || !checks.sessionRoleAuthorized) {
     throw new Error(`Live Staging identity attestation failed: ${JSON.stringify(checks)}`);
   }
   return checks;
