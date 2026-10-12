@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
+import GuidesHeroCards from "./guides/GuidesHeroCards";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
 import { getTotalLoopPoints, getLoopProgress } from "../lib/loop-progress";
@@ -1186,31 +1187,22 @@ export default function Home() {
       </section>
 
       <section id="tour-guides" dir="rtl" className="scroll-mt-24 bg-[#F8F5ED]">
-        <div className="relative w-full overflow-hidden bg-[#382C20]">
-          <img
+        <div className="guides-hero">
+          <Image
             src="/Image/guides/arees-loop-guides-heritage-banner.png"
             alt="مرشد سياحي يرافق زواراً وسط مواقع أثرية وتراثية في المملكة"
-            className="block h-auto w-full"
+            fill
+            priority
+            sizes="100vw"
+            className="guides-hero-image"
           />
-          <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-[#071E19]/80 via-[#071E19]/25 to-transparent px-5 pb-16 pt-7 text-center text-white md:pt-12">
+          <div className="guides-hero-shade" aria-hidden="true" />
+          <div className="guides-hero-title">
             <p className="text-xs font-bold tracking-widest text-[#E8C66E]">AREES LOOP GUIDES</p>
             <h2 className="mt-2 text-3xl font-black md:text-5xl">المرشدون السياحيون</h2>
             <p className="mt-2 text-sm text-white/90 md:text-base">خبرة محلية تقودك لتجارب أصيلة في المملكة</p>
           </div>
-        </div>
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-0 border-x border-b border-[#D4AF37]/25 bg-white md:grid-cols-2">
-          <div className="flex flex-col items-center px-6 py-8 text-center md:px-9">
-            <span className="text-xs font-bold text-[#A87917]">للزوار والسياح</span>
-            <h3 className="mt-2 text-xl font-black text-[#0D3B34]">اكتشف المكان مع المرشد المناسب</h3>
-            <p className="mt-3 max-w-md flex-1 text-sm leading-7 text-[#0D3B34]/70">وين ما تكون وجهتك، أريس لوب بتوصلك بالمرشد السياحي المناسب في المكان المناسب، وتوفر عليك وقت وجهد البحث، عشان تعيش تجربة أغنى وأسهل.</p>
-            <Link href="/guides/directory" className="mt-5 rounded-full bg-[#0D3B34] px-7 py-3 text-sm font-black text-white transition hover:bg-[#175A50]">ابحث عن مرشد سياحي</Link>
-          </div>
-          <div className="flex flex-col items-center border-t border-[#D4AF37]/25 bg-[#FBF7EC] px-6 py-8 text-center md:border-r md:border-t-0 md:px-9">
-            <span className="text-xs font-bold text-[#A87917]">للمرشدين السياحيين</span>
-            <h3 className="mt-2 text-xl font-black text-[#0D3B34]">خبرتك تستحق الوصول</h3>
-            <p className="mt-3 max-w-md flex-1 text-sm leading-7 text-[#0D3B34]/70">حوّل خبرتك السياحية إلى فرص حقيقية. انضم إلى أريس لوب، وخلّي العملاء يكتشفوا خدماتك في الوجهة والوقت المناسبين.</p>
-            <Link href="/guides/register" className="mt-5 rounded-full border border-[#C5A052] bg-white px-7 py-3 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF3D3]">انضم كمرشد سياحي</Link>
-          </div>
+          <GuidesHeroCards />
         </div>
       </section>
 

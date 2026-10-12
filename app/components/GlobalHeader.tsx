@@ -54,7 +54,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
     <header className="pointer-events-none fixed inset-x-0 top-2 z-[100] px-4 md:px-8">
       <nav className={`pointer-events-auto mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border ${border} ${glass} px-4 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-xl backdrop-saturate-150 md:h-[82px] md:px-6`}>
         <Link href="/" aria-label="Arees Loop">
-          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[132px] md:w-[154px]" />
+          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[100px] sm:w-[132px] md:w-[154px]" />
         </Link>
 
         <div dir="rtl" className={`hidden items-center gap-5 text-[13px] font-bold lg:flex xl:gap-7 ${text}`}>
@@ -75,6 +75,12 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
         </div>
 
         <div className="flex items-center gap-2">
+          {navVisible.guides !== false && (
+            <Link href="/#tour-guides" aria-label="المرشدون السياحيون" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#D4AF37]/50 bg-[#0D3B34] text-[11px] font-bold text-white transition hover:bg-[#175A50] sm:w-auto sm:px-3 lg:hidden">
+              <span aria-hidden="true" className="sm:hidden">🧭</span>
+              <span className="hidden sm:inline">المرشدون</span>
+            </Link>
+          )}
           <div className={`hidden rounded-full border p-1 text-[10px] font-black sm:flex ${border} ${text}`}>
             <button type="button" onClick={() => setLanguage("ar")} className={`rounded-full px-2.5 py-1.5 ${language === "ar" ? "bg-[#0D3B34] text-white" : ""}`}>AR</button>
             <button type="button" onClick={() => setLanguage("en")} className={`rounded-full px-2.5 py-1.5 ${language === "en" ? "bg-[#0D3B34] text-white" : ""}`}>EN</button>
