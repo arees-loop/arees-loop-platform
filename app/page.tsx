@@ -213,7 +213,8 @@ export default function Home() {
     .map(service => ({...service, displayName: destinationCountries[service.city || ""] || service.city || service.nameAr}));
   const featuredSaudiDestinations = liveServices
     .filter(service => saudiCities.has(service.city || ""))
-    .filter((service, index, all) => all.findIndex(item => item.city === service.city) === index);
+    .filter((service, index, all) => all.findIndex(item => item.city === service.city) === index)
+    .map(service => ({...service, displayName: service.city || service.nameAr}));
   const currentScene = heroScenes[activeScene];
   const isArabic = heroLanguage === "ar";
   const isLastScene = activeScene === heroScenes.length - 1;
@@ -567,7 +568,7 @@ export default function Home() {
               {isArabic ? currentScene.descriptionAr : currentScene.descriptionEn}
             </p>
 
-            {currentScene.id === "world" && (
+            {(currentScene.id === "world" || currentScene.id === "saudi") && (
               <div
                 dir={isArabic ? "rtl" : "ltr"}
                 className="relative z-40 mt-7 w-[min(760px,calc(100vw-40px))] lg:absolute lg:left-1/2 lg:top-[calc(50%+205px)] lg:-translate-x-1/2"
@@ -586,7 +587,7 @@ export default function Home() {
                       ref={worldDestinationsRef}
                       className="flex flex-1 snap-x gap-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     >
-                      {featuredWorldDestinations.map((destination) => (
+                      {(currentScene.id === "world" ? featuredWorldDestinations : featuredSaudiDestinations).map((destination) => (
                         <Link
                           key={destination.id}
                           href={`/services/${destination.id}`}
