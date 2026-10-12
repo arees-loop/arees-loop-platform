@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import ExperiencePhoto from "@/app/components/ExperiencePhoto";
+import SaveExperienceButton from "@/app/components/SaveExperienceButton";
 import ExperienceDistance from "@/app/components/ExperienceDistance";
 import {useParams} from "next/navigation";
 import {useEffect,useState} from "react";
@@ -33,6 +34,7 @@ export default function ServiceDetails(){
     </section>
     <div dir="rtl" className="lg:sticky lg:top-6">
      <div className="relative mx-auto aspect-square w-full max-w-[520px] overflow-hidden rounded-[24px] border border-[#0D3B34]/8 bg-white shadow-sm">
+      <SaveExperienceButton experience={{id:service.id,name:service.nameAr,city:service.city||"",image:images[0]||null,category:service.category}}/>
       <ExperiencePhoto src={images[imageIndex]} alt={service.nameAr} className="object-contain"/>
       {images.length>1&&<><button onClick={prev} aria-label="الصورة السابقة" className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-xl shadow-md">›</button><button onClick={next} aria-label="الصورة التالية" className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-xl shadow-md">‹</button><div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#0D3B34]/85 px-3 py-1 text-[10px] font-bold text-white">{imageIndex+1} / {images.length}</div></>}
      </div>
