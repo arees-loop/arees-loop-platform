@@ -745,3 +745,9 @@ a.arees-primary-action[href]:active {
 .arees-service-content .arees-service-copy :where(strong, b) {
   font-weight: 700 !important;
 }
+
+/* Saudi Business Center authentic seal: right aligned, with mobile clearance. */
+.sbc-verify-seal { z-index: 70; }
+@media (max-width: 767px) {
+  .sbc-verify-seal { margin-bottom: env(safe-area-inset-bottom, 0px); }
+}
