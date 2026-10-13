@@ -152,7 +152,7 @@ export async function PATCH(request:NextRequest) {
         prisma.transportRequestEvent.create({data:{
           requestId:id,actorId,actorName,action:status==="CANCELED"?"CANCELED":"STATUS_CHANGED",
           fromStatus:current.status,toStatus:status,
-          details:status==="CANCELED"?{initiatedBy:by,reason}:null,
+          details:status==="CANCELED"?{initiatedBy:by,reason}:undefined,
         }}),
       ]);
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
