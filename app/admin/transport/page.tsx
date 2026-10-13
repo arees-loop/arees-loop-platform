@@ -34,8 +34,8 @@ const field="w-full rounded-xl border border-[#D4AF37]/35 bg-[#FFFEFA] px-3 py-3
 const label="flex flex-col gap-1.5 text-xs font-semibold";
 const day=(d:string|null)=>d?d.slice(0,10):"";
 
-export default function TransportAdminPage() {
-  const [tab,setTab]=useState<"requests"|"offers">("requests");
+export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"}={}) {
+  const [tab,setTab]=useState<"requests"|"offers">(initialOfferKind==="ALL"?"requests":"offers");
   const [requests,setRequests]=useState<RequestRow[]>([]);
   const [offers,setOffers]=useState<Offer[]>([]);
   const [staff,setStaff]=useState<Staff[]>([]);
@@ -43,12 +43,12 @@ export default function TransportAdminPage() {
   const [history,setHistory]=useState<HistoryEvent[]>([]);
   const [cancelReason,setCancelReason]=useState("");
   const [cancelBy,setCancelBy]=useState("STAFF");
-  const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY">("ALL");
+  const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY">(initialOfferKind);
   const [bannerFile,setBannerFile]=useState<File|null>(null);
   const [bannerPreview,setBannerPreview]=useState("");
   const [selected,setSelected]=useState<RequestRow|null>(null);
   const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
-  const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer});
+  const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":blankOffer.origin,destination:initialOfferKind==="FLIGHT"?"":blankOffer.destination});
   const [status,setStatus]=useState("");
   const [error,setError]=useState("");
   const [busy,setBusy]=useState(false);
