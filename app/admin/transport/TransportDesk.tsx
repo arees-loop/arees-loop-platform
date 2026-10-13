@@ -8,7 +8,7 @@ type RequestRow={
   id:string;reference:string;kind:string;customerName:string;customerEmail:string|null;
   countryCode:string;phone:string;whatsappCountryCode:string|null;whatsappPhone:string|null;
   origin:string;destination:string;travelDate:string;adults:number;children:number;infants:number;
-  notes:string|null;status:string;adminNotes:string|null;carrierName:string|null;
+  notes:string|null;status:string;adminNotes:string|null;customerReply:string|null;carrierName:string|null;
   quoteAmountSar:number|null;quoteNotes:string|null;quoteValidUntil:string|null;whatsappStatus:string;
   notificationStatus:string;createdAt:string;assignedToId:string|null;canceledBy:string|null;cancellationReason:string|null;
   tripType?:string;returnDate?:string|null;itinerary?:unknown;
@@ -43,6 +43,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [identity,setIdentity]=useState<{role:string;id:string}|null>(null);
   const [history,setHistory]=useState<HistoryEvent[]>([]);
   const [cancelReason,setCancelReason]=useState("");
+  const [replyDraft,setReplyDraft]=useState("");
   const [cancelBy,setCancelBy]=useState("STAFF");
   const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY">(initialOfferKind);
   const [offerView,setOfferView]=useState<"CARDS"|"LIST">("CARDS");
@@ -97,7 +98,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   }
 
   function choose(q:RequestRow) {
-    setSelected(q);setError("");setStatus("");
+    setSelected(q);setError("");setStatus("");setReplyDraft(q.customerReply||"");
     void loadHistory(q.id);
     setForm({carrierName:q.carrierName||"",
       quoteAmountSar:q.quoteAmountSar===null?"":String(q.quoteAmountSar),
@@ -137,6 +138,19 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     finally{setBusy(false);}
   }
 
+  async function publishReply(){
+    if(!selected||busy||!replyDraft.trim())return;
+    setBusy(true);setError("");setStatus("");
+    try{
+      const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id:selected.id,action:"REPLY_CUSTOMER",customerReply:replyDraft})});
+      const d=await r.json();
+      if(!r.ok||!d.success){setError(d.message||"تعذر نشر الرد.");return;}
+      setSelected(d.data);setStatus("تم نشر الرد ليظهر للعميل داخل صفحة «طلباتي».");
+      void loadHistory(selected.id);await load();
+    }catch{setError("تعذر نشر الرد.");}
+    finally{setBusy(false);}
+  }
   async function markManuallySent() {
     if(!selected||busy)return;setBusy(true);setError("");
     try{
@@ -308,6 +322,12 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   })}
                 </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
+                <section className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
+                  <h3 className="text-sm font-black">رد يظهر للعميل في «طلباتي»</h3>
+                  <p className="mt-1 text-xs leading-6 text-[#0D3B34]/65">هذا الرد عام للعميل، ومختلف عن ملاحظات الموظفين الداخلية.</p>
+                  <textarea maxLength={2500} rows={3} className={field+" mt-3"} value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="اكتب رد أريس على العميل..."/>
+                  <button type="button" onClick={()=>void publishReply()} disabled={busy||replyDraft.trim().length<1} className="mt-3 rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-black text-white disabled:opacity-40">نشر الرد للعميل</button>
+                </section>
                 <section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4">
                   <h3 className="text-base font-black">الإسناد وسير العمل</h3>
                   <p className="mt-2 text-sm">الموظف المسؤول: <b>{staffName(selected.assignedToId)}</b></p>
