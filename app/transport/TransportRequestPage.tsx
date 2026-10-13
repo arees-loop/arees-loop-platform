@@ -114,7 +114,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   {offer.description&&<p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#0D3B34]/75">{offer.description}</p>}
                   {offer.operationStatus==="SUSPENDED"&&<p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-black text-red-800">الخدمة متوقفة مؤقتاً</p>}
                   {offer.operationStatus==="UNKNOWN"&&<p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-800">حالة التشغيل قيد التأكيد</p>}
-                  {offer.operationNote&&<p className="mt-3 whitespace-pre-line rounded-xl bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">{offer.operationNote}</p>
+                  {offer.operationNote&&<p className="mt-3 whitespace-pre-line rounded-xl bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">{offer.operationNote}</p>}
                 </div>
               </article>
             ))}
