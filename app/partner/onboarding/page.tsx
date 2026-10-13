@@ -323,11 +323,14 @@ export default function PartnerOnboardingPage() {
     useState<AiReviewClientResult | null>(null);
   const [applicationId, setApplicationId] = useState("");
   const [applicationStatus, setApplicationStatus] = useState("");
+  // The type chosen on the partner landing page is shown alone, not reselected here.
+  const [lockedPartnerType, setLockedPartnerType] = useState<PartnerType>("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const selectedType = params.get("type");
     if (selectedType !== "business" && selectedType !== "individual" && selectedType !== "government") return;
+    setLockedPartnerType(selectedType);
     setData(current => current.partnerType ? current : ({
       ...current,
       partnerType: selectedType,
@@ -402,6 +405,10 @@ export default function PartnerOnboardingPage() {
               : application.partnerType === "INDIVIDUAL"
                 ? "individual"
                 : "";
+
+        // An existing application always retains its saved type even when a
+        // different ?type= link is opened; never silently reclassify it.
+        if (mappedPartnerType) setLockedPartnerType(mappedPartnerType);
 
         const mappedApplicantRole: ApplicantRole =
           application.applicantRole === "OWNER"
@@ -2066,6 +2073,26 @@ export default function PartnerOnboardingPage() {
 
             <div data-validation="partnerType">
               <Field label="نوع مقدم الخدمة *">
+              {lockedPartnerType ? (
+                <div className="rounded-[22px] border border-[#D4AF37]/35 bg-[#F4F8F5] px-5 py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-[#0D3B34] text-lg font-black text-[#EAD38D]">✓</span>
+                      <div>
+                        <p className="text-sm font-black text-[#0D3B34]">
+                          {lockedPartnerType === "business" ? "شركة أو مؤسسة" : lockedPartnerType === "individual" ? "فرد" : "جهة حكومية أو غير ربحية"}
+                        </p>
+                        <p className="mt-1 text-xs text-[#0D3B34]/60">نوع الشريك المختار من صفحة الانضمام</p>
+                      </div>
+                    </div>
+                    {!applicationId && (
+                      <Link href="/partner/select-type" className="rounded-full border border-[#D4AF37]/55 bg-white px-4 py-2 text-xs font-bold text-[#0D3B34] transition hover:bg-[#FFF9E9]">
+                        تغيير النوع
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : (
               <div className={`grid gap-3 rounded-[22px] ${
                 validationErrors.partnerType ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
               } md:grid-cols-3`}>
@@ -2124,6 +2151,7 @@ export default function PartnerOnboardingPage() {
                   }}
                 />
               </div>
+              )}
             </Field>
             <ValidationError message={validationErrors.partnerType} />
             </div>
