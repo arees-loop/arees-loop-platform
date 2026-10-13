@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { AirportLookup } from "@/app/components/AviationLookup";
 import { useEffect, useState, type FormEvent } from "react";
 
 type Kind="FLIGHT"|"FERRY";
@@ -165,8 +166,12 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                     </>
                   ):(
                     <>
-                      <label className={label}>مدينة / مطار المغادرة *<input className={field} required maxLength={100} value={origin} onChange={e=>setOrigin(e.target.value)} placeholder="مثلاً: المدينة المنورة"/></label>
-                      <label className={label}>مدينة / مطار الوصول *<input className={field} required maxLength={100} value={destination} onChange={e=>setDestination(e.target.value)} placeholder="مثلاً: الخرطوم"/></label>
+                      <label className={label}>من — مدينة / مطار المغادرة ورمز IATA *
+                        <AirportLookup required value={origin} onChange={setOrigin} ariaLabel="مدينة أو مطار المغادرة" placeholder="مثلاً: جدة أو JED أو مطار الملك عبدالعزيز"/>
+                      </label>
+                      <label className={label}>إلى — مدينة / مطار الوصول ورمز IATA *
+                        <AirportLookup required value={destination} onChange={setDestination} ariaLabel="مدينة أو مطار الوصول" placeholder="مثلاً: بورتسودان أو PZU أو الخرطوم"/>
+                      </label>
                     </>
                   )}
                   <label className={label}>تاريخ السفر المطلوب *<input className={field} required type="date" min={today} value={travelDate} onChange={e=>setTravelDate(e.target.value)}/></label>
