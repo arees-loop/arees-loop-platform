@@ -12,17 +12,31 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
   const lat = params.lat ? Number(params.lat) : NaN;
   const lng = params.lng ? Number(params.lng) : NaN;
   const nearby = Number.isFinite(lat) && Number.isFinite(lng) && lat >= 16 && lat <= 33 && lng >= 34 && lng <= 56;
+  let loadFailed = false;
   const guides = await prisma.partner.findMany({
     where: {
       partnerType: "INDIVIDUAL",
       status: "ACTIVE",
-      licenses: { some: { status: "VERIFIED", expiryDate: { gt: new Date() }, OR: [{ type: { contains: "إرشاد" } }, { type: { contains: "GUIDE", mode: "insensitive" } }] } },
+      licenses: { some: {
+        status: "VERIFIED",
+        expiryDate: { gt: new Date() },
+        AND: [
+          { OR: [
+            { type: { contains: "إرشاد" } },
+            { type: { contains: "GUIDE", mode: "insensitive" as const } },
+          ] },
+          ...(specialty ? [{ type: { contains: specialty, mode: "insensitive" as const } }] : []),
+        ],
+      } },
       ...(city ? { city: { contains: city, mode: "insensitive" as const } } : {}),
-      ...(specialty ? { licenses: { some: { status: "VERIFIED" as const, expiryDate: { gt: new Date() }, type: { contains: specialty, mode: "insensitive" as const } } } } : {}),
     },
     select: { id: true, publicName: true, legalNameAr: true, descriptionAr: true, city: true, locationName: true, logoUrl: true, latitude: true, longitude: true, licenses: { where: { status: "VERIFIED", expiryDate: { gt: new Date() } }, select: { type: true }, take: 3 } },
     orderBy: { activatedAt: "desc" },
     take: nearby ? 500 : 48,
+  }).catch((error) => {
+    console.error("Unable to load verified guides:", error);
+    loadFailed = true;
+    return [];
   });
 
   const distanceKm = (g: {latitude: unknown; longitude: unknown}) => { const a=Number(g.latitude), b=Number(g.longitude); if(!Number.isFinite(a)||!Number.isFinite(b)||g.latitude==null||g.longitude==null)return Infinity; const dLat=(a-lat)*Math.PI/180,dLng=(b-lng)*Math.PI/180;const h=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(a*Math.PI/180)*Math.sin(dLng/2)**2;return 6371*2*Math.asin(Math.min(1,Math.sqrt(h))); };
@@ -38,7 +52,7 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
         <datalist id="guide-cities">{SAUDI_CITY_SUGGESTIONS.map(c=><option key={c} value={c}/>)}</datalist>
         <datalist id="guide-categories">{GUIDE_LICENSE_CATEGORIES.map(c=><option key={c} value={c}/>)}</datalist>
       </form>
-      {visibleGuides.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{visibleGuides.map(guide => <article key={guide.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_12px_35px_rgba(13,59,52,.07)] transition hover:-translate-y-1 hover:shadow-xl">
+      {loadFailed ? <div role="alert" className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-12 text-center"><h2 className="text-xl font-black">تعذر تحميل دليل المرشدين حالياً</h2><p className="mt-3 text-sm text-[#0D3B34]/65">الاتصال بالبيانات غير متاح الآن. أعد المحاولة لاحقاً، ولن نعرض مرشدين غير متحقق من اعتمادهم.</p></div> : visibleGuides.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{visibleGuides.map(guide => <article key={guide.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_12px_35px_rgba(13,59,52,.07)] transition hover:-translate-y-1 hover:shadow-xl">
         <div className="flex aspect-[4/3] items-center justify-center bg-[#EDE9DC]">{guide.logoUrl ? <img src={guide.logoUrl} alt={guide.publicName || guide.legalNameAr} className="h-full w-full object-contain"/> : <span className="text-6xl font-bold text-[#0D3B34]/25" aria-label="لا توجد صورة شخصية">◉</span>}</div>
         <div className="p-5"><p className="mb-2 text-xs font-bold text-[#A87917]">مرشد سياحي معتمد</p><h2 className="text-xl font-black">{guide.publicName || guide.legalNameAr}</h2><p className="mt-2 min-h-12 text-sm leading-6 text-[#0D3B34]/70">{guide.descriptionAr || "مرشد سياحي مرخص"}</p><p className="mt-3 text-sm font-bold">📍 {guide.city || guide.locationName || "المملكة العربية السعودية"}{nearby && Number.isFinite(distanceKm(guide)) ? ` — ${Math.round(distanceKm(guide))} كم تقريباً` : ""}</p><p className="mt-2 text-xs text-[#0D3B34]/55">{guide.licenses.map(l=>l.type).join(" • ")}</p><Link href={`/guides/${guide.id}`} className="mt-5 block rounded-full bg-[#0D3B34] px-5 py-3 text-center text-sm font-bold text-white">عرض ملف المرشد</Link></div>
       </article>)}</div> : <div className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-12 text-center"><h2 className="text-xl font-black">لا توجد ملفات مرشدين مطابقة حالياً</h2><p className="mt-3 text-sm text-[#0D3B34]/65">ستظهر بطاقات المرشدين بصورهم وتخصصاتهم ومناطقهم فور اعتماد بياناتهم وتراخيصهم.</p></div>}
