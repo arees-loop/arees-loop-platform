@@ -11,7 +11,7 @@ export async function POST(request:NextRequest){
     const form=await request.formData();
     const file=form.get("file");
     const kind=String(form.get("kind")||"");
-    if(kind!=="FLIGHT"&&kind!=="FERRY")return NextResponse.json({success:false,message:"حدد القسم."},{status:400});
+    if(kind!=="FLIGHT"&&kind!=="FERRY"&&kind!=="HOTEL")return NextResponse.json({success:false,message:"حدد القسم."},{status:400});
     if(!(file instanceof File)||file.size<=0||file.size>4*1024*1024)return NextResponse.json({success:false,message:"ملف الصورة مطلوب (بحد أقصى 4 ميجابايت)."}, {status:400});
     const ext=types[file.type];
     if(!ext)return NextResponse.json({success:false,message:"الصيغ المسموحة PNG وJPG وWEBP فقط."},{status:415});
