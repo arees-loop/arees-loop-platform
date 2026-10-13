@@ -16,7 +16,9 @@ export default async function QuotePage({params}:Props) {
   const session=await getCurrentSession();
   if(!session||!["ADMIN","SUPER_ADMIN"].includes(session.user.role)) redirect("/admin/login");
   const {id}=await params;
-  const item=await prisma.transportRequest.findUnique({where:{id}});
+  const item=await prisma.transportRequest.findFirst({
+    where:{id,...(session.user.role==="SUPER_ADMIN"?{}:{assignedToId:session.user.id})},
+  });
   if(!item)notFound();
   const kind=item.kind==="FERRY"?"باخرة":"طيران";
   const hasQuote=item.carrierName&&item.quoteAmountSar!==null;
