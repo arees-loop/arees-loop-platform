@@ -266,6 +266,13 @@ export default function PartnerOnboardingPage() {
 
   const [data, setData] =
     useState<FormData>(initialData);
+  const [governmentEntry, setGovernmentEntry] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("type") !== "government") return;
+    setGovernmentEntry(true);
+    setData(current => current.partnerType ? current : {...current, partnerType:"government", proofType:"وثيقة جهة حكومية أو غير ربحية", receivesPayments:false});
+  }, []);
+
 
   const [uploadedFiles, setUploadedFiles] = useState<{
     authorization: File | null;
@@ -2022,10 +2029,11 @@ export default function PartnerOnboardingPage() {
 
             <div data-validation="partnerType">
               <Field label="نوع مقدم الخدمة *">
+              {governmentEntry && <p className="mb-3 rounded-xl bg-[#EAF5EE] p-3 text-sm font-bold">تسجيل جهة حكومية أو غير ربحية — فعاليات وبرامج دون أسعار أو تسويات.</p>}
               <div className={`grid gap-3 rounded-[22px] ${
                 validationErrors.partnerType ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
               } md:grid-cols-3`}>
-                <SelectCard
+                {!governmentEntry && <SelectCard
                   title="فرد"
                   description="مقدم خدمة فردي أو مهني"
                   active={
@@ -2043,9 +2051,9 @@ export default function PartnerOnboardingPage() {
                       ""
                     );
                   }}
-                />
+                />}
 
-                <SelectCard
+                {!governmentEntry && <SelectCard
                   title="مؤسسة أو شركة"
                   description="منشأة تجارية مسجلة"
                   active={
@@ -2058,7 +2066,7 @@ export default function PartnerOnboardingPage() {
                       "business"
                     )
                   }
-                />
+                />}
 
                 <SelectCard
                   title="جهة حكومية أو غير ربحية"
