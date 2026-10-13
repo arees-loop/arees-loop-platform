@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { canManageTransport } from "@/lib/transport-permissions";
 import QuotePrintButton from "./print-button";
 
 type Props={params:Promise<{id:string}>};
@@ -20,6 +21,8 @@ export default async function QuotePage({params}:Props) {
     where:{id,...(session.user.role==="SUPER_ADMIN"?{}:{assignedToId:session.user.id})},
   });
   if(!item)notFound();
+  if(session.user.role!=="SUPER_ADMIN" &&
+    (item.assignedToId!==session.user.id || !canManageTransport(session.user,item.kind==="FERRY"?"FERRY":"FLIGHT")))notFound();
   const kind=item.kind==="FERRY"?"باخرة":"طيران";
   const hasQuote=item.carrierName&&item.quoteAmountSar!==null;
   return (
