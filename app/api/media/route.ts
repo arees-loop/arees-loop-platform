@@ -10,11 +10,24 @@ export async function GET(request: NextRequest) {
   if (!pathname) return new Response("Not found", { status: 404 });
   const logoMatch = new RegExp("^partners/([^/]+)/logos/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   const successMatch = new RegExp("^success-partners/([a-zA-Z0-9_-]+)/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
-  if (!pathname.startsWith("services/") && !logoMatch && !successMatch) {
+  const transportMatch = /^transport-offers\/(FLIGHT|FERRY)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
+  if (!pathname.startsWith("services/") && !logoMatch && !successMatch && !transportMatch) {
     return new Response("Not found", { status: 404 });
   }
 
-  let publicAsset = !logoMatch && !successMatch;
+  let publicAsset = !logoMatch && !successMatch && !transportMatch;
+  if (transportMatch) {
+    const offer = await prisma.transportOffer.findFirst({
+      where: { bannerUrl: `/api/media?pathname=${encodeURIComponent(pathname)}` },
+      select: { isVisible: true },
+    });
+    if (!offer) return new Response("Not found", { status: 404 });
+    publicAsset = offer.isVisible;
+    if (!publicAsset) {
+      const session = await getCurrentSession();
+      if (session?.user.role !== "SUPER_ADMIN") return new Response("Not found", { status: 404 });
+    }
+  }
   if (successMatch) {
     const partner = await prisma.successPartner.findUnique({
       where: { id: successMatch[1] },
