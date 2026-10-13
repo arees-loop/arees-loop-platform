@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes, createHash } from "node:crypto";
+import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { sendTransportInquiryNotification } from "@/lib/transport-email";
 
@@ -65,12 +67,17 @@ export async function POST(request: NextRequest) {
     }
     if (![adults,children,infants].every(n=>Number.isInteger(n) && n>=0 && n<=30) || adults<1 || children+infants>60) return msg("أعداد المسافرين غير صحيحة.",400);
     if (notes && notes.length>1200) return msg("الملاحظات طويلة جداً.",400);
+    // A high-entropy capability permits secure follow-up for guests without logging in.
+    const trackingToken=randomBytes(32).toString("base64url");
+    const trackingTokenHash=createHash("sha256").update(trackingToken).digest("hex");
+    const session=await getCurrentSession();
     // Low-volume per phone safeguard for an anonymous public form.
     const recent = await prisma.transportRequest.count({where:{countryCode,phone,createdAt:{gte:new Date(Date.now()-24*60*60*1000)}}});
     if (recent>=5) return msg("تم استقبال طلبات متعددة لهذا الرقم اليوم؛ تواصل مع خدمة العملاء.",429);
     const reference="AR-"+(kind==="FERRY"?"SEA":"AIR")+"-"+crypto.randomUUID().replaceAll("-","").slice(0,10).toUpperCase();
     const created = await prisma.transportRequest.create({data:{
       reference,kind,customerName:name,customerEmail:email,countryCode,phone,
+      userId:session?.user.id||null,trackingTokenHash,
       whatsappCountryCode:waPhone?waCountryCode:null,whatsappPhone:waPhone||null,
       origin,destination,travelDate,tripType,returnDate,itinerary,adults,children,infants,notes,
     }});
@@ -92,7 +99,7 @@ export async function POST(request: NextRequest) {
     await prisma.transportRequest.update({where:{id:created.id},data:{notificationStatus:mailed?"SENT":"FAILED",emailedAt:mailed?new Date():null}})
       .catch(error=>console.error("Transport notification status update failed",error));
     return NextResponse.json({success:true,data:{
-      reference,kind,customerName:name,origin,destination,travelDate:day,adults,children,infants,
+      reference,trackingToken,kind,customerName:name,origin,destination,travelDate:day,adults,children,infants,
       phone:"+"+countryCode+phone,tripType,returnDate:returnDay||null,itinerary,notice:"تم تسجيل طلبك بنجاح. الطلب ليس حجزاً مؤكداً ولا يتضمن سداداً، وسيتواصل معك فريق أريس.",
     }},{status:201,headers:{"Cache-Control":"no-store"}});
   } catch(error) {
