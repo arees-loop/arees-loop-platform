@@ -7,7 +7,12 @@ export async function GET(request: NextRequest) {
   if(kind!=="FLIGHT"&&kind!=="FERRY") return NextResponse.json({success:false,message:"نوع الخدمة غير صالح."},{status:400});
   try {
     const offers=await prisma.transportOffer.findMany({
-      where:{kind,isVisible:true},
+      where:{kind,isVisible:true,deletedAt:null,
+        AND:[
+          {OR:[{startsAt:null},{startsAt:{lte:new Date()}}]},
+          {OR:[{endsAt:null},{endsAt:{gte:new Date()}}]},
+        ],
+      },
       select:{id:true,title:true,description:true,carrierName:true,origin:true,destination:true,travelDate:true,amountSar:true,priceUnit:true,bannerUrl:true,operationStatus:true,operationNote:true},
       orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],take:30,
     });
