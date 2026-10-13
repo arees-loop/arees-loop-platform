@@ -79,12 +79,14 @@ export default function GuidesHeroCards() {
 
       <article data-guide-card className="guide-feature-card guide-feature-card-gold">
         <div className="guide-feature-heading guide-feature-heading-guides">
-          <GuidePortrait person="man" className="guide-portrait-side guide-portrait-side-right" />
+          <span className="guide-team-frame" role="group" aria-label="المرشد والمرشدة في إطار مشترك">
+            <GuidePortrait person="man" className="guide-team-half guide-team-half-man" />
+            <GuidePortrait person="woman" className="guide-team-half guide-team-half-woman" />
+          </span>
           <div className="guide-feature-heading-copy">
             <p className="guide-feature-eyebrow">للمرشدين السياحيين</p>
             <h3>خبرتك تستحق الوصول</h3>
           </div>
-          <GuidePortrait person="woman" className="guide-portrait-side guide-portrait-side-left" />
         </div>
         <p className="guide-feature-description">حوّل خبرتك السياحية إلى فرص حقيقية. انضم إلى أريس لوب، وخلّي العملاء يكتشفوا خدماتك في الوجهة والوقت المناسبين.</p>
         <Link href="/guides/register" className="guide-feature-action guide-feature-action-secondary">
