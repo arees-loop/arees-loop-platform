@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/customer-experience-r07-r09-r10-20261012
+      - feature/government-partner-join-20261013
   workflow_dispatch:
 
 permissions:
