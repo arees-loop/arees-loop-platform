@@ -1218,11 +1218,11 @@ export default function Home() {
         <div dir="rtl" className="relative z-20 mx-auto max-w-7xl px-6 text-center md:px-10">
           <p className="text-sm font-black tracking-[0.20em] text-[#A87917] md:text-base">شركاء النجاح</p>
           <h2 className="mt-3 text-4xl font-black leading-tight text-[#11130F] md:text-6xl">
-            شراكات تصنع تجربة أقرب
-            <span className="text-[#A87917]"> وأثراً أكبر</span>
+            شراكات تُثري التجربة
+            <span className="text-[#A87917]"> وتصنع أثراً أكبر</span>
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-8 text-[#34382F]/65 md:text-lg">
-            نعمل مع شركائنا لربط الزائر بالخدمات والتجارب والفرص التي تثري رحلته، ضمن منظومة رقمية واحدة تجمع الاكتشاف والحجز والتفاعل.
+            نجمع الشركات ومقدّمي التجارب والجهات الحكومية وغير الربحية في منظومة رقمية تدعم الشراكات والمبادرات المجتمعية، وتُبرز الفعاليات والبرامج والوجهات السياحية، وتربط الزوار بتجارب مميزة تجمع بين الاكتشاف والتفاعل والحجز.
           </p>
         </div>
 
@@ -1257,8 +1257,8 @@ export default function Home() {
 
         <div className="relative z-20 mx-auto mt-5 flex max-w-5xl flex-col items-center justify-between gap-4 px-6 text-center md:flex-row md:px-10 md:text-right" dir="rtl">
           <div>
-            <p className="text-lg font-black text-[#201B12]">انضم لمنظومة Arees Loop</p>
-            <p className="mt-1 text-sm font-medium leading-7 text-[#3D3528]/65">للشركات ومقدمي التجارب والجهات الراغبة في الوصول إلى الزوار عبر تجربة رقمية ذكية.</p>
+            <p className="text-lg font-black text-[#201B12]">انضم إلى منظومة شركاء أريس لوب</p>
+            <p className="mt-1 text-sm font-medium leading-7 text-[#3D3528]/65">سواء كنت شركة، أو مقدّم تجربة، أو جهة حكومية أو غير ربحية، شاركنا إبراز برامجك وفعالياتك ووجهاتك، والوصول إلى جمهور أوسع.</p>
           </div>
           <Link href="/partner/onboarding" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/55 px-8 py-3.5 font-black text-[#8B6718] shadow-[0_12px_35px_rgba(155,112,24,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/75">انضم كشريك</Link>
 
