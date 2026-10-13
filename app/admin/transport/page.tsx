@@ -17,17 +17,17 @@ type Offer={
   id:string;kind:string;title:string;description:string|null;carrierName:string|null;
   origin:string|null;destination:string|null;travelDate:string|null;amountSar:number|null;
   priceUnit:string|null;bannerUrl:string|null;operationStatus:string;operationNote:string|null;
-  isVisible:boolean;sortOrder:number;
+  isVisible:boolean;sortOrder:number;startsAt:string|null;endsAt:string|null;
 };
 const operators={FLIGHT:["تاركو للطيران","بدر للطيران","الخطوط الجوية السودانية","أخرى"],FERRY:["الجودي","دليلة","عمان","مونتي","أخرى"]};
-type Staff={id:string;firstName:string|null;lastName:string|null;email:string;role:string};
+type Staff={id:string;firstName:string|null;lastName:string|null;email:string;role:string;adminPermissions:unknown};
 type HistoryEvent={id:string;actorName:string;action:string;fromStatus:string|null;toStatus:string|null;details:unknown;createdAt:string};
 const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"تم الإلغاء"};
 const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],QUOTE_READY:["PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
 const blankOffer={
   id:"",kind:"FERRY",title:"",description:"",carrierName:"",origin:"سواكن",destination:"جدة",
   travelDate:"",amountSar:"",priceUnit:"للبالغ",bannerUrl:"",operationStatus:"AVAILABLE",operationNote:"",
-  isVisible:true,sortOrder:0,
+  isVisible:true,sortOrder:0,startsAt:"",endsAt:"",
 };
 type OfferForm=typeof blankOffer;
 const field="w-full rounded-xl border border-[#D4AF37]/35 bg-[#FFFEFA] px-3 py-3 text-sm outline-[#B38A25]";
@@ -35,7 +35,7 @@ const label="flex flex-col gap-1.5 text-xs font-semibold";
 const day=(d:string|null)=>d?d.slice(0,10):"";
 
 export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"}={}) {
-  const [tab,setTab]=useState<"requests"|"offers">(initialOfferKind==="ALL"?"requests":"offers");
+  const [tab,setTab]=useState<"requests"|"offers">("requests");
   const [requests,setRequests]=useState<RequestRow[]>([]);
   const [offers,setOffers]=useState<Offer[]>([]);
   const [staff,setStaff]=useState<Staff[]>([]);
@@ -44,6 +44,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [cancelReason,setCancelReason]=useState("");
   const [cancelBy,setCancelBy]=useState("STAFF");
   const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY">(initialOfferKind);
+  const [offerView,setOfferView]=useState<"CARDS"|"LIST">("CARDS");
+  const [offerFilter,setOfferFilter]=useState<"ALL"|"ACTIVE"|"PAUSED"|"UPCOMING"|"EXPIRED">("ALL");
   const [bannerFile,setBannerFile]=useState<File|null>(null);
   const [bannerPreview,setBannerPreview]=useState("");
   const [selected,setSelected]=useState<RequestRow|null>(null);
@@ -157,6 +159,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
 
   function startOffer(offer?:Offer) {
     setBannerFile(null);
+    setBannerFile(null);
     setStatus("");setError("");setTab("offers");
     setOfferForm(offer?{
       id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
@@ -164,7 +167,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       travelDate:day(offer.travelDate),amountSar:offer.amountSar===null?"":String(offer.amountSar),
       priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
-      isVisible:offer.isVisible,sortOrder:offer.sortOrder,
+      isVisible:offer.isVisible,sortOrder:offer.sortOrder,startsAt:day(offer.startsAt),endsAt:day(offer.endsAt),
     }:{...blankOffer});
   }
 
@@ -185,13 +188,62 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر حفظ العرض.");return;}
       setStatus("تم حفظ العرض أو الجدول. سيظهر للزوار إذا اخترت «ظاهر» والبيانات متصلة.");
-      setOfferForm({...blankOffer});
+      setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});
       setBannerFile(null);
       await load();
     }catch{setError("تعذر الاتصال بالخادم لحفظ العرض.");}
     finally{setBusy(false);}
   }
 
+
+  function formForOffer(offer:Offer) {
+    return {
+      id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
+      carrierName:offer.carrierName||"",origin:offer.origin||"",destination:offer.destination||"",
+      travelDate:day(offer.travelDate),amountSar:offer.amountSar===null?"":String(offer.amountSar),
+      priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
+      operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
+      isVisible:offer.isVisible,sortOrder:offer.sortOrder,
+      startsAt:day(offer.startsAt),endsAt:day(offer.endsAt),
+    };
+  }
+  async function setOfferVisibility(offer:Offer,visible:boolean) {
+    if(!showSuper||busy)return;
+    setBusy(true);setError("");setStatus("");
+    try{
+      const r=await fetch("/api/admin/transport",{method:"PUT",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({...formForOffer(offer),isVisible:visible})});
+      const d=await r.json();
+      if(!r.ok||!d.success){setError(d.message||"تعذر تغيير حالة العرض.");return;}
+      setStatus(visible?"تم تفعيل العرض (وفق فترة النشر إن وجدت).":"تم إيقاف العرض وإخفاؤه.");
+      await load();
+    }catch{setError("تعذر تحديث ظهور العرض.");}
+    finally{setBusy(false);}
+  }
+  async function archiveOffer(offer:Offer) {
+    if(!showSuper||busy||!window.confirm("هل تريد حذف العرض من الواجهة؟ سيتم أرشفته للاحتفاظ بالسجلات وعدم فقد البيانات."))return;
+    setBusy(true);setError("");setStatus("");
+    try{
+      const r=await fetch("/api/admin/transport",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:offer.id})});
+      const d=await r.json();
+      if(!r.ok||!d.success){setError(d.message||"تعذر حذف العرض.");return;}
+      setStatus(d.message||"تمت أرشفة العرض.");await load();
+      if(offerForm.id===offer.id)startOffer();
+    }catch{setError("تعذر حذف العرض.");}
+    finally{setBusy(false);}
+  }
+  const filteredRequests=requests.filter(q=>initialOfferKind==="ALL"||q.kind===initialOfferKind);
+  const nowMs=Date.now();
+  const offerState=(o:Offer)=>{
+    if(!o.isVisible)return "PAUSED";
+    if(o.startsAt&&new Date(o.startsAt).getTime()>nowMs)return "UPCOMING";
+    if(o.endsAt&&new Date(o.endsAt).getTime()<nowMs)return "EXPIRED";
+    return "ACTIVE";
+  };
+  const filteredOffers=offers.filter(o=>
+    (initialOfferKind==="ALL"?(filterKind==="ALL"||o.kind===filterKind):o.kind===initialOfferKind) &&
+    (offerFilter==="ALL"||offerState(o)===offerFilter)
+  );
   const ferryOperators=operators.FERRY;
   return (
     <main dir="rtl" className="mx-auto max-w-[1300px] px-5 py-8 text-[#0D3B34]">
