@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
     const origin = String(data.origin??"").trim();
     const destination = String(data.destination??"").trim();
     const day = String(data.travelDate??"");
+    const tripType=kind==="FERRY"?"ONE_WAY":String(data.tripType??"ONE_WAY");
+    if(!["ONE_WAY","ROUND_TRIP","MULTI_CITY"].includes(tripType))return msg("نوع الرحلة غير صحيح.",400);
+    const returnDay=String(data.returnDate??"");
+    const rawLegs=data.itinerary;
     const notes = String(data.notes??"").trim() || null;
     const adults = Number(data.adults);
     const children = Number(data.children);
@@ -38,6 +42,27 @@ export async function POST(request: NextRequest) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return msg("تاريخ السفر غير صالح.",400);
     const travelDate = new Date(day+"T12:00:00.000Z");
     if (Number.isNaN(travelDate.getTime()) || travelDate.toISOString().slice(0,10)!==day || day < new Date().toISOString().slice(0,10)) return msg("اختر تاريخ سفر صحيحاً غير ماضٍ.",400);
+    let returnDate:Date|null=null;
+    if(tripType==="ROUND_TRIP"){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(returnDay)||returnDay<day)return msg("تاريخ العودة يجب ألا يسبق المغادرة.",400);
+      returnDate=new Date(returnDay+"T12:00:00.000Z");
+      if(Number.isNaN(returnDate.getTime())||returnDate.toISOString().slice(0,10)!==returnDay)return msg("تاريخ العودة غير صالح.",400);
+    }
+    const itinerary:Array<{origin:string;destination:string;travelDate:string}>=[];
+    if(tripType==="MULTI_CITY"){
+      if(!Array.isArray(rawLegs)||rawLegs.length<2||rawLegs.length>6)return msg("حدد من رحلتين إلى 6 رحلات.",400);
+      for(const item of rawLegs){
+        if(!item||typeof item!=="object"||Array.isArray(item))return msg("بيانات مسار الرحلة غير صحيحة.",400);
+        const leg=item as Record<string,unknown>;
+        const from=String(leg.origin??"").trim(),to=String(leg.destination??"").trim(),dt=String(leg.travelDate??"");
+        if(!from||!to||from===to||from.length>100||to.length>100)return msg("حدد مطارين مختلفين لكل مرحلة.",400);
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)||dt<new Date().toISOString().slice(0,10)||(itinerary.length>0&&dt<itinerary[itinerary.length-1].travelDate))return msg("تواريخ الرحلات المتعددة غير صالحة أو غير مرتبة.",400);
+        const d=new Date(dt+"T12:00:00.000Z");
+        if(Number.isNaN(d.getTime())||d.toISOString().slice(0,10)!==dt)return msg("تاريخ غير صالح.",400);
+        itinerary.push({origin:from,destination:to,travelDate:dt});
+      }
+      if(itinerary[0].origin!==origin||itinerary[0].destination!==destination||itinerary[0].travelDate!==day)return msg("بيانات المرحلة الأولى غير متطابقة.",400);
+    }
     if (![adults,children,infants].every(n=>Number.isInteger(n) && n>=0 && n<=30) || adults<1 || children+infants>60) return msg("أعداد المسافرين غير صحيحة.",400);
     if (notes && notes.length>1200) return msg("الملاحظات طويلة جداً.",400);
     // Low-volume per phone safeguard for an anonymous public form.
@@ -47,8 +72,12 @@ export async function POST(request: NextRequest) {
     const created = await prisma.transportRequest.create({data:{
       reference,kind,customerName:name,customerEmail:email,countryCode,phone,
       whatsappCountryCode:waPhone?waCountryCode:null,whatsappPhone:waPhone||null,
-      origin,destination,travelDate,adults,children,infants,notes,
+      origin,destination,travelDate,tripType,returnDate,itinerary,adults,children,infants,notes,
     }});
+    await prisma.transportRequestEvent.create({data:{
+      requestId:created.id,actorName:"العميل",action:"REQUEST_CREATED",toStatus:"NEW",
+      details:{tripType,returnDate:returnDay||null,legs:itinerary.length||1},
+    }}).catch(err=>console.error("Travel request event insert failed",err));
     let mailed = false;
     try {
       await sendTransportInquiryNotification({
@@ -64,7 +93,7 @@ export async function POST(request: NextRequest) {
       .catch(error=>console.error("Transport notification status update failed",error));
     return NextResponse.json({success:true,data:{
       reference,kind,customerName:name,origin,destination,travelDate:day,adults,children,infants,
-      phone:"+"+countryCode+phone,notice:"تم تسجيل طلبك بنجاح. الطلب ليس حجزاً مؤكداً ولا يتضمن سداداً، وسيتواصل معك فريق أريس.",
+      phone:"+"+countryCode+phone,tripType,returnDate:returnDay||null,itinerary,notice:"تم تسجيل طلبك بنجاح. الطلب ليس حجزاً مؤكداً ولا يتضمن سداداً، وسيتواصل معك فريق أريس.",
     }},{status:201,headers:{"Cache-Control":"no-store"}});
   } catch(error) {
     console.error("Transport request failed",error);
