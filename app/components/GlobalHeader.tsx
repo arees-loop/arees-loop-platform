@@ -71,15 +71,10 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           {navVisible.guides !== false && (<Link href="/#tour-guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
           {navVisible.hotels !== false && (<Link href="/hotels" className="transition hover:text-[#D4AF37]">الفنادق</Link>)}
           {navVisible.flights !== false && (
-            <div className="group relative">
-              <Link href="/flights" className="inline-flex items-center gap-1 py-6 transition hover:text-[#D4AF37]">
-                حجوزات الطيران والبواخر <span aria-hidden="true" className="text-xs transition group-hover:rotate-180 group-focus-within:rotate-180">⌄</span>
-              </Link>
-              <div className="invisible absolute right-0 top-[62px] z-50 w-56 translate-y-2 rounded-[20px] border border-[#D4AF37]/40 bg-white/95 p-2 text-right opacity-0 shadow-[0_18px_48px_rgba(13,59,52,.18)] backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                <Link href="/flights" className="block rounded-xl px-4 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">✈ حجز طيران</Link>
-                <Link href="/ferries" className="block rounded-xl px-4 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">⚓ حجز باخرة</Link>
-              </div>
-            </div>
+            <>
+              <Link href="/flights" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">✈ الطيران</Link>
+              <Link href="/ferries" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">⚓ البواخر</Link>
+            </>
           )}
           {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}
           {navVisible.partners !== false && (
