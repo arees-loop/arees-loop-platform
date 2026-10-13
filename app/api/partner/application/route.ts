@@ -739,7 +739,7 @@ export async function POST(request: NextRequest) {
 
 
 
-    if (!applicantRole) {
+    if (partnerType === "BUSINESS" && !applicantRole) {
 
 
 
@@ -1150,7 +1150,7 @@ export async function PATCH(request: NextRequest) {
     const partnerType = normalizePartnerType(body.partnerType);
     const applicantRole = normalizeApplicantRole(body.applicantRole);
 
-    if (!legalNameAr || !partnerType || !applicantRole) {
+    if (!legalNameAr || !partnerType || (partnerType === "BUSINESS" && !applicantRole)) {
       return NextResponse.json(
         {
           success: false,
