@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { AirportLookup, AirlineLookup } from "@/app/components/AviationLookup";
 
 type RequestRow={
   id:string;reference:string;kind:string;customerName:string;customerEmail:string|null;
@@ -176,8 +177,10 @@ export default function TransportAdminPage() {
                   <label className={label}>حالة الطلب<select className={field} value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
                     <option value="NEW">جديد</option><option value="CONTACTED">تم التواصل</option><option value="QUOTED">عرض سعر جاهز</option><option value="CLOSED">مغلق</option>
                   </select></label>
-                  <label className={label}>المشغّل / الباخرة / شركة الطيران<input className={field} list={`operators-${selected.kind}`} value={form.carrierName} onChange={e=>setForm(f=>({...f,carrierName:e.target.value}))} placeholder={selected.kind==="FERRY"?"اسم الباخرة":"اسم الخط الناقل"} maxLength={100}/>
-                    <datalist id={`operators-${selected.kind}`}>{operators[selected.kind==="FERRY"?"FERRY":"FLIGHT"].map(n=><option value={n} key={n}/>)}</datalist>
+                  <label className={label}>المشغّل / الباخرة / شركة الطيران
+                    {selected.kind==="FLIGHT" ? <AirlineLookup ariaLabel="ابحث عن شركة الطيران" value={form.carrierName} onChange={v=>setForm(f=>({...f,carrierName:v}))} placeholder="اختر شركة طيران برمز IATA أو اكتب اسماً آخر"/> :
+                      <><input className={field} list="ferry-operators-quote" value={form.carrierName} onChange={e=>setForm(f=>({...f,carrierName:e.target.value}))} placeholder="اسم الباخرة" maxLength={100}/>
+                        <datalist id="ferry-operators-quote">{operators.FERRY.map(n=><option value={n} key={n}/>)}</datalist></>}
                   </label>
                   <label className={label}>سعر العرض الإجمالي (ريال سعودي)<input className={field} type="number" min="0" step=".01" value={form.quoteAmountSar} onChange={e=>setForm(f=>({...f,quoteAmountSar:e.target.value}))} placeholder="0.00"/></label>
                   <label className={label}>صلاحية العرض حتى<input className={field} type="date" value={form.quoteValidUntil} onChange={e=>setForm(f=>({...f,quoteValidUntil:e.target.value}))}/></label>
@@ -204,10 +207,19 @@ export default function TransportAdminPage() {
             <p className="mt-2 text-xs leading-7">الأسعار تظهر في البطاقات الجانبية، وليس داخل نموذج طلب العميل. في البواخر أضف حالة التشغيل والملاحظات عند توقف أي باخرة.</p>
             <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2">
               <label className={label}>الخدمة<select className={field} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option></select></label>
-              <label className={label}>الناقل / الباخرة<input className={field} list="offer-operators" value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="مثل: الجودي أو تاركو"/><datalist id="offer-operators">{[...ferryOperators,...operators.FLIGHT].map(v=><option key={v} value={v}/>)}</datalist></label>
+              <label className={label}>الناقل / الباخرة
+                {offerForm.kind==="FLIGHT" ? <AirlineLookup ariaLabel="شركة الطيران في الإعلان" value={offerForm.carrierName} onChange={v=>setOfferForm(f=>({...f,carrierName:v}))} /> :
+                  <><input className={field} list="offer-operators" value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="اختر الباخرة"/><datalist id="offer-operators">{ferryOperators.map(v=><option key={v} value={v}/>)}</datalist></>}
+              </label>
               <label className={label+" sm:col-span-2"}>اسم العرض / الجدول<input required maxLength={160} className={field} value={offerForm.title} onChange={e=>setOfferForm(f=>({...f,title:e.target.value}))}/></label>
-              <label className={label}>من<input className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value}))}/></label>
-              <label className={label}>إلى<input className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value}))}/></label>
+              <label className={label}>من
+                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة المغادرة" value={offerForm.origin} onChange={v=>setOfferForm(f=>({...f,origin:v}))}/> :
+                  <select className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value,destination:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="سواكن">سواكن</option><option value="جدة">جدة</option></select>}
+              </label>
+              <label className={label}>إلى
+                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة الوصول" value={offerForm.destination} onChange={v=>setOfferForm(f=>({...f,destination:v}))}/> :
+                  <select className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value,origin:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="جدة">جدة</option><option value="سواكن">سواكن</option></select>}
+              </label>
               <label className={label}>موعد السفر/الإبحار<input className={field} type="date" value={offerForm.travelDate} onChange={e=>setOfferForm(f=>({...f,travelDate:e.target.value}))}/></label>
               <label className={label}>السعر المعلن (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.amountSar} onChange={e=>setOfferForm(f=>({...f,amountSar:e.target.value}))}/></label>
               <label className={label}>وحدة السعر<input className={field} placeholder="للبالغ / للطفل / يبدأ من" value={offerForm.priceUnit} onChange={e=>setOfferForm(f=>({...f,priceUnit:e.target.value}))}/></label>
