@@ -251,7 +251,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   </div>
                   <label className={label+" sm:col-span-2"}>ملاحظات أو متطلبات خاصة<textarea className={field} value={notes} onChange={e=>setNotes(e.target.value)} rows={4} maxLength={1200} placeholder="رحلة ذهاب فقط/ملاحظات الأمتعة أو المقاعد أو غيرها..."/></label>
                   <div className="sm:col-span-2 rounded-2xl bg-[#F7F2E6] p-4 text-xs leading-7 text-[#0D3B34]/80">بإرسال الطلب، أوافق على استخدام بيانات التواصل المقدمة للرد على الاستفسار. {policies[kind]}</div>
-                  <div className="sm:col-span-2"><button disabled={busy} type="submit" className="w-full rounded-2xl bg-[#0D3B34] px-6 py-4 text-base font-black text-white transition hover:bg-[#16574B] disabled:opacity-40">{busy?"جاري إرسال الطلب...":"إرسال طلب السعر — بدون سداد"}</button></div>
+                  <div className="sm:col-span-2"><button disabled={busy} type="submit" className="w-full rounded-2xl bg-[#0D3B34] px-6 py-4 text-base font-black text-white transition hover:bg-[#16574B] disabled:opacity-40">{busy?"جاري إرسال الطلب...":"إرسال طلب"}</button></div>
                 </form>
               </>
             )}
