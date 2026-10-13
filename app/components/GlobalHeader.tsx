@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import PartnerIcon from "./PartnerIcon";
 
 type HeaderUser = { firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null };
 
@@ -71,7 +72,25 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           {navVisible.hotels !== false && (<Link href="/hotels" className="transition hover:text-[#D4AF37]">الفنادق</Link>)}
           {navVisible.flights !== false && (<Link href="/flights" className="transition hover:text-[#D4AF37]">الطيران</Link>)}
           {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}
-          {navVisible.partners !== false && (<Link href="/#partners" className="transition hover:text-[#D4AF37]">للشركاء</Link>)}
+          {navVisible.partners !== false && (
+            <div className="group relative">
+              <Link href="/partner" className="inline-flex items-center gap-1.5 py-6 transition hover:text-[#B58C31] focus-visible:text-[#B58C31]" aria-label="للشركاء: خيارات الانضمام وتسجيل الدخول">
+                <PartnerIcon kind="handshake" className="h-[19px] w-[19px] text-[#B58C31]" />
+                للشركاء <span className="text-xs transition group-hover:rotate-180 group-focus-within:rotate-180" aria-hidden="true">⌄</span>
+              </Link>
+              <div className="invisible absolute right-0 top-[62px] z-50 w-64 translate-y-2 rounded-[22px] border border-[#D4AF37]/45 bg-white/95 p-2 text-right opacity-0 shadow-[0_18px_48px_rgba(13,59,52,.18)] backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <Link href="/partner/select-type" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">
+                  <PartnerIcon kind="handshake" className="h-6 w-6 shrink-0 text-[#B58C31]" /> انضم كشريك
+                </Link>
+                <Link href="/partner/government" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">
+                  <PartnerIcon kind="government" className="h-6 w-6 shrink-0 text-[#B58C31]" /> الجهات الحكومية
+                </Link>
+                <Link href="/partner/login" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">
+                  <PartnerIcon kind="login" className="h-6 w-6 shrink-0 text-[#B58C31]" /> تسجيل دخول الشركاء
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
