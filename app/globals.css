@@ -397,18 +397,18 @@ a.arees-primary-action[href]:active {
   text-align: right;
   border: 1px solid rgba(255, 255, 255, .82);
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, .25), rgba(239, 247, 236, .16));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 18px 48px rgba(7, 29, 23, .24), 0 0 24px rgba(255, 255, 255, .10);
-  -webkit-backdrop-filter: blur(12px) saturate(125%);
-  backdrop-filter: blur(12px) saturate(125%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .12), rgba(239, 247, 236, .065));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .62), 0 12px 30px rgba(7, 29, 23, .13);
+  -webkit-backdrop-filter: blur(4px) saturate(106%);
+  backdrop-filter: blur(4px) saturate(106%);
   transform: translate3d(var(--guide-card-x), var(--guide-card-y), 0);
   transition: transform .55s cubic-bezier(.2, .75, .25, 1), box-shadow .3s ease, border-color .3s ease, background-color .3s ease;
   will-change: transform;
 }
 
 .guide-feature-card-gold {
-  border-color: rgba(240, 216, 157, .92);
-  background: linear-gradient(135deg, rgba(255, 253, 247, .27), rgba(247, 238, 213, .17));
+  border-color: rgba(240, 216, 157, .64);
+  background: linear-gradient(135deg, rgba(255, 253, 247, .14), rgba(247, 238, 213, .07));
 }
 
 .guide-feature-heading {
@@ -417,23 +417,24 @@ a.arees-primary-action[href]:active {
   gap: 12px;
 }
 
-.guide-feature-visual {
-  position: relative;
-  display: block;
-  width: 64px;
-  height: 64px;
-  flex: 0 0 64px;
+.guide-feature-map-visual {
+  display: grid;
+  width: 84px;
+  height: 84px;
+  flex: 0 0 84px;
+  place-items: center;
+  border: 1px solid rgba(255, 247, 213, .55);
+  border-radius: 18px;
+  background: rgba(255, 252, 235, .12);
+  box-shadow: 0 8px 24px rgba(10, 39, 33, .12);
 }
 
 .guide-portrait {
   display: block;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, .96);
-  border-radius: 50%;
-  background-position: center 38%;
+  background-position: center 32%;
   background-repeat: no-repeat;
   background-size: cover;
-  box-shadow: 0 5px 15px rgba(7, 29, 23, .19);
 }
 
 .guide-portrait-man {
@@ -444,56 +445,32 @@ a.arees-primary-action[href]:active {
   background-image: url("/Image/guides/arees-guide-portrait-woman.jpg");
 }
 
-.guide-feature-visual-search > .guide-portrait {
-  width: 62px;
-  height: 62px;
-}
-
-.guide-location-badge,
-.guide-search-badge {
-  position: absolute;
+.guide-feature-heading-guides {
   display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  color: #fff;
-  border: 2px solid rgba(255, 255, 255, .97);
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(7, 29, 23, .23);
-}
-
-.guide-location-badge {
-  inset-inline-end: -1px;
-  top: -3px;
-  background: #b99035;
-}
-
-.guide-search-badge {
-  inset-inline-start: -3px;
-  bottom: -1px;
-  background: #0d5146;
-}
-
-.guide-team-portraits {
-  display: inline-flex;
-  flex: 0 0 auto;
+  grid-template-columns: 66px minmax(0, 1fr) 66px;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
+}
+
+.guide-feature-heading-copy {
   min-width: 0;
+  text-align: center;
 }
 
-.guide-team-portrait-front,
-.guide-team-portrait-back {
-  position: static;
-  flex: 0 0 60px;
-  width: 60px;
-  height: 60px;
-  border: 2px solid rgba(255, 255, 255, .96);
-  box-shadow: 0 0 0 1px rgba(190, 143, 49, .72), 0 6px 18px rgba(7, 29, 23, .22);
+.guide-portrait-side {
+  width: 66px;
+  height: 90px;
+  border: 2px solid rgba(255, 248, 225, .87);
+  border-radius: 14px;
+  box-shadow: 0 5px 18px rgba(6, 35, 27, .21), 0 0 0 1px rgba(197, 158, 64, .33);
 }
 
-.guide-team-portrait-back {
-  border-color: rgba(255, 249, 223, .98);
+.guide-portrait-side-right {
+  grid-column: 1;
+}
+
+.guide-portrait-side-left {
+  grid-column: 3;
 }
 
 .guide-feature-eyebrow {
@@ -568,7 +545,7 @@ a.arees-primary-action[href]:active {
   .guide-feature-card:hover,
   .guide-feature-card:focus-within {
     border-color: rgba(255, 255, 255, .98);
-    background: linear-gradient(135deg, rgba(255, 255, 255, .34), rgba(242, 248, 237, .22));
+    background: linear-gradient(135deg, rgba(255, 255, 255, .18), rgba(242, 248, 237, .10));
     box-shadow: inset 0 1px 0 #fff, 0 23px 52px rgba(7, 29, 23, .30), 0 0 27px rgba(232, 198, 110, .24);
     transform: translate3d(var(--guide-card-x), calc(var(--guide-card-y) - 5px), 0) scale(1.012);
   }
@@ -623,26 +600,26 @@ a.arees-primary-action[href]:active {
     padding: 15px 14px 16px;
   }
 
-  .guide-feature-visual {
-    width: 54px;
-    height: 54px;
-    flex-basis: 54px;
+  .guide-feature-map-visual {
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
   }
 
-  .guide-feature-visual-search > .guide-portrait {
+  .guide-feature-map-visual svg {
+    width: 58px;
+    height: 58px;
+  }
+
+  .guide-feature-heading-guides {
+    grid-template-columns: 52px minmax(0, 1fr) 52px;
+    gap: 7px;
+  }
+
+  .guide-portrait-side {
     width: 52px;
-    height: 52px;
-  }
-
-  .guide-team-portraits {
-    gap: 8px;
-  }
-
-  .guide-team-portrait-front,
-  .guide-team-portrait-back {
-    flex-basis: 49px;
-    width: 49px;
-    height: 49px;
+    height: 74px;
+    border-radius: 12px;
   }
 }
 
@@ -686,11 +663,11 @@ a.arees-primary-action[href]:active {
   }
 
   .guide-feature-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, .32), rgba(239, 247, 236, .23));
+    background: linear-gradient(135deg, rgba(255, 255, 255, .16), rgba(239, 247, 236, .08));
   }
 
   .guide-feature-card-gold {
-    background: linear-gradient(135deg, rgba(255, 253, 247, .35), rgba(247, 238, 213, .24));
+    background: linear-gradient(135deg, rgba(255, 253, 247, .17), rgba(247, 238, 213, .09));
   }
 }
 
