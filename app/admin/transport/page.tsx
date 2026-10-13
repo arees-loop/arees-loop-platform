@@ -118,6 +118,22 @@ export default function TransportAdminPage() {
     finally{setBusy(false);}
   }
 
+  async function performAction(action:"SET_STATUS"|"ASSIGN",payload:Record<string,unknown>){
+    if(!selected||busy)return;
+    setBusy(true);setError("");setStatus("");
+    try{
+      const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action,...payload})});
+      const d=await r.json();
+      if(!r.ok||!d.success){setError(d.message||"تعذر تنفيذ الإجراء.");return;}
+      setSelected(d.data);
+      setStatus(action==="ASSIGN"?"تم إسناد الطلب للموظف المختار.":"تم تحديث حالة الطلب وتسجيل الإجراء في السجل.");
+      setCancelReason("");
+      void loadHistory(selected.id);
+      await load();
+    }catch{setError("تعذر تحديث الطلب.");}
+    finally{setBusy(false);}
+  }
+
   async function markManuallySent() {
     if(!selected||busy)return;setBusy(true);setError("");
     try{
@@ -216,9 +232,7 @@ export default function TransportAdminPage() {
                 </div>
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
                 <form onSubmit={saveQuote} className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <label className={label}>حالة الطلب<select className={field} value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
-                    <option value="NEW">جديد</option><option value="CONTACTED">تم التواصل</option><option value="QUOTED">عرض سعر جاهز</option><option value="CLOSED">مغلق</option>
-                  </select></label>
+                  <div className="sm:col-span-2 rounded-xl border border-[#D4AF37]/35 bg-[#F9F6EC] px-4 py-3 text-sm font-bold">حالة الطلب الحالية: {statusNames[selected.status]||selected.status}</div>
                   <label className={label}>المشغّل / الباخرة / شركة الطيران
                     {selected.kind==="FLIGHT" ? <AirlineLookup ariaLabel="ابحث عن شركة الطيران" value={form.carrierName} onChange={v=>setForm(f=>({...f,carrierName:v}))} placeholder="اختر شركة طيران برمز IATA أو اكتب اسماً آخر"/> :
                       <><input className={field} list="ferry-operators-quote" value={form.carrierName} onChange={e=>setForm(f=>({...f,carrierName:e.target.value}))} placeholder="اسم الباخرة" maxLength={100}/>
