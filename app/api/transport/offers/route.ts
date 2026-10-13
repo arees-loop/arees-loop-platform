@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const offers=await prisma.transportOffer.findMany({
       where:{kind,isVisible:true},
-      select:{id:true,title:true,description:true,carrierName:true,origin:true,destination:true,travelDate:true,amountSar:true,priceUnit:true,bannerUrl:true},
+      select:{id:true,title:true,description:true,carrierName:true,origin:true,destination:true,travelDate:true,amountSar:true,priceUnit:true,bannerUrl:true,operationStatus:true,operationNote:true},
       orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],take:30,
     });
     return NextResponse.json({success:true,data:offers.map(x=>({...x,amountSar:x.amountSar===null?null:Number(x.amountSar)}))},
