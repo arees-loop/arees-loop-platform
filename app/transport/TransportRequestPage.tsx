@@ -45,11 +45,21 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   useEffect(()=>{
     let live=true;
     setOfferIndex(0);
-    fetch("/api/transport/offers?kind="+kind,{cache:"no-store"})
-      .then(async r=>r.ok?await r.json():null)
-      .then(data=>{if(!live)return;if(data?.success)setOffers(data.data||[]);else setOffersError(true);})
-      .catch(()=>{if(live)setOffersError(true);});
-    return()=>{live=false};
+    async function refreshOffers(){
+      try {
+        const response=await fetch("/api/transport/offers?kind="+kind,{cache:"no-store"});
+        const data=response.ok?await response.json():null;
+        if(!live)return;
+        if(data?.success){
+          setOffers(data.data||[]);
+          setOffersError(false);
+          setOfferIndex(i=>Math.min(i,Math.max(0,(data.data?.length||0)-1)));
+        } else setOffersError(true);
+      } catch{if(live)setOffersError(true);}
+    }
+    void refreshOffers();
+    const interval=setInterval(()=>void refreshOffers(),60000);
+    return()=>{live=false;clearInterval(interval);};
   },[kind]);
 
   async function submit(event:FormEvent<HTMLFormElement>) {
