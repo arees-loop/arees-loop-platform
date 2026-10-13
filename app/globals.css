@@ -737,3 +737,8 @@ a.arees-primary-action[href]:active {
 .guides-hero-title p:last-child{color:rgba(255,255,255,.92);text-shadow:0 3px 12px rgba(0,0,0,.88)}
 .guide-feature-card h3{color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.88)}
 .guide-feature-description{color:rgba(255,255,255,.90);font-weight:600;text-shadow:0 2px 9px rgba(0,0,0,.86)}
+
+.guide-feature-card,.guide-feature-card-gold{min-height:300px;color:#fff;background:linear-gradient(135deg,rgba(6,28,24,.38),rgba(6,28,24,.28));border-color:rgba(255,255,255,.55)}
+.guide-feature-card-gold{border-color:rgba(241,215,160,.76)}
+.guide-feature-eyebrow{display:inline-flex;width:fit-content;margin-bottom:6px;padding:5px 10px;border:1px solid rgba(243,210,122,.42);border-radius:999px;background:rgba(0,0,0,.30);color:#F3D27A;text-shadow:0 2px 7px rgba(0,0,0,.8)}
+.guide-feature-action{margin-top:auto}
