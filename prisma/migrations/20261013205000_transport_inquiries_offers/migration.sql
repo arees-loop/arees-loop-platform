@@ -48,6 +48,8 @@ CREATE TABLE "TransportOffer" (
   "amountSar" DECIMAL(12,2),
   "priceUnit" TEXT,
   "bannerUrl" TEXT,
+  "operationStatus" TEXT NOT NULL DEFAULT 'AVAILABLE',
+  "operationNote" TEXT,
   "isVisible" BOOLEAN NOT NULL DEFAULT true,
   "sortOrder" INTEGER NOT NULL DEFAULT 0,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
