@@ -43,6 +43,7 @@ type PartnerInfo = {
   tradeName: string;
   email: string;
   status: string;
+  partnerType?: string;
 };
 
 function SidebarToggleIcon() {
@@ -85,6 +86,7 @@ export default function PartnerShell({
     tradeName: "جاري تحميل بيانات الشريك...",
     email: "",
     status: "",
+    partnerType: "",
   });
 
   useEffect(() => {
@@ -114,6 +116,7 @@ export default function PartnerShell({
             "",
 
           status: application.status || "",
+          partnerType: application.partnerType || "",
         });
       })
       .catch(() => {});
@@ -380,7 +383,9 @@ export default function PartnerShell({
 
           {/* Navigation */}
           <nav className="mt-2 space-y-2">
-            {items.map(([href, icon, label]) => {
+            {(partner.partnerType === "GOVERNMENT_NONPROFIT"
+              ? items.filter(([href]) => !["/partner/services","/partner/bookings","/partner/coupons","/partner/loyalty","/partner/settlements","/partner/invoices"].includes(href)).concat([["/partner/public-events", "services", "الفعاليات والبرامج"] as const])
+              : items).map(([href, icon, label]) => {
               const active =
                 pathname === href ||
                 pathname.startsWith(`${href}/`);
