@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/session";
 import { canManageTransport } from "@/lib/transport-permissions";
-import TransportAdminPage from "../page";
+import TransportAdminPage from "../TransportDesk";
 
 export default async function FlightTransportAdminPage() {
   const session=await getCurrentSession();
