@@ -156,6 +156,7 @@ export default function TransportAdminPage() {
   const message = selected ? `السلام عليكم، بناءً على طلبكم لدى شركة أريس للحجز ${selected.kind==="FERRY"?"بالباخرة":"بالطيران"} رقم ${selected.reference} (${selected.origin} - ${selected.destination})، أعددنا عرض السعر لدى ${selected.carrierName||"الناقل المختار"}. المبلغ ${selected.quoteAmountSar===null?"قيد التحديد":selected.quoteAmountSar+" ريال سعودي"}. سنرفق عرض السعر PDF بهذه المحادثة. نؤكد أن العرض ليس حجزاً نهائياً، وشروط الاسترداد والتعديل وفق الناقل. ${selected.quoteNotes||""}` : "";
 
   function startOffer(offer?:Offer) {
+    setBannerFile(null);
     setStatus("");setError("");setTab("offers");
     setOfferForm(offer?{
       id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
@@ -171,11 +172,21 @@ export default function TransportAdminPage() {
     event.preventDefault();if(busy)return;setBusy(true);setError("");setStatus("");
     try{
       const method=offerForm.id?"PUT":"POST";
-      const r=await fetch("/api/admin/transport",{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(offerForm)});
+      let imageUrl=offerForm.bannerUrl;
+      if(bannerFile){
+        const data=new FormData();
+        data.set("kind",offerForm.kind);data.set("file",bannerFile);
+        const uploaded=await fetch("/api/admin/transport/image",{method:"POST",body:data});
+        const up=await uploaded.json();
+        if(!uploaded.ok||!up.success){setError(up.message||"تعذر رفع صورة الإعلان.");return;}
+        imageUrl=up.url;
+      }
+      const r=await fetch("/api/admin/transport",{method,headers:{"Content-Type":"application/json"},body:JSON.stringify({...offerForm,bannerUrl:imageUrl})});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر حفظ العرض.");return;}
       setStatus("تم حفظ العرض أو الجدول. سيظهر للزوار إذا اخترت «ظاهر» والبيانات متصلة.");
       setOfferForm({...blankOffer});
+      setBannerFile(null);
       await load();
     }catch{setError("تعذر الاتصال بالخادم لحفظ العرض.");}
     finally{setBusy(false);}
@@ -197,6 +208,11 @@ export default function TransportAdminPage() {
       <div className="mt-7 flex flex-wrap gap-2">
         <button onClick={()=>setTab("requests")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="requests"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>طلبات العملاء ({requests.length})</button>
         <button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.length})</button>
+        {tab==="offers"&&<div className="flex flex-wrap gap-2">
+          <button type="button" onClick={()=>{setFilterKind("FLIGHT");startOffer();setOfferForm(f=>({...f,kind:"FLIGHT",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FLIGHT"?"bg-[#D4AF37]":"bg-white"}`}>✈ عروض الطيران</button>
+          <button type="button" onClick={()=>{setFilterKind("FERRY");startOffer();}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FERRY"?"bg-[#D4AF37]":"bg-white"}`}>⚓ عروض البواخر</button>
+          <button type="button" onClick={()=>setFilterKind("ALL")} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="ALL"?"bg-[#D4AF37]":"bg-white"}`}>جميع العروض</button>
+        </div>}
         <button onClick={()=>void load()} disabled={busy||loading} className="rounded-full border border-[#D4AF37]/40 px-5 py-3 text-sm font-bold disabled:opacity-40">تحديث</button>
       </div>
       {error&&<p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{error}</p>}
