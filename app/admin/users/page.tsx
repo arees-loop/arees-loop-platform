@@ -13,7 +13,8 @@ const permissions=[
  ["التقارير والإحصائيات","الوصول إلى التقارير ومؤشرات أداء المنصة."],
  ["إعدادات المنصة","تعديل إعدادات المنصة العامة؛ تمنح فقط للمخولين."],
  ["الطيران","معالجة طلبات الطيران المسندة للموظف ومتابعة عروض الأسعار."],
- ["البواخر","معالجة طلبات البواخر المسندة للموظف ومتابعة عروض الأسعار."]
+ ["البواخر","معالجة طلبات البواخر المسندة للموظف ومتابعة عروض الأسعار."],
+ ["الفنادق","استلام ومعالجة طلبات الفنادق المسندة للموظف."]
 ];
 
 export default function AdminUsersPage(){
@@ -30,7 +31,7 @@ export default function AdminUsersPage(){
  const [actionNotice,setActionNotice]=useState("");
  async function loadUsers(){try{const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json();if(r.ok&&d.success)setUsers(d.data||[]);}catch{}}
  useEffect(()=>{void loadUsers();},[]);
- const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES"];
+ const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS"];
  async function setUserStatus(userId:string,action:"ACTIVATE"|"DISABLE"){
   setActionNotice("");
   const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,action})});
@@ -84,7 +85,7 @@ export default function AdminUsersPage(){
        <span className="text-sm text-black/60">{user.email}</span>
        <span><i className="not-italic rounded-full border border-[#D5B65B]/30 bg-[#FBF5E6] px-3 py-1.5 text-[11px] font-extrabold text-[#8D6B16]">{user.role==="SUPER_ADMIN"?"Super Admin":"Admin"}</i></span>
        <span><i className={`inline-flex items-center gap-1.5 not-italic rounded-full px-3 py-1.5 text-[11px] font-bold ${active?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}><i className={`h-1.5 w-1.5 rounded-full ${active?"bg-emerald-500":"bg-amber-500"}`}></i>{active?"نشط":"تم إرسال الدعوة"}</i></span>
-       <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة").replace("TRANSPORT_FLIGHTS","الطيران").replace("TRANSPORT_FERRIES","البواخر")).join(" • "):perms+" صلاحيات"}</span>
+       <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة").replace("TRANSPORT_FLIGHTS","الطيران").replace("TRANSPORT_FERRIES","البواخر").replace("HOTEL_REQUESTS","الفنادق")).join(" • "):perms+" صلاحيات"}</span>
        <div className="relative">
         <button onClick={()=>setActionUserId(v=>v===user.id?null:user.id)} aria-label="اتخاذ إجراء" title="اتخاذ إجراء" className="flex h-9 items-center justify-center gap-1 rounded-full border border-transparent px-3 text-xs font-extrabold text-[#0D4A40] transition-all hover:border-[#D5B65B]/45 hover:bg-white hover:shadow-[0_5px_18px_rgba(182,138,33,.22)]">•••<span className="hidden xl:inline">اتخاذ إجراء</span></button>
         {actionUserId===user.id&&<div className="absolute left-0 top-11 z-50 w-52 overflow-hidden rounded-2xl border border-[#D8C79D]/50 bg-white/95 p-1.5 text-right shadow-[0_18px_45px_rgba(50,40,20,.16)] backdrop-blur-xl">
