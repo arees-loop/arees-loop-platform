@@ -10,7 +10,8 @@ type RequestRow={
   origin:string;destination:string;travelDate:string;adults:number;children:number;infants:number;
   notes:string|null;status:string;adminNotes:string|null;carrierName:string|null;
   quoteAmountSar:number|null;quoteNotes:string|null;quoteValidUntil:string|null;whatsappStatus:string;
-  notificationStatus:string;createdAt:string;
+  notificationStatus:string;createdAt:string;assignedToId:string|null;canceledBy:string|null;cancellationReason:string|null;
+  tripType?:string;returnDate?:string|null;itinerary?:unknown;
 };
 type Offer={
   id:string;kind:string;title:string;description:string|null;carrierName:string|null;
@@ -19,6 +20,10 @@ type Offer={
   isVisible:boolean;sortOrder:number;
 };
 const operators={FLIGHT:["تاركو للطيران","بدر للطيران","الخطوط الجوية السودانية","أخرى"],FERRY:["الجودي","دليلة","عمان","مونتي","أخرى"]};
+type Staff={id:string;firstName:string|null;lastName:string|null;email:string;role:string};
+type HistoryEvent={id:string;actorName:string;action:string;fromStatus:string|null;toStatus:string|null;details:unknown;createdAt:string};
+const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"تم الإلغاء"};
+const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],QUOTE_READY:["PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
 const blankOffer={
   id:"",kind:"FERRY",title:"",description:"",carrierName:"",origin:"سواكن",destination:"جدة",
   travelDate:"",amountSar:"",priceUnit:"للبالغ",bannerUrl:"",operationStatus:"AVAILABLE",operationNote:"",
@@ -33,8 +38,16 @@ export default function TransportAdminPage() {
   const [tab,setTab]=useState<"requests"|"offers">("requests");
   const [requests,setRequests]=useState<RequestRow[]>([]);
   const [offers,setOffers]=useState<Offer[]>([]);
+  const [staff,setStaff]=useState<Staff[]>([]);
+  const [identity,setIdentity]=useState<{role:string;id:string}|null>(null);
+  const [history,setHistory]=useState<HistoryEvent[]>([]);
+  const [cancelReason,setCancelReason]=useState("");
+  const [cancelBy,setCancelBy]=useState("STAFF");
+  const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY">("ALL");
+  const [bannerFile,setBannerFile]=useState<File|null>(null);
+  const [bannerPreview,setBannerPreview]=useState("");
   const [selected,setSelected]=useState<RequestRow|null>(null);
-  const [form,setForm]=useState({status:"NEW",carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
+  const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
   const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer});
   const [status,setStatus]=useState("");
   const [error,setError]=useState("");
@@ -55,10 +68,35 @@ export default function TransportAdminPage() {
     finally{setLoading(false);}
   },[]);
   useEffect(()=>{void load();},[load]);
+  useEffect(()=>{
+    void fetch("/api/admin/me",{cache:"no-store"}).then(r=>r.json()).then(d=>{
+      if(d.success)setIdentity({role:d.data.role,id:d.data.id});
+    }).catch(()=>{});
+    void fetch("/api/admin/transport?mode=staff",{cache:"no-store"}).then(r=>r.json()).then(d=>{
+      if(d.success)setStaff(d.data||[]);
+    }).catch(()=>{});
+  },[]);
+  useEffect(()=>{
+    if(!bannerFile){setBannerPreview("");return;}
+    const url=URL.createObjectURL(bannerFile);setBannerPreview(url);
+    return()=>URL.revokeObjectURL(url);
+  },[bannerFile]);
+  const showSuper=identity?.role==="SUPER_ADMIN";
+  const staffName=(id:string|null)=>{
+    const user=staff.find(s=>s.id===id);
+    return user?([user.firstName,user.lastName].filter(Boolean).join(" ")||user.email):"لم يسند بعد";
+  };
+  async function loadHistory(id:string){
+    try {
+      const r=await fetch("/api/admin/transport?mode=history&id="+encodeURIComponent(id),{cache:"no-store"});
+      const d=await r.json();setHistory(d.success?d.data:[]);
+    }catch{setHistory([]);}
+  }
 
   function choose(q:RequestRow) {
     setSelected(q);setError("");setStatus("");
-    setForm({status:q.status,carrierName:q.carrierName||"",
+    void loadHistory(q.id);
+    setForm({carrierName:q.carrierName||"",
       quoteAmountSar:q.quoteAmountSar===null?"":String(q.quoteAmountSar),
       quoteNotes:q.quoteNotes||"",adminNotes:q.adminNotes||"",
       quoteValidUntil:day(q.quoteValidUntil)});
@@ -72,7 +110,9 @@ export default function TransportAdminPage() {
         body:JSON.stringify({id:selected.id,action:"SAVE_QUOTE",...form})});
       const result=await r.json();
       if(!r.ok||!result.success){setError(result.message||"تعذر حفظ العرض.");return;}
-      setSelected(result.data);setStatus("حُفظ عرض السعر. يمكن فتحه وطباعة PDF، ثم إرساله يدوياً من واتساب الشركة.");
+      setSelected(result.data);
+      void loadHistory(selected.id);
+      setStatus("حُفظ عرض السعر. يمكن فتحه وطباعة PDF، ثم إرساله يدوياً من واتساب الشركة.");
       await load();
     }catch{setError("تعذر حفظ العرض.");}
     finally{setBusy(false);}
@@ -81,11 +121,13 @@ export default function TransportAdminPage() {
   async function markManuallySent() {
     if(!selected||busy)return;setBusy(true);setError("");
     try{
+      if(!window.confirm("هل أرسلت ملف عرض السعر PDF فعلياً من واتساب الشركة؟ فتح المحادثة فقط لا يكفي.")){setBusy(false);return;}
       const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({id:selected.id,action:"MARK_MANUAL_WHATSAPP"})});
+        body:JSON.stringify({id:selected.id,action:"MARK_MANUAL_WHATSAPP",confirmed:true})});
       const q=await r.json();
       if(!r.ok||!q.success){setError(q.message||"تعذر تحديث الإرسال.");return;}
-      setSelected(current=>current?{...current,whatsappStatus:"MANUALLY_MARKED_SENT"}:current);
+      setSelected(current=>current?{...current,whatsappStatus:"MANUALLY_MARKED_SENT",status:"QUOTE_SENT"}:current);
+      void loadHistory(selected.id);
       setStatus("تم تسجيل تأكيد الموظف اليدوي لإرسال العرض. هذا ليس إثبات تسليم من واتساب.");
       await load();
     }catch{setError("تعذر تحديث حالة الإرسال.");}
