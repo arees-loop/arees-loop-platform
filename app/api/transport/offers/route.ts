@@ -1,0 +1,20 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+export const runtime="nodejs";
+
+export async function GET(request: NextRequest) {
+  const kind=request.nextUrl.searchParams.get("kind");
+  if(kind!=="FLIGHT"&&kind!=="FERRY") return NextResponse.json({success:false,message:"نوع الخدمة غير صالح."},{status:400});
+  try {
+    const offers=await prisma.transportOffer.findMany({
+      where:{kind,isVisible:true},
+      select:{id:true,title:true,description:true,carrierName:true,origin:true,destination:true,travelDate:true,amountSar:true,priceUnit:true,bannerUrl:true},
+      orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],take:30,
+    });
+    return NextResponse.json({success:true,data:offers.map(x=>({...x,amountSar:x.amountSar===null?null:Number(x.amountSar)}))},
+      {headers:{"Cache-Control":"public, max-age=0, s-maxage=30"}});
+  } catch(error) {
+    console.error("GET transport offers failed",error);
+    return NextResponse.json({success:false,message:"العروض غير متاحة حالياً."},{status:503,headers:{"Cache-Control":"no-store"}});
+  }
+}
