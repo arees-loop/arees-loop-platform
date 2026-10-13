@@ -381,6 +381,7 @@ model Partner {
   members     PartnerMember[]
   licenses    License[]
   categories  PartnerCategory[]
+  publicEvents PublicEvent[]
   services    Service[]
   bookings    Booking[]
   invoices    Invoice[]
@@ -852,4 +853,37 @@ model NavigationVisibility {
   key String @id
   visible Boolean @default(true)
   updatedAt DateTime @updatedAt
+}
+
+/** Free information-only events authored by an approved government/nonprofit partner. */
+model PublicEvent {
+  id String @id @default(cuid())
+  partnerId String
+  createdByUserId String
+  kind String @default("EVENT")
+  nameAr String
+  nameEn String
+  descriptionAr String @db.Text
+  descriptionEn String @db.Text
+  includesAr String? @db.Text
+  includesEn String? @db.Text
+  excludesAr String? @db.Text
+  excludesEn String? @db.Text
+  notesAr String? @db.Text
+  notesEn String? @db.Text
+  posterUrl String?
+  city String
+  locationName String
+  latitude Decimal? @db.Decimal(10,7)
+  longitude Decimal? @db.Decimal(10,7)
+  startsAt DateTime
+  endsAt DateTime
+  registrationUrl String?
+  status String @default("DRAFT")
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  partner Partner @relation(fields:[partnerId],references:[id],onDelete:Restrict)
+  @@index([partnerId,status])
+  @@index([status,startsAt])
 }
