@@ -924,6 +924,12 @@ model TransportRequest {
   status           String   @default("NEW")
   adminNotes       String?  @db.Text
   assignedToId     String?
+  carrierName      String?
+  quoteAmountSar   Decimal? @db.Decimal(12,2)
+  quoteNotes       String?  @db.Text
+  quoteValidUntil  DateTime?
+  quoteUpdatedAt   DateTime?
+  whatsappStatus   String   @default("NOT_SENT")
   notificationStatus String @default("PENDING")
   emailedAt        DateTime?
   createdAt        DateTime @default(now())
