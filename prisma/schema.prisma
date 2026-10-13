@@ -902,3 +902,54 @@ model SuccessPartner {
 
   @@index([isVisible, sortOrder])
 }
+
+/** Flight/ferry information requests. No payment, ticket issuance, or hold. */
+model TransportRequest {
+  id               String   @id @default(cuid())
+  reference        String   @unique
+  kind             String
+  customerName     String
+  customerEmail    String?
+  countryCode      String
+  phone            String
+  whatsappCountryCode String?
+  whatsappPhone    String?
+  origin           String
+  destination      String
+  travelDate       DateTime
+  adults           Int      @default(1)
+  children         Int      @default(0)
+  infants          Int      @default(0)
+  notes            String?  @db.Text
+  status           String   @default("NEW")
+  adminNotes       String?  @db.Text
+  assignedToId     String?
+  notificationStatus String @default("PENDING")
+  emailedAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([kind, status, createdAt])
+  @@index([phone, createdAt])
+}
+
+/** Admin-managed travel advertisements, ferry tariffs and sailing schedules. */
+model TransportOffer {
+  id           String   @id @default(cuid())
+  kind         String
+  title        String
+  description  String?  @db.Text
+  carrierName  String?
+  origin       String?
+  destination  String?
+  travelDate   DateTime?
+  amountSar    Decimal? @db.Decimal(12,2)
+  priceUnit    String?
+  bannerUrl    String?
+  isVisible    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([kind, isVisible, sortOrder])
+}
