@@ -56,3 +56,20 @@ CREATE TABLE "HotelOffer" (
   CONSTRAINT "HotelOffer_pkey" PRIMARY KEY ("id")
 );
 CREATE INDEX "HotelOffer_isVisible_startsAt_endsAt_idx" ON "HotelOffer"("isVisible","startsAt","endsAt");
+
+-- Hotel staff workflow history is additive and must not be deleted on request archival.
+CREATE TABLE "HotelInquiryEvent" (
+  "id" TEXT NOT NULL,
+  "requestId" TEXT NOT NULL,
+  "actorId" TEXT,
+  "actorName" TEXT NOT NULL,
+  "action" TEXT NOT NULL,
+  "fromStatus" TEXT,
+  "toStatus" TEXT,
+  "details" JSONB,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "HotelInquiryEvent_pkey" PRIMARY KEY ("id")
+);
+ALTER TABLE "HotelInquiryEvent" ADD CONSTRAINT "HotelInquiryEvent_requestId_fkey"
+  FOREIGN KEY ("requestId") REFERENCES "HotelInquiry"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+CREATE INDEX "HotelInquiryEvent_requestId_createdAt_idx" ON "HotelInquiryEvent"("requestId","createdAt");
