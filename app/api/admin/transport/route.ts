@@ -98,6 +98,21 @@ export async function PATCH(request:NextRequest) {
     if(!superAdmin && (current.assignedToId!==actorId || !canManageTransport(session.user, current.kind==="FERRY"?"FERRY":"FLIGHT")))return fail("الطلب غير مسند إلى حسابك أو لا تملك صلاحية القسم.",403);
     const action=cleanText(body.action,30);
 
+    if(action==="REPLY_CUSTOMER"){
+      if(["CANCELED","DONE"].includes(current.status))return fail("لا يمكن الرد على طلب مغلق؛ أعد فتحه بإجراء معتمد أولاً.",409);
+      const customerReply=cleanText(body.customerReply,2500);
+      if(!customerReply)return fail("اكتب الرد الذي سيظهر للعميل.",400);
+      const [updated]=await prisma.$transaction([
+        prisma.transportRequest.update({where:{id},data:{customerReply}}),
+        prisma.transportRequestEvent.create({data:{
+          requestId:id,actorId,actorName,action:"CUSTOMER_REPLY_PUBLISHED",
+          fromStatus:current.status,toStatus:current.status,
+          details:{messageLength:customerReply.length},
+        }}),
+      ]);
+      return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
+    }
+
     if(action==="ASSIGN"){
       if(!superAdmin)return fail("إسناد الطلبات للسوبر أدمن فقط.",403);
       const assignedToId=cleanText(body.assignedToId,100)||null;
