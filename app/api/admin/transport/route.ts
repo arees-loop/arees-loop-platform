@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { allowedTransportKinds, canManageTransport } from "@/lib/transport-permissions";
 
 export const runtime = "nodejs";
 
@@ -10,7 +11,7 @@ async function adminAccess(superOnly=false) {
   if(!["SUPER_ADMIN","ADMIN"].includes(session.user.role) || (superOnly && session.user.role!=="SUPER_ADMIN")){
     return {error:NextResponse.json({success:false,message:"غير مصرح بهذا الإجراء."},{status:403})};
   }
-  return {id:session.user.id,role:session.user.role};
+  return {id:session.user.id,role:session.user.role,allowedKinds:allowedTransportKinds(session.user)};
 }
 const fail=(message:string,status=400)=>NextResponse.json({success:false,message},{status});
 const num=(value:unknown)=>value===null||value===undefined||value===""?null:Number(value);
@@ -49,14 +50,15 @@ export async function GET(request:NextRequest) {
   try{
     if(mode==="staff"){
       if(access.role!=="SUPER_ADMIN")return fail("عرض الموظفين مخصص للسوبر أدمن.",403);
-      const staff=await prisma.user.findMany({where:{role:{in:["ADMIN","SUPER_ADMIN"]},status:"ACTIVE"},select:{id:true,firstName:true,lastName:true,email:true,role:true},orderBy:{createdAt:"asc"}});
+      const staff=await prisma.user.findMany({where:{role:{in:["ADMIN","SUPER_ADMIN"]},status:"ACTIVE"},select:{id:true,firstName:true,lastName:true,email:true,role:true,adminPermissions:true},orderBy:{createdAt:"asc"}});
       return NextResponse.json({success:true,data:staff},{headers:{"Cache-Control":"no-store"}});
     }
     if(mode==="offers"){
+      if(access.role!=="SUPER_ADMIN")return NextResponse.json({success:true,data:[]},{headers:{"Cache-Control":"no-store"}});
       const offers=await prisma.transportOffer.findMany({orderBy:[{kind:"asc"},{sortOrder:"asc"},{createdAt:"desc"}],take:200});
       return NextResponse.json({success:true,data:offers.map(o=>({...o,amountSar:o.amountSar===null?null:Number(o.amountSar)}))},{headers:{"Cache-Control":"no-store"}});
     }
-    const visible=access.role==="SUPER_ADMIN"?{}:{assignedToId:access.id};
+    const visible=access.role==="SUPER_ADMIN"?{}:{assignedToId:access.id,kind:{in:access.allowedKinds}};
     if(mode==="history"){
       const id=request.nextUrl.searchParams.get("id")||"";
       const item=await prisma.transportRequest.findFirst({where:{id,...visible},select:{id:true}});
@@ -81,7 +83,7 @@ export async function PATCH(request:NextRequest) {
     const id=cleanText(body.id,100);
     const current=await prisma.transportRequest.findUnique({where:{id}});
     if(!current)return fail("الطلب غير موجود.",404);
-    if(!superAdmin && current.assignedToId!==actorId)return fail("الطلب غير مسند إلى حسابك.",403);
+    if(!superAdmin && (current.assignedToId!==actorId || !canManageTransport(session.user, current.kind==="FERRY"?"FERRY":"FLIGHT")))return fail("الطلب غير مسند إلى حسابك أو لا تملك صلاحية القسم.",403);
     const action=cleanText(body.action,30);
 
     if(action==="ASSIGN"){
@@ -91,9 +93,10 @@ export async function PATCH(request:NextRequest) {
       if(assignedToId){
         const assignee=await prisma.user.findFirst({
           where:{id:assignedToId,role:{in:["ADMIN","SUPER_ADMIN"]},status:"ACTIVE"},
-          select:{id:true,firstName:true,lastName:true,email:true},
+          select:{id:true,firstName:true,lastName:true,email:true,role:true,adminPermissions:true},
         });
         if(!assignee)return fail("اختر موظفاً إدارياً نشطاً.",400);
+        if(!canManageTransport(assignee,current.kind==="FERRY"?"FERRY":"FLIGHT"))return fail("هذا الموظف ليست لديه صلاحية إدارة القسم المطلوب.",403);
         assigneeName=fullName(assignee);
       }
       const [updated]=await prisma.$transaction([
