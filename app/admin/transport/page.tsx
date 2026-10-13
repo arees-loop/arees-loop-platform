@@ -258,8 +258,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
         </div>
       </div>
       <div className="mt-7 flex flex-wrap gap-2">
-        <button onClick={()=>setTab("requests")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="requests"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>طلبات العملاء ({requests.length})</button>
-        <button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.length})</button>
+        <button onClick={()=>setTab("requests")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="requests"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>طلبات العملاء ({filteredRequests.length})</button>
+        <button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.filter(x=>initialOfferKind==="ALL"||x.kind===initialOfferKind).length})</button>
         {tab==="offers"&&<div className="flex flex-wrap gap-2">
           <button type="button" onClick={()=>{setFilterKind("FLIGHT");startOffer();setOfferForm(f=>({...f,kind:"FLIGHT",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FLIGHT"?"bg-[#D4AF37]":"bg-white"}`}>✈ عروض الطيران</button>
           <button type="button" onClick={()=>{setFilterKind("FERRY");startOffer();}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FERRY"?"bg-[#D4AF37]":"bg-white"}`}>⚓ عروض البواخر</button>
@@ -273,8 +273,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       {tab==="requests"&&(
         <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(350px,1fr)]">
           <section className="min-w-0 space-y-3">
-            {requests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
-            {requests.map(q=>(
+            {filteredRequests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
+            {filteredRequests.map(q=>(
               <button key={q.id} onClick={()=>choose(q)} className={`w-full rounded-[20px] border p-5 text-right transition hover:shadow-lg ${selected?.id===q.id?"border-[#D4AF37] bg-[#FFF9E7]":"border-[#D4AF37]/25 bg-white"}`}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="font-black">{q.kind==="FERRY"?"⚓ باخرة":"✈ طيران"} · {q.customerName}</span>
@@ -392,6 +392,13 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة الوصول" value={offerForm.destination} onChange={v=>setOfferForm(f=>({...f,destination:v}))}/> :
                   <select className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value,origin:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="جدة">جدة</option><option value="سواكن">سواكن</option></select>}
               </label>
+              <label className={label}>تاريخ بدء ظهور العرض
+                <input className={field} type="date" value={offerForm.startsAt} onChange={e=>setOfferForm(f=>({...f,startsAt:e.target.value}))}/>
+              </label>
+              <label className={label}>تاريخ آخر يوم لظهور العرض
+                <input className={field} type="date" min={offerForm.startsAt||undefined} value={offerForm.endsAt} onChange={e=>setOfferForm(f=>({...f,endsAt:e.target.value}))}/>
+              </label>
+              <p className="sm:col-span-2 rounded-lg bg-[#F7F2E6] px-4 py-3 text-xs leading-6">تاريخ نهاية العرض شامل طوال اليوم المحدد. عند انتهاء المدة يختفي تلقائياً من صفحة العميل، ويظل محفوظاً في الإدارة.</p>
               <label className={label}>موعد السفر/الإبحار<input className={field} type="date" value={offerForm.travelDate} onChange={e=>setOfferForm(f=>({...f,travelDate:e.target.value}))}/></label>
               <label className={label}>السعر المعلن (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.amountSar} onChange={e=>setOfferForm(f=>({...f,amountSar:e.target.value}))}/></label>
               <label className={label}>وحدة السعر<input className={field} placeholder="للبالغ / للطفل / يبدأ من" value={offerForm.priceUnit} onChange={e=>setOfferForm(f=>({...f,priceUnit:e.target.value}))}/></label>
@@ -435,19 +442,41 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             </form>
           </section>
           <section className="space-y-3">
-            <h2 className="text-xl font-black">العروض والجداول المنشورة</h2>
-            {offers.length===0&&!loading&&<p className="rounded-xl bg-white p-5 text-sm">لا توجد عروض بعد.</p>}
-            {offers.filter(o=>filterKind==="ALL"||o.kind===filterKind).map(offer=>(
-              <article key={offer.id} className="rounded-[22px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-xl font-black">إدارة العروض ({filteredOffers.length})</h2>
+              <div className="flex gap-2">
+                <button type="button" onClick={()=>setOfferView("CARDS")} className={`rounded-lg border px-4 py-2 text-xs font-bold ${offerView==="CARDS"?"bg-[#0D3B34] text-white":"bg-white"}`}>▦ بطاقات</button>
+                <button type="button" onClick={()=>setOfferView("LIST")} className={`rounded-lg border px-4 py-2 text-xs font-bold ${offerView==="LIST"?"bg-[#0D3B34] text-white":"bg-white"}`}>☷ قائمة</button>
+              </div>
+            </div>
+            <select className={field} aria-label="فلترة حالة العروض" value={offerFilter} onChange={e=>setOfferFilter(e.target.value as typeof offerFilter)}>
+              <option value="ALL">كل العروض</option>
+              <option value="ACTIVE">المفعّلة حالياً</option>
+              <option value="PAUSED">الموقوفة يدوياً</option>
+              <option value="UPCOMING">مجدولة للنشر</option>
+              <option value="EXPIRED">انتهت تلقائياً</option>
+            </select>
+            {filteredOffers.length===0&&!loading&&<p className="rounded-xl bg-white p-5 text-sm">لا توجد عروض بعد.</p>}
+            {filteredOffers.map(offer=>(
+              <article key={offer.id} className={`rounded-[22px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm ${offerView==="LIST"?"flex flex-wrap items-center gap-4":""}`}>
+                {offer.bannerUrl&&<div className={offerView==="LIST"?"h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-[#F7F4ED]":"mb-3 h-36 overflow-hidden rounded-xl bg-[#F7F4ED]"}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={offer.bannerUrl} alt={offer.title} className="h-full w-full object-cover" />
+                </div>}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div><p className="text-xs font-semibold text-[#947426]">{offer.kind==="FERRY"?"بواخر":"طيران"} · {offer.carrierName}</p>
                     <h3 className="mt-1 text-lg font-black">{offer.title}</h3>
                     <p className="mt-2 text-sm">{offer.origin} ← {offer.destination} · {day(offer.travelDate)}</p>
                     {offer.amountSar!==null&&<p className="mt-1 font-black text-[#9A7020]">{offer.amountSar.toLocaleString("ar-SA")} ر.س {offer.priceUnit}</p>}
-                    <p className="mt-2 text-xs">{offer.isVisible?"ظاهر":"مخفي"} · {offer.operationStatus==="SUSPENDED"?"متوقف":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح"}</p>
+                    <p className="mt-2 text-xs">{offerState(offer)==="ACTIVE"?"ظاهر الآن":offerState(offer)==="PAUSED"?"موقوف":offerState(offer)==="UPCOMING"?"مجدول": "منتهي تلقائياً"} · {offer.operationStatus==="SUSPENDED"?"متوقف":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح"}</p>
+                    {(offer.startsAt||offer.endsAt)&&<p className="mt-1 text-xs text-[#0D3B34]/65">النشر: {day(offer.startsAt)||"الآن"} ← {day(offer.endsAt)||"مفتوح"}</p>}
                     {offer.operationNote&&<p className="mt-2 whitespace-pre-wrap text-xs text-amber-800">{offer.operationNote}</p>}
                   </div>
-                  <button onClick={()=>startOffer(offer)} className="rounded-full border border-[#D4AF37]/40 px-5 py-2 text-sm font-bold">تعديل</button>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <button onClick={()=>startOffer(offer)} disabled={!showSuper} className="rounded-full border border-[#D4AF37]/40 px-4 py-2 text-xs font-bold disabled:opacity-40">تعديل</button>
+                    <button onClick={()=>void setOfferVisibility(offer,!offer.isVisible)} disabled={!showSuper||busy} className="rounded-full border border-[#D4AF37]/40 bg-[#F7F1DE] px-4 py-2 text-xs font-bold disabled:opacity-40">{offer.isVisible?"إيقاف":"تفعيل"}</button>
+                    <button onClick={()=>void archiveOffer(offer)} disabled={!showSuper||busy} className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 disabled:opacity-40">حذف</button>
+                  </div>
                 </div>
               </article>
             ))}
