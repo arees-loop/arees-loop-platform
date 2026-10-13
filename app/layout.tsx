@@ -50,13 +50,12 @@ export const metadata: Metadata = {
   },
 
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
 
     googleBot: {
-      index: false,
-      follow: false,
-      noimageindex: false,
+      index: true,
+      follow: true,
     },
   },
 
