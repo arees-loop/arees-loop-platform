@@ -742,3 +742,13 @@ a.arees-primary-action[href]:active {
 .guide-feature-card-gold{border-color:rgba(241,215,160,.76)}
 .guide-feature-eyebrow{display:inline-flex;width:fit-content;margin-bottom:6px;padding:5px 10px;border:1px solid rgba(243,210,122,.42);border-radius:999px;background:rgba(0,0,0,.30);color:#F3D27A;text-shadow:0 2px 7px rgba(0,0,0,.8)}
 .guide-feature-action{margin-top:auto}
+
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ .guide-feature-card:hover,.guide-feature-card:focus-within{background:linear-gradient(135deg,rgba(7,30,26,.48),rgba(7,30,26,.35))}
+}
+@media(max-width:1023px){
+ .guide-feature-card,.guide-feature-card-gold{background:linear-gradient(135deg,rgba(7,32,28,.82),rgba(7,32,28,.76))}
+}
+@media(max-width:380px){
+ .guide-team-frame{flex-basis:94px;width:94px;height:78px;border-radius:13px}
+}
