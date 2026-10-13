@@ -272,12 +272,14 @@ export default function PartnerOnboardingPage() {
     nationalAddress: File | null;
     ibanCertificate: File | null;
     vatCertificate: File | null;
+    logo: File | null;
     documents: Record<number, File>;
   }>({
     authorization: null,
     nationalAddress: null,
     ibanCertificate: null,
     vatCertificate: null,
+    logo: null,
     documents: {},
   });
 
@@ -321,6 +323,18 @@ export default function PartnerOnboardingPage() {
     useState<AiReviewClientResult | null>(null);
   const [applicationId, setApplicationId] = useState("");
   const [applicationStatus, setApplicationStatus] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("type") === "government") {
+      setData(current => current.partnerType ? current : ({
+        ...current,
+        partnerType: "government",
+        proofType: "وثيقة جهة حكومية أو غير ربحية",
+        categories: ["فعاليات"],
+      }));
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -469,6 +483,7 @@ export default function PartnerOnboardingPage() {
 
           publicName:
             String(application.publicName || ""),
+          logoFile: application.logoUrl ? "شعار مرفوع للمراجعة" : "",
           declaration: false,
           termsAccepted: false,
         }));
@@ -1199,14 +1214,14 @@ export default function PartnerOnboardingPage() {
     if (currentStep === "business") {
       if (!data.tradeName.trim()) errors.tradeName = "الاسم التجاري / اسم النشاط مطلوب.";
       if (!data.city.trim()) errors.city = "المدينة مطلوبة.";
-      if (!data.district.trim()) errors.district = "الحي مطلوب.";
-      if (!data.street.trim()) errors.street = "الشارع مطلوب.";
-      if (!data.shortNationalAddress.trim()) {
+      if (data.partnerType !== "government" && !data.district.trim()) errors.district = "الحي مطلوب.";
+      if (data.partnerType !== "government" && !data.street.trim()) errors.street = "الشارع مطلوب.";
+      if (data.partnerType !== "government" && !data.shortNationalAddress.trim()) {
         errors.shortNationalAddress = "العنوان الوطني المختصر مطلوب.";
-      } else if (!/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
+      } else if (data.partnerType !== "government" && !/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
         errors.shortNationalAddress = "أدخل عنواناً وطنياً مختصراً صحيحاً: 4 أحرف ثم 4 أرقام، مثال ABCD1234.";
       }
-      if (!data.nationalAddressFile) {
+      if (data.partnerType !== "government" && !data.nationalAddressFile) {
         errors.nationalAddressFile = "أرفق مستند العنوان الوطني للمنشأة.";
       }
     }
@@ -1227,6 +1242,9 @@ export default function PartnerOnboardingPage() {
     }
 
     if (currentStep === "operations") {
+      if (data.partnerType === "government" && !data.logoFile) {
+        errors.logoFile = "أرفق الشعار الرسمي للجهة.";
+      }
       if (smsVerificationEnabled === true) {
         if (
           !normalizeSaudiMobileForCheck(
@@ -1525,7 +1543,7 @@ export default function PartnerOnboardingPage() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        legalNameAr: data.legalName,
+        legalNameAr: data.legalName.trim() || data.tradeName.trim(),
         tradeNameAr: data.tradeName,
 
         partnerType: data.partnerType,
