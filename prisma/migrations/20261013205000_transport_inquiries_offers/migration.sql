@@ -3,6 +3,8 @@
 CREATE TABLE "TransportRequest" (
   "id" TEXT NOT NULL,
   "reference" TEXT NOT NULL,
+  "userId" TEXT,
+  "trackingTokenHash" TEXT,
   "kind" TEXT NOT NULL,
   "customerName" TEXT NOT NULL,
   "customerEmail" TEXT,
@@ -38,6 +40,8 @@ CREATE TABLE "TransportRequest" (
   CONSTRAINT "TransportRequest_pkey" PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX "TransportRequest_reference_key" ON "TransportRequest"("reference");
+CREATE UNIQUE INDEX "TransportRequest_trackingTokenHash_key" ON "TransportRequest"("trackingTokenHash");
+CREATE INDEX "TransportRequest_userId_createdAt_idx" ON "TransportRequest"("userId","createdAt");
 CREATE INDEX "TransportRequest_kind_status_createdAt_idx" ON "TransportRequest"("kind","status","createdAt");
 CREATE INDEX "TransportRequest_phone_createdAt_idx" ON "TransportRequest"("phone","createdAt");
 
