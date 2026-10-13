@@ -24,6 +24,17 @@ function parseDay(value:unknown){
   if(Number.isNaN(d.getTime())||d.toISOString().slice(0,10)!==s)throw new Error("التاريخ غير صالح.");
   return d;
 }
+function parseOfferDate(value:unknown, end=false) {
+  const date=parseDay(value);
+  if (!date) return null;
+  const day=date.toISOString().slice(0,10);
+  return new Date(day+(end?"T23:59:59.999Z":"T00:00:00.000Z"));
+}
+function offerPeriod(startsAt:unknown, endsAt:unknown) {
+  const start=parseOfferDate(startsAt), end=parseOfferDate(endsAt,true);
+  if(start && end && start.getTime()>end.getTime())throw new Error("نهاية العرض يجب ألا تسبق تاريخ بدايته.");
+  return { startsAt:start, endsAt:end };
+}
 function parseAmount(value:unknown){
   const n=num(value);
   if(n===null)return null;
@@ -55,7 +66,7 @@ export async function GET(request:NextRequest) {
     }
     if(mode==="offers"){
       if(access.role!=="SUPER_ADMIN")return NextResponse.json({success:true,data:[]},{headers:{"Cache-Control":"no-store"}});
-      const offers=await prisma.transportOffer.findMany({orderBy:[{kind:"asc"},{sortOrder:"asc"},{createdAt:"desc"}],take:200});
+      const offers=await prisma.transportOffer.findMany({where:{deletedAt:null},orderBy:[{kind:"asc"},{sortOrder:"asc"},{createdAt:"desc"}],take:200});
       return NextResponse.json({success:true,data:offers.map(o=>({...o,amountSar:o.amountSar===null?null:Number(o.amountSar)}))},{headers:{"Cache-Control":"no-store"}});
     }
     const visible=access.role==="SUPER_ADMIN"?{}:{assignedToId:access.id,kind:{in:access.allowedKinds}};
@@ -176,7 +187,8 @@ export async function POST(request:NextRequest) {
     if(!["AVAILABLE","SUSPENDED","UNKNOWN"].includes(status))return fail("حالة تشغيل غير صحيحة.");
     const url=cleanText(data.bannerUrl,500);
     if(url&&!url.startsWith("/Image/")&&!url.startsWith("/api/media?pathname="))return fail("أضف رابطاً لصورة موجودة في مكتبة المشروع.");
-    const offer=await prisma.transportOffer.create({data:{
+    const period=offerPeriod(data.startsAt,data.endsAt);
+    const offer=await prisma.transportOffer.create({data:{...period,
       kind:data.kind,title,description:cleanText(data.description,2500)||null,
       carrierName:cleanText(data.carrierName,100)||null,
       origin:cleanText(data.origin,80)||null,destination:cleanText(data.destination,80)||null,
@@ -193,7 +205,7 @@ export async function PUT(request:NextRequest) {
   try{
     const data=await request.json();
     const id=cleanText(data.id,100);
-    const current=await prisma.transportOffer.findUnique({where:{id}});
+    const current=await prisma.transportOffer.findFirst({where:{id,deletedAt:null}});
     if(!current)return fail("العرض غير موجود.",404);
     const title=cleanText(data.title,160);
     if(!title)return fail("العنوان مطلوب.");
@@ -201,7 +213,8 @@ export async function PUT(request:NextRequest) {
     if(!["AVAILABLE","SUSPENDED","UNKNOWN"].includes(status))return fail("حالة التشغيل غير صحيحة.");
     const url=cleanText(data.bannerUrl,500);
     if(url&&!url.startsWith("/Image/")&&!url.startsWith("/api/media?pathname="))return fail("رابط صورة غير معتمد.");
-    const updated=await prisma.transportOffer.update({where:{id},data:{
+    const period=offerPeriod(data.startsAt,data.endsAt);
+    const updated=await prisma.transportOffer.update({where:{id},data:{...period,
       title,description:cleanText(data.description,2500)||null,
       carrierName:cleanText(data.carrierName,100)||null,
       origin:cleanText(data.origin,80)||null,destination:cleanText(data.destination,80)||null,
@@ -214,4 +227,22 @@ export async function PUT(request:NextRequest) {
     await prisma.auditLog.create({data:{userId:access.id,action:"TRANSPORT_OFFER_UPDATED",entityType:"TransportOffer",entityId:id,afterData:{isVisible:updated.isVisible,operationStatus:updated.operationStatus}}}).catch(()=>{});
     return NextResponse.json({success:true,data:updated});
   }catch(err){console.error("Transport offer PUT failed",err);return fail(err instanceof Error&&/السعر|التاريخ/.test(err.message)?err.message:"تعذر تعديل العرض.",400);}
+}
+
+export async function DELETE(request:NextRequest) {
+  const access=await adminAccess(true);if(access.error)return access.error;
+  try {
+    const body=await request.json();
+    const id=cleanText(body.id,100);
+    if(!id)return fail("معرف العرض مطلوب.");
+    const previous=await prisma.transportOffer.findFirst({where:{id,deletedAt:null}});
+    if(!previous)return fail("العرض غير موجود.",404);
+    const updated=await prisma.transportOffer.update({where:{id},data:{deletedAt:new Date(),isVisible:false}});
+    await prisma.auditLog.create({data:{userId:access.id,action:"TRANSPORT_OFFER_ARCHIVED",entityType:"TransportOffer",entityId:id,beforeData:{title:previous.title,isVisible:previous.isVisible},afterData:{deletedAt:updated.deletedAt?.toISOString()}}})
+      .catch(err=>console.error("Transport archive audit failed",err));
+    return NextResponse.json({success:true,message:"تمت أرشفة العرض وإخفاؤه دون حذف بياناته.",data:{id}});
+  } catch(err) {
+    console.error("DELETE transport offer failed",err);
+    return fail("تعذر أرشفة العرض.",500);
+  }
 }
