@@ -31,13 +31,18 @@ export default function SelectPartnerTypePage() {
             <PartnerIcon kind="handshake" className="h-9 w-9" />
           </div>
           <p className="text-xs font-extrabold tracking-widest text-[#A87917]">AREES LOOP PARTNERS</p>
-          <h1 className="mt-3 text-3xl font-black md:text-5xl">اختر نوع الشريك</h1>
-          <p className="mt-5 text-base leading-8 text-[#0D3B34]/70">
-            نرحب بالشركات والأفراد والجهات الحكومية وغير الربحية ضمن منظومة أريس لوب.
-            اختر الصفة المناسبة لبدء طلب الانضمام والتحقق والاعتماد.
+          <h1 className="mt-3 text-3xl font-black leading-tight md:text-5xl">شراكتك تصنع تجربة أغنى</h1>
+          <p className="mx-auto mt-5 max-w-3xl text-base leading-9 text-[#0D3B34]/75">
+            نرحب بالشركات ومقدمي التجارب والجهات الحكومية وغير الربحية للمشاركة في إبراز البرامج
+            والفعاليات والوجهات السياحية، وتوسيع أثر الشراكات والمبادرات المجتمعية.
           </p>
+          <div className="mx-auto mt-8 flex max-w-sm items-center justify-center gap-3">
+            <span className="h-px flex-1 bg-[#D4AF37]/40" aria-hidden="true" />
+            <h2 className="text-lg font-black text-[#0D3B34] md:text-xl">اختر نوع الشريك</h2>
+            <span className="h-px flex-1 bg-[#D4AF37]/40" aria-hidden="true" />
+          </div>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
+        <div className="mt-7 grid gap-5 md:grid-cols-3">
           {partnerTypes.map((item) => (
             <Link key={item.icon} href={item.href} className="group flex min-h-[290px] flex-col items-center rounded-[30px] border border-[#D4AF37]/30 bg-white px-7 py-9 text-center shadow-[0_14px_40px_rgba(13,59,52,.07)] transition duration-300 hover:-translate-y-1 hover:border-[#D4AF37] hover:shadow-[0_20px_45px_rgba(13,59,52,.12)] focus-visible:outline-4 focus-visible:outline-[#D4AF37]">
               <span className="flex h-[76px] w-[76px] items-center justify-center rounded-[24px] border border-[#D4AF37]/35 bg-gradient-to-br from-[#FFF7DF] to-[#F0E5C6] text-[#A87C21] transition group-hover:bg-[#0D3B34] group-hover:text-[#0D3B34]">
