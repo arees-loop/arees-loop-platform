@@ -11,7 +11,9 @@ const permissions=[
  ["الحجوزات","عرض الحجوزات ومتابعة حالتها وبيانات التنفيذ."],
  ["المدفوعات والتسويات","عرض المدفوعات والتسويات المالية للشركاء."],
  ["التقارير والإحصائيات","الوصول إلى التقارير ومؤشرات أداء المنصة."],
- ["إعدادات المنصة","تعديل إعدادات المنصة العامة؛ تمنح فقط للمخولين."]
+ ["إعدادات المنصة","تعديل إعدادات المنصة العامة؛ تمنح فقط للمخولين."],
+ ["الطيران","معالجة طلبات الطيران المسندة للموظف ومتابعة عروض الأسعار."],
+ ["البواخر","معالجة طلبات البواخر المسندة للموظف ومتابعة عروض الأسعار."]
 ];
 
 export default function AdminUsersPage(){
@@ -23,10 +25,12 @@ export default function AdminUsersPage(){
  const [notice,setNotice]=useState("");
  const [users,setUsers]=useState<AdminUser[]>([]);
  const [actionUserId,setActionUserId]=useState<string|null>(null);
+ const [editUserId,setEditUserId]=useState<string|null>(null);
+ const [editPermissions,setEditPermissions]=useState<string[]>([]);
  const [actionNotice,setActionNotice]=useState("");
  async function loadUsers(){try{const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json();if(r.ok&&d.success)setUsers(d.data||[]);}catch{}}
  useEffect(()=>{void loadUsers();},[]);
- const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS"];
+ const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES"];
  async function setUserStatus(userId:string,action:"ACTIVATE"|"DISABLE"){
   setActionNotice("");
   const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,action})});
@@ -37,6 +41,14 @@ export default function AdminUsersPage(){
   setActionNotice(""); const form=new FormData(); form.append("userId",userId); form.append("file",file);
   const r=await fetch("/api/admin/users/profile-image",{method:"POST",body:form}); const d=await r.json(); setActionNotice(d.message||"تعذر رفع الصورة.");
   if(r.ok&&d.success) await loadUsers();
+ }
+ async function saveUserPermissions(){
+  if(!editUserId)return;
+  try{
+   const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:editUserId,action:"SET_PERMISSIONS",permissions:editPermissions})});
+   const d=await r.json();setActionNotice(d.message||"تعذر حفظ الصلاحيات.");
+   if(r.ok&&d.success){setEditUserId(null);await loadUsers();}
+  }catch{setActionNotice("تعذر تحديث صلاحيات المستخدم.");}
  }
  async function sendInvite(){
   setNotice(""); setSending(true);
@@ -72,7 +84,7 @@ export default function AdminUsersPage(){
        <span className="text-sm text-black/60">{user.email}</span>
        <span><i className="not-italic rounded-full border border-[#D5B65B]/30 bg-[#FBF5E6] px-3 py-1.5 text-[11px] font-extrabold text-[#8D6B16]">{user.role==="SUPER_ADMIN"?"Super Admin":"Admin"}</i></span>
        <span><i className={`inline-flex items-center gap-1.5 not-italic rounded-full px-3 py-1.5 text-[11px] font-bold ${active?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}><i className={`h-1.5 w-1.5 rounded-full ${active?"bg-emerald-500":"bg-amber-500"}`}></i>{active?"نشط":"تم إرسال الدعوة"}</i></span>
-       <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة")).join(" • "):perms+" صلاحيات"}</span>
+       <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة").replace("TRANSPORT_FLIGHTS","الطيران").replace("TRANSPORT_FERRIES","البواخر")).join(" • "):perms+" صلاحيات"}</span>
        <div className="relative">
         <button onClick={()=>setActionUserId(v=>v===user.id?null:user.id)} aria-label="اتخاذ إجراء" title="اتخاذ إجراء" className="flex h-9 items-center justify-center gap-1 rounded-full border border-transparent px-3 text-xs font-extrabold text-[#0D4A40] transition-all hover:border-[#D5B65B]/45 hover:bg-white hover:shadow-[0_5px_18px_rgba(182,138,33,.22)]">•••<span className="hidden xl:inline">اتخاذ إجراء</span></button>
         {actionUserId===user.id&&<div className="absolute left-0 top-11 z-50 w-52 overflow-hidden rounded-2xl border border-[#D8C79D]/50 bg-white/95 p-1.5 text-right shadow-[0_18px_45px_rgba(50,40,20,.16)] backdrop-blur-xl">
@@ -81,7 +93,7 @@ export default function AdminUsersPage(){
           <button disabled className="w-full cursor-not-allowed rounded-xl px-3 py-2.5 text-right text-xs text-black/35">كامل الصلاحيات — محمي</button>
          </>:<>
           <label className="block w-full cursor-pointer rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تغيير الصورة الشخصية<input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)void uploadProfileImage(user.id,file)}}/></label>
-          <button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تعديل الصلاحيات</button>
+          <button onClick={()=>{setEditUserId(user.id);setEditPermissions(Array.isArray(user.adminPermissions)?user.adminPermissions.map(String):[]);setActionUserId(null);}} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تعديل الصلاحيات</button>
           {!active&&<button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">إعادة إرسال الدعوة</button>}
           <div className="my-1 border-t border-black/[.06]"/>
           {active?<button onClick={()=>void setUserStatus(user.id,"DISABLE")} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-red-600 hover:bg-red-50">تعطيل المستخدم</button>:<button onClick={()=>void setUserStatus(user.id,"ACTIVATE")} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-emerald-700 hover:bg-emerald-50">تنشيط المستخدم</button>}
@@ -96,6 +108,25 @@ export default function AdminUsersPage(){
    {actionNotice&&<div className="mt-4 rounded-xl border border-[#D8C79D]/40 bg-white px-5 py-3 text-xs font-bold text-[#103F38]">{actionNotice}</div>}
    <div className="mt-4 rounded-xl bg-[#F7F0E2] px-5 py-4 text-xs text-black/55">الـ Super Admin يملك كامل الصلاحيات. الأدمن العادي تظهر له فقط الأقسام الممنوحة له.</div>
   </div>
+  {editUserId&&<div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/40 p-4" onClick={()=>setEditUserId(null)}>
+    <section dir="rtl" onClick={e=>e.stopPropagation()} className="w-full max-w-xl rounded-3xl bg-white p-7 shadow-2xl">
+      <h2 className="text-xl font-black">تعديل صلاحيات الموظف</h2>
+      <p className="mt-2 text-sm text-black/55">حدد الأقسام المسموح للموظف الوصول إليها؛ طلبات الطيران والبواخر لها صلاحيتان منفصلتان.</p>
+      <div className="mt-5 grid max-h-[55vh] gap-2 overflow-y-auto sm:grid-cols-2">
+        {permissions.map(([title,desc],i)=>{
+          const code=permissionCodes[i];
+          return <label key={code} className="flex cursor-pointer gap-3 rounded-xl border p-3 text-xs">
+            <input type="checkbox" checked={editPermissions.includes(code)} onChange={()=>setEditPermissions(prev=>prev.includes(code)?prev.filter(x=>x!==code):[...prev,code])} />
+            <span><b>{title}</b><small className="mt-1 block text-black/55">{desc}</small></span>
+          </label>;
+        })}
+      </div>
+      <div className="mt-6 flex gap-3">
+        <button onClick={()=>void saveUserPermissions()} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white">حفظ الصلاحيات</button>
+        <button onClick={()=>setEditUserId(null)} className="rounded-xl border px-5 py-3 text-sm">إلغاء</button>
+      </div>
+    </section>
+  </div>}
   {open&&<div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/25 p-4 backdrop-blur-sm" onClick={()=>setOpen(false)}>
    <div onClick={e=>e.stopPropagation()} className="w-full max-w-2xl rounded-[24px] bg-white p-7 shadow-2xl">
     <div className="flex items-start justify-between"><div><h2 className="text-2xl font-bold">إضافة مستخدم إداري</h2><p className="mt-1 text-sm text-black/45">سيتم إرسال دعوة إلى البريد الإلكتروني لإنشاء كلمة المرور وتفعيل الحساب.</p></div><button onClick={()=>setOpen(false)} className="text-2xl text-black/40">×</button></div>
