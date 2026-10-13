@@ -1,0 +1,26 @@
+"use client";
+import {useEffect,useState,type FormEvent} from "react";
+type Entry={id:string;nameAr:string;nameEn:string;kind:string;city:string;status:string};
+const empty={kind:"EVENT",nameAr:"",nameEn:"",descriptionAr:"",descriptionEn:"",includesAr:"",includesEn:"",excludesAr:"",excludesEn:"",notesAr:"",notesEn:"",posterUrl:"",city:"",locationName:"",startsAt:"",endsAt:"",registrationUrl:"",latitude:"",longitude:""};
+const inputStyle="w-full rounded-xl border border-[#0D3B34]/20 bg-[#FCFBF7] p-3 text-sm outline-none focus:border-[#C4A35F]";
+export default function PublicEventsPage(){
+ const [form,setForm]=useState(empty),[entries,setEntries]=useState<Entry[]>([]),[authorized,setAuthorized]=useState(false),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false),[organization,setOrganization]=useState("");
+ const set=(key:keyof typeof empty,value:string)=>setForm(old=>({...old,[key]:value}));
+ useEffect(()=>{fetch("/api/partner/public-events",{cache:"no-store"}).then(async r=>({ok:r.ok,data:await r.json()})).then(({ok,data})=>{if(ok){setAuthorized(true);setEntries(data.data||[]);setOrganization(data.partnerName||"")}else setNotice(data.message||"تعذر تحميل الفعاليات.")}).catch(()=>setNotice("تعذر الاتصال بالخادم."))},[]);
+ async function submit(e:FormEvent){e.preventDefault();setBusy(true);setNotice("");try{const r=await fetch("/api/partner/public-events",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});const d=await r.json();if(!r.ok)throw Error(d.message||"تعذر النشر.");setEntries(v=>[d.data,...v]);setForm(empty);setNotice("نُشرت الفعالية بنجاح.")}catch(e){setNotice(e instanceof Error?e.message:"تعذر النشر.")}finally{setBusy(false)}}
+ const field=(title:string,key:keyof typeof empty,required=false,long=false)=><label className="block text-sm font-semibold">{title}{required?" *":""}{long?<textarea rows={3} value={form[key]} required={required} onChange={e=>set(key,e.target.value)} className={inputStyle}/>:<input value={form[key]} required={required} onChange={e=>set(key,e.target.value)} className={inputStyle}/>}</label>;
+ return <main dir="rtl" className="min-h-screen bg-[#F8F5ED] px-5 py-12 text-[#0D3B34]"><div className="mx-auto max-w-5xl"><p className="text-xs font-bold text-[#B99124]">AREES LOOP · PUBLIC EVENTS</p><h1 className="mt-2 text-3xl font-black">الفعاليات والبرامج</h1><p className="mt-2 text-sm text-[#0D3B34]/65">فعاليات مجانية معلوماتية للجهات الحكومية وغير الربحية؛ بدون أسعار أو عمولات.</p>{organization&&<p className="mt-3 font-bold">الجهة المنظمة: {organization}</p>}{notice&&<p role="status" className="my-5 rounded-xl bg-white p-4 text-sm">{notice}</p>}
+ {authorized&&<form onSubmit={submit} className="mt-7 rounded-3xl border border-[#D4AF37]/30 bg-white p-6 shadow-sm md:p-9"><div className="grid gap-5 md:grid-cols-2"><label className="text-sm font-bold">نوع المحتوى<select className={inputStyle} value={form.kind} onChange={e=>set("kind",e.target.value)}><option value="EVENT">فعالية</option><option value="PROGRAM">برنامج</option></select></label><div className="rounded-xl bg-[#F8F5ED] p-4 text-sm">متاح للجهات المعتمدة فقط</div>
+ {field("عنوان الفعالية بالعربية","nameAr",true)}{field("English title","nameEn",true)}
+ {field("التفاصيل بالعربية","descriptionAr",true,true)}{field("Description in English","descriptionEn",true,true)}
+ {field("يشمل البرنامج بالعربية","includesAr",false,true)}{field("Includes in English","includesEn",false,true)}
+ {field("لا يشمل البرنامج بالعربية","excludesAr",false,true)}{field("Excludes in English","excludesEn",false,true)}
+ {field("الملاحظات بالعربية","notesAr",false,true)}{field("Notes in English","notesEn",false,true)}
+ {field("المدينة","city",true)}{field("موقع الفعالية","locationName",true)}
+ <label className="text-sm font-bold">البداية *<input type="datetime-local" required value={form.startsAt} onChange={e=>set("startsAt",e.target.value)} className={inputStyle}/></label>
+ <label className="text-sm font-bold">النهاية *<input type="datetime-local" required value={form.endsAt} onChange={e=>set("endsAt",e.target.value)} className={inputStyle}/></label>
+ {field("رابط بوستر الفعالية HTTPS","posterUrl")}{field("رابط التسجيل الخارجي (اختياري)","registrationUrl")}
+ {field("خط العرض (اختياري)","latitude")}{field("خط الطول (اختياري)","longitude")}
+ </div><p className="mt-5 text-xs text-[#0D3B34]/65">رفع البوستر من الجهاز يتطلب إصلاح تكامل تخزين الصور القائم أولاً. حالياً يُقبل رابط HTTPS لصورة معتمدة.</p><button disabled={busy} className="mt-5 rounded-full bg-[#0D3B34] px-8 py-3 font-bold text-white disabled:opacity-50">{busy?"جارٍ الحفظ...":"نشر الفعالية"}</button></form>}
+ <section className="mt-10"><h2 className="mb-5 text-xl font-black">فعاليات الجهة</h2>{entries.length?<div className="grid gap-4 md:grid-cols-2">{entries.map(item=><article key={item.id} className="rounded-2xl bg-white p-5"><p className="text-xs text-[#B99124]">{item.kind==="PROGRAM"?"برنامج":"فعالية"} · {item.city}</p><h3 className="mt-2 font-bold">{item.nameAr}</h3><p className="text-sm text-[#0D3B34]/60">{item.nameEn}</p><a href={`/events/${item.id}`} className="mt-3 inline-block underline">عرض الفعالية</a></article>)}</div>:<p className="rounded-2xl bg-white p-6 text-sm">لا توجد فعاليات مسجلة.</p>}</section></div></main>
+}
