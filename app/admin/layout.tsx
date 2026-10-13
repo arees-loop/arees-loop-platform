@@ -20,6 +20,7 @@ const nav: NavItem[] = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
   { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
   { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
+  { href: "/admin/success-partners", label: "شركاء النجاح (المتحرك)", icon: "✧", superOnly: true, permission: null },
   { href: "/admin/users", label: "المستخدمين", icon: "♙", superOnly: true, permission: null },
   { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
   { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
