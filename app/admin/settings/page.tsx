@@ -11,6 +11,12 @@ export default function PlatformSettingsPage(){
    <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">تحكم في ظهور روابط القائمة العلوية للزوار دون حذف الصفحات.</p>
    <span className="mt-6 inline-block text-sm font-bold text-[#B38A25]">فتح الإعدادات ←</span>
   </Link>
+  <Link href="/admin/success-partners" className="group rounded-3xl border border-[#D4AF37]/30 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-[#D4AF37] hover:shadow-lg">
+   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl text-[#B38A25]">✧</span>
+   <h2 className="mt-5 text-lg font-black">شركاء النجاح — الشريط المتحرك</h2>
+   <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">إضافة الشعارات وتعديل ظهورها وترتيبها بالصفحة الرئيسية. متاح للسوبر أدمن فقط.</p>
+   <span className="mt-6 inline-block text-sm font-bold text-[#B38A25]">إدارة الشعارات ←</span>
+  </Link>
   <div className="rounded-3xl border border-dashed border-[#D4AF37]/35 bg-white/60 p-7">
    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl text-[#B38A25]">＋</span>
    <h2 className="mt-5 text-lg font-black">إعدادات إضافية</h2>
