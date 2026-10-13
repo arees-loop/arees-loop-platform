@@ -23,6 +23,7 @@ type PartnerApplication = {
   legalNameAr: string;
   tradeNameAr: string | null;
   partnerType: string | null;
+  logoUrl?: string | null;
   submittedAt: string | null;
   updatedAt: string;
   completionNotes?: string | null;
@@ -128,6 +129,9 @@ function formatDateTime(value: string) {
 
 export default function PartnerStatusPage() {
   const [showDetails, setShowDetails] = useState(false);
+  const [officialLogoFile, setOfficialLogoFile] = useState<File | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoFeedback, setLogoFeedback] = useState("");
   const [application, setApplication] = useState<PartnerApplication | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -176,6 +180,29 @@ export default function PartnerStatusPage() {
       active = false;
     };
   }, []);
+
+  async function uploadOfficialLogo() {
+    if (!officialLogoFile || !application || logoUploading) return;
+    setLogoUploading(true);
+    setLogoFeedback("");
+    try {
+      const body = new FormData();
+      body.append("file", officialLogoFile);
+      const response = await fetch("/api/partner/logo", {method:"POST",body});
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success) {
+        setLogoFeedback(result?.message || "تعذر رفع الشعار. حاول مرة أخرى.");
+        return;
+      }
+      setApplication(current => current ? {...current,logoUrl:result.logoUrl} : current);
+      setOfficialLogoFile(null);
+      setLogoFeedback("رُفع الشعار وأصبح جاهزاً لمراجعة أريس.");
+    } catch {
+      setLogoFeedback("تعذر الاتصال بخدمة رفع الشعار.");
+    } finally {
+      setLogoUploading(false);
+    }
+  }
 
   const currentStatus = application ? statusToStep(application.status) : "received";
   const currentIndex = useMemo(
@@ -303,6 +330,32 @@ export default function PartnerStatusPage() {
             </div>
           </div>
         </section>
+
+        {application.partnerType === "GOVERNMENT_NONPROFIT" &&
+          ["DRAFT","SUBMITTED","UNDER_REVIEW","NEEDS_COMPLETION"].includes(application.status) && (
+            <section className="mb-7 rounded-[28px] border border-[#D4AF37]/25 bg-white p-6">
+              <h3 className="text-xl font-bold">الشعار الرسمي للجهة</h3>
+              <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">ارفع الشعار المعتمد، أو استبدله قبل الموافقة النهائية. لا يظهر للزوار قبل الاعتماد.</p>
+              {application.logoUrl && (
+                <div className="mt-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={application.logoUrl} alt="شعار الجهة للمراجعة" className="h-24 w-24 rounded-xl border bg-white object-contain p-2"/>
+                </div>
+              )}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <input type="file" accept=".png,.jpg,.jpeg,.webp"
+                  aria-label="اختيار شعار الجهة الرسمي"
+                  onChange={e=>setOfficialLogoFile(e.target.files?.[0]??null)}
+                  className="max-w-full rounded-xl border bg-[#FAF8F1] p-3 text-sm" />
+                <button type="button" onClick={uploadOfficialLogo}
+                  disabled={!officialLogoFile || logoUploading}
+                  className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">
+                  {logoUploading ? "جاري رفع الشعار..." : "رفع الشعار للمراجعة"}
+                </button>
+              </div>
+              {logoFeedback && <p role="status" className="mt-3 text-sm font-semibold">{logoFeedback}</p>}
+            </section>
+          )}
 
         <div className="grid gap-7 lg:grid-cols-[1.5fr_0.8fr]">
           <section className="rounded-[30px] border border-[#DDD9CC] bg-[#FCFBF7] p-6 md:p-8">
