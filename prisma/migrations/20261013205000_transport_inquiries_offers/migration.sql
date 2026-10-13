@@ -24,6 +24,7 @@ CREATE TABLE "TransportRequest" (
   "notes" TEXT,
   "status" TEXT NOT NULL DEFAULT 'NEW',
   "adminNotes" TEXT,
+  "customerReply" TEXT,
   "assignedToId" TEXT,
   "canceledBy" TEXT,
   "cancellationReason" TEXT,
