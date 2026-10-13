@@ -250,7 +250,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     <main dir="rtl" className="mx-auto max-w-[1300px] px-5 py-8 text-[#0D3B34]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-black tracking-widest text-[#A78332]">AREES LOOP · AREES TRAVEL</p>
-          <h1 className="mt-2 text-3xl font-black">حجوزات الطيران والبواخر</h1>
+          <h1 className="mt-2 text-3xl font-black">{initialOfferKind==="FLIGHT"?"إدارة حجوزات الطيران":initialOfferKind==="FERRY"?"إدارة حجوزات البواخر":"حجوزات الطيران والبواخر"}</h1>
           <p className="mt-2 text-sm leading-8 text-[#0D3B34]/70">استقبال الطلبات، إعداد عروض الأسعار، متابعة التواصل، وإدارة إعلانات الأسعار وجداول البواخر.</p>
         </div>
         <div className="flex gap-2">
@@ -261,7 +261,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       <div className="mt-7 flex flex-wrap gap-2">
         <button onClick={()=>setTab("requests")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="requests"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>طلبات العملاء ({filteredRequests.length})</button>
         <button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.filter(x=>initialOfferKind==="ALL"||x.kind===initialOfferKind).length})</button>
-        {tab==="offers"&&<div className="flex flex-wrap gap-2">
+        {tab==="offers"&&initialOfferKind==="ALL"&&<div className="flex flex-wrap gap-2">
           <button type="button" onClick={()=>{setFilterKind("FLIGHT");startOffer();setOfferForm(f=>({...f,kind:"FLIGHT",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FLIGHT"?"bg-[#D4AF37]":"bg-white"}`}>✈ عروض الطيران</button>
           <button type="button" onClick={()=>{setFilterKind("FERRY");startOffer();}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FERRY"?"bg-[#D4AF37]":"bg-white"}`}>⚓ عروض البواخر</button>
           <button type="button" onClick={()=>setFilterKind("ALL")} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="ALL"?"bg-[#D4AF37]":"bg-white"}`}>جميع العروض</button>
@@ -379,7 +379,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             {!showSuper&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-bold text-amber-800">تعديل العروض والأسعار والصور متاح للسوبر أدمن فقط.</p>}
             <p className="mt-2 text-xs leading-7">الأسعار تظهر في البطاقات الجانبية، وليس داخل نموذج طلب العميل. في البواخر أضف حالة التشغيل والملاحظات عند توقف أي باخرة.</p>
             <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2">
-              <label className={label}>الخدمة<select className={field} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option></select></label>
+              <label className={label}>الخدمة<select className={field} disabled={initialOfferKind!=="ALL"} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option></select></label>
               <label className={label}>الناقل / الباخرة
                 {offerForm.kind==="FLIGHT" ? <AirlineLookup ariaLabel="شركة الطيران في الإعلان" value={offerForm.carrierName} onChange={v=>setOfferForm(f=>({...f,carrierName:v}))} /> :
                   <><input className={field} list="offer-operators" value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="اختر الباخرة"/><datalist id="offer-operators">{ferryOperators.map(v=><option key={v} value={v}/>)}</datalist></>}
@@ -438,7 +438,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/30 p-3 text-sm font-bold"><input type="checkbox" checked={offerForm.isVisible} onChange={e=>setOfferForm(f=>({...f,isVisible:e.target.checked}))}/> ظاهر للزوار</label>
               <div className="flex flex-wrap gap-3 sm:col-span-2">
                 <button disabled={busy||!showSuper} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
-                <button type="button" onClick={()=>setOfferForm({...blankOffer})} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
+                <button type="button" onClick={()=>{setBannerFile(null);setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});}} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
               </div>
             </form>
           </section>
