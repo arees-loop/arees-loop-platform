@@ -3,6 +3,8 @@
 CREATE TABLE "HotelInquiry" (
   "id" TEXT NOT NULL,
   "reference" TEXT NOT NULL,
+  "userId" TEXT,
+  "trackingTokenHash" TEXT,
   "customerName" TEXT NOT NULL,
   "customerEmail" TEXT,
   "countryCode" TEXT NOT NULL,
@@ -27,6 +29,8 @@ CREATE TABLE "HotelInquiry" (
   CONSTRAINT "HotelInquiry_pkey" PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX "HotelInquiry_reference_key" ON "HotelInquiry"("reference");
+CREATE UNIQUE INDEX "HotelInquiry_trackingTokenHash_key" ON "HotelInquiry"("trackingTokenHash");
+CREATE INDEX "HotelInquiry_userId_createdAt_idx" ON "HotelInquiry"("userId","createdAt");
 CREATE INDEX "HotelInquiry_status_createdAt_idx" ON "HotelInquiry"("status","createdAt");
 CREATE INDEX "HotelInquiry_phone_createdAt_idx" ON "HotelInquiry"("phone","createdAt");
 
