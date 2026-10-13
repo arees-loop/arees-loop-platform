@@ -28,7 +28,8 @@ function parseOfferDate(value:unknown, end=false) {
   const date=parseDay(value);
   if (!date) return null;
   const day=date.toISOString().slice(0,10);
-  return new Date(day+(end?"T23:59:59.999Z":"T00:00:00.000Z"));
+  // Include the chosen Saudi calendar day in the campaign window (Asia/Riyadh, UTC+03).
+  return new Date(day+(end?"T23:59:59.999+03:00":"T00:00:00.000+03:00"));
 }
 function offerPeriod(startsAt:unknown, endsAt:unknown) {
   const start=parseOfferDate(startsAt), end=parseOfferDate(endsAt,true);
