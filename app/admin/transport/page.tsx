@@ -323,6 +323,7 @@ export default function TransportAdminPage() {
         <div className="mt-7 grid items-start gap-6 xl:grid-cols-2">
           <section className="rounded-[25px] border border-[#D4AF37]/35 bg-white p-6">
             <h2 className="text-xl font-black">{offerForm.id?"تعديل عرض أو جدول":"إضافة عرض أو جدول جديد"}</h2>
+            {!showSuper&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-bold text-amber-800">تعديل العروض والأسعار والصور متاح للسوبر أدمن فقط.</p>}
             <p className="mt-2 text-xs leading-7">الأسعار تظهر في البطاقات الجانبية، وليس داخل نموذج طلب العميل. في البواخر أضف حالة التشغيل والملاحظات عند توقف أي باخرة.</p>
             <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2">
               <label className={label}>الخدمة<select className={field} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option></select></label>
@@ -345,11 +346,38 @@ export default function TransportAdminPage() {
               <label className={label}>حالة التشغيل<select className={field} value={offerForm.operationStatus} onChange={e=>setOfferForm(f=>({...f,operationStatus:e.target.value}))}><option value="AVAILABLE">تعمل / متاحة</option><option value="SUSPENDED">متوقفة حالياً</option><option value="UNKNOWN">غير مؤكد</option></select></label>
               <label className={label+" sm:col-span-2"}>وصف العرض<textarea className={field} rows={3} value={offerForm.description} onChange={e=>setOfferForm(f=>({...f,description:e.target.value}))}/></label>
               <label className={label+" sm:col-span-2"}>ملاحظات التشغيل التي تظهر للعميل<textarea className={field} rows={2} value={offerForm.operationNote} onChange={e=>setOfferForm(f=>({...f,operationNote:e.target.value}))} placeholder="مثلاً: الباخرة متوقفة حالياً حتى إشعار آخر"/></label>
-              <label className={label+" sm:col-span-2"}>رابط بنر من ملفات المشروع (اختياري)<input className={field} value={offerForm.bannerUrl} onChange={e=>setOfferForm(f=>({...f,bannerUrl:e.target.value}))} placeholder="/Image/..."/></label>
+              <div className="sm:col-span-2 rounded-[20px] border border-[#D4AF37]/35 bg-[#F8F5EC] p-4">
+                <label className={label}>صورة الإعلان أو تصميم العرض (PNG / JPG / WEBP)
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>setBannerFile(e.target.files?.[0]||null)} />
+                </label>
+                <p className="mt-2 text-xs text-[#0D3B34]/65">حتى 4 ميجابايت. هذه معاينة للصورة والنص قبل الحفظ؛ التخزين يتطلب اتصال Vercel Blob.</p>
+                {!bannerFile&&<label className={label+" mt-3"}>أو رابط صورة موجودة في ملفات المشروع
+                  <input className={field} value={offerForm.bannerUrl} onChange={e=>setOfferForm(f=>({...f,bannerUrl:e.target.value}))} placeholder="/Image/..."/>
+                </label>}
+                {(bannerPreview||offerForm.bannerUrl)&&<div className="mt-4 overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} className="h-44 w-full object-contain"/>
+                </div>}
+              </div>
+              <div className="sm:col-span-2 overflow-hidden rounded-[24px] border border-[#D4AF37]/40 bg-white shadow-lg">
+                <div className="bg-[#0D3B34] px-5 py-3 text-sm font-black text-white">معاينة بطاقة العرض — نص مع صورة</div>
+                {(bannerPreview||offerForm.bannerUrl)&&
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img alt={offerForm.title||"صورة العرض"} src={bannerPreview||offerForm.bannerUrl} className="h-40 w-full bg-[#F8F5EC] object-contain"/>}
+                <div className="p-5">
+                  <p className="text-xs font-bold text-[#A77B23]">{offerForm.carrierName||"الناقل / الباخرة"}</p>
+                  <h3 className="mt-2 text-xl font-black">{offerForm.title||"عنوان العرض"}</h3>
+                  <p className="mt-2 text-sm">{offerForm.origin||"من"} ← {offerForm.destination||"إلى"} · {offerForm.travelDate||"موعد يحدد لاحقاً"}</p>
+                  {offerForm.amountSar!==""&&<p className="mt-3 text-2xl font-black text-[#9A7620]">{Number(offerForm.amountSar).toLocaleString("ar-SA")} ر.س <span className="text-xs">{offerForm.priceUnit}</span></p>}
+                  {offerForm.description&&<p className="mt-2 whitespace-pre-line text-sm leading-7">{offerForm.description}</p>}
+                  {offerForm.operationNote&&<p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs leading-6 text-amber-900">{offerForm.operationNote}</p>}
+                  <p className="mt-3 text-xs text-[#0D3B34]/60">حسب التوفر والتأكيد — العرض ليس تذكرة مؤكدة.</p>
+                </div>
+              </div>
               <label className={label}>ترتيب العرض<input className={field} type="number" min={0} max={9999} value={offerForm.sortOrder} onChange={e=>setOfferForm(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
               <label className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/30 p-3 text-sm font-bold"><input type="checkbox" checked={offerForm.isVisible} onChange={e=>setOfferForm(f=>({...f,isVisible:e.target.checked}))}/> ظاهر للزوار</label>
               <div className="flex flex-wrap gap-3 sm:col-span-2">
-                <button disabled={busy} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
+                <button disabled={busy||!showSuper} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
                 <button type="button" onClick={()=>setOfferForm({...blankOffer})} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
               </div>
             </form>
@@ -357,7 +385,7 @@ export default function TransportAdminPage() {
           <section className="space-y-3">
             <h2 className="text-xl font-black">العروض والجداول المنشورة</h2>
             {offers.length===0&&!loading&&<p className="rounded-xl bg-white p-5 text-sm">لا توجد عروض بعد.</p>}
-            {offers.map(offer=>(
+            {offers.filter(o=>filterKind==="ALL"||o.kind===filterKind).map(offer=>(
               <article key={offer.id} className="rounded-[22px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div><p className="text-xs font-semibold text-[#947426]">{offer.kind==="FERRY"?"بواخر":"طيران"} · {offer.carrierName}</p>
