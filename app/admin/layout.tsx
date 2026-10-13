@@ -24,6 +24,7 @@ const nav: NavItem[] = [
   { href: "/admin/transport", label: "طلبات الطيران والبواخر", icon: "✈", permission: null },
   { href: "/admin/users", label: "المستخدمين", icon: "♙", superOnly: true, permission: null },
   { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
+  { href: "/admin/transport", label: "طلبات الطيران والبواخر", icon: "✈", permission: null },
   { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
   { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
   { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
