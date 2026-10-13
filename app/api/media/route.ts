@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   const pathname = request.nextUrl.searchParams.get("pathname");
   if (!pathname) return new Response("Not found", { status: 404 });
-  const logoMatch = /^partners\\/([^/]+)\\/logos\\/[a-f0-9-]+\\.(png|jpg|webp)$/.exec(pathname);
+  const logoMatch = new RegExp("^partners/([^/]+)/logos/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   if (!pathname.startsWith("services/") && !logoMatch) {
     return new Response("Not found", { status: 404 });
   }
