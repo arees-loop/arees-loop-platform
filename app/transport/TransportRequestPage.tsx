@@ -1,10 +1,12 @@
 "use client";
 import { AirportLookup } from "@/app/components/AviationLookup";
+import Link from "next/link";
+import { storeCustomerClaim } from "@/lib/customer-request-claims";
 import { useEffect, useState, type FormEvent } from "react";
 
 type Kind="FLIGHT"|"FERRY";
 type Offer={id:string;title:string;description:string|null;carrierName:string|null;origin:string|null;destination:string|null;travelDate:string|null;amountSar:number|null;priceUnit:string|null;bannerUrl:string|null;operationStatus:string;operationNote:string|null};
-type Confirmation={reference:string;kind:string;customerName:string;origin:string;destination:string;travelDate:string;adults:number;children:number;infants:number;phone:string;notice:string;tripType?:string;returnDate?:string|null;itinerary?:{origin:string;destination:string;travelDate:string}[]};
+type Confirmation={reference:string;trackingToken:string;kind:string;customerName:string;origin:string;destination:string;travelDate:string;adults:number;children:number;infants:number;phone:string;notice:string;tripType?:string;returnDate?:string|null;itinerary?:{origin:string;destination:string;travelDate:string}[]};
 const codes=[["966","السعودية +966"],["249","السودان +249"],["20","مصر +20"],["971","الإمارات +971"],["974","قطر +974"],["965","الكويت +965"],["973","البحرين +973"],["968","عُمان +968"],["1","أمريكا/كندا +1"],["44","بريطانيا +44"],["other","دولة أخرى"]];
 const field="w-full min-w-0 rounded-2xl border border-[#C5AE73]/35 bg-[#FCFBF6] px-4 py-3.5 text-sm text-[#0D3B34] outline-[#B69034]";
 const label="flex flex-col gap-2 text-sm font-bold text-[#183E36]";
@@ -22,6 +24,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [confirmation,setConfirmation]=useState<Confirmation|null>(null);
+  const [claimSaved,setClaimSaved]=useState(true);
   const [countryCode,setCountryCode]=useState("966");
   const [customCountryCode,setCustomCountryCode]=useState("");
   const [altCountryCode,setAltCountryCode]=useState("966");
@@ -82,6 +85,8 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
       });
       const body=await result.json().catch(()=>null);
       if(!result.ok||!body?.success){setError(body?.message||"تعذر إرسال الطلب، حاول مجدداً.");return;}
+      const saved=storeCustomerClaim({reference:body.data.reference,token:body.data.trackingToken});
+      setClaimSaved(saved);
       setConfirmation(body.data);
     }catch{setError("تعذر الاتصال بالخدمة حالياً. أعد المحاولة.");}
     finally{setBusy(false);}
@@ -152,7 +157,8 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
             {confirmation?(
               <div role="status">
                 <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-3xl text-emerald-700">✓</div>
-                <h2 className="text-3xl font-black">تم استلام طلبك بنجاح</h2>
+                <h2 className="text-3xl font-black">تم إرسال الطلب بنجاح</h2>
+                <p className="mt-3 text-base font-bold">تابع الطلب من صفحة «طلباتي»</p>
                 <p className="mt-3 text-sm leading-8">رقم الطلب: <strong dir="ltr">{confirmation.reference}</strong></p>
                 <div className="mt-6 grid gap-3 rounded-[22px] bg-[#F8F4E9] p-5 text-sm leading-7 sm:grid-cols-2">
                   <p>الاسم: <b>{confirmation.customerName}</b></p>
@@ -167,7 +173,11 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   <p className="sm:col-span-2">التواصل: <b dir="ltr">{confirmation.phone}</b></p>
                 </div>
                 <p className="mt-5 text-sm leading-8">سيراجع موظف أريس الطلب ويتواصل معك على الرقم المدخل لإرسال السعر والتوفر. <strong>لا يعتبر الطلب تذكرة أو حجزاً مؤكداً.</strong></p>
-                <button type="button" onClick={()=>{setConfirmation(null);setNotes("");}} className="mt-7 rounded-full bg-[#0D3B34] px-8 py-3 font-bold text-white">إرسال طلب جديد</button>
+                {!claimSaved&&<p role="alert" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-7">تعذر حفظ رمز متابعة الطلب في هذا المتصفح. احتفظ برقم الطلب، وسجّل الدخول إلى حسابك لمتابعته إذا أرسلته من حساب مسجّل.</p>}
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <Link href={`/my-requests?reference=${encodeURIComponent(confirmation.reference)}`} className="rounded-full bg-[#0D3B34] px-8 py-3 font-black text-white shadow-md">متابعة الطلب ←</Link>
+                  <button type="button" onClick={()=>{setConfirmation(null);setNotes("");}} className="rounded-full border border-[#D4AF37]/50 bg-white px-8 py-3 font-bold">إرسال طلب جديد</button>
+                </div>
               </div>
             ):(
               <>
