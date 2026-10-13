@@ -24,7 +24,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const userId = typeof body.userId === "string" ? body.userId : "";
     const action = body.action;
-    if (!userId || !["ACTIVATE","DISABLE"].includes(action)) {
+    if (!userId || !["ACTIVATE","DISABLE","SET_PERMISSIONS"].includes(action)) {
       return NextResponse.json({ success:false, message:"الإجراء غير صالح." }, { status:400 });
     }
 
@@ -36,6 +36,17 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success:false, message:"لا يمكن تعطيل حساب Super Admin من هذه القائمة." }, { status:409 });
     }
 
+    if (action === "SET_PERMISSIONS") {
+      if (target.role !== "ADMIN") return NextResponse.json({ success:false,message:"لا يمكن تعديل صلاحيات السوبر أدمن." },{status:403});
+      const permitted = ["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES"];
+      if (!Array.isArray(body.permissions) || body.permissions.length > permitted.length ||
+        body.permissions.some((x:unknown)=>typeof x!=="string" || !permitted.includes(x)) ||
+        new Set(body.permissions).size!==body.permissions.length) return NextResponse.json({success:false,message:"الصلاحيات غير صحيحة."},{status:400});
+      const before = await prisma.user.findUnique({where:{id:userId},select:{adminPermissions:true}});
+      const updated = await prisma.user.update({where:{id:userId},data:{adminPermissions:body.permissions},select:{id:true,adminPermissions:true}});
+      await prisma.auditLog.create({data:{userId:session.user.id,action:"ADMIN_PERMISSIONS_UPDATED",entityType:"User",entityId:userId,beforeData:{permissions:before?.adminPermissions},afterData:{permissions:updated.adminPermissions}}}).catch(err=>console.error("Admin permission audit failed",err));
+      return NextResponse.json({success:true,message:"تم تحديث صلاحيات الموظف.",data:updated});
+    }
     const status = action === "ACTIVATE" ? "ACTIVE" : "DISABLED";
     const updated = await prisma.user.update({ where:{id:userId}, data:{status}, select:{id:true,status:true} });
     await prisma.auditLog.create({ data:{ userId:session.user.id, action:action === "ACTIVATE" ? "ADMIN_USER_ACTIVATED" : "ADMIN_USER_DISABLED", entityType:"User", entityId:userId, beforeData:{status:target.status}, afterData:{status} } });
