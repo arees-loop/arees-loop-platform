@@ -9,11 +9,28 @@ export async function GET(request: NextRequest) {
   const pathname = request.nextUrl.searchParams.get("pathname");
   if (!pathname) return new Response("Not found", { status: 404 });
   const logoMatch = new RegExp("^partners/([^/]+)/logos/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
-  if (!pathname.startsWith("services/") && !logoMatch) {
+  const successMatch = new RegExp("^success-partners/([a-zA-Z0-9_-]+)/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
+  if (!pathname.startsWith("services/") && !logoMatch && !successMatch) {
     return new Response("Not found", { status: 404 });
   }
 
-  let publicAsset = !logoMatch;
+  let publicAsset = !logoMatch && !successMatch;
+  if (successMatch) {
+    const partner = await prisma.successPartner.findUnique({
+      where: { id: successMatch[1] },
+      select: { id: true, logoUrl: true, isVisible: true },
+    });
+    if (!partner || partner.logoUrl !== `/api/media?pathname=${encodeURIComponent(pathname)}`) {
+      return new Response("Not found", { status: 404 });
+    }
+    publicAsset = partner.isVisible;
+    if (!publicAsset) {
+      const session = await getCurrentSession();
+      if (session?.user.role !== "SUPER_ADMIN") {
+        return new Response("Not found", { status: 404 });
+      }
+    }
+  }
   if (logoMatch) {
     const partner = await prisma.partner.findUnique({
       where:{id:logoMatch[1]},
