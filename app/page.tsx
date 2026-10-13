@@ -13,6 +13,14 @@ import { getCurrentLocation } from "../lib/location";
 import { getTotalLoopPoints, getLoopProgress } from "../lib/loop-progress";
 
 type LiveService = { id:string; nameAr:string; descriptionAr?:string|null; city?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string; latitude?:number|null; longitude?:number|null };
+type SuccessPartnerEntry = { id: string; name: string; logoUrl: string; websiteUrl?: string | null };
+const fallbackSuccessPartners: SuccessPartnerEntry[] = [
+  { id: "arees", name: "أريس للسفر والسياحة", logoUrl: "/Logo/arees-travel-solutions-logo.png" },
+  { id: "tarco", name: "تاركو للطيران", logoUrl: "/Logo/tarco-aviation-logo.png" },
+  { id: "badr", name: "بدر للطيران", logoUrl: "/Logo/badr-airlines-transparent-v2.png" },
+  { id: "sudan", name: "الخطوط الجوية السودانية", logoUrl: "/Logo/sudan-airways-transparent-v2.png" },
+];
+
 const steps = [
   {
     number: "01",
@@ -187,6 +195,7 @@ const distanceKm = (
 
 export default function Home() {
   const [partnersNudge, setPartnersNudge] = useState(0);
+  const [successPartners, setSuccessPartners] = useState<SuccessPartnerEntry[] | null>(null);
   const [walletPoints, setWalletPoints] = useState<number | null>(null);
   const [lastRewardPoints, setLastRewardPoints] = useState<number | null>(null);
   const [liveServices, setLiveServices] = useState<LiveService[]>([]);
@@ -217,6 +226,14 @@ export default function Home() {
     .filter(service => saudiCities.has(service.city || ""))
     .filter((service, index, all) => all.findIndex(item => item.city === service.city) === index)
     .map(service => ({...service, displayName: service.city || service.nameAr}));
+  const activeSuccessPartners = successPartners ?? fallbackSuccessPartners;
+  // Repeat at least eight slots so the marquee stays visually seamless with few partners.
+  const marqueePartners = activeSuccessPartners.length
+    ? Array.from(
+        { length: Math.ceil(8 / activeSuccessPartners.length) },
+        () => activeSuccessPartners,
+      ).flat()
+    : [];
   const currentScene = heroScenes[activeScene];
   const isArabic = heroLanguage === "ar";
   const isLastScene = activeScene === heroScenes.length - 1;
@@ -238,6 +255,19 @@ export default function Home() {
       window.removeEventListener("storage", syncWallet);
       window.removeEventListener("focus", syncWallet);
     };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/success-partners", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : null)
+      .then(data => {
+        if (active && data?.success && Array.isArray(data.data)) {
+          setSuccessPartners(data.data);
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
