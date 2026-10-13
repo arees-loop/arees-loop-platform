@@ -230,7 +230,45 @@ export default function TransportAdminPage() {
                   <p>السفر: <b>{day(selected.travelDate)}</b></p>
                   <p>العدد: <b>{selected.adults} بالغ / {selected.children} طفل / {selected.infants} رضيع</b></p>
                 </div>
+                {selected.kind==="FLIGHT"&&<div className="mt-3 rounded-xl border border-[#D4AF37]/25 bg-[#F8F5EC] p-4 text-xs leading-7">
+                  <b>نوع الرحلة:</b> {selected.tripType==="ROUND_TRIP"?"ذهاب وعودة":selected.tripType==="MULTI_CITY"?"متعدد الوجهات":"ذهاب فقط"}
+                  {selected.returnDate&&<p>تاريخ العودة: {day(selected.returnDate)}</p>}
+                  {Array.isArray(selected.itinerary)&&selected.itinerary.map((leg,index)=>{
+                    const value=leg as {origin:string;destination:string;travelDate:string};
+                    return <p key={index}>الرحلة {index+1}: {value.origin} ← {value.destination} · {value.travelDate}</p>;
+                  })}
+                </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
+                <section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4">
+                  <h3 className="text-base font-black">الإسناد وسير العمل</h3>
+                  <p className="mt-2 text-sm">الموظف المسؤول: <b>{staffName(selected.assignedToId)}</b></p>
+                  {showSuper&&<div className="mt-3 flex flex-wrap gap-2">
+                    <select aria-label="إسناد الطلب لموظف" className={field+" min-w-0 flex-1"} value={selected.assignedToId||""} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})} disabled={busy}>
+                      <option value="">غير مسند</option>
+                      {staff.map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email} · {u.role}</option>)}
+                    </select>
+                  </div>}
+                  <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-bold">الحالة: {statusNames[selected.status]||selected.status}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(transitions[selected.status]||[]).filter(x=>x!=="CANCELED"&&x!=="QUOTE_READY").map(next=>
+                      <button key={next} type="button" disabled={busy} onClick={()=>void performAction("SET_STATUS",{status:next})}
+                        className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2 text-xs font-bold disabled:opacity-40">
+                        {statusNames[next]}
+                      </button>)}
+                  </div>
+                  {(transitions[selected.status]||[]).includes("CANCELED")&&<div className="mt-4 grid gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
+                    <label className={label}>جهة الإلغاء
+                      <select className={field} value={cancelBy} onChange={e=>setCancelBy(e.target.value)}>
+                        <option value="STAFF">الموظف</option><option value="PARTNER">الشريك / مقدم الخدمة</option><option value="CUSTOMER">العميل</option>
+                      </select>
+                    </label>
+                    <label className={label}>سبب الإلغاء (إلزامي)
+                      <textarea className={field} minLength={5} maxLength={1500} rows={2} value={cancelReason} onChange={e=>setCancelReason(e.target.value)} placeholder="وضح سبب الإلغاء مع التفاصيل..."/>
+                    </label>
+                    <button type="button" disabled={busy||cancelReason.trim().length<5} onClick={()=>void performAction("SET_STATUS",{status:"CANCELED",canceledBy:cancelBy,cancellationReason:cancelReason})} className="rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40">تأكيد إلغاء الطلب</button>
+                  </div>}
+                  {selected.cancellationReason&&<p className="mt-3 whitespace-pre-wrap text-sm text-red-700">سبب الإلغاء: {selected.cancellationReason}</p>}
+                </section>
                 <form onSubmit={saveQuote} className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2 rounded-xl border border-[#D4AF37]/35 bg-[#F9F6EC] px-4 py-3 text-sm font-bold">حالة الطلب الحالية: {statusNames[selected.status]||selected.status}</div>
                   <label className={label}>المشغّل / الباخرة / شركة الطيران
@@ -251,6 +289,15 @@ export default function TransportAdminPage() {
                 <p className="mt-3 text-xs leading-7 text-[#0D3B34]/65">احفظ عرض السعر PDF ثم أرفقه يدوياً من حساب واتساب الشركة في المحادثة المفتوحة. فتح المحادثة وحده لا يعني إرسال الملف. لا يتم إرسال المستند تلقائياً قبل ربط WhatsApp Cloud API.</p>
                 <button disabled={busy} type="button" onClick={()=>void markManuallySent()} className="mt-4 w-full rounded-xl border border-[#D4AF37]/35 px-4 py-3 text-sm font-bold">تأكيد الموظف أنه أرسل PDF يدوياً</button>
                 <p className="mt-2 text-xs">حالة واتساب: {selected.whatsappStatus==="MANUALLY_MARKED_SENT"?"أكد الموظف الإرسال يدوياً":"لم يتم إثبات الإرسال"}</p>
+                <section className="mt-6 rounded-2xl border border-[#D4AF37]/30 bg-[#FBF9F4] p-4">
+                  <div className="flex items-center justify-between gap-3"><h3 className="font-black">سجل إجراءات الطلب</h3><button type="button" onClick={()=>void loadHistory(selected.id)} className="text-xs font-bold text-[#A67D28]">تحديث</button></div>
+                  {history.length===0?<p className="mt-3 text-xs text-[#0D3B34]/60">لا توجد إجراءات محفوظة لعرضها.</p>:
+                    <ol className="mt-4 space-y-3">{history.map(e=><li key={e.id} className="rounded-xl border border-[#D4AF37]/25 bg-white p-3 text-xs leading-6">
+                      <p className="font-bold">{e.actorName} · {e.action==="ASSIGNED"?"إسناد موظف":e.action==="QUOTE_SAVED"?"حفظ عرض السعر":e.action==="QUOTE_MARKED_SENT_MANUALLY"?"تأكيد إرسال العرض":e.action==="CANCELED"?"إلغاء الطلب":e.action==="REQUEST_CREATED"?"إنشاء الطلب":"تغيير حالة"}</p>
+                      {e.toStatus&&<p>الحالة: {statusNames[e.fromStatus||""]||"—"} ← {statusNames[e.toStatus]||e.toStatus}</p>}
+                      <p className="text-[#0D3B34]/55">{new Date(e.createdAt).toLocaleString("ar-SA")}</p>
+                    </li>)}</ol>}
+                </section>
               </>
             )}
           </section>
