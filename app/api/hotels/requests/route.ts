@@ -47,6 +47,10 @@ export async function POST(request:NextRequest){
       checkOutDate:new Date(checkOutDate+"T12:00:00.000Z"),
       rooms,adults,children,notes,
     }});
+    await prisma.hotelInquiryEvent.create({data:{
+      requestId:created.id,actorName:"العميل",action:"REQUEST_CREATED",toStatus:"NEW",
+      details:{rooms,adults,children},
+    }}).catch(error=>console.error("Hotel creation event insert failed",error));
     let sent=false;
     try{
       await sendHotelInquiryNotification({
