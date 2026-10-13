@@ -1262,28 +1262,33 @@ export default function Home() {
           <button type="button" aria-label="الشريك السابق" className="partner-arrow left-4 md:left-8" onClick={() => setPartnersNudge((value) => value - 1)}>‹</button>
           <button type="button" aria-label="الشريك التالي" className="partner-arrow right-4 md:right-8" onClick={() => setPartnersNudge((value) => value + 1)}>›</button>
 
-          <div className="partners-marquee" style={{ "--partners-nudge": `${partnersNudge * 210}px` } as React.CSSProperties}>
-            {[0, 1].map((group) => (
-              <div key={group} className="partners-group" aria-hidden={group === 1}>
-                {[
-                  { src: "/Logo/arees-travel-solutions-logo.png", alt: "أريس للسفر والسياحة" },
-                  { src: "/Logo/tarco-aviation-logo.png", alt: "تاركو للطيران" },
-                  { src: "/Logo/badr-airlines-transparent-v2.png", alt: "بدر للطيران" },
-                  { src: "/Logo/sudan-airways-transparent-v2.png", alt: "الخطوط الجوية السودانية" },
-                  { src: "/Logo/arees-travel-solutions-logo.png", alt: "أريس للسفر والسياحة" },
-                  { src: "/Logo/tarco-aviation-logo.png", alt: "تاركو للطيران" },
-                  { src: "/Logo/badr-airlines-transparent-v2.png", alt: "بدر للطيران" },
-                  { src: "/Logo/sudan-airways-transparent-v2.png", alt: "الخطوط الجوية السودانية" },
-                ].map((partner, index) => (
-                  <div key={`${group}-${index}`} className="partner-slot">
-                    <div className="partner-glass">
-                      <Image src={partner.src} alt={group === 0 ? partner.alt : ""} width={420} height={190} className="h-auto max-h-[78px] w-auto max-w-[165px] object-contain md:max-h-[96px] md:max-w-[205px]" />
+          {marqueePartners.length ? (
+            <div className="partners-marquee" style={{
+              "--partners-nudge": `${partnersNudge * 210}px`,
+              "--partners-distance": `${marqueePartners.length * 210}px`,
+              "--partners-distance-mobile": `${marqueePartners.length * 165}px`,
+            } as React.CSSProperties}>
+              {[0, 1].map((group) => (
+                <div key={group} className="partners-group" aria-hidden={group === 1}>
+                  {marqueePartners.map((partner, index) => (
+                    <div key={`${group}-${partner.id}-${index}`} className="partner-slot">
+                      <div className="partner-glass">
+                        {partner.websiteUrl ? (
+                          <a href={partner.websiteUrl} target="_blank" rel="noopener noreferrer" tabIndex={group === 1 ? -1 : 0} title={partner.name}>
+                            <Image src={partner.logoUrl} alt={group === 0 ? partner.name : ""} width={420} height={190} unoptimized={partner.logoUrl.startsWith("/api/media")} className="h-auto max-h-[78px] w-auto max-w-[165px] object-contain md:max-h-[96px] md:max-w-[205px]" />
+                          </a>
+                        ) : (
+                          <Image src={partner.logoUrl} alt={group === 0 ? partner.name : ""} width={420} height={190} unoptimized={partner.logoUrl.startsWith("/api/media")} className="h-auto max-h-[78px] w-auto max-w-[165px] object-contain md:max-h-[96px] md:max-w-[205px]" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="py-7 text-center text-sm font-semibold text-[#0D3B34]/65">سيظهر شركاء النجاح المعتمدون هنا قريباً.</p>
+          )}
         </div>
 
         <div className="relative z-20 mx-auto mt-5 flex max-w-5xl flex-col items-center justify-between gap-4 px-6 text-center md:flex-row md:px-10 md:text-right" dir="rtl">
@@ -1307,8 +1312,8 @@ export default function Home() {
           .partner-glass:hover { transform:translateY(-8px) scale(1.12); background:linear-gradient(135deg,rgba(255,255,255,.76),rgba(255,249,232,.34)); box-shadow:inset 0 1px 0 white,0 22px 42px rgba(132,89,12,.16),0 0 28px rgba(212,175,55,.16); }
           .partner-arrow { position:absolute; z-index:40; top:50%; display:flex; height:48px; width:48px; transform:translateY(-50%); align-items:center; justify-content:center; border:1px solid rgba(184,138,37,.32); border-radius:999px; background:rgba(255,255,255,.72); color:#8B6718; font-size:32px; line-height:1; box-shadow:0 10px 30px rgba(86,57,8,.12); backdrop-filter:blur(12px); transition:.25s ease; }
           .partner-arrow:hover { transform:translateY(-50%) scale(1.08); background:white; }
-          @keyframes partnersFlow { from { transform:translateX(calc(var(--partners-nudge) + 0px)); } to { transform:translateX(calc(var(--partners-nudge) - 1680px)); } }
-          @media (max-width:767px) { .partner-slot{width:165px;flex-basis:165px;padding:0 7px}.partner-glass{height:105px;border-radius:24px}.partners-marquee{animation-duration:28s}@keyframes partnersFlow{from{transform:translateX(calc(var(--partners-nudge) + 0px))}to{transform:translateX(calc(var(--partners-nudge) - 1320px))}} }
+          @keyframes partnersFlow { from { transform:translateX(calc(var(--partners-nudge) + 0px)); } to { transform:translateX(calc(var(--partners-nudge) - var(--partners-distance))); } }
+          @media (max-width:767px) { .partner-slot{width:165px;flex-basis:165px;padding:0 7px}.partner-glass{height:105px;border-radius:24px}.partners-marquee{animation-duration:28s}@keyframes partnersFlow{from{transform:translateX(calc(var(--partners-nudge) + 0px))}to{transform:translateX(calc(var(--partners-nudge) - var(--partners-distance-mobile)))}} }
           @media (prefers-reduced-motion:reduce){.partners-marquee{animation:none}}
         `}</style>
       </section>
