@@ -33,6 +33,7 @@ type OfferForm=typeof blankOffer;
 const field="w-full rounded-xl border border-[#D4AF37]/35 bg-[#FFFEFA] px-3 py-3 text-sm outline-[#B38A25]";
 const label="flex flex-col gap-1.5 text-xs font-semibold";
 const day=(d:string|null)=>d?d.slice(0,10):"";
+const offerDay=(d:string|null)=>d?new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Riyadh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d)):"";
 
 export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"}={}) {
   const [tab,setTab]=useState<"requests"|"offers">("requests");
@@ -167,7 +168,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       travelDate:day(offer.travelDate),amountSar:offer.amountSar===null?"":String(offer.amountSar),
       priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
-      isVisible:offer.isVisible,sortOrder:offer.sortOrder,startsAt:day(offer.startsAt),endsAt:day(offer.endsAt),
+      isVisible:offer.isVisible,sortOrder:offer.sortOrder,startsAt:offerDay(offer.startsAt),endsAt:offerDay(offer.endsAt),
     }:{...blankOffer});
   }
 
@@ -204,7 +205,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
       isVisible:offer.isVisible,sortOrder:offer.sortOrder,
-      startsAt:day(offer.startsAt),endsAt:day(offer.endsAt),
+      startsAt:offerDay(offer.startsAt),endsAt:offerDay(offer.endsAt),
     };
   }
   async function setOfferVisibility(offer:Offer,visible:boolean) {
@@ -313,7 +314,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   {showSuper&&<div className="mt-3 flex flex-wrap gap-2">
                     <select aria-label="إسناد الطلب لموظف" className={field+" min-w-0 flex-1"} value={selected.assignedToId||""} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})} disabled={busy}>
                       <option value="">غير مسند</option>
-                      {staff.map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email} · {u.role}</option>)}
+                      {staff.filter(u=>u.role==="SUPER_ADMIN"||(Array.isArray(u.adminPermissions)&&u.adminPermissions.includes(selected.kind==="FERRY"?"TRANSPORT_FERRIES":"TRANSPORT_FLIGHTS"))).map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email} · {u.role}</option>)}
                     </select>
                   </div>}
                   <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-bold">الحالة: {statusNames[selected.status]||selected.status}</p>
@@ -469,7 +470,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                     <p className="mt-2 text-sm">{offer.origin} ← {offer.destination} · {day(offer.travelDate)}</p>
                     {offer.amountSar!==null&&<p className="mt-1 font-black text-[#9A7020]">{offer.amountSar.toLocaleString("ar-SA")} ر.س {offer.priceUnit}</p>}
                     <p className="mt-2 text-xs">{offerState(offer)==="ACTIVE"?"ظاهر الآن":offerState(offer)==="PAUSED"?"موقوف":offerState(offer)==="UPCOMING"?"مجدول": "منتهي تلقائياً"} · {offer.operationStatus==="SUSPENDED"?"متوقف":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح"}</p>
-                    {(offer.startsAt||offer.endsAt)&&<p className="mt-1 text-xs text-[#0D3B34]/65">النشر: {day(offer.startsAt)||"الآن"} ← {day(offer.endsAt)||"مفتوح"}</p>}
+                    {(offer.startsAt||offer.endsAt)&&<p className="mt-1 text-xs text-[#0D3B34]/65">النشر: {offerDay(offer.startsAt)||"الآن"} ← {offerDay(offer.endsAt)||"مفتوح"}</p>}
                     {offer.operationNote&&<p className="mt-2 whitespace-pre-wrap text-xs text-amber-800">{offer.operationNote}</p>}
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
