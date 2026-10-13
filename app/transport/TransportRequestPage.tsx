@@ -98,8 +98,11 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
             <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/72">قدّم طلبك، ثم يتواصل معك فريق أريس لتحديد التوفر والسعر وإرسال عرض رسمي. <strong>لا يوجد سداد أو إصدار تذاكر في هذه الصفحة.</strong></p>
           </div>
           <div className="flex gap-2">
-            <Link href="/flights" className={`rounded-full px-5 py-3 text-sm font-bold ${!ferry?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/50 bg-white"}`}>✈ حجز طيران</Link>
-            <Link href="/ferries" className={`rounded-full px-5 py-3 text-sm font-bold ${ferry?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/50 bg-white"}`}>⚓ حجز باخرة</Link>
+            {ferry ? (
+              <span className="rounded-full bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white">⚓ حجز باخرة</span>
+            ) : (
+              <span className="rounded-full bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white">✈ حجز طيران</span>
+            )}
           </div>
         </div>
 
