@@ -19,6 +19,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   const ferry=kind==="FERRY", title=ferry?"حجز البواخر":"حجز الطيران";
   const [offers,setOffers]=useState<Offer[]>([]);
   const [offersError,setOffersError]=useState(false);
+  const [offerIndex,setOfferIndex]=useState(0);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [confirmation,setConfirmation]=useState<Confirmation|null>(null);
@@ -43,6 +44,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
 
   useEffect(()=>{
     let live=true;
+    setOfferIndex(0);
     fetch("/api/transport/offers?kind="+kind,{cache:"no-store"})
       .then(async r=>r.ok?await r.json():null)
       .then(data=>{if(!live)return;if(data?.success)setOffers(data.data||[]);else setOffersError(true);})
@@ -99,7 +101,12 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
               <p className="mt-2 text-sm leading-7 text-white/80">الأسعار استرشادية حسب الإعلان، والتوفر والسعر النهائي يخضعان للتأكيد عند مراجعة الطلب.</p>
             </div>
             {offersError&&<div role="status" className="rounded-2xl border border-amber-200 bg-white px-5 py-4 text-sm leading-7">العروض غير متاحة للعرض حالياً، لكن يمكنك إرسال طلب سفر عند اتصال خدمة الطلبات.</div>}
-            {offers.map(offer=>(
+            {offers.length>1&&<div className="flex items-center justify-between rounded-2xl border border-[#D4AF37]/35 bg-white px-4 py-3">
+              <button type="button" aria-label="العرض السابق" onClick={()=>setOfferIndex(i=>(i-1+offers.length)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AF37]/40 bg-[#F8F2DF] text-lg font-black">→</button>
+              <span className="text-sm font-bold">عرض {offerIndex%offers.length+1} من {offers.length}</span>
+              <button type="button" aria-label="العرض التالي" onClick={()=>setOfferIndex(i=>(i+1)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AF37]/40 bg-[#F8F2DF] text-lg font-black">←</button>
+            </div>}
+            {offers.filter((_,index)=>index===offerIndex%offers.length).map(offer=>(
               <article key={offer.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/35 bg-white shadow-[0_15px_45px_rgba(13,59,52,.07)]">
                 {offer.bannerUrl&&<div className="h-36 overflow-hidden bg-[#F2EEE3]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -118,6 +125,9 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                 </div>
               </article>
             ))}
+            {offers.length>1&&<div className="flex flex-wrap justify-center gap-2" aria-label="التنقل بين العروض">
+              {offers.map((o,i)=><button key={o.id} type="button" onClick={()=>setOfferIndex(i)} aria-label={`عرض ${i+1}: ${o.title}`} className={`h-2.5 rounded-full ${i===offerIndex%offers.length?"w-7 bg-[#0D3B34]":"w-2.5 bg-[#D4AF37]/50"}`}/>)}
+            </div>}
             {!offersError&&offers.length===0&&<div className="rounded-2xl border border-dashed border-[#D4AF37]/45 bg-white p-6 text-sm leading-8">سيتم عرض الأسعار والجداول المتاحة هنا عند نشرها من إدارة أريس.</div>}
             <div className="rounded-[24px] border border-[#D4AF37]/35 bg-[#FFFAEE] p-5 text-sm leading-8">
               <h3 className="font-black">مهم قبل إرسال الطلب</h3>
