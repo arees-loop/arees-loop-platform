@@ -33,6 +33,9 @@ type Partner = {
 
   tradeName: string;
 
+  logoUrl?: string;
+  partnerType?: string;
+
   category: string;
 
   city: string;
@@ -94,6 +97,7 @@ type ApiPartner = {
   tradeNameAr?: string | null;
   tradeNameEn?: string | null;
   publicName?: string | null;
+  logoUrl?: string | null;
   partnerType?: string | null;
   commercialRegister?: string | null;
   unifiedNumber?: string | null;
@@ -172,6 +176,8 @@ function mapApiPartner(partner: ApiPartner): Partner {
 
   return {
     id: partner.id,
+    logoUrl: partner.logoUrl?.trim() || "",
+    partnerType: partner.partnerType ?? "",
     legalName:
       partner.legalNameAr?.trim() || partner.legalNameEn?.trim() || EMPTY_VALUE,
     tradeName:
@@ -1148,6 +1154,22 @@ function AdminPartnersContent() {
                     {selectedPartner.legalName}
 
                   </p>
+                  {selectedPartner.partnerType === "GOVERNMENT_NONPROFIT" && (
+                    <div className="mt-4 rounded-2xl border border-[#D4AF37]/25 bg-[#FFF9E9] p-4">
+                      <p className="text-xs font-bold text-[#8E701D]">الهوية الرسمية للجهة — خاضعة للتدقيق</p>
+                      {selectedPartner.logoUrl ? (
+                        <div className="mt-3 flex items-center gap-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={selectedPartner.logoUrl} alt="الشعار المرفوع للمراجعة" className="h-20 w-20 rounded-xl border bg-white object-contain p-2" />
+                          <span className="text-xs leading-6 text-[#0D3B34]/65">
+                            راجع تطابق الشعار مع مستند الجهة قبل الاعتماد.
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-xs text-[#B45309]">لم يُرفع شعار الجهة بعد.</p>
+                      )}
+                    </div>
+                  )}
 
                 </div>
 
