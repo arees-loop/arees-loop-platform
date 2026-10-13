@@ -29,6 +29,9 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   const [origin,setOrigin]=useState(ferry?"سواكن":"");
   const [destination,setDestination]=useState(ferry?"جدة":"");
   const [travelDate,setTravelDate]=useState("");
+  const [tripType,setTripType]=useState<"ONE_WAY"|"ROUND_TRIP"|"MULTI_CITY">("ONE_WAY");
+  const [returnDate,setReturnDate]=useState("");
+  const [legs,setLegs]=useState([{origin:"",destination:"",travelDate:""},{origin:"",destination:"",travelDate:""}]);
   const [name,setName]=useState("");
   const [phone,setPhone]=useState("");
   const [whatsappPhone,setWhatsappPhone]=useState("");
@@ -59,7 +62,11 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
           kind,customerName:name,customerEmail:email,
           countryCode:countryCode==="other"?customCountryCode:countryCode,phone,
           whatsappCountryCode:whatsappPhone?(altCountryCode==="other"?altCustomCountryCode:altCountryCode):"",
-          whatsappPhone,origin,destination,travelDate,adults,children,infants,notes,
+          whatsappPhone,origin:kind==="FLIGHT"&&tripType==="MULTI_CITY"?legs[0].origin:origin,
+          destination:kind==="FLIGHT"&&tripType==="MULTI_CITY"?legs[0].destination:destination,
+          travelDate:kind==="FLIGHT"&&tripType==="MULTI_CITY"?legs[0].travelDate:travelDate,
+          tripType:kind==="FERRY"?"ONE_WAY":tripType,returnDate:tripType==="ROUND_TRIP"?returnDate:"",
+          itinerary:kind==="FLIGHT"&&tripType==="MULTI_CITY"?legs:[],adults,children,infants,notes,
         }),
       });
       const body=await result.json().catch(()=>null);
@@ -159,7 +166,30 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                     </div>
                     {altCountryCode==="other"&&whatsappPhone&&<input required inputMode="numeric" className={field+" mt-2"} aria-label="مفتاح دولة واتساب آخر" value={altCustomCountryCode} onChange={e=>setAltCustomCountryCode(e.target.value)}/>}
                   </div>
-                  {ferry?(
+                  {!ferry&&<fieldset className="sm:col-span-2 rounded-[22px] border border-[#D4AF37]/35 bg-[#F8F5EC] px-5 py-4">
+                    <legend className="px-2 text-sm font-black">اتجاه رحلة الطيران *</legend>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                      {([["ONE_WAY","ذهاب فقط"],["ROUND_TRIP","ذهاب وعودة"],["MULTI_CITY","متعدد الوجهات"]] as const).map(([id,label])=>
+                        <label key={id} className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 text-sm font-bold ${tripType===id?"border-[#D4AF37] bg-[#0D3B34] text-white":"border-[#D4AF37]/25 bg-white"}`}>
+                          <input type="radio" name="flight-trip-type" checked={tripType===id} onChange={()=>setTripType(id)}/>{label}
+                        </label>)}
+                    </div>
+                  </fieldset>}
+                  {kind==="FLIGHT"&&tripType==="MULTI_CITY" ? <div className="sm:col-span-2">
+                    <h3 className="mb-3 font-black">خط سير الرحلة — حتى 6 رحلات</h3>
+                    <div className="space-y-4">
+                      {legs.map((leg,index)=><div key={index} className="grid gap-3 rounded-2xl border border-[#D4AF37]/30 bg-[#FCFAF3] p-4 sm:grid-cols-2">
+                        <div className="sm:col-span-2 flex items-center justify-between gap-2">
+                          <span className="font-bold">الرحلة {index+1}</span>
+                          {index>=2&&<button type="button" className="text-sm font-bold text-red-700" onClick={()=>setLegs(prev=>prev.filter((_,i)=>i!==index))}>حذف الوجهة</button>}
+                        </div>
+                        <label className={label}>من *<AirportLookup required ariaLabel={`مغادرة الرحلة ${index+1}`} value={leg.origin} onChange={v=>setLegs(prev=>prev.map((x,i)=>i===index?{...x,origin:v}:x))}/></label>
+                        <label className={label}>إلى *<AirportLookup required ariaLabel={`وصول الرحلة ${index+1}`} value={leg.destination} onChange={v=>setLegs(prev=>prev.map((x,i)=>i===index?{...x,destination:v}:x))}/></label>
+                        <label className={label+" sm:col-span-2"}>تاريخ السفر *<input required className={field} type="date" min={index?legs[index-1]?.travelDate||today:today} value={leg.travelDate} onChange={e=>setLegs(prev=>prev.map((x,i)=>i===index?{...x,travelDate:e.target.value}:x))}/></label>
+                      </div>)}
+                    </div>
+                    {legs.length<6&&<button type="button" onClick={()=>setLegs(prev=>[...prev,{origin:prev[prev.length-1]?.destination||"",destination:"",travelDate:""}])} className="mt-4 rounded-full border border-[#D4AF37] bg-white px-5 py-2.5 text-sm font-black">＋ إضافة رحلة أخرى</button>}
+                  </div> : ferry?(
                     <>
                       <label className={label}>من *<select required className={field} value={origin} onChange={e=>{const next=e.target.value;setOrigin(next);setDestination(next==="سواكن"?"جدة":"سواكن");}}><option value="سواكن">سواكن</option><option value="جدة">جدة</option></select></label>
                       <label className={label}>إلى *<select required className={field} value={destination} onChange={e=>{const next=e.target.value;setDestination(next);setOrigin(next==="سواكن"?"جدة":"سواكن");}}><option value="جدة">جدة</option><option value="سواكن">سواكن</option></select></label>
@@ -174,7 +204,8 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                       </label>
                     </>
                   )}
-                  <label className={label}>تاريخ السفر المطلوب *<input className={field} required type="date" min={today} value={travelDate} onChange={e=>setTravelDate(e.target.value)}/></label>
+                  {tripType!=="MULTI_CITY"||ferry ? <label className={label}>تاريخ السفر المطلوب *<input className={field} required type="date" min={today} value={travelDate} onChange={e=>setTravelDate(e.target.value)}/></label> : null}
+                  {!ferry&&tripType==="ROUND_TRIP"&&<label className={label}>تاريخ العودة *<input className={field} type="date" required min={travelDate||today} value={returnDate} onChange={e=>setReturnDate(e.target.value)}/></label>}
                   <div className="grid grid-cols-3 gap-2 sm:col-span-2">
                     {[["البالغون",adults,setAdults,1],["الأطفال",children,setChildren,0],["الرضع",infants,setInfants,0]].map(([title,value,setter,min])=>(
                       <label key={String(title)} className="flex flex-col gap-2 text-xs font-bold">{String(title)}<input type="number" className={field+" text-center"} value={Number(value)} min={Number(min)} max={30} required onChange={e=>(setter as (n:number)=>void)(Number(e.target.value))}/></label>
