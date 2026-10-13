@@ -4,8 +4,8 @@ import { AirportLookup } from "@/app/components/AviationLookup";
 import { useEffect, useState, type FormEvent } from "react";
 
 type Kind="FLIGHT"|"FERRY";
-type Offer={id:string;title:string;description:string|null;carrierName:string|null;origin:string|null;destination:string|null;travelDate:string|null;amountSar:number|null;priceUnit:string|null;bannerUrl:string|null};
-type Confirmation={reference:string;kind:string;customerName:string;origin:string;destination:string;travelDate:string;adults:number;children:number;infants:number;phone:string;notice:string};
+type Offer={id:string;title:string;description:string|null;carrierName:string|null;origin:string|null;destination:string|null;travelDate:string|null;amountSar:number|null;priceUnit:string|null;bannerUrl:string|null;operationStatus:string;operationNote:string|null};
+type Confirmation={reference:string;kind:string;customerName:string;origin:string;destination:string;travelDate:string;adults:number;children:number;infants:number;phone:string;notice:string;tripType?:string;returnDate?:string|null;itinerary?:{origin:string;destination:string;travelDate:string}[]};
 const codes=[["966","السعودية +966"],["249","السودان +249"],["20","مصر +20"],["971","الإمارات +971"],["974","قطر +974"],["965","الكويت +965"],["973","البحرين +973"],["968","عُمان +968"],["1","أمريكا/كندا +1"],["44","بريطانيا +44"],["other","دولة أخرى"]];
 const field="w-full min-w-0 rounded-2xl border border-[#C5AE73]/35 bg-[#FCFBF6] px-4 py-3.5 text-sm text-[#0D3B34] outline-[#B69034]";
 const label="flex flex-col gap-2 text-sm font-bold text-[#183E36]";
@@ -112,6 +112,9 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   {offer.travelDate&&<p className="mt-1 text-xs text-[#0D3B34]/65">موعد الرحلة: {new Date(offer.travelDate).toLocaleDateString("ar-SA",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"})}</p>}
                   {offer.amountSar!==null&&<p className="mt-3 text-2xl font-black text-[#A47A23]">{offer.amountSar.toLocaleString("ar-SA")} ر.س <span className="text-xs font-medium">{offer.priceUnit||""}</span></p>}
                   {offer.description&&<p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#0D3B34]/75">{offer.description}</p>}
+                  {offer.operationStatus==="SUSPENDED"&&<p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-black text-red-800">الخدمة متوقفة مؤقتاً</p>}
+                  {offer.operationStatus==="UNKNOWN"&&<p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-800">حالة التشغيل قيد التأكيد</p>}
+                  {offer.operationNote&&<p className="mt-3 whitespace-pre-line rounded-xl bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">{offer.operationNote}</p>
                 </div>
               </article>
             ))}
@@ -135,6 +138,9 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   <p>من: <b>{confirmation.origin}</b></p>
                   <p>إلى: <b>{confirmation.destination}</b></p>
                   <p>السفر: <b>{confirmation.travelDate}</b></p>
+                  {!ferry&&<p>نوع الرحلة: <b>{confirmation.tripType==="ROUND_TRIP"?"ذهاب وعودة":confirmation.tripType==="MULTI_CITY"?"متعدد الوجهات":"ذهاب فقط"}</b></p>}
+                  {confirmation.returnDate&&<p>العودة: <b>{confirmation.returnDate}</b></p>}
+                  {confirmation.itinerary?.map((leg,index)=><p key={index} className="sm:col-span-2">المرحلة {index+1}: {leg.origin} ← {leg.destination} · {leg.travelDate}</p>)}
                   <p>المسافرون: <b>{confirmation.adults} بالغ / {confirmation.children} طفل / {confirmation.infants} رضيع</b></p>
                   <p className="sm:col-span-2">التواصل: <b dir="ltr">{confirmation.phone}</b></p>
                 </div>
