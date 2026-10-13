@@ -3,6 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 type AirportRow=[string,string,string,string];
+type AirportArabicMap=Record<string,{city:string;airport:string}>;
+let airportArabicPromise:Promise<AirportArabicMap>|null=null;
+function loadArabicAirports(){
+  if(!airportArabicPromise)airportArabicPromise=fetch("/data/airports-ar.json").then(response=>{
+    if(!response.ok)throw new Error("Arabic airport data unavailable");
+    return response.json() as Promise<AirportArabicMap>;
+  }).catch(error=>{airportArabicPromise=null;throw error;});
+  return airportArabicPromise;
+}
+function airportLabel(row:AirportRow,arabic:AirportArabicMap){
+  return `${arabic[row[0]]?.city||row[2]||row[1]} (${row[0]})`;
+}
 type AirlineRow=[string,string];
 let airportsPromise:Promise<AirportRow[]>|null=null;
 let airlinesPromise:Promise<AirlineRow[]>|null=null;
@@ -26,32 +38,42 @@ const commonInput="w-full rounded-xl border border-[#D4AF37]/35 bg-[#FFFEFA] px-
 
 export function AirportLookup({value,onChange,placeholder,required=false,ariaLabel}:{value:string;onChange:(next:string)=>void;placeholder?:string;required?:boolean;ariaLabel:string}) {
   const [rows,setRows]=useState<AirportRow[]>([]);
+  const [arabic,setArabic]=useState<AirportArabicMap>({});
   const [active,setActive]=useState(false);
   const [error,setError]=useState(false);
-  useEffect(()=>{let ok=true;loadAirports().then(v=>{if(ok)setRows(v)}).catch(()=>{if(ok)setError(true)});return()=>{ok=false};},[]);
+  useEffect(()=>{
+    let ok=true;
+    loadAirports().then(v=>{if(ok)setRows(v)}).catch(()=>{if(ok)setError(true)});
+    loadArabicAirports().then(v=>{if(ok)setArabic(v)}).catch(()=>{});
+    return()=>{ok=false};
+  },[]);
   const results=useMemo(()=>{
     const query=norm(value);
     if(!query)return rows.filter(r=>popular.includes(r[0])).sort((a,b)=>popular.indexOf(a[0])-popular.indexOf(b[0])).slice(0,10);
     const parts=query.replace(/[()]/g," ").split(/\s+/).filter(Boolean);
     return rows.filter(r=>{
-      const text=norm([r[0],r[1],r[2],r[3]].join(" "));
+      const entry=arabic[r[0]];
+      const text=norm([r[0],r[1],r[2],r[3],entry?.city||"",entry?.airport||""].join(" "));
       return parts.every(p=>text.includes(p));
     }).sort((a,b)=>{
-      const score=(r:AirportRow)=>norm(r[0])===query?-100:norm(r[2]).startsWith(query)?-20:norm(r[1]).startsWith(query)?-10:0;
+      const score=(r:AirportRow)=>{
+        const item=arabic[r[0]];
+        return norm(r[0])===query?-100:item&&norm(item.city).startsWith(query)?-50:item&&norm(item.airport).startsWith(query)?-40:norm(r[2]).startsWith(query)?-20:norm(r[1]).startsWith(query)?-10:0;
+      };
       return score(a)-score(b);
     }).slice(0,12);
-  },[rows,value]);
+  },[rows,value,arabic]);
   return <div className="relative">
     <input type="text" role="combobox" aria-label={ariaLabel} aria-autocomplete="list" aria-expanded={active&&results.length>0}
       required={required} maxLength={100} autoComplete="off" className={commonInput}
       placeholder={placeholder||"ابحث بالمدينة أو المطار أو رمز IATA: JED"} value={value}
       onChange={e=>{onChange(e.target.value);setActive(true)}} onFocus={()=>setActive(true)}
       onBlur={()=>setTimeout(()=>setActive(false),140)}
-      onKeyDown={e=>{if(e.key==="Escape")setActive(false);if(e.key==="Enter"&&active&&results.length){e.preventDefault();const r=results[0];onChange(`${r[2]||r[1]} (${r[0]})`);setActive(false)}}}/>
+      onKeyDown={e=>{if(e.key==="Escape")setActive(false);if(e.key==="Enter"&&active&&results.length){e.preventDefault();const r=results[0];onChange(airportLabel(r,arabic));setActive(false)}}}/>
     {active&&results.length>0&&<ul role="listbox" aria-label="المطارات ورموز IATA" className="absolute left-0 right-0 top-full z-[65] mt-2 max-h-[270px] overflow-y-auto rounded-2xl border border-[#D4AF37]/40 bg-white p-1.5 shadow-2xl">
       {results.map((r,i)=><li key={r[0]+"-"+i} role="option" aria-selected={value.includes("("+r[0]+")")}>
-        <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>{onChange(`${r[2]||r[1]} (${r[0]})`);setActive(false)}} className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition hover:bg-[#F6EFDE]">
-          <span className="min-w-0 truncate">{r[2]||r[1]} · {r[1]} <span className="text-xs text-[#0D3B34]/50">{r[3]}</span></span>
+        <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>{onChange(airportLabel(r,arabic));setActive(false)}} className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition hover:bg-[#F6EFDE]">
+          <span className="min-w-0 truncate">{arabic[r[0]]?.city||r[2]||r[1]} · {arabic[r[0]]?.airport||r[1]} <span className="text-xs text-[#0D3B34]/50">{r[3]}</span></span>
           <span className="shrink-0 rounded-lg bg-[#0D3B34] px-2 py-1 font-bold text-white" dir="ltr">{r[0]}</span>
         </button>
       </li>)}
