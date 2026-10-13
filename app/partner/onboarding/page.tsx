@@ -3270,23 +3270,31 @@ export default function PartnerOnboardingPage() {
                   />
                 </Field>
 
-                <Field label="شعار الجهة">
-                  <input
-                    type="file"
-                    accept=".png,.jpg,.jpeg,.webp"
-                    onChange={(e) =>
-                      update(
-                        "logoFile",
-                        e.target
-                          .files?.[0]
-                          ?.name || ""
-                      )
-                    }
-                    className={
-                      inputClass
-                    }
-                  />
-                </Field>
+                <div data-validation="logoFile">
+                  <Field label={data.partnerType === "government" ? "الشعار الرسمي المعتمد *" : "شعار الجهة"}>
+                    <input
+                      type="file"
+                      accept=".png,.jpg,.jpeg,.webp"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        if (file && file.size > 3 * 1024 * 1024) {
+                          setValidationErrors(current => ({...current, logoFile:"حجم الشعار يجب ألا يتجاوز 3 ميجابايت."}));
+                          setUploadedFiles(current => ({...current,logo:null}));
+                          update("logoFile","");
+                          return;
+                        }
+                        setValidationErrors(current => ({...current,logoFile:""}));
+                        setUploadedFiles(current => ({...current,logo:file}));
+                        update("logoFile", file?.name || "");
+                      }}
+                      className={inputClass}
+                    />
+                    <p className="mt-2 text-xs text-[#0D3B34]/55">
+                      PNG أو JPG أو WEBP، بحد أقصى 3 ميجابايت. لا يظهر الشعار للجمهور قبل اعتماد الجهة.
+                    </p>
+                  </Field>
+                  <ValidationError message={validationErrors.logoFile} />
+                </div>
               </div>
             </div>
 
