@@ -62,3 +62,19 @@ CREATE TABLE "TransportOffer" (
   CONSTRAINT "TransportOffer_pkey" PRIMARY KEY ("id")
 );
 CREATE INDEX "TransportOffer_kind_isVisible_sortOrder_idx" ON "TransportOffer"("kind","isVisible","sortOrder");
+
+CREATE TABLE "TransportRequestEvent" (
+  "id" TEXT NOT NULL,
+  "requestId" TEXT NOT NULL,
+  "actorId" TEXT,
+  "actorName" TEXT NOT NULL,
+  "action" TEXT NOT NULL,
+  "fromStatus" TEXT,
+  "toStatus" TEXT,
+  "details" JSONB,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "TransportRequestEvent_pkey" PRIMARY KEY ("id")
+);
+ALTER TABLE "TransportRequestEvent" ADD CONSTRAINT "TransportRequestEvent_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "TransportRequest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+CREATE INDEX "TransportRequestEvent_requestId_createdAt_idx" ON "TransportRequestEvent"("requestId","createdAt");
+CREATE INDEX "TransportRequestEvent_actorId_createdAt_idx" ON "TransportRequestEvent"("actorId","createdAt");
