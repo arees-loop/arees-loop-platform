@@ -6,6 +6,7 @@ import Link from "next/link";
 import ExperiencePhoto from "./components/ExperiencePhoto";
 import GuidesHeroCards from "./guides/GuidesHeroCards";
 import SaveExperienceButton from "./components/SaveExperienceButton";
+import PartnerIcon from "./components/PartnerIcon";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
 import { getCurrentLocation } from "../lib/location";
@@ -1260,7 +1261,7 @@ export default function Home() {
             <p className="text-lg font-black text-[#201B12]">انضم إلى منظومة شركاء أريس لوب</p>
             <p className="mt-1 text-sm font-medium leading-7 text-[#3D3528]/65">سواء كنت شركة، أو مقدّم تجربة، أو جهة حكومية أو غير ربحية، شاركنا إبراز برامجك وفعالياتك ووجهاتك، والوصول إلى جمهور أوسع.</p>
           </div>
-          <Link href="/partner/onboarding" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/55 px-8 py-3.5 font-black text-[#8B6718] shadow-[0_12px_35px_rgba(155,112,24,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/75">انضم كشريك</Link>
+          <Link href="/partner/select-type" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/55 px-8 py-3.5 font-black text-[#8B6718] shadow-[0_12px_35px_rgba(155,112,24,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/75">انضم كشريك</Link>
 
         </div>
 
@@ -1520,8 +1521,9 @@ export default function Home() {
               <div>
                 <h3 className="text-[11px] font-black text-[#0D3B34]">للشركاء</h3>
                 <div className="mt-1.5 space-y-1 text-[11px] text-[#0D3B34]/50">
-                  <Link href="/partner/onboarding" className="block transition hover:text-[#D4AF37]">سجل كشريك</Link>
-                  <Link href="/partner/login" className="block transition hover:text-[#D4AF37]">تسجيل دخول الشريك</Link>
+                  <Link href="/partner/select-type" className="flex items-center gap-2 transition hover:text-[#B58C31]"><PartnerIcon kind="handshake" className="h-4 w-4 shrink-0 text-[#B58C31]" /> انضم كشريك</Link>
+                  <Link href="/partner/government" className="flex items-center gap-2 transition hover:text-[#B58C31]"><PartnerIcon kind="government" className="h-4 w-4 shrink-0 text-[#B58C31]" /> الجهات الحكومية</Link>
+                  <Link href="/partner/login" className="flex items-center gap-2 transition hover:text-[#B58C31]"><PartnerIcon kind="login" className="h-4 w-4 shrink-0 text-[#B58C31]" /> تسجيل دخول الشركاء</Link>
                 </div>
               </div>
             </div>
@@ -1610,7 +1612,7 @@ export default function Home() {
               <a href="#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</a>
               <a href="#rewards" className="transition hover:text-[#D4AF37]">المكافآت</a>
               <Link href="/auth" className="transition hover:text-[#D4AF37]">تسجيل جديد</Link>
-              <Link href="/partner/onboarding" className="transition hover:text-[#D4AF37]">انضم كشريك</Link>
+              <Link href="/partner/select-type" className="transition hover:text-[#D4AF37]">انضم كشريك</Link>
               <Link href="/guides/register" className="transition hover:text-[#D4AF37]">انضم كمرشد سياحي</Link>
             <Link href="/privacy-policy" className="transition hover:text-[#D4AF37]">سياسة الخصوصية</Link>
 <Link href="/terms" className="transition hover:text-[#D4AF37]">الشروط والأحكام</Link>
