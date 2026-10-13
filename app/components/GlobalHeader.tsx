@@ -74,7 +74,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}
           {navVisible.partners !== false && (
             <div className="group relative">
-              <Link href="/partner" className="inline-flex items-center gap-1.5 py-6 transition hover:text-[#B58C31] focus-visible:text-[#B58C31]" aria-label="للشركاء: خيارات الانضمام وتسجيل الدخول">
+              <Link href="/partner/select-type" className="inline-flex items-center gap-1.5 py-6 transition hover:text-[#B58C31] focus-visible:text-[#B58C31]" aria-label="للشركاء: خيارات الانضمام وتسجيل الدخول">
                 <PartnerIcon kind="handshake" className="h-[19px] w-[19px] text-[#B58C31]" />
                 للشركاء <span className="text-xs transition group-hover:rotate-180 group-focus-within:rotate-180" aria-hidden="true">⌄</span>
               </Link>
