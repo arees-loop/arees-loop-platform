@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
 import PublicGlobalHeader from "./components/PublicGlobalHeader";
@@ -125,6 +126,10 @@ export default function RootLayout({
         {children}
 
       
+        {/* ختم التوثيق الرسمي — المركز السعودي للأعمال. يُحمّل من المصدر الرسمي فقط. */}
+        <div className="sbc-verify-seal" data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QT09" data-position="bottom-right" />
+        <Script src="https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js" strategy="afterInteractive" />
+
         {/* AREES LOOP — BETA STATUS */}
         <div className="pointer-events-none fixed right-3 top-3 z-[9999] md:right-5">
           <div className="flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#073F37]/90 px-4 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl">
