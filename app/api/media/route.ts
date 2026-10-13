@@ -11,11 +11,25 @@ export async function GET(request: NextRequest) {
   const logoMatch = new RegExp("^partners/([^/]+)/logos/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   const successMatch = new RegExp("^success-partners/([a-zA-Z0-9_-]+)/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   const transportMatch = /^transport-offers\/(FLIGHT|FERRY)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
-  if (!pathname.startsWith("services/") && !logoMatch && !successMatch && !transportMatch) {
+  const hotelMatch = /^transport-offers\/HOTEL\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
+  if (!pathname.startsWith("services/") && !logoMatch && !successMatch && !transportMatch && !hotelMatch) {
     return new Response("Not found", { status: 404 });
   }
 
-  let publicAsset = !logoMatch && !successMatch && !transportMatch;
+  let publicAsset = !logoMatch && !successMatch && !transportMatch && !hotelMatch;
+  if(hotelMatch){
+    const offer=await prisma.hotelOffer.findFirst({
+      where:{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`,deletedAt:null},
+      select:{isVisible:true,startsAt:true,endsAt:true},
+    });
+    if(!offer)return new Response("Not found",{status:404});
+    const now=new Date();
+    publicAsset=offer.isVisible&&(!offer.startsAt||offer.startsAt<=now)&&(!offer.endsAt||offer.endsAt>=now);
+    if(!publicAsset){
+      const session=await getCurrentSession();
+      if(session?.user.role!=="SUPER_ADMIN")return new Response("Not found",{status:404});
+    }
+  }
   if (transportMatch) {
     const offer = await prisma.transportOffer.findFirst({
       where: { bannerUrl: `/api/media?pathname=${encodeURIComponent(pathname)}` },
