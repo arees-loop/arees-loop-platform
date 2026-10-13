@@ -1424,10 +1424,12 @@ export default function PartnerOnboardingPage() {
       data.tradeName.trim() &&
         data.country.trim() &&
         data.city.trim() &&
-        data.district.trim() &&
-        data.street.trim() &&
-        /^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase()) &&
-        Boolean(data.nationalAddressFile)
+        (data.partnerType === "government" || (
+          data.district.trim() &&
+          data.street.trim() &&
+          /^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase()) &&
+          Boolean(data.nationalAddressFile)
+        ))
     );
 
     checks.push({
@@ -1437,7 +1439,9 @@ export default function PartnerOnboardingPage() {
         : "warn",
       note: businessOk
         ? "بيانات النشاط الأساسية مكتملة."
-        : "أكمل اسم النشاط والمدينة والحي والشارع والعنوان الوطني ومرفقه.",
+        : data.partnerType === "government"
+          ? "أكمل اسم الجهة الرسمية والمدينة."
+          : "أكمل اسم النشاط والمدينة والحي والشارع والعنوان الوطني ومرفقه.",
     });
 
     checks.push({
@@ -1467,6 +1471,13 @@ export default function PartnerOnboardingPage() {
       note: documentsOk
         ? "توجد مستندات جاهزة للتدقيق."
         : "لم تتم إضافة مستند أو ترخيص بعد.",
+    });
+
+    checks.push({
+      label: "شعار الجهة الرسمي",
+      state: data.partnerType !== "government" || Boolean(data.logoFile) ? "ok" : "warn",
+      note: data.partnerType !== "government" ? "غير مطلوب لهذا النوع من الشركاء." :
+        data.logoFile ? "سيظهر الشعار بعد تدقيق أريس واعتماد الجهة." : "يلزم إرفاق الشعار الرسمي للجهة.",
     });
 
     const settlementOk =
@@ -1715,6 +1726,20 @@ export default function PartnerOnboardingPage() {
             "تم إنشاء طلب الشراكة، لكن تعذر رفع أحد المستندات."
         );
 
+        return;
+      }
+    }
+
+    if (data.partnerType === "government" && uploadedFiles.logo) {
+      const logoForm = new FormData();
+      logoForm.append("file", uploadedFiles.logo);
+      const logoResponse = await fetch("/api/partner/logo", {
+        method: "POST",
+        body: logoForm,
+      });
+      const logoResult = await logoResponse.json().catch(() => null);
+      if (!logoResponse.ok || !logoResult?.success) {
+        window.alert(logoResult?.message || "تم تسجيل طلب الانضمام، لكن تعذر رفع الشعار. حاول مجدداً من استكمال الطلب.");
         return;
       }
     }
@@ -2229,11 +2254,13 @@ export default function PartnerOnboardingPage() {
                 {currentStep === "business" && (
           <StepCard
             eyebrow="STEP 02 / 06"
-            title="بيانات النشاط والمقر"
-            description="أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."
+            title={data.partnerType === "government" ? "بيانات الجهة الرسمية" : "بيانات النشاط والمقر"}
+            description={data.partnerType === "government"
+              ? "اكتب الاسم الرسمي للجهة والمدينة. تتم مراجعة الهوية والمستندات قبل اعتماد شعار الجهة."
+              : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <div data-validation="tradeName"><Field label="الاسم التجاري / اسم النشاط *">
+              <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : "الاسم التجاري / اسم النشاط *"}>
                 <input
                   value={data.tradeName}
                   onChange={(e) => {
@@ -2253,7 +2280,7 @@ export default function PartnerOnboardingPage() {
                 />
               </Field><ValidationError message={validationErrors.tradeName} /></div>
 
-              <Field label="الاسم القانوني">
+              <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : "الاسم القانوني"}>
                 <input
                   value={data.legalName}
                   onChange={(e) =>
