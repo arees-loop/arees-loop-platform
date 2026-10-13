@@ -326,14 +326,15 @@ export default function PartnerOnboardingPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("type") === "government") {
-      setData(current => current.partnerType ? current : ({
-        ...current,
-        partnerType: "government",
-        proofType: "وثيقة جهة حكومية أو غير ربحية",
-        categories: ["فعاليات"],
-      }));
-    }
+    const selectedType = params.get("type");
+    if (selectedType !== "business" && selectedType !== "individual" && selectedType !== "government") return;
+    setData(current => current.partnerType ? current : ({
+      ...current,
+      partnerType: selectedType,
+      ...(selectedType === "government"
+        ? { proofType: "وثيقة جهة حكومية أو غير ربحية", categories: ["فعاليات"] }
+        : {}),
+    }));
   }, []);
 
   useEffect(() => {
