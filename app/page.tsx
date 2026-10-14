@@ -1346,11 +1346,12 @@ export default function Home() {
         <img
           src="/Image/hero/arees-air-sea-clean-banner.webp"
           alt="منظر بحري عند الغروب مع باخرة وطائرة وأفق جدة"
-          className="absolute inset-0 h-full w-full object-cover object-[50%_40%]"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_72%]"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#071713]/25 via-[#071713]/35 to-[#071713]/65" aria-hidden="true" />
         <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-8 text-center text-white">
+          <img src="/Logo/arees-loop-logo.png" alt="أريس لوب" className="mb-2 h-12 w-auto object-contain drop-shadow-md sm:h-14" />
           <p className="text-sm font-black tracking-[0.18em] text-[#F0D37D]">
             {isArabic ? "أريس لوب · رحلتك تبدأ هنا" : "AREES LOOP · YOUR JOURNEY STARTS HERE"}
           </p>
