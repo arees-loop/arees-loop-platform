@@ -21,7 +21,7 @@ export default function HotelsPage(){
   const [savedClaim,setSavedClaim]=useState(true);
   const [form,setForm]=useState({
     customerName:"",customerEmail:"",countryCode:"966",customCountryCode:"",phone:"",
-    whatsappCountryCode:"966",whatsappPhone:"",destination:"",hotelName:"",
+    destination:"",hotelName:"",
     checkInDate:"",checkOutDate:"",rooms:1,adults:2,children:0,notes:"",
   });
   const edit=<K extends keyof typeof form>(key:K,value:(typeof form)[K])=>
@@ -46,12 +46,12 @@ export default function HotelsPage(){
     }catch{setError("تعذر الاتصال بالخادم؛ حاول مجدداً.");}
     finally{setBusy(false);}
   }
-  return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
+  return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-12 pt-32 text-[#0D3B34] md:px-8">
     <div className="mx-auto max-w-[1450px]">
-      <div className="overflow-hidden">
-        {/* The approved hotel banner includes its own title and must not be covered by page copy. */}
+      <div className="mb-3">
+        {/* Keep the complete supplied banner visible without a white frame or forced crop. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Image/hero/arees-hotel-banner.webp" alt="حجز الفنادق — إقامتك المميزة تبدأ هنا" className="block aspect-[2.1/1] w-full object-cover object-[65%_center] md:aspect-[4.2/1] md:object-center" />
+        <img src="/Image/hero/arees-hotel-banner.webp" alt="حجز الفنادق — إقامتك المميزة تبدأ هنا" className="block h-auto w-full" />
       </div>
       
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(290px,.9fr)_minmax(0,1.3fr)]">
@@ -114,13 +114,6 @@ export default function HotelsPage(){
                 </div>
                 {form.countryCode==="other"&&<input className={field+" mt-2"} required placeholder="مفتاح الدولة بالأرقام" value={form.customCountryCode} onChange={e=>edit("customCountryCode",e.target.value)}/>}
               </div>
-              <div className="sm:col-span-2">
-                <p className="mb-2 text-sm font-bold">واتساب بديل (اختياري)</p>
-                <div className="grid gap-2 sm:grid-cols-[190px_1fr]">
-                  <select className={field} aria-label="مفتاح واتساب" value={form.whatsappCountryCode} onChange={e=>edit("whatsappCountryCode",e.target.value)}>{countries.filter(x=>x[0]!=="other").map(([k,l])=><option key={k} value={k}>{l}</option>)}</select>
-                  <input className={field} aria-label="رقم واتساب البديل" inputMode="tel" value={form.whatsappPhone} onChange={e=>edit("whatsappPhone",e.target.value)} placeholder="رقم واتساب آخر"/>
-                </div>
-              </div>
               <label className={label}>المدينة أو الوجهة *<input className={field} required maxLength={100} value={form.destination} onChange={e=>edit("destination",e.target.value)} placeholder="مثلاً مكة المكرمة"/></label>
               <label className={label}>الفندق المطلوب (اختياري)<input className={field} maxLength={160} value={form.hotelName} onChange={e=>edit("hotelName",e.target.value)} placeholder="اسم فندق أو منطقة"/></label>
               <label className={label}>تاريخ الدخول *<input className={field} type="date" min={today} required value={form.checkInDate} onChange={e=>edit("checkInDate",e.target.value)}/></label>
@@ -131,20 +124,18 @@ export default function HotelsPage(){
               </div>
               <label className={label+" sm:col-span-2"}>ملاحظات ومتطلبات خاصة<textarea className={field} maxLength={1500} rows={3} value={form.notes} onChange={e=>edit("notes",e.target.value)} placeholder="نوع الغرفة، الإطلالة، الإفطار، طلب غرف متجاورة..."/></label>
               <p className="rounded-xl bg-[#F7F1E5] px-4 py-3 text-xs leading-7 sm:col-span-2">بإرسال الطلب تسمح لأريس باستخدام بيانات التواصل للرد على الاستعلام. يخضع الحجز النهائي لتوفر الفندق وشروط الإلغاء والاسترداد.</p>
+              <div className="sm:col-span-2 mt-2 flex flex-wrap justify-center gap-3">
+                <a href="https://wa.me/966580091220?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D8%AD%D8%AC%D8%B2%20%D9%81%D9%ند%D9%82."
+                  target="_blank" rel="noopener noreferrer"
+                  className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] shadow-sm transition hover:bg-[#FFF9EB]">
+                  تواصل عبر الواتساب
+                </a>
+                <button type="submit" disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
+              </div>
             </form>
           </>}
         </section>
       </div>
-      {!success&&<div className="fixed inset-x-0 bottom-0 z-50 border-t border-[#D4AF37]/25 bg-white/95 px-4 py-3 shadow-[0_-10px_30px_rgba(13,59,52,.12)] backdrop-blur-xl">
-        <div dir="rtl" className="mx-auto flex max-w-[1450px] justify-center gap-3">
-          <a href="https://wa.me/966580091220?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D8%AD%D8%AC%D8%B2%20%D9%81%D9%86%D8%AF%D9%82."
-          target="_blank" rel="noopener noreferrer"
-          className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] shadow-sm transition hover:bg-[#FFF9EB]">
-          تواصل عبر الواتساب
-        </a>
-          <button form="hotel-request-form-fields" type="submit" disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
-        </div>
-      </div>}
     </div>
   </main>;
 }
