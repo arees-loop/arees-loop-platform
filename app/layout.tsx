@@ -130,8 +130,8 @@ export default function RootLayout({
         <div className="sbc-verify-seal" data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QT09" data-position="bottom-left" />
         <Script src="https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js" strategy="afterInteractive" />
 
-        {/* Compact beta label, kept clear of the mobile logo and navigation. */}
-        <div className="pointer-events-none fixed left-2 top-[82px] z-[90] md:left-auto md:right-5 md:top-3">
+        {/* Always-visible floating status badge, positioned below the sticky header on every route. */}
+        <div className="pointer-events-none fixed left-2 top-[90px] z-[120] md:left-auto md:right-5 md:top-[92px]">
           <div className="flex items-center gap-1.5 rounded-full border border-[#D4AF37]/30 bg-[#073F37]/90 px-2 py-1 shadow-sm backdrop-blur-xl">
             <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
             <span className="whitespace-nowrap text-[9px] font-semibold text-white md:text-[10px]">تحت التطوير</span>
