@@ -117,7 +117,7 @@ export async function PATCH(request:NextRequest) {
     const id=cleanText(body.id,100);
     const current=await prisma.transportRequest.findUnique({where:{id}});
     if(!current)return fail("الطلب غير موجود.",404);
-    if(!superAdmin && (current.assignedToId!==actorId || !canManageTransport(session.user, current.kind==="FERRY"?"FERRY":"FLIGHT")))return fail("الطلب غير مسند إلى حسابك أو لا تملك صلاحية القسم.",403);
+    if(!superAdmin && (current.assignedToId!==actorId || !canManageTransport(session.user, current.kind==="FERRY"?"FERRY":current.kind==="VISA"?"VISA":current.kind==="DRIVING_LICENSE"?"DRIVING_LICENSE":"FLIGHT")))return fail("الطلب غير مسند إلى حسابك أو لا تملك صلاحية القسم.",403);
     const action=cleanText(body.action,30);
 
     if(action==="REPLY_CUSTOMER"){
@@ -145,7 +145,7 @@ export async function PATCH(request:NextRequest) {
           select:{id:true,firstName:true,lastName:true,email:true,role:true,adminPermissions:true},
         });
         if(!assignee)return fail("اختر موظفاً إدارياً نشطاً.",400);
-        if(!canManageTransport(assignee,current.kind==="FERRY"?"FERRY":"FLIGHT"))return fail("هذا الموظف ليست لديه صلاحية إدارة القسم المطلوب.",403);
+        if(!canManageTransport(assignee,current.kind==="FERRY"?"FERRY":current.kind==="VISA"?"VISA":current.kind==="DRIVING_LICENSE"?"DRIVING_LICENSE":"FLIGHT"))return fail("هذا الموظف ليست لديه صلاحية إدارة القسم المطلوب.",403);
         assigneeName=fullName(assignee);
       }
       const [updated]=await prisma.$transaction([
@@ -216,7 +216,7 @@ export async function POST(request:NextRequest) {
   const access=await adminAccess(true);if(access.error)return access.error;
   try{
     const data=await request.json();
-    if(!["FLIGHT","FERRY"].includes(data.kind))return fail("نوع العرض غير صحيح.");
+    if(!["FLIGHT","FERRY","VISA"].includes(data.kind))return fail("نوع العرض غير صحيح.");
     const title=cleanText(data.title,160);
     if(!title)return fail("عنوان العرض مطلوب.");
     const schedule=parseSchedule(data.scheduleType,data.scheduleData,data.travelDate);
