@@ -102,13 +102,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
             alt={ferry?"حجز البواخر — رحلتك البحرية تبدأ هنا":"حجز الطيران — رحلتك الجوية تبدأ هنا"}
             className="block aspect-[2.1/1] w-full object-cover object-[65%_center] md:aspect-[4.2/1] md:object-center" />
         </div>
-        <div className="mb-4 mt-3 flex justify-center">
-        <a href={`https://wa.me/966580091220?text=${encodeURIComponent(ferry?"السلام عليكم، أرغب في الاستفسار عن حجز باخرة.":"السلام عليكم، أرغب في الاستفسار عن حجز طيران.")}`}
-            target="_blank" rel="noopener noreferrer"
-            className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF9EB]">
-            تواصل عبر الواتساب
-          </a>
-      </div>
+        
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(300px,0.9fr)_minmax(0,1.3fr)]">
           <aside className="min-w-0 space-y-4 lg:sticky lg:top-28">
@@ -184,7 +178,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                 <h2 className="text-2xl font-black">بيانات طلب {title}</h2>
                 <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">املأ البيانات التالية للتواصل معك بعرض السعر. لا تتطلب العملية حساباً أو دفعاً.</p>
                 {error&&<p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{error}</p>}
-                <form onSubmit={submit} className="mt-6 grid gap-5 sm:grid-cols-2">
+                <form id="transport-request-form-fields" onSubmit={submit} className="mt-6 grid gap-5 sm:grid-cols-2">
                   <input type="text" name="website" autoComplete="off" tabIndex={-1} aria-hidden="true" className="hidden"/>
                   <label className={label}>اسم المسافر / مقدم الطلب *<input className={field} required minLength={2} maxLength={100} value={name} onChange={e=>setName(e.target.value)} placeholder="الاسم الكامل"/></label>
                   <label className={label}>البريد الإلكتروني (اختياري)<input className={field} type="email" value={email} maxLength={180} onChange={e=>setEmail(e.target.value)} placeholder="example@email.com"/></label>
@@ -251,13 +245,22 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   </div>
                   <label className={label+" sm:col-span-2"}>ملاحظات أو متطلبات خاصة<textarea className={field} value={notes} onChange={e=>setNotes(e.target.value)} rows={4} maxLength={1200} placeholder="رحلة ذهاب فقط/ملاحظات الأمتعة أو المقاعد أو غيرها..."/></label>
                   <div className="sm:col-span-2 rounded-2xl bg-[#F7F2E6] p-4 text-xs leading-7 text-[#0D3B34]/80">بإرسال الطلب، أوافق على استخدام بيانات التواصل المقدمة للرد على الاستفسار. {policies[kind]}</div>
-                  <div className="sm:col-span-2"><button disabled={busy} type="submit" className="w-full rounded-2xl bg-[#0D3B34] px-6 py-4 text-base font-black text-white transition hover:bg-[#16574B] disabled:opacity-40">{busy?"جاري إرسال الطلب...":"إرسال طلب"}</button></div>
                 </form>
               </>
             )}
           </section>
         </div>
       </section>
+      {!confirmation&&<div className="fixed inset-x-0 bottom-0 z-50 border-t border-[#D4AF37]/25 bg-white/95 px-4 py-3 shadow-[0_-10px_30px_rgba(13,59,52,.12)] backdrop-blur-xl">
+        <div dir="rtl" className="mx-auto flex max-w-[1450px] justify-center gap-3">
+          <a href={`https://wa.me/966580091220?text=${encodeURIComponent(ferry?"السلام عليكم، أرغب في الاستفسار عن حجز باخرة.":"السلام عليكم، أرغب في الاستفسار عن حجز طيران.")}`}
+            target="_blank" rel="noopener noreferrer"
+            className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] shadow-sm transition hover:bg-[#FFF9EB]">
+            تواصل عبر الواتساب
+          </a>
+          <button form="transport-request-form-fields" type="submit" disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
+        </div>
+      </div>}
     </main>
   );
 }
