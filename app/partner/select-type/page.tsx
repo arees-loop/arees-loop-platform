@@ -1,6 +1,9 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { buildPageMetadata } from "@/lib/seo-metadata";
 import PartnerIcon from "@/app/components/PartnerIcon";
 
+export const metadata: Metadata = buildPageMetadata({title:"انضم كشريك في أريس لوب",description:"اعرض خدماتك وتجاربك السياحية أمام الزوار، واستقبل الطلبات عبر منصة تجمع الشركاء بالعملاء.",path:"/partner/select-type",image:"/Image/social/arees-partner-share.webp",imageWidth:1254,imageHeight:1254,imageType:"image/webp",imageAlt:"انضم كشريك في أريس لوب"});
 const partnerTypes = [
   {
     title: "شركة أو مؤسسة",
