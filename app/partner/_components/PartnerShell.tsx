@@ -156,9 +156,11 @@ export default function PartnerShell({
   };
   const visibleItems = (partner.partnerType === "GOVERNMENT_NONPROFIT"
     ? items.filter(([href]) => !["/partner/services","/partner/bookings","/partner/coupons","/partner/loyalty","/partner/settlements","/partner/invoices"].includes(href)).concat([["/partner/public-events", "services", "الفعاليات والبرامج"] as const])
-    : items).filter(([href]) => href === "/partner/team"
-      ? access?.isManager === true
-      : access?.permissions[permissionForHref[href]] === true);
+    : items).filter(([href]) => {
+      if (href === "/partner/team") return access?.isManager === true;
+      const permission = permissionForHref[href];
+      return !!permission && access?.permissions[permission] === true;
+    });
 
   return (
     <div
