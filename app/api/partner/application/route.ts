@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 import { getCurrentSession } from "@/lib/session";
+import { hasPartnerPermission } from "@/lib/partner-permissions";
 import {
   isSmsVerificationEnabled,
   normalizeSaudiMobile,
@@ -280,6 +281,7 @@ export async function GET() {
       },
 
       include: {
+        user: { select: { role: true } },
 
         partner: {
 
@@ -369,7 +371,15 @@ export async function GET() {
 
         success: true,
 
-        application: membership.partner,
+        application: hasPartnerPermission(membership.user.role, membership.permissions, "business") ? membership.partner : {
+          status: membership.partner.status,
+          tradeNameAr: membership.partner.tradeNameAr,
+          legalNameAr: membership.partner.legalNameAr,
+          publicName: membership.partner.publicName,
+          partnerType: membership.partner.partnerType,
+          businessEmail: membership.partner.businessEmail,
+          mainContactEmail: membership.partner.mainContactEmail,
+        },
 
       },
 
