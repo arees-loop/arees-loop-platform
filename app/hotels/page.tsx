@@ -47,11 +47,21 @@ export default function HotelsPage(){
     finally{setBusy(false);}
   }
   return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
-    <div className="mx-auto max-w-[1260px]">
-      <p className="text-xs font-black tracking-[.18em] text-[#B08B37]">AREES LOOP · HOTEL REQUESTS</p>
-      <h1 className="mt-3 text-4xl font-black md:text-5xl">حجوزات الفنادق</h1>
-      <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/70">اختر وجهتك ومواعيد الإقامة وأرسل طلب السعر إلى فريق أريس. سنتواصل معك بالتوفر والعرض الرسمي، بدون سداد في هذه الصفحة.</p>
-      <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(290px,.9fr)_minmax(0,1.3fr)]">
+    <div className="mx-auto max-w-[1450px]">
+      <div className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_15px_35px_rgba(13,59,52,.09)]">
+        {/* The approved hotel banner includes its own title and must not be covered by page copy. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/Image/hero/arees-hotel-banner.webp" alt="حجز الفنادق — إقامتك المميزة تبدأ هنا" className="block h-auto w-full" />
+      </div>
+      <div className="mb-4 mt-3 flex flex-wrap items-center justify-center gap-3">
+        <a href="#hotel-request-form" className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154]">إرسال طلب</a>
+        <a href="https://wa.me/966580091220?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D8%AD%D8%AC%D8%B2%20%D9%81%D9%86%D8%AF%D9%82."
+          target="_blank" rel="noopener noreferrer"
+          className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF9EB]">
+          تواصل عبر الواتساب
+        </a>
+      </div>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(290px,.9fr)_minmax(0,1.3fr)]">
         <aside className="space-y-4 lg:sticky lg:top-28">
           <div className="rounded-[26px] bg-[#0D3B34] p-6 text-white shadow-xl">
             <p className="text-sm font-bold text-[#EBD08C]">إعلانات وعروض الفنادق</p>
@@ -80,7 +90,7 @@ export default function HotelsPage(){
           {!offersUnavailable&&offers.length===0&&<div className="rounded-2xl border border-dashed border-[#D4AF37]/40 bg-white p-6 text-sm leading-8">العروض ستظهر هنا عند نشرها من إدارة أريس.</div>}
           <div className="rounded-2xl bg-[#FFF9E8] p-5 text-xs leading-8">الإلغاء والاسترداد يخضعان لسياسة الفندق ونوع سعر الغرفة عند تأكيد الحجز. إرسال الطلب ليس حجزاً مؤكداً ولا يترتب عليه سداد.</div>
         </aside>
-        <section className="rounded-[28px] border border-[#D4AF37]/35 bg-white p-5 shadow-lg md:p-8">
+        <section id="hotel-request-form" className="scroll-mt-28 rounded-[28px] border border-[#D4AF37]/35 bg-white p-5 shadow-lg md:p-8">
           {success?<div role="status">
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-3xl text-green-700">✓</div>
             <h2 className="mt-4 text-3xl font-black">تم إرسال الطلب بنجاح</h2>
