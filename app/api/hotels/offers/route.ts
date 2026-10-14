@@ -10,9 +10,9 @@ export async function GET(){
         {OR:[{endsAt:null},{endsAt:{gte:now}}]},
       ]},
       orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],take:30,
-      select:{id:true,title:true,destination:true,hotelName:true,description:true,amountSar:true,priceUnit:true,bannerUrl:true,startsAt:true,endsAt:true},
+      select:{id:true,title:true,destination:true,hotelName:true,description:true,amountSar:true,priceUnit:true,bannerUrl:true,imageUrls:true,startsAt:true,endsAt:true},
     });
-    return NextResponse.json({success:true,data:data.map(x=>({...x,amountSar:x.amountSar===null?null:Number(x.amountSar)}))},
+    return NextResponse.json({success:true,data:data.map(x=>({...x,imageUrls:Array.isArray(x.imageUrls)?x.imageUrls:(x.bannerUrl?[x.bannerUrl]:[]),amountSar:x.amountSar===null?null:Number(x.amountSar)}))},
       {headers:{"Cache-Control":"public, max-age=0, s-maxage=30"}});
   }catch(error){console.error("GET hotel offers failed",error);
     return NextResponse.json({success:false,message:"تعذر تحميل عروض الفنادق."},{status:503,headers:{"Cache-Control":"no-store"}});
