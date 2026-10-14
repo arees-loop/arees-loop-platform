@@ -196,6 +196,8 @@ const distanceKm = (
 export default function Home() {
   const [partnersNudge, setPartnersNudge] = useState(0);
   const [successPartners, setSuccessPartners] = useState<SuccessPartnerEntry[] | null>(null);
+  const partnersSectionRef = useRef<HTMLElement | null>(null);
+  const [travelBookingsHeight, setTravelBookingsHeight] = useState<number | null>(null);
   const [walletPoints, setWalletPoints] = useState<number | null>(null);
   const [lastRewardPoints, setLastRewardPoints] = useState<number | null>(null);
   const [liveServices, setLiveServices] = useState<LiveService[]>([]);
@@ -255,6 +257,16 @@ export default function Home() {
       window.removeEventListener("storage", syncWallet);
       window.removeEventListener("focus", syncWallet);
     };
+  }, []);
+
+  useEffect(() => {
+    const partnersSection = partnersSectionRef.current;
+    if (!partnersSection) return;
+    const syncTravelBannerHeight = () => setTravelBookingsHeight(Math.round(partnersSection.getBoundingClientRect().height));
+    syncTravelBannerHeight();
+    const observer = new ResizeObserver(syncTravelBannerHeight);
+    observer.observe(partnersSection);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -1245,7 +1257,7 @@ export default function Home() {
           SUCCESS PARTNERS — CONTINUOUS LUXURY RIBBON
       ====================================================== */}
 
-      <section id="partners" className="scroll-mt-24 relative overflow-hidden bg-[#F8F0E2] px-0 py-10 md:py-12">
+      <section id="partners" ref={partnersSectionRef} className="scroll-mt-24 relative overflow-hidden bg-[#F8F0E2] px-0 py-10 md:py-12">
         <div dir="rtl" className="relative z-20 mx-auto max-w-7xl px-6 text-center md:px-10">
           <p className="text-sm font-black tracking-[0.20em] text-[#A87917] md:text-base">شركاء النجاح</p>
           <h2 className="mt-3 text-4xl font-black leading-tight text-[#11130F] md:text-6xl">
@@ -1323,22 +1335,39 @@ export default function Home() {
           The image source is a local static asset so production does not
           depend on externally hosted or short-lived chat attachments.
       ====================================================== */}
-      <section id="travel-bookings" dir="rtl" aria-label="حجوزات الطيران والبواخر" className="scroll-mt-24 bg-[#f7f7f2]">
-        {/* Clean approved artwork shown at its native 16:9 ratio, with no veil, transparency, overlay or duplicate labels. */}
+      <section
+        id="travel-bookings"
+        dir="rtl"
+        aria-label={isArabic ? "حجوزات الطيران والبواخر" : "Flight and ferry bookings"}
+        className="relative isolate scroll-mt-24 flex items-center justify-center overflow-hidden bg-[#071713]"
+        style={{ height: travelBookingsHeight ? `${travelBookingsHeight}px` : "420px" }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/Image/hero/arees-air-sea-clean-banner.webp"
           alt="منظر بحري عند الغروب مع باخرة وطائرة وأفق جدة"
-          className="block h-auto w-full"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_40%]"
           loading="lazy"
         />
-        <div className="flex flex-wrap justify-center gap-3 px-4 py-5">
-          <Link href="/flights" className="inline-flex min-w-[175px] items-center justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white transition hover:bg-[#145347]">
-            احجز تذكرة طيران
-          </Link>
-          <Link href="/ferries" className="inline-flex min-w-[175px] items-center justify-center rounded-full border-2 border-[#D4AF37] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF8E7]">
-            احجز تذكرة باخرة
-          </Link>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#071713]/25 via-[#071713]/35 to-[#071713]/65" aria-hidden="true" />
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-8 text-center text-white">
+          <p className="text-sm font-black tracking-[0.18em] text-[#F0D37D]">
+            {isArabic ? "أريس لوب · رحلتك تبدأ هنا" : "AREES LOOP · YOUR JOURNEY STARTS HERE"}
+          </p>
+          <h2 className="mt-3 text-3xl font-black leading-tight drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] sm:text-4xl md:text-6xl">
+            {isArabic ? "من البحر إلى السماء" : "From Sea to Sky"}
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] sm:text-base md:text-lg">
+            {isArabic ? "اختر رحلتك البحرية أو الجوية، واتجه إلى صفحة الطلب مباشرة." : "Choose a sea or air journey and go directly to its request page."}
+          </p>
+          <div className="mt-6 flex w-full max-w-xl flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/flights" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full bg-[#0D3B34] px-7 py-3.5 text-sm font-black text-white shadow-[0_10px_30px_rgba(0,0,0,0.28)] ring-1 ring-white/45 transition hover:bg-[#145347]">
+              {isArabic ? "حجوزات الطيران" : "Flight bookings"}
+            </Link>
+            <Link href="/ferries" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full border-2 border-[#F0D37D] bg-white/95 px-7 py-3.5 text-sm font-black text-[#0D3B34] shadow-[0_10px_30px_rgba(0,0,0,0.28)] transition hover:bg-[#FFF8E7]">
+              {isArabic ? "حجوزات البواخر" : "Ferry bookings"}
+            </Link>
+          </div>
         </div>
       </section>
 
