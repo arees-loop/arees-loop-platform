@@ -17,7 +17,7 @@ type RequestRow={
 };
 type Offer={
   id:string;kind:string;title:string;description:string|null;carrierName:string|null;
-  origin:string|null;destination:string|null;travelDate:string|null;amountSar:number|null;
+  origin:string|null;destination:string|null;travelDate:string|null;amountSar:number|null;adultPriceSar:number|null;childPriceSar:number|null;infantPriceSar:number|null;
   priceUnit:string|null;bannerUrl:string|null;operationStatus:string;operationNote:string|null;
   isVisible:boolean;sortOrder:number;startsAt:string|null;endsAt:string|null;
 };
@@ -28,7 +28,7 @@ const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت ال�
 const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],QUOTE_READY:["PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
 const blankOffer={
   id:"",kind:"FERRY",title:"",description:"",carrierName:"",origin:"سواكن",destination:"جدة",
-  travelDate:"",amountSar:"",priceUnit:"للبالغ",bannerUrl:"",operationStatus:"AVAILABLE",operationNote:"",
+  travelDate:"",amountSar:"",adultPriceSar:"",childPriceSar:"",infantPriceSar:"",priceUnit:"للبالغ",bannerUrl:"",operationStatus:"AVAILABLE",operationNote:"",
   isVisible:true,sortOrder:0,startsAt:"",endsAt:"",
 };
 type OfferForm=typeof blankOffer;
@@ -184,6 +184,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
       carrierName:offer.carrierName||"",origin:offer.origin||"",destination:offer.destination||"",
       travelDate:day(offer.travelDate),amountSar:offer.amountSar===null?"":String(offer.amountSar),
+      adultPriceSar:offer.adultPriceSar===null?"":String(offer.adultPriceSar),childPriceSar:offer.childPriceSar===null?"":String(offer.childPriceSar),infantPriceSar:offer.infantPriceSar===null?"":String(offer.infantPriceSar),
       priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
       isVisible:offer.isVisible,sortOrder:offer.sortOrder,startsAt:offerDay(offer.startsAt),endsAt:offerDay(offer.endsAt),
@@ -431,7 +432,10 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <p className="sm:col-span-2 xl:col-span-2 xl:col-start-3 rounded-lg bg-[#F7F2E6] px-4 py-3 text-xs leading-6">تاريخ نهاية العرض شامل طوال اليوم المحدد. عند انتهاء المدة يختفي تلقائياً من صفحة العميل، ويظل محفوظاً في الإدارة.</p>
               <label className={label}>موعد السفر/الإبحار<input className={field} type="date" value={offerForm.travelDate} onChange={e=>setOfferForm(f=>({...f,travelDate:e.target.value}))}/></label>
               <label className={label}>السعر المعلن (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.amountSar} onChange={e=>setOfferForm(f=>({...f,amountSar:e.target.value}))}/></label>
-              <label className={label}>وحدة السعر<input className={field} placeholder="للبالغ / للطفل / يبدأ من" value={offerForm.priceUnit} onChange={e=>setOfferForm(f=>({...f,priceUnit:e.target.value}))}/></label>
+              <label className={label}>سعر البالغ (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.adultPriceSar} onChange={e=>setOfferForm(f=>({...f,adultPriceSar:e.target.value}))}/></label>
+              <label className={label}>سعر الطفل (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.childPriceSar} onChange={e=>setOfferForm(f=>({...f,childPriceSar:e.target.value}))}/></label>
+              <label className={label}>سعر الرضيع (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.infantPriceSar} onChange={e=>setOfferForm(f=>({...f,infantPriceSar:e.target.value}))}/></label>
+              <label className={label}>وحدة / ملاحظة السعر<input className={field} placeholder="مثلاً: يبدأ من / حسب الناقل" value={offerForm.priceUnit} onChange={e=>setOfferForm(f=>({...f,priceUnit:e.target.value}))}/></label>
               <label className={label}>حالة التشغيل<select className={field} value={offerForm.operationStatus} onChange={e=>setOfferForm(f=>({...f,operationStatus:e.target.value}))}><option value="AVAILABLE">تعمل / متاحة</option><option value="SUSPENDED">متوقفة حالياً</option><option value="UNKNOWN">غير مؤكد</option></select></label>
               <label className={label+" sm:col-span-2 xl:col-span-2 xl:col-start-3"}>وصف العرض<textarea className={field} rows={3} value={offerForm.description} onChange={e=>setOfferForm(f=>({...f,description:e.target.value}))}/></label>
               <label className={label+" sm:col-span-2 xl:col-span-2 xl:col-start-3"}>ملاحظات التشغيل التي تظهر للعميل<textarea className={field} rows={2} value={offerForm.operationNote} onChange={e=>setOfferForm(f=>({...f,operationNote:e.target.value}))} placeholder="مثلاً: الباخرة متوقفة حالياً حتى إشعار آخر"/></label>
@@ -456,7 +460,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <p className="text-xs font-bold text-[#A77B23]">{offerForm.carrierName||"الناقل / الباخرة"}</p>
                   <h3 className="mt-2 text-xl font-black">{offerForm.title||"عنوان العرض"}</h3>
                   <p className="mt-2 text-sm">{offerForm.origin||"من"} ← {offerForm.destination||"إلى"} · {offerForm.travelDate||"موعد يحدد لاحقاً"}</p>
-                  {offerForm.amountSar!==""&&<p className="mt-3 text-2xl font-black text-[#9A7620]">{Number(offerForm.amountSar).toLocaleString("ar-SA")} ر.س <span className="text-xs">{offerForm.priceUnit}</span></p>}
+                  {(offerForm.adultPriceSar!==""||offerForm.childPriceSar!==""||offerForm.infantPriceSar!=="")&&<div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-[#9A7620]">{offerForm.adultPriceSar!==""&&<span className="rounded-full bg-[#FBF8EF] px-3 py-1">بالغ {Number(offerForm.adultPriceSar).toLocaleString("ar-SA")} ر.س</span>}{offerForm.childPriceSar!==""&&<span className="rounded-full bg-[#FBF8EF] px-3 py-1">طفل {Number(offerForm.childPriceSar).toLocaleString("ar-SA")} ر.س</span>}{offerForm.infantPriceSar!==""&&<span className="rounded-full bg-[#FBF8EF] px-3 py-1">رضيع {Number(offerForm.infantPriceSar).toLocaleString("ar-SA")} ر.س</span>}</div>}
+                  {offerForm.amountSar!==""&&<p className="mt-2 text-sm font-bold">{Number(offerForm.amountSar).toLocaleString("ar-SA")} ر.س {offerForm.priceUnit}</p>}
                   {offerForm.description&&<p className="mt-2 whitespace-pre-line text-sm leading-7">{offerForm.description}</p>}
                   {offerForm.operationNote&&<p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs leading-6 text-amber-900">{offerForm.operationNote}</p>}
                   <p className="mt-3 text-xs text-[#0D3B34]/60">حسب التوفر والتأكيد — العرض ليس تذكرة مؤكدة.</p>
@@ -496,7 +501,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <div><p className="text-xs font-semibold text-[#947426]">{offer.kind==="FERRY"?"بواخر":"طيران"} · {offer.carrierName}</p>
                     <h3 className="mt-1 text-lg font-black">{offer.title}</h3>
                     <p className="mt-2 text-sm">{offer.origin} ← {offer.destination} · {day(offer.travelDate)}</p>
-                    {offer.amountSar!==null&&<p className="mt-1 font-black text-[#9A7020]">{offer.amountSar.toLocaleString("ar-SA")} ر.س {offer.priceUnit}</p>}
+                    {(offer.adultPriceSar!==null||offer.childPriceSar!==null||offer.infantPriceSar!==null)&&<p className="mt-1 text-xs font-black text-[#9A7020]">{offer.adultPriceSar!==null&&`بالغ ${offer.adultPriceSar.toLocaleString("ar-SA")} ر.س `}{offer.childPriceSar!==null&&`طفل ${offer.childPriceSar.toLocaleString("ar-SA")} ر.س `}{offer.infantPriceSar!==null&&`رضيع ${offer.infantPriceSar.toLocaleString("ar-SA")} ر.س`}</p>}
+                    {offer.amountSar!==null&&<p className="mt-1 font-bold text-xs text-[#0D3B34]/70">السعر العام: {offer.amountSar.toLocaleString("ar-SA")} ر.س {offer.priceUnit}</p>}
                     <p className="mt-2 text-xs">{offerState(offer)==="ACTIVE"?"ظاهر الآن":offerState(offer)==="PAUSED"?"موقوف":offerState(offer)==="UPCOMING"?"مجدول": "منتهي تلقائياً"} · {offer.operationStatus==="SUSPENDED"?"متوقف":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح"}</p>
                     {(offer.startsAt||offer.endsAt)&&<p className="mt-1 text-xs text-[#0D3B34]/65">النشر: {offerDay(offer.startsAt)||"الآن"} ← {offerDay(offer.endsAt)||"مفتوح"}</p>}
                     {offer.operationNote&&<p className="mt-2 whitespace-pre-wrap text-xs text-amber-800">{offer.operationNote}</p>}
