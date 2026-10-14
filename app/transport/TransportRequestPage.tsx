@@ -95,23 +95,20 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   return (
     <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
       <section className="mx-auto max-w-[1450px]">
-        <div className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_15px_35px_rgba(13,59,52,.09)]">
+        <div className="overflow-hidden">
           {/* Browser-native image preserves the approved artwork and embedded typography without cropping. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={ferry?"/Image/hero/arees-ferry-banner.webp":"/Image/hero/arees-flight-banner.webp"}
             alt={ferry?"حجز البواخر — رحلتك البحرية تبدأ هنا":"حجز الطيران — رحلتك الجوية تبدأ هنا"}
-            className="block h-auto w-full" />
+            className="block aspect-[2.1/1] w-full object-cover object-[65%_center] md:aspect-[4.2/1] md:object-center" />
         </div>
-        <div className="mb-4 mt-3 flex flex-wrap items-center justify-center gap-3">
-          <a href="#travel-request-form" className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154]">
-            إرسال طلب
-          </a>
-          <a href={`https://wa.me/966580091220?text=${encodeURIComponent(ferry?"السلام عليكم، أرغب في الاستفسار عن حجز باخرة.":"السلام عليكم، أرغب في الاستفسار عن حجز طيران.")}`}
+        <div className="mb-4 mt-3 flex justify-center">
+        <a href={`https://wa.me/966580091220?text=${encodeURIComponent(ferry?"السلام عليكم، أرغب في الاستفسار عن حجز باخرة.":"السلام عليكم، أرغب في الاستفسار عن حجز طيران.")}`}
             target="_blank" rel="noopener noreferrer"
             className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF9EB]">
             تواصل عبر الواتساب
           </a>
-        </div>
+      </div>
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(300px,0.9fr)_minmax(0,1.3fr)]">
           <aside className="min-w-0 space-y-4 lg:sticky lg:top-28">
