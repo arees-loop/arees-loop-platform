@@ -68,7 +68,7 @@ export async function GET(request:NextRequest) {
     if(mode==="offers"){
       if(access.role!=="SUPER_ADMIN")return NextResponse.json({success:true,data:[]},{headers:{"Cache-Control":"no-store"}});
       const offers=await prisma.transportOffer.findMany({where:{deletedAt:null},orderBy:[{kind:"asc"},{sortOrder:"asc"},{createdAt:"desc"}],take:200});
-      return NextResponse.json({success:true,data:offers.map(o=>({...o,amountSar:o.amountSar===null?null:Number(o.amountSar)}))},{headers:{"Cache-Control":"no-store"}});
+      return NextResponse.json({success:true,data:offers.map(o=>({...o,amountSar:o.amountSar===null?null:Number(o.amountSar),adultPriceSar:o.adultPriceSar===null?null:Number(o.adultPriceSar),childPriceSar:o.childPriceSar===null?null:Number(o.childPriceSar),infantPriceSar:o.infantPriceSar===null?null:Number(o.infantPriceSar)}))},{headers:{"Cache-Control":"no-store"}});
     }
     const visible=access.role==="SUPER_ADMIN"?{}:{assignedToId:access.id,kind:{in:access.allowedKinds}};
     if(mode==="history"){
@@ -208,7 +208,9 @@ export async function POST(request:NextRequest) {
       kind:data.kind,title,description:cleanText(data.description,2500)||null,
       carrierName:cleanText(data.carrierName,100)||null,
       origin:cleanText(data.origin,80)||null,destination:cleanText(data.destination,80)||null,
-      travelDate,amountSar:amount,priceUnit:cleanText(data.priceUnit,50)||null,
+      travelDate,amountSar:amount,
+      adultPriceSar:parseAmount(data.adultPriceSar),childPriceSar:parseAmount(data.childPriceSar),infantPriceSar:parseAmount(data.infantPriceSar),
+      priceUnit:cleanText(data.priceUnit,50)||null,
       bannerUrl:url||null,operationStatus:status,operationNote:cleanText(data.operationNote,1000)||null,
       isVisible: Boolean(data.isVisible),sortOrder:Number.isInteger(data.sortOrder)?Math.max(0,Math.min(9999,data.sortOrder)):0,
     }});
@@ -235,6 +237,7 @@ export async function PUT(request:NextRequest) {
       carrierName:cleanText(data.carrierName,100)||null,
       origin:cleanText(data.origin,80)||null,destination:cleanText(data.destination,80)||null,
       travelDate:parseDay(data.travelDate),amountSar:parseAmount(data.amountSar),
+      adultPriceSar:parseAmount(data.adultPriceSar),childPriceSar:parseAmount(data.childPriceSar),infantPriceSar:parseAmount(data.infantPriceSar),
       priceUnit:cleanText(data.priceUnit,50)||null,
       bannerUrl:url||null,operationStatus:status,operationNote:cleanText(data.operationNote,1000)||null,
       isVisible:Boolean(data.isVisible),
