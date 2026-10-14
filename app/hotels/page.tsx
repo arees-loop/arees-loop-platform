@@ -73,7 +73,7 @@ export default function HotelsPage(){
             <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full border border-[#E8CC85]/20 offer-studio-orbit" />
             <div className="pointer-events-none absolute -bottom-20 -right-12 h-56 w-56 rounded-full border border-white/10 offer-studio-orbit offer-studio-orbit-slow" />
             <div className="relative z-10 flex items-start justify-between gap-3 px-1 pb-4">
-              <div><p className="text-xs font-black tracking-wide text-[#E8CC85]">إعلانات وعروض الفنادق</p><h2 className="mt-1 text-xl font-black sm:text-2xl">استديو إقامات أريس</h2></div>
+              <div><p className="text-xs font-black tracking-wide text-[#E8CC85]">إعلانات وعروض الفنادق</p><h2 className="mt-1 text-xl font-black sm:text-2xl">العروض والتخفيضات</h2></div>
               <span className="mt-1 inline-flex shrink-0 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-white/85"><span className="h-2 w-2 animate-pulse rounded-full bg-[#E8CC85]"/> عروض محدثة</span>
             </div>
             {offersUnavailable&&<div role="status" className="relative z-10 rounded-2xl border border-amber-200/40 bg-white/10 p-5 text-sm leading-7">تعذر تحميل العروض الآن. أرسل طلبك وسنراجع الخيارات المتاحة معك.</div>}
