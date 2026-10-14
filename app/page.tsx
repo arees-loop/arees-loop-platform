@@ -1351,7 +1351,7 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/5 to-[#0D3B34]/10" aria-hidden="true" />
         <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-6 text-center">
-          <img src="/Logo/arees-loop-logo.png" alt="شعار أريس لوب" className="mb-2 h-16 w-auto object-contain sm:h-[76px]" />
+          <img src="/Logo/arees-loop-logo.png" alt="شعار أريس لوب" className="mb-2 h-16 w-auto scale-[3] object-contain sm:h-[76px]" />
           <h2 className="mt-2 flex flex-wrap justify-center gap-x-3 text-4xl font-black leading-tight sm:text-5xl md:text-6xl lg:text-[72px]">
             <span className="text-[#0D3B34] drop-shadow-[0_2px_12px_rgba(255,255,255,0.7)]">{isArabic ? "حجوزات الطيران" : "Flight Bookings"}</span>
             <span className="text-[#A87516] drop-shadow-[0_2px_12px_rgba(255,255,255,0.7)]">{isArabic ? "والبواخر" : "and Ferries"}</span>
@@ -1360,13 +1360,13 @@ export default function Home() {
             {isArabic ? "بين أمواج البحر ورحابة السماء، نقرب لك رحلتك بخيارات حجز سهلة وواضحة." : "Between the sea and open skies, find easy, clear booking options for your journey."}
           </p>
           <div className="mt-6 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-5">
-            <Link href="/flights" className="inline-flex min-h-[66px] min-w-[250px] items-center justify-center gap-3 rounded-full bg-[#063F36] px-8 py-4 text-lg font-black text-white shadow-[0_12px_28px_rgba(13,59,52,0.22)] transition hover:bg-[#145347] sm:min-w-[270px] sm:text-xl">
-              <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <Link href="/flights" className="inline-flex min-h-[56px] min-w-[210px] items-center justify-center gap-2.5 rounded-full bg-[#063F36] px-6 py-3 text-base font-black text-white shadow-[0_10px_24px_rgba(13,59,52,0.2)] transition hover:bg-[#145347] sm:min-w-[225px] sm:text-lg">
+              <svg className="h-6 w-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M3 13.5 21 3l-7.5 18-2.7-7.2L3 13.5Z" /><path d="m10.8 13.8 4.8-4.8" />
               </svg>
               {isArabic ? "احجز تذكرة طيران" : "Book a flight"}
             </Link>
-            <Link href="/ferries" className="inline-flex min-h-[66px] min-w-[250px] items-center justify-center gap-3 rounded-full border-2 border-[#B8862B] bg-[#FFFDF7] px-8 py-4 text-lg font-black text-[#0D3B34] shadow-[0_12px_28px_rgba(13,59,52,0.14)] transition hover:bg-[#FFF5DF] sm:min-w-[270px] sm:text-xl">
+            <Link href="/ferries" className="inline-flex min-h-[56px] min-w-[210px] items-center justify-center gap-2.5 rounded-full border-2 border-[#B8862B] bg-[#FFFDF7] px-6 py-3 text-base font-black text-[#0D3B34] shadow-[0_10px_24px_rgba(13,59,52,0.14)] transition hover:bg-[#FFF5DF] sm:min-w-[225px] sm:text-lg">
               <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
                 <path d="M3 15h18l-2.2 4H6l-3-4Z" /><path d="M7 15V9h10v6M10 9V5h4v4M4 21c1.2-1 2.4-1 3.6 0s2.4 1 3.6 0 2.4-1 3.6 0 2.4 1 3.6 0 2.4-1 3.6 0" />
               </svg>
