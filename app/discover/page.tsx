@@ -12,6 +12,6 @@ export async function generateMetadata({searchParams}:Props):Promise<Metadata>{
   experiences:{title:"التجارب والأنشطة السياحية",description:"تصفح التجارب والأنشطة السياحية واختر ما يناسب رحلتك واهتماماتك."},
  };
  const key=type&&data[type]?type:"experiences",item=data[key];
- return buildPageMetadata({title:item.title,description:item.description,path:"/discover?type="+key,image:"/Image/social/arees-loop-whatsapp-preview.png",imageWidth:1734,imageHeight:907,imageType:"image/png",imageAlt:item.title+" | أريس لوب"});
+ return buildPageMetadata({title:item.title,description:item.description,path:"/discover?type="+key,image:"/api/og/discover?type="+key,imageWidth:1200,imageHeight:630,imageType:"image/png",imageAlt:item.title+" | أريس لوب"});
 }
 export default function DiscoverPage(){return <Suspense fallback={<main dir="rtl" className="min-h-screen bg-[#F7F4ED] pt-32 text-center">جاري تحميل التجارب...</main>}><DiscoverClient/></Suspense>;}
