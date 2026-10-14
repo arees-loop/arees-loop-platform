@@ -20,17 +20,20 @@ const nav: NavItem[] = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
   { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
   { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
-  { href: "/admin/success-partners", label: "شركاء النجاح (المتحرك)", icon: "✧", superOnly: true, permission: null },
   { href: "/admin/users", label: "المستخدمين", icon: "♙", superOnly: true, permission: null },
   { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
-  { href: "/admin/transport/flights", label: "إدارة حجوزات الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
-  { href: "/admin/transport/ferries", label: "إدارة حجوزات البواخر", icon: "⚓", permission: "TRANSPORT_FERRIES" },
-  { href: "/admin/hotels", label: "إدارة طلبات وعروض الفنادق", icon: "▤", permission: "HOTEL_REQUESTS" },
   { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
   { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
   { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
   { href: "/admin/rewards", label: "النقاط وتقارير الاستبدال", icon: "✦", permission: "REPORTS_ANALYTICS" },
+];
+
+const platformNav: NavItem[] = [
   { href: "/admin/settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
+  { href: "/admin/success-partners", label: "شركاء النجاح (المتحرك)", icon: "✧", superOnly: true, permission: null },
+  { href: "/admin/transport/flights", label: "إدارة حجوزات الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
+  { href: "/admin/transport/ferries", label: "إدارة حجوزات البواخر", icon: "⚓", permission: "TRANSPORT_FERRIES" },
+  { href: "/admin/hotels", label: "إدارة طلبات وعروض الفنادق", icon: "▤", permission: "HOTEL_REQUESTS" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -41,6 +44,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [platformMenuOpen, setPlatformMenuOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
   const [pendingServiceCount, setPendingServiceCount] = useState(0);
 
@@ -50,6 +54,10 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
       .then((r) => r.json())
       .then((d) => { if (d.success) setAdmin(d.data); })
       .catch(() => {});
+  }, [pathname]);
+
+  useEffect(() => {
+    if (platformNav.some((item) => pathname === item.href.split("?")[0])) setPlatformMenuOpen(true);
   }, [pathname]);
 
   useEffect(() => {
@@ -70,9 +78,17 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const grantedPermissions = Array.isArray(admin?.adminPermissions)
     ? admin.adminPermissions.map(String)
     : [];
-  const visibleNav = nav.filter((item) =>
-    isSuperAdmin || (!item.superOnly && (!item.permission || grantedPermissions.includes(item.permission)))
-  );
+  const hasNavAccess = (item: NavItem) =>
+    isSuperAdmin || (!item.superOnly && (!item.permission || grantedPermissions.includes(item.permission)));
+  const visibleNav = nav.filter(hasNavAccess);
+  const visiblePlatformNav = platformNav.filter(hasNavAccess);
+  const isActive = (item: NavItem) => {
+    const base = item.href.split("?")[0];
+    return item.href.includes("?")
+      ? pathname === base && searchParams.get("view") === "active"
+      : pathname === base && !(base === "/admin/partners" && searchParams.get("view") === "active");
+  };
+  const platformMenuActive = visiblePlatformNav.some(isActive);
   const fullName = [admin?.firstName, admin?.lastName].filter(Boolean).join(" ") || (isSuperAdmin ? "Arees Admin" : "Admin");
   const initials = fullName.split(" ").filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "A";
 
@@ -121,10 +137,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
           {/* Navigation */}
           <nav className="flex-1 space-y-1.5 px-4 py-5">
             {visibleNav.map((item) => {
-              const base = item.href.split("?")[0];
-              const active = item.href.includes("?")
-                ? pathname === base && searchParams.get("view") === "active"
-                : pathname === base && !(base === "/admin/partners" && searchParams.get("view") === "active");
+              const active = isActive(item);
 
               return (
                 <Link
@@ -168,6 +181,33 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            {visiblePlatformNav.length > 0 && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  aria-expanded={platformMenuOpen}
+                  onClick={() => setPlatformMenuOpen((open) => !open)}
+                  className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all duration-200 ${platformMenuActive ? "bg-[#F3E5BD]/75 text-[#171717] shadow-[0_5px_16px_rgba(181,138,37,.09)]" : "text-[#171717]/72 hover:bg-[#D4AF37]/10 hover:text-[#171717]"}`}
+                >
+                  <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] text-lg ${platformMenuActive ? "bg-[#B68A21] text-white" : "text-[#171717] group-hover:bg-white/65 group-hover:text-[#B68A21]"}`}>⚙</span>
+                  <span className="flex-1 text-right">إدارة المنصة</span>
+                  <span className="text-xs text-[#171717]/55">{platformMenuOpen ? "⌃" : "⌄"}</span>
+                </button>
+                {platformMenuOpen && (
+                  <div className="mr-5 mt-1 space-y-1 border-r border-[#D4AF37]/30 pr-3">
+                    {visiblePlatformNav.map((item) => {
+                      const active = isActive(item);
+                      return (
+                        <Link key={item.href} href={item.href} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold transition ${active ? "bg-[#F3E5BD]/75 text-[#171717]" : "text-[#171717]/70 hover:bg-[#D4AF37]/10 hover:text-[#171717]"}`}>
+                          <span className="w-5 text-center text-base">{item.icon}</span>
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </nav>
 
           {/* Platform Link */}
@@ -306,37 +346,6 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                     </button>
                   </div>
                 )}
-              </div>
-
-              {/* =====================
-                  CENTER
-              ====================== */}
-              <div
-                className="
-                  absolute left-1/2 top-1/2
-                  hidden -translate-x-1/2 -translate-y-1/2
-                  items-center gap-3
-                  rounded-full
-                  border border-[#D4AF37]/15
-                  bg-[#0D3B34]/95
-                  px-5 py-2.5
-                  shadow-[0_7px_22px_rgba(13,59,52,.12)]
-                  transition-all duration-200
-                  hover:shadow-[0_8px_28px_rgba(212,175,55,.18)]
-                  lg:flex
-                "
-              >
-                <span className="text-[9px] font-bold tracking-[.17em] text-[#E6C24D]">
-                  AREES LOOP
-                </span>
-
-                <span className="h-3.5 w-px bg-white/20" />
-
-                <span className="whitespace-nowrap text-[10px] font-semibold text-white/85">
-                  إصدار تجريبي
-                </span>
-
-                <span className="h-1.5 w-1.5 rounded-full bg-[#E6C24D] shadow-[0_0_9px_rgba(230,194,77,.75)]" />
               </div>
 
               {/* =====================
