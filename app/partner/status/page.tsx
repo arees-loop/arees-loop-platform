@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { readImageDimensions, type ImageDimensions } from "@/lib/client-image-dimensions";
+import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
 
 type StatusKey =
   | "received"
@@ -130,6 +133,7 @@ function formatDateTime(value: string) {
 export default function PartnerStatusPage() {
   const [showDetails, setShowDetails] = useState(false);
   const [officialLogoFile, setOfficialLogoFile] = useState<File | null>(null);
+  const [officialLogoDimensions, setOfficialLogoDimensions] = useState<ImageDimensions | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoFeedback, setLogoFeedback] = useState("");
   const [application, setApplication] = useState<PartnerApplication | null>(null);
@@ -183,6 +187,10 @@ export default function PartnerStatusPage() {
 
   async function uploadOfficialLogo() {
     if (!officialLogoFile || !application || logoUploading) return;
+    if (officialLogoDimensions?.width !== IMAGE_REQUIREMENTS.squareLogo.width || officialLogoDimensions?.height !== IMAGE_REQUIREMENTS.squareLogo.height) {
+      setLogoFeedback(imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo));
+      return;
+    }
     setLogoUploading(true);
     setLogoFeedback("");
     try {
@@ -343,12 +351,13 @@ export default function PartnerStatusPage() {
                 </div>
               )}
               <div className="mt-4 flex flex-wrap items-center gap-3">
+                <div className="w-full"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.squareLogo} actual={officialLogoFile?officialLogoDimensions:null}/></div>
                 <input type="file" accept=".png,.jpg,.jpeg,.webp"
                   aria-label="اختيار شعار الجهة الرسمي"
-                  onChange={e=>setOfficialLogoFile(e.target.files?.[0]??null)}
+                  onChange={async e=>{const file=e.target.files?.[0]??null;setOfficialLogoFile(file);setOfficialLogoDimensions(null);if(file){try{setOfficialLogoDimensions(await readImageDimensions(file));}catch{setLogoFeedback("تعذر قراءة أبعاد الصورة.");}}}}
                   className="max-w-full rounded-xl border bg-[#FAF8F1] p-3 text-sm" />
                 <button type="button" onClick={uploadOfficialLogo}
-                  disabled={!officialLogoFile || logoUploading}
+                  disabled={!officialLogoFile || logoUploading || officialLogoDimensions?.width!==IMAGE_REQUIREMENTS.squareLogo.width || officialLogoDimensions?.height!==IMAGE_REQUIREMENTS.squareLogo.height}
                   className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">
                   {logoUploading ? "جاري رفع الشعار..." : "رفع الشعار للمراجعة"}
                 </button>

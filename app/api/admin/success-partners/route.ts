@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { checkServerImageDimensions } from "@/lib/server-image-dimensions";
 
 export const runtime = "nodejs";
 
@@ -46,6 +48,8 @@ async function saveLogo(file: File, id: string) {
       ? header[0] === 255 && header[1] === 216 && header[2] === 255
       : String.fromCharCode(...header.slice(0, 4)) === "RIFF" && String.fromCharCode(...header.slice(8, 12)) === "WEBP";
   if (!valid) throw new Error("محتوى الملف لا يطابق نوع الصورة.");
+  const dimensions = await checkServerImageDimensions(file, IMAGE_REQUIREMENTS.successPartner);
+  if (!dimensions.matches) throw new Error(`${imageDimensionMessage(IMAGE_REQUIREMENTS.successPartner)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُحفظ.`);
   const pathname = `success-partners/${id}/${crypto.randomUUID()}.${ext}`;
   const blob = await put(pathname, file, {
     access: "private",

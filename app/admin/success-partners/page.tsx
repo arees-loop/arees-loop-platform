@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { readImageDimensions, type ImageDimensions } from "@/lib/client-image-dimensions";
+import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
 
 type SuccessPartner = {
   id: string;
@@ -17,10 +20,12 @@ export default function SuccessPartnersAdminPage() {
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [fileDimensions, setFileDimensions] = useState<ImageDimensions | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editWebsite, setEditWebsite] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
+  const [editFileDimensions, setEditFileDimensions] = useState<ImageDimensions | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -49,6 +54,10 @@ export default function SuccessPartnersAdminPage() {
   async function addPartner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!file || busy) return;
+    if (!fileDimensions || fileDimensions.width !== IMAGE_REQUIREMENTS.successPartner.width || fileDimensions.height !== IMAGE_REQUIREMENTS.successPartner.height) {
+      setError(imageDimensionMessage(IMAGE_REQUIREMENTS.successPartner));
+      return;
+    }
     if (file.size > 3 * 1024 * 1024) {
       setError("حجم الشعار يجب ألا يزيد عن 3 ميجابايت.");
       return;
@@ -70,6 +79,7 @@ export default function SuccessPartnersAdminPage() {
       setName("");
       setWebsite("");
       setFile(null);
+      setFileDimensions(null);
       const picker = document.getElementById("success-partner-file") as HTMLInputElement | null;
       if (picker) picker.value = "";
       setNotice("تمت إضافة الشريك إلى الشريط المتحرك بنجاح.");
@@ -86,12 +96,17 @@ export default function SuccessPartnersAdminPage() {
     setEditName(partner.name);
     setEditWebsite(partner.websiteUrl || "");
     setEditFile(null);
+    setEditFileDimensions(null);
     setError("");
     setNotice("");
   }
 
   async function updatePartner(partner: SuccessPartner, visible = partner.isVisible) {
     if (busy) return;
+    if (editing === partner.id && editFile && (!editFileDimensions || editFileDimensions.width !== IMAGE_REQUIREMENTS.successPartner.width || editFileDimensions.height !== IMAGE_REQUIREMENTS.successPartner.height)) {
+      setError(imageDimensionMessage(IMAGE_REQUIREMENTS.successPartner));
+      return;
+    }
     const form = new FormData();
     form.set("id", partner.id);
     form.set("name", editing === partner.id ? editName : partner.name);
@@ -170,6 +185,7 @@ export default function SuccessPartnersAdminPage() {
       <section className="mt-8 rounded-[26px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-black">إضافة شريك نجاح</h2>
         <p className="mt-2 text-xs leading-6 text-[#0D3B34]/65">صورة الشعار الرسمي PNG أو JPG أو WEBP حتى 3 ميجابايت. يظهر في الموقع بعد الحفظ مباشرة عندما تكون الخدمة متصلة بقاعدة البيانات والتخزين.</p>
+        <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.successPartner} actual={file ? fileDimensions : null}/>
         <form onSubmit={addPartner} className="mt-5 grid gap-4 lg:grid-cols-3">
           <label className="flex flex-col gap-2 text-sm font-semibold">
             اسم الشريك *
@@ -181,10 +197,10 @@ export default function SuccessPartnersAdminPage() {
           </label>
           <label className="flex flex-col gap-2 text-sm font-semibold">
             صورة الشعار *
-            <input id="success-partner-file" required type="file" accept=".png,.jpg,.jpeg,.webp" onChange={e => setFile(e.target.files?.[0] || null)} className="w-full rounded-xl border border-[#D4AF37]/30 bg-[#FDFBF5] px-3 py-2.5 text-sm" />
+            <input id="success-partner-file" required type="file" accept=".png,.jpg,.jpeg,.webp" onChange={async e => { const selected=e.target.files?.[0]||null; setFile(selected); setFileDimensions(null); if(selected){try{setFileDimensions(await readImageDimensions(selected));}catch{setError("تعذر قراءة أبعاد الصورة.");}} }} className="w-full rounded-xl border border-[#D4AF37]/30 bg-[#FDFBF5] px-3 py-2.5 text-sm" />
           </label>
           <div className="lg:col-span-3">
-            <button disabled={busy || !name.trim() || !file} type="submit" className="rounded-full bg-[#0D3B34] px-8 py-3.5 font-bold text-white shadow-md transition hover:bg-[#17584D] disabled:cursor-not-allowed disabled:opacity-40">
+            <button disabled={busy || !name.trim() || !file || fileDimensions?.width!==IMAGE_REQUIREMENTS.successPartner.width || fileDimensions?.height!==IMAGE_REQUIREMENTS.successPartner.height} type="submit" className="rounded-full bg-[#0D3B34] px-8 py-3.5 font-bold text-white shadow-md transition hover:bg-[#17584D] disabled:cursor-not-allowed disabled:opacity-40">
               {busy ? "جارٍ الحفظ..." : "＋ إضافة الشريك إلى الشريط"}
             </button>
           </div>
@@ -212,7 +228,8 @@ export default function SuccessPartnersAdminPage() {
                       <input aria-label="تعديل اسم الشريك" maxLength={120} value={editName} onChange={e => setEditName(e.target.value)} className="rounded-lg border border-[#D4AF37]/45 px-3 py-2 text-sm" />
                       <input aria-label="تعديل موقع الشريك" type="url" value={editWebsite} onChange={e => setEditWebsite(e.target.value)} placeholder="موقع الشريك (اختياري)" dir="ltr" className="rounded-lg border border-[#D4AF37]/45 px-3 py-2 text-sm" />
                       <label className="text-xs md:col-span-2">استبدال الصورة (اختياري)
-                        <input type="file" accept=".png,.jpg,.jpeg,.webp" onChange={e => setEditFile(e.target.files?.[0] || null)} className="mt-2 block w-full rounded-lg border border-[#D4AF37]/45 p-2 text-sm" />
+                        <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.successPartner} actual={editFile ? editFileDimensions : null}/>
+                        <input type="file" accept=".png,.jpg,.jpeg,.webp" onChange={async e => {const selected=e.target.files?.[0]||null;setEditFile(selected);setEditFileDimensions(null);if(selected){try{setEditFileDimensions(await readImageDimensions(selected));}catch{setError("تعذر قراءة أبعاد الصورة.");}}}} className="mt-2 block w-full rounded-lg border border-[#D4AF37]/45 p-2 text-sm" />
                       </label>
                     </div>
                   )}
@@ -223,7 +240,7 @@ export default function SuccessPartnersAdminPage() {
                   <button disabled={busy} onClick={() => void updatePartner(partner, !partner.isVisible)} className="rounded-xl border border-[#D4AF37]/35 bg-white px-4 py-2 text-sm font-bold disabled:opacity-40">{partner.isVisible ? "إخفاء" : "إظهار"}</button>
                   {editing === partner.id ? (
                     <>
-                      <button disabled={busy || !editName.trim()} onClick={() => void updatePartner(partner)} className="rounded-xl bg-[#0D3B34] px-4 py-2 text-sm font-bold text-white disabled:opacity-40">حفظ</button>
+                      <button disabled={busy || !editName.trim() || (!!editFile && (editFileDimensions?.width!==IMAGE_REQUIREMENTS.successPartner.width || editFileDimensions?.height!==IMAGE_REQUIREMENTS.successPartner.height))} onClick={() => void updatePartner(partner)} className="rounded-xl bg-[#0D3B34] px-4 py-2 text-sm font-bold text-white disabled:opacity-40">حفظ</button>
                       <button disabled={busy} onClick={() => setEditing(null)} className="rounded-xl border border-[#D4AF37]/35 px-4 py-2 text-sm">إلغاء</button>
                     </>
                   ) : (

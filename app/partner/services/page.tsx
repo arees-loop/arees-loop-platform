@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { readImageDimensions } from "@/lib/client-image-dimensions";
+import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
 
 declare global {
   interface Window {
@@ -146,6 +149,7 @@ export default function PartnerServicesPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [imageUploadDimensions, setImageUploadDimensions] = useState<{width:number;height:number}|null>(null);
   const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
   const [submitMessage, setSubmitMessage] = useState("");
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
@@ -1191,15 +1195,21 @@ export default function PartnerServicesPage() {
               {/* IMAGES */}
               <FormSection eyebrow="MEDIA" title="صور الخدمة">
                 <div className="mb-3 text-xs leading-5 text-[#0D3B34]/55">
-                  <span className="font-black text-red-600">الحد الأدنى 1000 بكسل لأقصر ضلع · الحد الأقصى 5 MB للصورة.</span> <span>حتى 10 صور · JPG / PNG / WebP · نحافظ على أبعاد الصورة كاملة دون قص.</span>
+                  <span className="font-black text-red-600">{imageDimensionMessage(IMAGE_REQUIREMENTS.servicePhoto)} · الحد الأقصى 5 MB للصورة.</span> <span>حتى 10 صور · JPG / PNG / WebP.</span>
                 </div>
+                <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.servicePhoto} actual={imageUploadDimensions}/>
                 <label className="flex cursor-pointer items-center justify-center rounded-[18px] border border-dashed border-[#B88A13]/45 bg-white px-5 py-5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF9E8]">
                   + إضافة صور
                   <input type="file" multiple accept="image/png,image/jpeg,image/webp" className="hidden"
-                    onChange={(e)=>{
+                    onChange={async(e)=>{
                       const selected=Array.from(e.target.files||[]);
                       const remaining=Math.max(0,10-form.imagePreviews.length);
-                      const files=selected.filter((file)=>file.size<=5*1024*1024).slice(0,remaining);
+                      const acceptable=[] as File[];
+                      for(const file of selected.slice(0,remaining)){
+                        if(file.size>5*1024*1024) continue;
+                        try{const d=await readImageDimensions(file);setImageUploadDimensions(d);if(d.width===IMAGE_REQUIREMENTS.servicePhoto.width&&d.height===IMAGE_REQUIREMENTS.servicePhoto.height) acceptable.push(file);else setSubmitMessage(`${file.name}: ${imageDimensionMessage(IMAGE_REQUIREMENTS.servicePhoto)} لم تُرفع.`)}catch{setSubmitMessage(`تعذر قراءة أبعاد ${file.name}.`)}
+                      }
+                      const files=acceptable;
                       const rejected=selected.filter((file)=>file.size>5*1024*1024);
                       if(rejected.length) setSubmitMessage("حجم بعض الصور غير مناسب. الحد الأقصى 5 MB للصورة.");
                       if(!files.length) { e.currentTarget.value=""; return; }

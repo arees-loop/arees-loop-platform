@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { readImageDimensions } from "@/lib/client-image-dimensions";
 
 type AdminUser={id:string;email:string;firstName:string|null;lastName:string|null;role:string;status:string;adminPermissions:unknown;profileImageUrl?:string|null};
 
@@ -39,6 +41,7 @@ export default function AdminUsersPage(){
   if(r.ok&&d.success){await loadUsers();setActionUserId(null);}
  }
  async function uploadProfileImage(userId:string,file:File){
+  try{const d=await readImageDimensions(file);if(d.width!==IMAGE_REQUIREMENTS.avatar.width||d.height!==IMAGE_REQUIREMENTS.avatar.height){setActionNotice(`${imageDimensionMessage(IMAGE_REQUIREMENTS.avatar)} أبعاد الصورة الحالية ${d.width} × ${d.height}. لم تُرفع.`);return;}}catch{setActionNotice("تعذر قراءة أبعاد الصورة.");return;}
   setActionNotice(""); const form=new FormData(); form.append("userId",userId); form.append("file",file);
   const r=await fetch("/api/admin/users/profile-image",{method:"POST",body:form}); const d=await r.json(); setActionNotice(d.message||"تعذر رفع الصورة.");
   if(r.ok&&d.success) await loadUsers();
@@ -93,7 +96,7 @@ export default function AdminUsersPage(){
           <div className="px-3 py-2 text-[11px] font-bold text-[#8D6B16]">Super Admin</div>
           <button disabled className="w-full cursor-not-allowed rounded-xl px-3 py-2.5 text-right text-xs text-black/35">كامل الصلاحيات — محمي</button>
          </>:<>
-          <label className="block w-full cursor-pointer rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تغيير الصورة الشخصية<input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)void uploadProfileImage(user.id,file)}}/></label>
+          <div className="px-3 py-1 text-right text-[10px] font-black text-red-600">{imageDimensionMessage(IMAGE_REQUIREMENTS.avatar)}</div><label className="block w-full cursor-pointer rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تغيير الصورة الشخصية<input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)void uploadProfileImage(user.id,file)}}/></label>
           <button onClick={()=>{setEditUserId(user.id);setEditPermissions(Array.isArray(user.adminPermissions)?user.adminPermissions.map(String):[]);setActionUserId(null);}} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تعديل الصلاحيات</button>
           {!active&&<button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">إعادة إرسال الدعوة</button>}
           <div className="my-1 border-t border-black/[.06]"/>

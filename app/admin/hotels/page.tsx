@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useCallback,useEffect,useState,type FormEvent } from "react";
+import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
 
 type HotelCase={
  id:string;reference:string;customerName:string;customerEmail:string|null;
@@ -94,6 +96,7 @@ export default function HotelAdminPage(){
  }
  async function saveOffer(e:FormEvent){
    e.preventDefault();if(!admin||busy)return;
+   if(banner&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height)){setError(imageDimensionMessage(IMAGE_REQUIREMENTS.offer));return;}
    setBusy(true);setError("");setNotice("");
    try{
      let bannerUrl=edit.bannerUrl;
@@ -228,18 +231,12 @@ export default function HotelAdminPage(){
          <label className="text-xs font-bold sm:col-span-2">صورة العرض (PNG / JPG / WEBP)
            <input type="file" accept="image/png,image/jpeg,image/webp" className={field+" mt-2"} onChange={e=>{setBanner(e.target.files?.[0]||null);setBannerDimensions(null);}}/>
          </label>
-         <div className="sm:col-span-2 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">
-           <p className="font-black">مقاس صورة عروض الفنادق: 1200 × 600 بكسل — أفقي (2:1).</p>
-           <p className="text-xs">الحد الأقصى 4 ميجابايت. قد يقص الموقع أطراف الصورة حسب الشاشة؛ خلي العنصر المهم في المنتصف.</p>
-           {banner&&bannerDimensions&&<p className="mt-1 font-black">مقاس الصورة المختارة: {bannerDimensions.width} × {bannerDimensions.height} بكسل</p>}
-         </div>
-         <label className="text-xs font-bold sm:col-span-2">أو مسار صورة بالمشروع
-           <input className={field+" mt-2"} value={edit.bannerUrl} onChange={e=>setEdit(f=>({...f,bannerUrl:e.target.value}))} placeholder="/Image/..."/>
-         </label>
+         <div className="sm:col-span-2"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={banner?bannerDimensions:null}/><p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت. لن يُحفظ العرض إذا كانت أبعاد الصورة مختلفة.</p></div>
+         {!banner&&edit.bannerUrl&&<p className="text-xs font-bold text-[#0D3B34]/65 sm:col-span-2">الصورة الحالية محفوظة. لاختيار بديل، ارفع صورة بالمقاس المحدد أعلاه.</p>}
          <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={edit.isVisible} onChange={e=>setEdit(f=>({...f,isVisible:e.target.checked}))}/>نشر الإعلان</label>
          <label className="text-xs font-bold">ترتيب الإعلان<input type="number" min={0} className={field+" mt-2"} value={edit.sortOrder} onChange={e=>setEdit(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
          <div className="flex flex-wrap gap-3 sm:col-span-2">
-           <button disabled={!admin||busy} className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">حفظ الإعلان</button>
+           <button disabled={!admin||busy||Boolean(banner&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">حفظ الإعلان</button>
            <button type="button" onClick={()=>selectOffer()} className="rounded-xl border px-5 py-3 text-sm">عرض جديد</button>
          </div>
        </form>
@@ -261,9 +258,9 @@ export default function HotelAdminPage(){
        </div>
        <select className={field} value={filter} onChange={e=>setFilter(e.target.value as typeof filter)}><option value="ALL">الكل</option><option value="ACTIVE">مفعّل</option><option value="PAUSED">موقوف</option></select>
        {display.map(o=><article key={o.id} className={`rounded-2xl border border-[#D4AF37]/30 bg-white p-4 ${view==="list"?"flex flex-wrap items-center gap-4":""}`}>
-         {o.bannerUrl&&<div className={view==="list"?"h-20 w-32 overflow-hidden rounded-xl":"mb-3 h-36 overflow-hidden rounded-xl"}>
+       {o.bannerUrl&&<div className={view==="list"?"aspect-[2/1] w-32 overflow-hidden rounded-xl bg-[#F8F5EC]":"mb-3 aspect-[2/1] overflow-hidden rounded-xl bg-[#F8F5EC]"}>
            {/* eslint-disable-next-line @next/next/no-img-element */}
-           <img alt={o.title} src={o.bannerUrl} className="h-full w-full object-cover"/>
+           <img alt={o.title} src={o.bannerUrl} className="h-full w-full object-contain"/>
          </div>}
          <div className="min-w-0 flex-1"><h3 className="font-black">{o.title}</h3><p className="mt-1 text-xs">{o.destination} · {o.hotelName}</p>
            {o.amountSar!==null&&<p className="mt-2 text-sm font-black text-[#98751A]">{o.amountSar} ر.س</p>}

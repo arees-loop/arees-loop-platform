@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { readImageDimensions } from "@/lib/client-image-dimensions";
+import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
 
 type PriceMode = "INCLUDED" | "ADDED";
 type ServiceType = "EXPERIENCE" | "PROGRAM" | "HOTEL" | "TOUR" | "EVENT" | "GUIDE" | "TRANSPORT" | "TICKET" | "OTHER";
@@ -60,10 +63,26 @@ export default function NewPartnerServicePage() {
   const [submitting,setSubmitting]=useState(false);
   const [submitMessage,setSubmitMessage]=useState("");
   const [submitError,setSubmitError]=useState("");
-  const [images, setImages] = useState<Array<{file:File;url:string}>>([]);
-  const addImages=(e:ChangeEvent<HTMLInputElement>)=>{
+  const [images, setImages] = useState<Array<{file:File;url:string;width:number;height:number}>>([]);
+  const [imageError,setImageError]=useState("");
+  const [imageDimensions,setImageDimensions]=useState<Array<{name:string;width:number;height:number}>>([]);
+  const addImages=async(e:ChangeEvent<HTMLInputElement>)=>{
+    setImageError("");
     const files=Array.from(e.target.files||[]).filter(f=>f.type.startsWith("image/"));
-    if(files.length) setImages(prev=>[...prev,...files.map(file=>({file,url:URL.createObjectURL(file)}))]);
+    const valid:Array<{file:File;url:string;width:number;height:number}>=[];
+    let remaining=Math.max(0,10-images.length);
+    if(files.length>remaining)setImageError("يمكن إضافة 10 صور كحد أقصى للخدمة.");
+    for(const file of files){
+      if(remaining<=0)break;
+      try{
+        const dimensions=await readImageDimensions(file);
+        setImageDimensions(previous=>[...previous,{name:file.name,...dimensions}]);
+        if(dimensions.width!==IMAGE_REQUIREMENTS.servicePhoto.width||dimensions.height!==IMAGE_REQUIREMENTS.servicePhoto.height){setImageError(`${file.name}: ${imageDimensionMessage(IMAGE_REQUIREMENTS.servicePhoto)}`);continue;}
+        valid.push({file,url:URL.createObjectURL(file),...dimensions});
+        remaining--;
+      }catch{setImageError(`تعذر قراءة أبعاد ${file.name}.`);}
+    }
+    if(valid.length) setImages(prev=>[...prev,...valid]);
     e.target.value="";
   };
   const removeImage=(index:number)=>setImages(prev=>{URL.revokeObjectURL(prev[index]?.url||"");return prev.filter((_,i)=>i!==index)});
@@ -116,14 +135,23 @@ export default function NewPartnerServicePage() {
   const submitService=async()=>{
     setSubmitError("");setSubmitMessage("");
     if(!nameAr.trim()||!city.trim()||!locationName.trim()||!location){setSubmitError("أكمل اسم الخدمة وحدد مكان تنفيذ الخدمة بدقة.");return;} if(hasMeetingPoint&&(!meetingPointName.trim()||!meetingLocation)){setSubmitError("حدد اسم وموقع نقطة التجمع أو ألغِ خيار نقطة التجمع.");return;}
+    if(images.some(image=>image.width!==IMAGE_REQUIREMENTS.servicePhoto.width||image.height!==IMAGE_REQUIREMENTS.servicePhoto.height)){setSubmitError(imageDimensionMessage(IMAGE_REQUIREMENTS.servicePhoto));return;}
     setSubmitting(true);
     try{
+      const uploadedImages=[];
+      for(const image of images){
+        const body=new FormData();body.append("file",image.file);
+        const upload=await fetch("/api/partner/services/images",{method:"POST",credentials:"include",body});
+        const result=await upload.json();
+        if(!upload.ok||!result?.success)throw new Error(result?.message||`تعذر رفع ${image.file.name}.`);
+        uploadedImages.push({url:result.url,name:image.file.name});
+      }
       const r=await fetch("/api/partner/services",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         nameAr,descriptionAr,category:serviceType,city,locationName,formattedAddress,placeId,country,countryCode,
         latitude:location.lat,longitude:location.lng,
         hasMeetingPoint,meetingPointName,meetingPointAddress,meetingInstructions,
         meetingLatitude:meetingLocation?.lat,meetingLongitude:meetingLocation?.lng,
-        licenseId,basePrice:price,vatMode:"included",loyaltyPoints,cancellationPolicy
+        licenseId,basePrice:price,vatMode:"included",loyaltyPoints,cancellationPolicy,images:uploadedImages
       })});
       const j=await r.json();
       if(!r.ok) throw new Error(j.message||"تعذر إرسال الخدمة.");
@@ -196,7 +224,7 @@ export default function NewPartnerServicePage() {
                 <div className="p-2"><p className="truncate text-[10px]">{img.file.name}</p>{i===0?<span className="text-[10px] font-bold text-[#B99124]">الصورة الرئيسية</span>:<button type="button" onClick={()=>setImages(prev=>[prev[i],...prev.filter((_,x)=>x!==i)])} className="text-[10px] font-bold">اجعلها الرئيسية</button>}</div>
                 <button type="button" aria-label="حذف الصورة" onClick={()=>removeImage(i)} className="absolute left-1 top-1 h-7 w-7 rounded-full bg-white/90 text-xs font-bold">×</button>
               </div>)}
-              <label className="flex h-32 w-32 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#B99124]/50 bg-[#FFF8E5] text-center text-xs font-bold text-[#0D3B34]">+ إضافة صورة<input type="file" accept="image/*" multiple onChange={addImages} className="hidden"/></label>
+              <div className="w-full"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.servicePhoto} actual={imageDimensions.length?imageDimensions[imageDimensions.length-1]:null}/><p className="mt-2 text-xs text-red-600">لن تُرفع أو تُحفظ أي صورة بأبعاد مختلفة عن المقاس المطلوب.</p>{imageError&&<p role="alert" className="mt-2 text-xs font-bold text-red-700">{imageError}</p>}<label className="mt-3 flex h-32 w-32 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#B99124]/50 bg-[#FFF8E5] text-center text-xs font-bold text-[#0D3B34]">+ إضافة صورة<input type="file" accept="image/*" multiple onChange={addImages} className="hidden"/></label></div>
             </div>
             {images.length>0&&<p className="mt-3 text-xs text-[#0D3B34]/50">تم اختيار {images.length} {images.length===1?"صورة":"صور"}</p>}
           </div>

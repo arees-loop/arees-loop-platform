@@ -128,7 +128,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   <div className="pointer-events-none absolute inset-x-3 top-2 h-8 rounded-[28px] bg-white/10 offer-studio-layer offer-studio-layer-mid" />
                   {offers.filter((_,index)=>index===offerIndex%offers.length).map(offer=>(
                     <article key={offer.id} className="offer-studio-slide relative overflow-hidden rounded-[24px] border border-white/20 bg-[#F7F4ED] text-[#0D3B34] shadow-2xl" aria-live="polite">
-                      <div className="relative h-40 overflow-hidden bg-[radial-gradient(circle_at_75%_15%,#EBD38B,#F7F4ED_48%,#D8E9E2)] sm:h-48">
+                      <div className="relative aspect-[2/1] overflow-hidden bg-[radial-gradient(circle_at_75%_15%,#EBD38B,#F7F4ED_48%,#D8E9E2)]">
                         {offer.bannerUrl? <>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={offer.bannerUrl} alt={offer.title} className="offer-studio-art h-full w-full object-cover"/>

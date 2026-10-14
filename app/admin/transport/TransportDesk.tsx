@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { AirportLookup, AirlineLookup } from "@/app/components/AviationLookup";
+import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
 
 type RequestRow={
   id:string;reference:string;kind:string;customerName:string;customerEmail:string|null;
@@ -190,6 +192,11 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
 
   async function saveOffer(event:FormEvent) {
     event.preventDefault();if(busy)return;setBusy(true);setError("");setStatus("");
+    if (bannerFile && (bannerDimensions?.width !== IMAGE_REQUIREMENTS.offer.width || bannerDimensions?.height !== IMAGE_REQUIREMENTS.offer.height)) {
+      setError(imageDimensionMessage(IMAGE_REQUIREMENTS.offer));
+      setBusy(false);
+      return;
+    }
     try{
       const method=offerForm.id?"PUT":"POST";
       let imageUrl=offerForm.bannerUrl;
@@ -432,14 +439,9 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <label className={label}>صورة الإعلان أو تصميم العرض (PNG / JPG / WEBP)
                   <input type="file" accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>{setBannerFile(e.target.files?.[0]||null);setBannerDimensions(null);}} />
                 </label>
-                <div className="mt-3 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">
-                  <p className="font-black">مقاس صورة العروض للطيران والبواخر: 1200 × 600 بكسل — أفقي (2:1).</p>
-                  <p className="text-xs">الحد الأقصى 4 ميجابايت. قد يقص الموقع أطراف الصورة حسب الشاشة؛ خلي العنصر المهم في المنتصف.</p>
-                  {bannerFile&&bannerDimensions&&<p className="mt-1 font-black">مقاس الصورة المختارة: {bannerDimensions.width} × {bannerDimensions.height} بكسل</p>}
-                </div>
-                {!bannerFile&&<label className={label+" mt-3"}>أو رابط صورة موجودة في ملفات المشروع
-                  <input className={field} value={offerForm.bannerUrl} onChange={e=>setOfferForm(f=>({...f,bannerUrl:e.target.value}))} placeholder="/Image/..."/>
-                </label>}
+                <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={bannerFile ? bannerDimensions : null} />
+                <p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت. لن يُحفظ العرض إذا كانت أبعاد الصورة مختلفة.</p>
+                {!bannerFile&&offerForm.bannerUrl&&<p className="mt-3 text-xs font-bold text-[#0D3B34]/65">الصورة الحالية محفوظة. لاختيار بديل، ارفع صورة بالمقاس المحدد أعلاه.</p>}
                 {(bannerPreview||offerForm.bannerUrl)&&<div className="mt-4 overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} onLoad={e=>{if(bannerFile)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="h-44 w-full object-contain"/>
@@ -463,7 +465,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className={label}>ترتيب العرض<input className={field} type="number" min={0} max={9999} value={offerForm.sortOrder} onChange={e=>setOfferForm(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
               <label className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/30 p-3 text-sm font-bold"><input type="checkbox" checked={offerForm.isVisible} onChange={e=>setOfferForm(f=>({...f,isVisible:e.target.checked}))}/> ظاهر للزوار</label>
               <div className="flex flex-wrap gap-3 sm:col-span-2">
-                <button disabled={busy||!showSuper} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
+                <button disabled={busy||!showSuper||Boolean(bannerFile&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
                 <button type="button" onClick={()=>{setBannerFile(null);setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});}} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
               </div>
             </form>
@@ -486,9 +488,9 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             {filteredOffers.length===0&&!loading&&<p className="rounded-xl bg-white p-5 text-sm">لا توجد عروض بعد.</p>}
             {filteredOffers.map(offer=>(
               <article key={offer.id} className={`rounded-[22px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm ${offerView==="LIST"?"flex flex-wrap items-center gap-4":""}`}>
-                {offer.bannerUrl&&<div className={offerView==="LIST"?"h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-[#F7F4ED]":"mb-3 h-36 overflow-hidden rounded-xl bg-[#F7F4ED]"}>
+                {offer.bannerUrl&&<div className={offerView==="LIST"?"aspect-[2/1] w-28 shrink-0 overflow-hidden rounded-xl bg-[#F7F4ED]":"mb-3 aspect-[2/1] overflow-hidden rounded-xl bg-[#F7F4ED]"}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={offer.bannerUrl} alt={offer.title} className="h-full w-full object-cover" />
+                  <img src={offer.bannerUrl} alt={offer.title} className="h-full w-full object-contain" />
                 </div>}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div><p className="text-xs font-semibold text-[#947426]">{offer.kind==="FERRY"?"بواخر":"طيران"} · {offer.carrierName}</p>

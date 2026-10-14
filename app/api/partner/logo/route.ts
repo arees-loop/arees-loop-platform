@@ -3,6 +3,8 @@ import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getActivePartnerMembership } from "@/lib/partner-permissions";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { checkServerImageDimensions } from "@/lib/server-image-dimensions";
 
 export const runtime = "nodejs";
 
@@ -60,6 +62,8 @@ export async function POST(request: NextRequest) {
     if (!validImageHeader(file.type,header)) {
       return NextResponse.json({success:false,message:"محتوى الملف لا يطابق صيغة الصورة المختارة."},{status:415});
     }
+    const dimensions = await checkServerImageDimensions(file, IMAGE_REQUIREMENTS.squareLogo);
+    if (!dimensions.matches) return NextResponse.json({success:false,message:`${imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُحفظ.`},{status:400});
 
     const pathname = `partners/${membership.partnerId}/logos/${crypto.randomUUID()}.${extension}`;
     const blob = await put(pathname, file, {

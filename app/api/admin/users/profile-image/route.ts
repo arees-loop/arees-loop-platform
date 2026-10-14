@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { checkServerImageDimensions } from "@/lib/server-image-dimensions";
 
 const ALLOWED = new Set(["image/jpeg","image/png","image/webp"]);
 const MAX = 5 * 1024 * 1024;
@@ -17,6 +19,8 @@ export async function POST(request: Request) {
     if (!(file instanceof File) || typeof userId !== "string") return NextResponse.json({success:false,message:"الصورة والمستخدم مطلوبان."},{status:400});
     if (!ALLOWED.has(file.type)) return NextResponse.json({success:false,message:"يسمح بصور JPG أو PNG أو WEBP فقط."},{status:415});
     if (file.size <= 0 || file.size > MAX) return NextResponse.json({success:false,message:"حجم الصورة يجب ألا يتجاوز 5 ميجابايت."},{status:413});
+    const dimensions=await checkServerImageDimensions(file,IMAGE_REQUIREMENTS.avatar);
+    if(!dimensions.matches)return NextResponse.json({success:false,message:`${imageDimensionMessage(IMAGE_REQUIREMENTS.avatar)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُحفظ.`},{status:400});
     const target = await prisma.user.findUnique({where:{id:userId},select:{id:true,role:true}});
     if (!target || !["ADMIN","SUPER_ADMIN"].includes(target.role)) return NextResponse.json({success:false,message:"المستخدم الإداري غير موجود."},{status:404});
     const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";

@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { readImageDimensions } from "@/lib/client-image-dimensions";
 type StepId =
   | "account"
   | "business"
@@ -261,6 +263,7 @@ const initialData: FormData = {
 };
 
 export default function PartnerOnboardingPage() {
+  const [logoDimensionsOk, setLogoDimensionsOk] = useState(true);
   const [currentStep, setCurrentStep] =
     useState<StepId>("account");
 
@@ -1544,6 +1547,7 @@ export default function PartnerOnboardingPage() {
   const canSubmit =
     data.declaration &&
     data.termsAccepted &&
+    logoDimensionsOk &&
     !aiChecks.some(
       (item) =>
         item.state === "warn"
@@ -3304,13 +3308,18 @@ export default function PartnerOnboardingPage() {
                     <input
                       type="file"
                       accept=".png,.jpg,.jpeg,.webp"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0] ?? null;
+                        setLogoDimensionsOk(!file);
                         if (file && file.size > 3 * 1024 * 1024) {
                           setValidationErrors(current => ({...current, logoFile:"حجم الشعار يجب ألا يتجاوز 3 ميجابايت."}));
                           setUploadedFiles(current => ({...current,logo:null}));
                           update("logoFile","");
                           return;
+                        }
+                        if(file){
+                          try{const dimensions=await readImageDimensions(file);const matches=dimensions.width===IMAGE_REQUIREMENTS.squareLogo.width&&dimensions.height===IMAGE_REQUIREMENTS.squareLogo.height;setLogoDimensionsOk(matches);if(!matches){setValidationErrors(current=>({...current,logoFile:`${imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}.`}));setUploadedFiles(current=>({...current,logo:null}));update("logoFile","");return;}}
+                          catch{setLogoDimensionsOk(false);setValidationErrors(current=>({...current,logoFile:"تعذر قراءة أبعاد الصورة."}));setUploadedFiles(current=>({...current,logo:null}));return;}
                         }
                         setValidationErrors(current => ({...current,logoFile:""}));
                         setUploadedFiles(current => ({...current,logo:file}));
@@ -3319,7 +3328,7 @@ export default function PartnerOnboardingPage() {
                       className={inputClass}
                     />
                     <p className="mt-2 text-xs text-[#0D3B34]/55">
-                      PNG أو JPG أو WEBP، بحد أقصى 3 ميجابايت. لا يظهر الشعار للجمهور قبل اعتماد الجهة.
+                      <span className="font-black text-red-600">{imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo)}</span> PNG أو JPG أو WEBP، بحد أقصى 3 ميجابايت. لا يظهر الشعار للجمهور قبل اعتماد الجهة.
                     </p>
                   </Field>
                   <ValidationError message={validationErrors.logoFile} />

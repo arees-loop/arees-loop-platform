@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AccountMenu from "@/app/components/AccountMenu";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { readImageDimensions } from "@/lib/client-image-dimensions";
 
 type ToggleRowProps = {
   title: string;
@@ -164,6 +166,7 @@ export default function ProfilePage() {
     if(!file)return;
     setAvatarError("");
     if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>2*1024*1024){setAvatarError("اختر صورة JPG أو PNG أو WebP بحجم لا يتجاوز 2 ميجابايت");return;}
+    try{const d=await readImageDimensions(file);if(d.width!==IMAGE_REQUIREMENTS.avatar.width||d.height!==IMAGE_REQUIREMENTS.avatar.height){setAvatarError(`${imageDimensionMessage(IMAGE_REQUIREMENTS.avatar)} أبعاد الصورة الحالية ${d.width} × ${d.height}.`);return;}}catch{setAvatarError("تعذر قراءة أبعاد الصورة.");return;}
     setAvatarBusy(true);
     try{
       const form=new FormData();form.set("image",file);
@@ -344,6 +347,7 @@ export default function ProfilePage() {
                 {avatarBusy ? "جارٍ رفع الصورة…" : "إضافة أو تغيير الصورة"}
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={avatarBusy} onChange={e => { void uploadAvatar(e.target.files?.[0]); e.target.value = ""; }} />
               </label>
+              <p className="text-xs font-bold text-red-300">{imageDimensionMessage(IMAGE_REQUIREMENTS.avatar)}</p>
               {avatarError && <p role="alert" className="text-xs text-red-200">{avatarError}</p>}
 
               <div>

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { checkServerImageDimensions } from "@/lib/server-image-dimensions";
 export const runtime="nodejs";
 const allowed:Record<string,string>={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
 export async function POST(request:NextRequest){
@@ -14,6 +16,10 @@ export async function POST(request:NextRequest){
   const bytes=Buffer.from(await file.arrayBuffer());
   const magicValid=file.type==="image/jpeg"?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:file.type==="image/png"?bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
   if(!magicValid)return NextResponse.json({success:false,message:"ملف الصورة غير صالح"},{status:400});
+  try{
+   const dimensions=await checkServerImageDimensions(file,IMAGE_REQUIREMENTS.avatar);
+   if(!dimensions.matches)return NextResponse.json({success:false,message:`${imageDimensionMessage(IMAGE_REQUIREMENTS.avatar)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُحفظ.`},{status:400});
+  }catch{return NextResponse.json({success:false,message:"تعذر قراءة أبعاد الصورة."},{status:400});}
   const blob=await put(`avatars/${session.user.id}/${crypto.randomUUID()}.${allowed[file.type]}`,bytes,{access:"public",contentType:file.type,addRandomSuffix:false});
   await prisma.user.update({where:{id:session.user.id},data:{profileImageUrl:blob.url}});
   return NextResponse.json({success:true,url:blob.url});
