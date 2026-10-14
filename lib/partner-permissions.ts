@@ -57,3 +57,8 @@ export async function getActivePartnerMembership(userId: string) {
     orderBy: { createdAt: "desc" },
   });
 }
+
+export async function userHasPartnerPermission(userId: string, permission: PartnerPermission) {
+  const membership = await getActivePartnerMembership(userId);
+  return !!membership && hasPartnerPermission(membership.user.role, membership.permissions, permission);
+}
