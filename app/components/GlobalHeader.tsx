@@ -81,7 +81,79 @@ export default function GlobalHeader() {
               <div className="invisible absolute right-1/2 top-[64px] z-50 w-56 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/95 p-2 text-right opacity-0 shadow-[0_18px_48px_rgba(13,59,52,.18)] backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
                 {navVisible.flights !== false && <Link href="/flights" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">✈ الطيران</Link>}
                 {navVisible.flights !== false && <Link href="/ferries" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">⚓ البواخر</Link>}
-                {navVisible.programs !== false && (
+                {navVisible.hotels !== false && <Link href="/hotels" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">الفنادق</Link>}
+                {navVisible.flights !== false && <Link href="/visas" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">🛂 التأشيرات</Link>}
+                {navVisible.flights !== false && <Link href="/international-driving-license" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">🚘 رخصة القيادة الدولية</Link>}
+              </div>
+            </div>
+          )}
+          {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}
+          {navVisible.partners !== false && (
+            <div className="group relative">
+              <Link href="/partner/select-type" className="inline-flex items-center gap-1.5 py-6 transition hover:text-[#B58C31] focus-visible:text-[#B58C31]" aria-label="للشركاء: خيارات الانضمام وتسجيل الدخول">
+                <PartnerIcon kind="handshake" className="h-[19px] w-[19px] text-[#B58C31]" />
+                للشركاء <span className="text-xs transition group-hover:rotate-180 group-focus-within:rotate-180" aria-hidden="true">⌄</span>
+              </Link>
+              <div className="invisible absolute right-0 top-[62px] z-50 w-64 translate-y-2 rounded-[22px] border border-[#D4AF37]/45 bg-white/95 p-2 text-right opacity-0 shadow-[0_18px_48px_rgba(13,59,52,.18)] backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <Link href="/partner/select-type" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">
+                  <PartnerIcon kind="handshake" className="h-6 w-6 shrink-0 text-[#B58C31]" /> انضم كشريك
+                </Link>
+                <Link href="/partner/government" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">
+                  <PartnerIcon kind="government" className="h-6 w-6 shrink-0 text-[#B58C31]" /> الجهات الحكومية
+                </Link>
+                <Link href="/partner/login" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">
+                  <PartnerIcon kind="login" className="h-6 w-6 shrink-0 text-[#B58C31]" /> تسجيل دخول الشركاء
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className={`hidden rounded-full border p-1 text-[10px] font-black sm:flex ${border} ${text}`}>
+            <button type="button" onClick={() => setLanguage("ar")} className={`rounded-full px-2.5 py-1.5 ${language === "ar" ? "bg-[#0D3B34] text-white" : ""}`}>AR</button>
+            <button type="button" onClick={() => setLanguage("en")} className={`rounded-full px-2.5 py-1.5 ${language === "en" ? "bg-[#0D3B34] text-white" : ""}`}>EN</button>
+          </div>
+
+          {user ? (
+            <>
+              <Link href="/cart" aria-label="السلة" className="relative grid h-11 w-11 place-items-center rounded-full bg-[#0D3B34] text-white shadow-[0_8px_22px_rgba(13,59,52,0.28)] transition hover:-translate-y-0.5 hover:bg-[#145347]">
+                <span className="text-[20px] leading-none">🛒</span>
+                {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-[#D4AF37] px-1 text-[10px] font-black text-[#0D3B34]">{cartCount > 99 ? "99+" : cartCount}</span>}
+              </Link>
+              <div className="relative" onMouseEnter={() => setAccountOpen(true)} onMouseLeave={() => setAccountOpen(false)}>
+                <button type="button" onClick={() => setAccountOpen((value) => !value)} aria-expanded={accountOpen} aria-haspopup="menu" className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
+                  {user.profileImageUrl && <img src={user.profileImageUrl} alt="صورتي" className="h-8 w-8 rounded-full border border-white/25 object-cover" />}
+                  <span className="max-w-[76px] truncate sm:max-w-none">مرحباً، {displayName}</span>
+                  <span className={`text-[#D4AF37] transition-transform ${accountOpen ? "rotate-180" : ""}`}>⌄</span>
+                </button>
+                {accountOpen && (
+                  <div dir="rtl" className="absolute left-0 top-full mt-1 w-52 overflow-hidden rounded-[18px] border border-[#D4AF37]/35 bg-white/95 p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+                    <Link href="/notifications" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الإشعارات</Link>
+                    <Link href="/bookings" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الطلبات والحجوزات</Link>
+                    <Link href="/favorites" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الاهتمامات</Link>
+                    <Link href="/rewards" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">المكافآت والنقاط</Link>
+                    <Link href="/cart" onClick={() => setAccountOpen(false)} className="flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]"><span>السلة</span>{cartCount > 0 && <span className="rounded-full bg-[#D4AF37] px-2 py-0.5 text-[10px] font-black text-[#0D3B34]">{cartCount}</span>}</Link>
+                    <Link href="/profile" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">حسابي وإعداداتي</Link>
+                    <div className="my-1 h-px bg-[#0D3B34]/10" />
+                    <button type="button" onClick={logout} className="block w-full rounded-xl px-4 py-2.5 text-right text-xs font-bold text-red-700 hover:bg-red-50">تسجيل الخروج</button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className={`hidden rounded-full border px-4 py-2.5 text-xs font-bold sm:inline-flex ${border} ${text}`}>تسجيل الدخول</Link>
+              <Link href="/login" className="rounded-full bg-[#0D3B34]/95 px-4 py-2.5 text-xs font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#145347] md:px-5">ابدأ التجربة</Link>
+            </>
+          )}
+        </div>
+      </nav>
+      {mobileNavOpen && (
+        <nav id="arees-mobile-navigation" aria-label="التنقل الرئيسي" dir="rtl" className="absolute inset-x-0 top-full z-[110] border-t border-[#0D3B34]/10 bg-[#F7F4EA]/[0.98] px-4 pb-4 pt-3 shadow-[0_18px_35px_rgba(13,59,52,.16)] backdrop-blur-xl lg:hidden">
+          <div className="mx-auto grid max-w-xl grid-cols-2 gap-2 text-right text-sm font-bold text-[#0D3B34]">
+            {navVisible.discover !== false && <Link href="/discover" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">اكتشف التجارب</Link>}
+            {navVisible.programs !== false && (
               <section className="col-span-2">
                 <button type="button" aria-expanded={mobileProgramsOpen} aria-controls="arees-mobile-program-links" onClick={() => setMobileProgramsOpen(value => !value)} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-right hover:bg-[#D4AF37]/15">
                   <span>برامج سياحية</span><span aria-hidden="true">{mobileProgramsOpen ? "−" : "+"}</span>
