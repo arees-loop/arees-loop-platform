@@ -439,6 +439,12 @@ export default function Home() {
       setActiveScene((current) =>
         Math.min(heroScenes.length - 1, current + 1),
       );
+    } else if (forward) {
+      touchLocked.current = true;
+      document.getElementById("how")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     } else if (backward && activeScene > 0) {
       touchLocked.current = true;
       setShowLocationNotice(false);
@@ -457,6 +463,7 @@ export default function Home() {
       <section
         ref={heroRef}
         className="relative min-h-screen overflow-hidden bg-[#071713]"
+        style={{ touchAction: "pan-x" }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMouse({ x: 0, y: 0 })}
         onTouchStart={handleHeroTouchStart}
