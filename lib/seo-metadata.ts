@@ -23,11 +23,12 @@ export function buildPageMetadata({
   imageType,
   imageAlt,
 }: PageMetadataInput): Metadata {
+  const pageTitle = title.replace(/\\s*\\|\\s*Arees Loop$/, "");
   const imageUrl = new URL(image, SITE_URL).toString();
   const pageUrl = new URL(path, SITE_URL).toString();
 
   return {
-    title,
+    title: pageTitle,
     description,
     alternates: { canonical: pageUrl },
     robots: {
@@ -40,13 +41,13 @@ export function buildPageMetadata({
       locale: "ar_SA",
       url: pageUrl,
       siteName: "Arees Loop",
-      title,
+      title: pageTitle,
       description,
       images: [{ url: imageUrl, width: imageWidth, height: imageHeight, type: imageType, alt: imageAlt }],
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: pageTitle,
       description,
       images: [imageUrl],
     },
