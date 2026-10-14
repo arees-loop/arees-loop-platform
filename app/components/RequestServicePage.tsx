@@ -50,6 +50,11 @@ export default function RequestServicePage({kind}:{kind:Kind}){
  <div className="sm:col-span-2 grid gap-4 sm:grid-cols-[minmax(180px,.7fr)_minmax(0,1.3fr)]"><label className={label}>مفتاح الدولة<select className={field} value={countryCode} onChange={e=>setCountryCode(e.target.value)}>{codes.map(([code,text])=><option key={code} value={code}>{text}</option>)}</select></label>{countryCode==="other"&&<label className={label}>مفتاح الدولة<input required inputMode="numeric" pattern="[0-9]{1,4}" className={field} value={customCode} onChange={e=>setCustomCode(e.target.value)}/></label>}<label className={label}>رقم الجوال<input required inputMode="tel" autoComplete="tel-national" pattern="[0-9٠-٩]{6,15}" maxLength={15} className={field} value={phone} onChange={e=>setPhone(e.target.value.replace(/[^0-9٠-٩]/g,""))} placeholder="رقم فعّال للتواصل"/></label></div>
  <label className={label+" sm:col-span-2"}>ملاحظات إضافية (اختياري)<textarea maxLength={800} rows={3} className={field} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="اكتب أي تفاصيل تساعدنا في مراجعة طلبك"/></label>
  <p className="sm:col-span-2 rounded-2xl bg-[#F7F2E6] p-4 text-xs leading-7">إرسال الطلب لا يعني إصدار التأشيرة أو الرخصة، ولا يشمل دفعاً إلكترونياً. يخضع القبول والمدة والرسوم لشروط الجهات المختصة.</p>
- <button disabled={busy} className="sm:col-span-2 rounded-2xl bg-[#0D3B34] px-6 py-4 text-base font-black text-white shadow-lg transition hover:bg-[#15574B] disabled:opacity-60">{busy?"جارٍ إرسال الطلب...":"إرسال الطلب"}</button>
+ <div className="sm:col-span-2 mt-2 flex flex-wrap justify-center gap-3">
+ <a href={`https://wa.me/966580091220?text=${encodeURIComponent(visa?"السلام عليكم، أرغب في الاستفسار عن إصدار تأشيرة عبر أريس لوب.":"السلام عليكم، أرغب في الاستفسار عن رخصة القيادة الدولية عبر أريس لوب.")}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] shadow-sm transition hover:bg-[#FFF9EB]">
+ تواصل عبر الواتساب
+ </a>
+ <button disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
+ </div>
  </form></section></div></section></main>;
 }
