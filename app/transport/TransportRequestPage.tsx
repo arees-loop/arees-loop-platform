@@ -96,7 +96,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={ferry?"/Image/hero/arees-ferry-banner.webp":"/Image/hero/arees-flight-banner.webp"}
             alt={ferry?"حجز البواخر — رحلتك البحرية تبدأ هنا":"حجز الطيران — رحلتك الجوية تبدأ هنا"}
-            className="block aspect-[4.2/1] w-full object-cover object-center" />
+            className="block aspect-[4.2/1] w-full scale-[1.04] object-cover object-center" />
         </div>
         
 
