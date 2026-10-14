@@ -23,7 +23,7 @@ export function buildPageMetadata({
   imageType,
   imageAlt,
 }: PageMetadataInput): Metadata {
-  const pageTitle = title.replace(/\\s*\\|\\s*Arees Loop$/, "");
+  const pageTitle = title.replace(/\s*\|\s*Arees Loop$/, "");
   const imageUrl = new URL(image, SITE_URL).toString();
   const pageUrl = new URL(path, SITE_URL).toString();
 
