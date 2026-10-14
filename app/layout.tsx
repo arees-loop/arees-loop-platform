@@ -130,24 +130,11 @@ export default function RootLayout({
         <div className="sbc-verify-seal" data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QT09" data-position="bottom-left" />
         <Script src="https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js" strategy="afterInteractive" />
 
-        {/* AREES LOOP — BETA STATUS */}
-        <div className="pointer-events-none fixed right-3 top-3 z-[9999] md:right-5">
-          <div className="flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#073F37]/90 px-4 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D4AF37] opacity-40" />
-
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#D4AF37]" />
-            </span>
-
-            <span className="whitespace-nowrap text-[12px] font-semibold tracking-wide text-white md:text-[13px]">
-              تحت التطوير
-            </span>
-
-            <span className="h-3 w-px bg-white/20" />
-
-            <span className="whitespace-nowrap text-[9px] font-semibold tracking-[0.16em] text-[#E2BD45] md:text-[10px]">
-              AREES LOOP
-            </span>
+        {/* Compact beta label, kept clear of the mobile logo and navigation. */}
+        <div className="pointer-events-none fixed left-2 top-[82px] z-[90] md:left-auto md:right-5 md:top-3">
+          <div className="flex items-center gap-1.5 rounded-full border border-[#D4AF37]/30 bg-[#073F37]/90 px-2 py-1 shadow-sm backdrop-blur-xl">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
+            <span className="whitespace-nowrap text-[9px] font-semibold text-white md:text-[10px]">تحت التطوير</span>
           </div>
         </div>
       </body>
