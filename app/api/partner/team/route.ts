@@ -24,7 +24,7 @@ export async function GET() {
     const session = await getCurrentSession();
     if (!session) return denied("يجب تسجيل الدخول أولاً.", 401);
     const access = await managerMembership(session.user.id);
-    if (access.error) return access.error;
+    if ("error" in access) return access.error;
     const members = await prisma.partnerMember.findMany({
       where: { partnerId: access.membership.partnerId },
       include: { user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, role: true } } },
@@ -88,7 +88,7 @@ export async function PATCH(request: Request) {
     const current = await prisma.partnerMember.findFirst({ where: { id, partnerId: access.membership.partnerId }, include: { user: { select: { role: true } } } });
     if (!current) return denied("الموظف غير موجود في هذه المنشأة.", 404);
     if (current.userId === session.user.id || canManagePartnerTeam(current.user.role)) return denied("لا يمكن تعديل صلاحيات المالك أو المدير من هذه الصفحة.", 400);
-    const data: { permissions?: object; jobTitle?: string | null; isActive?: boolean } = {};
+    const data: any = {};
     if (body.permissions !== undefined) data.permissions = normalizePartnerPermissions(body.permissions);
     if (body.jobTitle !== undefined) {
       const title = String(body.jobTitle || "").trim();
