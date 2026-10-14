@@ -18,7 +18,7 @@ export default function OfferImageCarousel({images,fallback,title,className="",i
   useEffect(()=>{setIndex(0);},[gallery.join("|")]);
   useEffect(()=>{
     if(gallery.length<2||paused||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    const timer=window.setInterval(()=>setIndex(i=>(i+1)%gallery.length),3000);
+    const timer=window.setInterval(()=>setIndex(i=>(i+1)%gallery.length),2000);
     return()=>window.clearInterval(timer);
   },[gallery.length,paused]);
 
