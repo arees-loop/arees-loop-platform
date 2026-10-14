@@ -17,7 +17,7 @@ type RequestRow={
 };
 type Offer={
   id:string;kind:string;title:string;description:string|null;carrierName:string|null;
-  origin:string|null;destination:string|null;travelDate:string|null;amountSar:number|null;adultPriceSar:number|null;childPriceSar:number|null;infantPriceSar:number|null;
+  origin:string|null;destination:string|null;travelDate:string|null;scheduleType:string;scheduleData:unknown;amountSar:number|null;adultPriceSar:number|null;childPriceSar:number|null;infantPriceSar:number|null;
   priceUnit:string|null;bannerUrl:string|null;operationStatus:string;operationNote:string|null;
   isVisible:boolean;sortOrder:number;startsAt:string|null;endsAt:string|null;
 };
@@ -28,7 +28,7 @@ const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت ال�
 const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],QUOTE_READY:["PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
 const blankOffer={
   id:"",kind:"FERRY",title:"",description:"",carrierName:"",origin:"سواكن",destination:"جدة",
-  travelDate:"",amountSar:"",adultPriceSar:"",childPriceSar:"",infantPriceSar:"",priceUnit:"للبالغ",bannerUrl:"",operationStatus:"AVAILABLE",operationNote:"",
+  travelDate:"",scheduleType:"SINGLE",scheduleDates:"",rangeFrom:"",rangeTo:"",weekdaysText:"",monthDaysText:"",scheduleUntil:"",amountSar:"",adultPriceSar:"",childPriceSar:"",infantPriceSar:"",priceUnit:"للبالغ",bannerUrl:"",operationStatus:"AVAILABLE",operationNote:"",
   isVisible:true,sortOrder:0,startsAt:"",endsAt:"",
 };
 type OfferForm=typeof blankOffer;
@@ -183,7 +183,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     setOfferForm(offer?{
       id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
       carrierName:offer.carrierName||"",origin:offer.origin||"",destination:offer.destination||"",
-      travelDate:day(offer.travelDate),amountSar:offer.amountSar===null?"":String(offer.amountSar),
+      travelDate:day(offer.travelDate),scheduleType:offer.scheduleType||"SINGLE",scheduleDates:Array.isArray((offer.scheduleData as {dates?:unknown[]}|null)?.dates)?((offer.scheduleData as {dates:string[]}).dates).join("\n"):"",rangeFrom:String((offer.scheduleData as {from?:string}|null)?.from||""),rangeTo:String((offer.scheduleData as {to?:string}|null)?.to||""),weekdaysText:Array.isArray((offer.scheduleData as {weekdays?:unknown[]}|null)?.weekdays)?((offer.scheduleData as {weekdays:number[]}).weekdays).join(", "):"",monthDaysText:Array.isArray((offer.scheduleData as {monthDays?:unknown[]}|null)?.monthDays)?((offer.scheduleData as {monthDays:number[]}).monthDays).join(", "):"",scheduleUntil:String((offer.scheduleData as {until?:string}|null)?.until||""),amountSar:offer.amountSar===null?"":String(offer.amountSar),
       adultPriceSar:offer.adultPriceSar===null?"":String(offer.adultPriceSar),childPriceSar:offer.childPriceSar===null?"":String(offer.childPriceSar),infantPriceSar:offer.infantPriceSar===null?"":String(offer.infantPriceSar),
       priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
@@ -209,7 +209,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
         if(!uploaded.ok||!up.success){setError(up.message||"تعذر رفع صورة الإعلان.");return;}
         imageUrl=up.url;
       }
-      const r=await fetch("/api/admin/transport",{method,headers:{"Content-Type":"application/json"},body:JSON.stringify({...offerForm,bannerUrl:imageUrl})});
+      const r=await fetch("/api/admin/transport",{method,headers:{"Content-Type":"application/json"},body:JSON.stringify({...offerForm,scheduleData:offerForm.scheduleType==="SINGLE"?{date:offerForm.travelDate}:offerForm.scheduleType==="MULTIPLE"?{datesText:offerForm.scheduleDates}:offerForm.scheduleType==="RANGE"?{from:offerForm.rangeFrom,to:offerForm.rangeTo}:offerForm.scheduleType==="WEEKLY"?{weekdaysText:offerForm.weekdaysText,until:offerForm.scheduleUntil}:{monthDaysText:offerForm.monthDaysText,until:offerForm.scheduleUntil},bannerUrl:imageUrl})});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر حفظ العرض.");return;}
       setStatus("تم حفظ العرض أو الجدول. سيظهر للزوار إذا اخترت «ظاهر» والبيانات متصلة.");
@@ -225,7 +225,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     return {
       id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
       carrierName:offer.carrierName||"",origin:offer.origin||"",destination:offer.destination||"",
-      travelDate:day(offer.travelDate),amountSar:offer.amountSar===null?"":String(offer.amountSar),
+      travelDate:day(offer.travelDate),scheduleType:offer.scheduleType||"SINGLE",scheduleData:offer.scheduleData,scheduleDates:Array.isArray((offer.scheduleData as {dates?:unknown[]}|null)?.dates)?((offer.scheduleData as {dates:string[]}).dates).join("\n"):"",rangeFrom:String((offer.scheduleData as {from?:string}|null)?.from||""),rangeTo:String((offer.scheduleData as {to?:string}|null)?.to||""),weekdaysText:Array.isArray((offer.scheduleData as {weekdays?:unknown[]}|null)?.weekdays)?((offer.scheduleData as {weekdays:number[]}).weekdays).join(", "):"",monthDaysText:Array.isArray((offer.scheduleData as {monthDays?:unknown[]}|null)?.monthDays)?((offer.scheduleData as {monthDays:number[]}).monthDays).join(", "):"",scheduleUntil:String((offer.scheduleData as {until?:string}|null)?.until||""),amountSar:offer.amountSar===null?"":String(offer.amountSar),
       priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
       isVisible:offer.isVisible,sortOrder:offer.sortOrder,
@@ -430,7 +430,13 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <input className={field} type="date" min={offerForm.startsAt||undefined} value={offerForm.endsAt} onChange={e=>setOfferForm(f=>({...f,endsAt:e.target.value}))}/>
               </label>
               <p className="sm:col-span-2 xl:col-span-2 xl:col-start-3 rounded-lg bg-[#F7F2E6] px-4 py-3 text-xs leading-6">تاريخ نهاية العرض شامل طوال اليوم المحدد. عند انتهاء المدة يختفي تلقائياً من صفحة العميل، ويظل محفوظاً في الإدارة.</p>
-              <label className={label}>موعد السفر/الإبحار<input className={field} type="date" value={offerForm.travelDate} onChange={e=>setOfferForm(f=>({...f,travelDate:e.target.value}))}/></label>
+              <label className={label}>نمط مواعيد السفر<select className={field} value={offerForm.scheduleType} onChange={e=>setOfferForm(f=>({...f,scheduleType:e.target.value}))}><option value="SINGLE">تاريخ واحد</option><option value="MULTIPLE">تواريخ متعددة</option><option value="RANGE">فترة من إلى</option><option value="WEEKLY">أيام أسبوعية</option><option value="MONTHLY">أيام من كل شهر</option></select></label>
+              {offerForm.scheduleType==="SINGLE"&&<label className={label}>موعد السفر/الإبحار<input className={field} type="date" value={offerForm.travelDate} onChange={e=>setOfferForm(f=>({...f,travelDate:e.target.value}))}/></label>}
+              {offerForm.scheduleType==="MULTIPLE"&&<label className={label}>التواريخ المتعددة (كل تاريخ في سطر أو مفصول بفاصلة)<textarea className={field} rows={2} placeholder="2026-11-05، 2026-11-15" value={offerForm.scheduleDates} onChange={e=>setOfferForm(f=>({...f,scheduleDates:e.target.value}))}/></label>}
+              {offerForm.scheduleType==="RANGE"&&<><label className={label}>بداية الفترة<input className={field} type="date" value={offerForm.rangeFrom} onChange={e=>setOfferForm(f=>({...f,rangeFrom:e.target.value}))}/></label><label className={label}>نهاية الفترة<input className={field} type="date" value={offerForm.rangeTo} onChange={e=>setOfferForm(f=>({...f,rangeTo:e.target.value}))}/></label></>}
+              {offerForm.scheduleType==="WEEKLY"&&<label className={label}>أيام الأسبوع (0 الأحد إلى 6 السبت)<input className={field} placeholder="مثال: 0، 3، 6" value={offerForm.weekdaysText} onChange={e=>setOfferForm(f=>({...f,weekdaysText:e.target.value}))}/></label>}
+              {offerForm.scheduleType==="MONTHLY"&&<label className={label}>أيام الشهر (1 إلى 31)<input className={field} placeholder="مثال: 5، 15، 25" value={offerForm.monthDaysText} onChange={e=>setOfferForm(f=>({...f,monthDaysText:e.target.value}))}/></label>}
+              {(offerForm.scheduleType==="WEEKLY"||offerForm.scheduleType==="MONTHLY")&&<label className={label}>آخر موعد للتكرار (اختياري)<input className={field} type="date" value={offerForm.scheduleUntil} onChange={e=>setOfferForm(f=>({...f,scheduleUntil:e.target.value}))}/></label>
               <label className={label}>السعر المعلن (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.amountSar} onChange={e=>setOfferForm(f=>({...f,amountSar:e.target.value}))}/></label>
               <label className={label}>سعر البالغ (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.adultPriceSar} onChange={e=>setOfferForm(f=>({...f,adultPriceSar:e.target.value}))}/></label>
               <label className={label}>سعر الطفل (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.childPriceSar} onChange={e=>setOfferForm(f=>({...f,childPriceSar:e.target.value}))}/></label>
