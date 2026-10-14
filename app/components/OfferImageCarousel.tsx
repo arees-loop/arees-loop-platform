@@ -31,9 +31,9 @@ export default function OfferImageCarousel({images,fallback,title,className="",i
         className={`h-full w-full object-cover transition-opacity duration-500 ${imageClassName}`}/>
       {gallery.length>1&&<>
         <button type="button" aria-label="الصورة السابقة" onClick={()=>setIndex(i=>(i-1+gallery.length)%gallery.length)}
-          className="absolute right-3 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/60 bg-[#0D3B34]/80 text-xl font-black text-white shadow-lg backdrop-blur hover:bg-[#0D3B34]">→</button>
+          className="absolute right-3 top-1/2 z-30 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-[#0D3B34]/95 text-2xl font-black text-white shadow-[0_4px_18px_rgba(0,0,0,.45)] backdrop-blur hover:scale-105 hover:bg-[#0D3B34] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E8CC85]">→</button>
         <button type="button" aria-label="الصورة التالية" onClick={()=>setIndex(i=>(i+1)%gallery.length)}
-          className="absolute left-3 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/60 bg-[#0D3B34]/80 text-xl font-black text-white shadow-lg backdrop-blur hover:bg-[#0D3B34]">←</button>
+          className="absolute left-3 top-1/2 z-30 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-[#0D3B34]/95 text-2xl font-black text-white shadow-[0_4px_18px_rgba(0,0,0,.45)] backdrop-blur hover:scale-105 hover:bg-[#0D3B34] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E8CC85]">←</button>
         <span aria-live="polite" className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold text-white">{index+1} / {gallery.length}</span>
       </>}
     </>:null}
