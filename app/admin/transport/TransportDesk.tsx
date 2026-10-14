@@ -18,7 +18,7 @@ type RequestRow={
 type Offer={
   id:string;kind:string;title:string;description:string|null;carrierName:string|null;
   origin:string|null;destination:string|null;travelDate:string|null;scheduleType:string;scheduleData:unknown;amountSar:number|null;adultPriceSar:number|null;childPriceSar:number|null;infantPriceSar:number|null;
-  priceUnit:string|null;bannerUrl:string|null;operationStatus:string;operationNote:string|null;
+  priceUnit:string|null;bannerUrl:string|null;imageUrls:string[];operationStatus:string;operationNote:string|null;
   isVisible:boolean;sortOrder:number;startsAt:string|null;endsAt:string|null;
 };
 const operators={FLIGHT:["تاركو للطيران","بدر للطيران","الخطوط الجوية السودانية","أخرى"],FERRY:["الجودي","دليلة","عمان","مونتي","أخرى"]};
@@ -28,7 +28,7 @@ const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت ال�
 const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],QUOTE_READY:["PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
 const blankOffer={
   id:"",kind:"FERRY",title:"",description:"",carrierName:"",origin:"سواكن",destination:"جدة",
-  travelDate:"",scheduleType:"SINGLE",scheduleDates:"",rangeFrom:"",rangeTo:"",weekdaysText:"",monthDaysText:"",scheduleUntil:"",amountSar:"",adultPriceSar:"",childPriceSar:"",infantPriceSar:"",priceUnit:"للبالغ",bannerUrl:"",operationStatus:"AVAILABLE",operationNote:"",
+  travelDate:"",scheduleType:"SINGLE",scheduleDates:"",rangeFrom:"",rangeTo:"",weekdaysText:"",monthDaysText:"",scheduleUntil:"",amountSar:"",adultPriceSar:"",childPriceSar:"",infantPriceSar:"",priceUnit:"للبالغ",bannerUrl:"",imageUrls:[] as string[],operationStatus:"AVAILABLE",operationNote:"",
   isVisible:true,sortOrder:0,startsAt:"",endsAt:"",
 };
 type OfferForm=typeof blankOffer;
@@ -51,6 +51,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [offerView,setOfferView]=useState<"CARDS"|"LIST">("CARDS");
   const [offerFilter,setOfferFilter]=useState<"ALL"|"ACTIVE"|"PAUSED"|"UPCOMING"|"EXPIRED">("ALL");
   const [bannerFile,setBannerFile]=useState<File|null>(null);
+  const [extraBannerFiles,setExtraBannerFiles]=useState<File[]>([]);
   const [bannerPreview,setBannerPreview]=useState("");
   const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
   const [selected,setSelected]=useState<RequestRow|null>(null);
@@ -177,7 +178,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
 
   function startOffer(offer?:Offer) {
     setBannerFile(null);
-    setBannerFile(null);
+    setExtraBannerFiles([]);
     setBannerDimensions(null);
     setStatus("");setError("");setTab("offers");
     setOfferForm(offer?{
@@ -185,7 +186,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       carrierName:offer.carrierName||"",origin:offer.origin||"",destination:offer.destination||"",
       travelDate:day(offer.travelDate),scheduleType:offer.scheduleType||"SINGLE",scheduleDates:Array.isArray((offer.scheduleData as {dates?:unknown[]}|null)?.dates)?((offer.scheduleData as {dates:string[]}).dates).join("\n"):"",rangeFrom:String((offer.scheduleData as {from?:string}|null)?.from||""),rangeTo:String((offer.scheduleData as {to?:string}|null)?.to||""),weekdaysText:Array.isArray((offer.scheduleData as {weekdays?:unknown[]}|null)?.weekdays)?((offer.scheduleData as {weekdays:number[]}).weekdays).join(", "):"",monthDaysText:Array.isArray((offer.scheduleData as {monthDays?:unknown[]}|null)?.monthDays)?((offer.scheduleData as {monthDays:number[]}).monthDays).join(", "):"",scheduleUntil:String((offer.scheduleData as {until?:string}|null)?.until||""),amountSar:offer.amountSar===null?"":String(offer.amountSar),
       adultPriceSar:offer.adultPriceSar===null?"":String(offer.adultPriceSar),childPriceSar:offer.childPriceSar===null?"":String(offer.childPriceSar),infantPriceSar:offer.infantPriceSar===null?"":String(offer.infantPriceSar),
-      priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
+      priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",imageUrls:offer.imageUrls?.length?offer.imageUrls:(offer.bannerUrl?[offer.bannerUrl]:[]),
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
       isVisible:offer.isVisible,sortOrder:offer.sortOrder,startsAt:offerDay(offer.startsAt),endsAt:offerDay(offer.endsAt),
     }:{...blankOffer});
@@ -201,20 +202,26 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     try{
       const method=offerForm.id?"PUT":"POST";
       let imageUrl=offerForm.bannerUrl;
-      if(bannerFile){
-        const data=new FormData();
-        data.set("kind",offerForm.kind);data.set("file",bannerFile);
-        const uploaded=await fetch("/api/admin/transport/image",{method:"POST",body:data});
-        const up=await uploaded.json();
-        if(!uploaded.ok||!up.success){setError(up.message||"تعذر رفع صورة الإعلان.");return;}
-        imageUrl=up.url;
+      let imageUrls=offerForm.imageUrls;
+      const selectedImages=[bannerFile,...extraBannerFiles].filter((file):file is File=>Boolean(file));
+      if(selectedImages.length){
+        const uploadedImages:string[]=[];
+        for(const file of selectedImages){
+          const data=new FormData();data.set("kind",offerForm.kind);data.set("file",file);
+          const uploaded=await fetch("/api/admin/transport/image",{method:"POST",body:data});
+          const up=await uploaded.json();
+          if(!uploaded.ok||!up.success){setError(up.message||"تعذر رفع إحدى الصور.");return;}
+          uploadedImages.push(up.url);
+        }
+        imageUrls=uploadedImages;
+        imageUrl=imageUrls[0]||"";
       }
-      const r=await fetch("/api/admin/transport",{method,headers:{"Content-Type":"application/json"},body:JSON.stringify({...offerForm,scheduleData:offerForm.scheduleType==="SINGLE"?{date:offerForm.travelDate}:offerForm.scheduleType==="MULTIPLE"?{datesText:offerForm.scheduleDates}:offerForm.scheduleType==="RANGE"?{from:offerForm.rangeFrom,to:offerForm.rangeTo}:offerForm.scheduleType==="WEEKLY"?{weekdaysText:offerForm.weekdaysText,until:offerForm.scheduleUntil}:{monthDaysText:offerForm.monthDaysText,until:offerForm.scheduleUntil},bannerUrl:imageUrl})});
+      const r=await fetch("/api/admin/transport",{method,headers:{"Content-Type":"application/json"},body:JSON.stringify({...offerForm,imageUrls,scheduleData:offerForm.scheduleType==="SINGLE"?{date:offerForm.travelDate}:offerForm.scheduleType==="MULTIPLE"?{datesText:offerForm.scheduleDates}:offerForm.scheduleType==="RANGE"?{from:offerForm.rangeFrom,to:offerForm.rangeTo}:offerForm.scheduleType==="WEEKLY"?{weekdaysText:offerForm.weekdaysText,until:offerForm.scheduleUntil}:{monthDaysText:offerForm.monthDaysText,until:offerForm.scheduleUntil},bannerUrl:imageUrl})});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر حفظ العرض.");return;}
       setStatus("تم حفظ العرض أو الجدول. سيظهر للزوار إذا اخترت «ظاهر» والبيانات متصلة.");
       setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});
-      setBannerFile(null);
+      setBannerFile(null);setExtraBannerFiles([]);
       await load();
     }catch{setError("تعذر الاتصال بالخادم لحفظ العرض.");}
     finally{setBusy(false);}
@@ -226,7 +233,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
       carrierName:offer.carrierName||"",origin:offer.origin||"",destination:offer.destination||"",
       travelDate:day(offer.travelDate),scheduleType:offer.scheduleType||"SINGLE",scheduleData:offer.scheduleData,scheduleDates:Array.isArray((offer.scheduleData as {dates?:unknown[]}|null)?.dates)?((offer.scheduleData as {dates:string[]}).dates).join("\n"):"",rangeFrom:String((offer.scheduleData as {from?:string}|null)?.from||""),rangeTo:String((offer.scheduleData as {to?:string}|null)?.to||""),weekdaysText:Array.isArray((offer.scheduleData as {weekdays?:unknown[]}|null)?.weekdays)?((offer.scheduleData as {weekdays:number[]}).weekdays).join(", "):"",monthDaysText:Array.isArray((offer.scheduleData as {monthDays?:unknown[]}|null)?.monthDays)?((offer.scheduleData as {monthDays:number[]}).monthDays).join(", "):"",scheduleUntil:String((offer.scheduleData as {until?:string}|null)?.until||""),amountSar:offer.amountSar===null?"":String(offer.amountSar),
-      priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",
+      priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",imageUrls:offer.imageUrls||[],
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
       isVisible:offer.isVisible,sortOrder:offer.sortOrder,
       startsAt:offerDay(offer.startsAt),endsAt:offerDay(offer.endsAt),
@@ -446,12 +453,13 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className={label+" sm:col-span-2 xl:col-span-2 xl:col-start-3"}>وصف العرض<textarea className={field} rows={3} value={offerForm.description} onChange={e=>setOfferForm(f=>({...f,description:e.target.value}))}/></label>
               <label className={label+" sm:col-span-2 xl:col-span-2 xl:col-start-3"}>ملاحظات التشغيل التي تظهر للعميل<textarea className={field} rows={2} value={offerForm.operationNote} onChange={e=>setOfferForm(f=>({...f,operationNote:e.target.value}))} placeholder="مثلاً: الباخرة متوقفة حالياً حتى إشعار آخر"/></label>
               <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3 rounded-[20px] border border-[#D4AF37]/35 bg-[#F8F5EC] p-4">
-                <label className={label}>صورة الإعلان أو تصميم العرض (PNG / JPG / WEBP)
-                  <input type="file" accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>{setBannerFile(e.target.files?.[0]||null);setBannerDimensions(null);}} />
+                <label className={label}>صور الإعلان أو تصميم العرض (PNG / JPG / WEBP — حتى 10 صور)
+                  <input type="file" multiple accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>{const files=Array.from(e.target.files||[]);setBannerFile(files[0]||null);setExtraBannerFiles(files.slice(1));setBannerDimensions(null);}} />
                 </label>
                 <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={bannerFile ? bannerDimensions : null} />
-                <p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت. لن يُحفظ العرض إذا كانت أبعاد الصورة مختلفة.</p>
-                {!bannerFile&&offerForm.bannerUrl&&<p className="mt-3 text-xs font-bold text-[#0D3B34]/65">الصورة الحالية محفوظة. لاختيار بديل، ارفع صورة بالمقاس المحدد أعلاه.</p>}
+                <p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت للصورة و10 صور للعرض. يجب أن تطابق كل صورة المقاس المحدد وإلا يرفضها النظام.</p>
+                {!bannerFile&&offerForm.imageUrls.length>0&&<p className="mt-3 text-xs font-bold text-[#0D3B34]/65">الصور الحالية محفوظة ({offerForm.imageUrls.length}). اختيار صور جديدة يستبدل الصور الحالية.</p>}
+                {bannerFile&&<p className="mt-2 text-xs font-bold text-[#0D3B34]/65">سيتم رفع {1+extraBannerFiles.length} صور للعرض.</p>}
                 {(bannerPreview||offerForm.bannerUrl)&&<div className="mt-4 overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} onLoad={e=>{if(bannerFile)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="h-44 w-full object-contain"/>
@@ -477,7 +485,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/30 p-3 text-sm font-bold"><input type="checkbox" checked={offerForm.isVisible} onChange={e=>setOfferForm(f=>({...f,isVisible:e.target.checked}))}/> ظاهر للزوار</label>
               <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
                 <button disabled={busy||!showSuper||Boolean(bannerFile&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
-                <button type="button" onClick={()=>{setBannerFile(null);setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});}} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
+                <button type="button" onClick={()=>{setBannerFile(null);setExtraBannerFiles([]);setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});}} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
               </div>
             </form>
           </section>
