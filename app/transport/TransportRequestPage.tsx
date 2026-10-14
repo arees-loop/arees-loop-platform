@@ -21,6 +21,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   const [offers,setOffers]=useState<Offer[]>([]);
   const [offersError,setOffersError]=useState(false);
   const [offerIndex,setOfferIndex]=useState(0);
+  const [offersPaused,setOffersPaused]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [confirmation,setConfirmation]=useState<Confirmation|null>(null);
@@ -43,7 +44,6 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
 
   useEffect(()=>{
     let live=true;
-    setOfferIndex(0);
     async function refreshOffers(){
       try {
         const response=await fetch("/api/transport/offers?kind="+kind,{cache:"no-store"});
@@ -60,6 +60,14 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
     const interval=setInterval(()=>void refreshOffers(),60000);
     return()=>{live=false;clearInterval(interval);};
   },[kind]);
+
+  useEffect(()=>{
+    if(offers.length<2||offersPaused)return;
+    const media=window.matchMedia("(prefers-reduced-motion: reduce)");
+    if(media.matches)return;
+    const timer=window.setInterval(()=>setOfferIndex(index=>(index+1)%offers.length),7000);
+    return()=>window.clearInterval(timer);
+  },[offers.length,offersPaused]);
 
   async function submit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,40 +110,80 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(300px,0.9fr)_minmax(0,1.3fr)]">
           <aside className="min-w-0 space-y-4 lg:sticky lg:top-28">
-            <div className="overflow-hidden rounded-[28px] bg-[#0D3B34] px-6 py-7 text-white shadow-xl">
-              <p className="text-sm font-bold text-[#E8CC85]">{ferry?"جداول البواخر والعروض":"عروض الطيران والوجهات"}</p>
-              <h2 className="mt-2 text-2xl font-black">عروض أريس المختارة</h2>
-              <p className="mt-2 text-sm leading-7 text-white/80">الأسعار استرشادية حسب الإعلان، والتوفر والسعر النهائي يخضعان للتأكيد عند مراجعة الطلب.</p>
-            </div>
-            {offersError&&<div role="status" className="rounded-2xl border border-amber-200 bg-white px-5 py-4 text-sm leading-7">العروض غير متاحة للعرض حالياً، لكن يمكنك إرسال طلب سفر عند اتصال خدمة الطلبات.</div>}
-            {offers.length>1&&<div className="flex items-center justify-between rounded-2xl border border-[#D4AF37]/35 bg-white px-4 py-3">
-              <button type="button" aria-label="العرض السابق" onClick={()=>setOfferIndex(i=>(i-1+offers.length)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AF37]/40 bg-[#F8F2DF] text-lg font-black">→</button>
-              <span className="text-sm font-bold">عرض {offerIndex%offers.length+1} من {offers.length}</span>
-              <button type="button" aria-label="العرض التالي" onClick={()=>setOfferIndex(i=>(i+1)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AF37]/40 bg-[#F8F2DF] text-lg font-black">←</button>
-            </div>}
-            {offers.filter((_,index)=>index===offerIndex%offers.length).map(offer=>(
-              <article key={offer.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/35 bg-white shadow-[0_15px_45px_rgba(13,59,52,.07)]">
-                {offer.bannerUrl&&<div className="h-36 overflow-hidden bg-[#F2EEE3]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={offer.bannerUrl} alt={offer.title} className="h-full w-full object-cover"/>
-                </div>}
-                <div className="p-5">
-                  {offer.carrierName&&<p className="text-xs font-black text-[#B18D32]">{offer.carrierName}</p>}
-                  <h3 className="mt-2 text-lg font-black">{offer.title}</h3>
-                  {offer.origin&&offer.destination&&<p className="mt-2 text-sm">{offer.origin} ← {offer.destination}</p>}
-                  {offer.travelDate&&<p className="mt-1 text-xs text-[#0D3B34]/65">موعد الرحلة: {new Date(offer.travelDate).toLocaleDateString("ar-SA",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"})}</p>}
-                  {offer.amountSar!==null&&<p className="mt-3 text-2xl font-black text-[#A47A23]">{offer.amountSar.toLocaleString("ar-SA")} ر.س <span className="text-xs font-medium">{offer.priceUnit||""}</span></p>}
-                  {offer.description&&<p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#0D3B34]/75">{offer.description}</p>}
-                  {offer.operationStatus==="SUSPENDED"&&<p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-black text-red-800">الخدمة متوقفة مؤقتاً</p>}
-                  {offer.operationStatus==="UNKNOWN"&&<p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-800">حالة التشغيل قيد التأكيد</p>}
-                  {offer.operationNote&&<p className="mt-3 whitespace-pre-line rounded-xl bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">{offer.operationNote}</p>}
+            <div className="offer-studio relative overflow-hidden rounded-[30px] border border-[#D4AF37]/30 bg-[#0D3B34] p-4 text-white shadow-[0_22px_60px_rgba(13,59,52,.2)] sm:p-5"
+              onMouseEnter={()=>setOffersPaused(true)} onMouseLeave={()=>setOffersPaused(false)} onFocusCapture={()=>setOffersPaused(true)} onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setOffersPaused(false);}}>
+              <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full border border-[#E8CC85]/20 offer-studio-orbit" />
+              <div className="pointer-events-none absolute -bottom-20 -right-12 h-56 w-56 rounded-full border border-white/10 offer-studio-orbit offer-studio-orbit-slow" />
+              <div className="relative z-10 flex items-start justify-between gap-3 px-1 pb-4">
+                <div>
+                  <p className="text-xs font-black tracking-wide text-[#E8CC85]">{ferry?"جداول البواخر والعروض":"عروض الطيران والوجهات"}</p>
+                  <h2 className="mt-1 text-xl font-black sm:text-2xl">استديو عروض أريس</h2>
                 </div>
-              </article>
-            ))}
-            {offers.length>1&&<div className="flex flex-wrap justify-center gap-2" aria-label="التنقل بين العروض">
-              {offers.map((o,i)=><button key={o.id} type="button" onClick={()=>setOfferIndex(i)} aria-label={`عرض ${i+1}: ${o.title}`} className={`h-2.5 rounded-full ${i===offerIndex%offers.length?"w-7 bg-[#0D3B34]":"w-2.5 bg-[#D4AF37]/50"}`}/>)}
-            </div>}
-            {!offersError&&offers.length===0&&<div className="rounded-2xl border border-dashed border-[#D4AF37]/45 bg-white p-6 text-sm leading-8">سيتم عرض الأسعار والجداول المتاحة هنا عند نشرها من إدارة أريس.</div>}
+                <span className="mt-1 inline-flex shrink-0 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-white/85"><span className="h-2 w-2 animate-pulse rounded-full bg-[#E8CC85]"/> عروض محدثة</span>
+              </div>
+              {offersError&&<div role="status" className="relative z-10 rounded-2xl border border-amber-200/40 bg-white/10 px-5 py-4 text-sm leading-7">تعذر تحميل العروض الآن. يمكنك إرسال طلبك وسنراجع المواعيد معك.</div>}
+              {offers.length>0&&<>
+                <div className="relative px-1 pb-2 pt-1">
+                  <div className="pointer-events-none absolute inset-x-5 top-5 h-8 rounded-[28px] bg-[#D4AF37]/15 offer-studio-layer offer-studio-layer-back" />
+                  <div className="pointer-events-none absolute inset-x-3 top-2 h-8 rounded-[28px] bg-white/10 offer-studio-layer offer-studio-layer-mid" />
+                  {offers.filter((_,index)=>index===offerIndex%offers.length).map(offer=>(
+                    <article key={offer.id} className="offer-studio-slide relative overflow-hidden rounded-[24px] border border-white/20 bg-[#F7F4ED] text-[#0D3B34] shadow-2xl" aria-live="polite">
+                      <div className="relative h-40 overflow-hidden bg-[radial-gradient(circle_at_75%_15%,#EBD38B,#F7F4ED_48%,#D8E9E2)] sm:h-48">
+                        {offer.bannerUrl? <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={offer.bannerUrl} alt={offer.title} className="offer-studio-art h-full w-full object-cover"/>
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#082F2A]/80 via-[#082F2A]/10 to-transparent" />
+                        </>:<div className="absolute inset-0 overflow-hidden bg-[linear-gradient(135deg,#F8F2DF,#DCEAE3_48%,#C4D9D0)]">
+                          <span className="offer-studio-ship absolute -bottom-5 left-8 text-[112px] leading-none drop-shadow-xl" aria-hidden="true">{ferry?"⛴":"✈"}</span>
+                          <span className="absolute right-5 top-5 h-20 w-20 rounded-full bg-white/40 blur-xl" />
+                          <span className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#0D3B34]/25 to-transparent" />
+                        </div>}
+                        <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3 text-white">
+                          <div className="min-w-0 drop-shadow-md">
+                            {offer.carrierName&&<p className="text-[11px] font-black text-[#F1D98E]">{offer.carrierName}</p>}
+                            <h3 className="mt-1 line-clamp-2 text-lg font-black sm:text-xl">{offer.title}</h3>
+                            {offer.origin&&offer.destination&&<p className="mt-1 text-xs font-bold text-white/90">{offer.origin} <span className="px-1 text-[#E8CC85]">←</span> {offer.destination}</p>}
+                          </div>
+                          {offer.amountSar!==null&&<div className="shrink-0 rounded-2xl border border-white/20 bg-[#0D3B34]/85 px-3 py-2 text-left shadow-lg backdrop-blur-sm"><span className="block text-[10px] text-white/75">يبدأ من</span><strong className="text-lg font-black text-[#F1D98E]">{offer.amountSar.toLocaleString("ar-SA")} <small className="text-[10px]">ر.س</small></strong></div>}
+                        </div>
+                        {offers.length>1&&<div className="absolute inset-x-3 top-1/2 z-10 flex -translate-y-1/2 justify-between">
+                          <button type="button" aria-label="العرض السابق" onClick={()=>setOfferIndex(i=>(i-1+offers.length)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-white/55 bg-[#0D3B34]/75 text-xl font-black text-white shadow-lg backdrop-blur transition hover:scale-105 hover:bg-[#0D3B34]">→</button>
+                          <button type="button" aria-label="العرض التالي" onClick={()=>setOfferIndex(i=>(i+1)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-white/55 bg-[#0D3B34]/75 text-xl font-black text-white shadow-lg backdrop-blur transition hover:scale-105 hover:bg-[#0D3B34]">←</button>
+                        </div>}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 text-xs">
+                        <p className="font-bold">{offer.travelDate?<>موعد الرحلة: <time dateTime={offer.travelDate}>{new Date(offer.travelDate).toLocaleDateString("ar-SA",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"})}</time></>:"الموعد يؤكد عند إرسال الطلب"}</p>
+                        <span className={`rounded-full px-3 py-1 font-black ${offer.operationStatus==="SUSPENDED"?"bg-red-50 text-red-800":offer.operationStatus==="UNKNOWN"?"bg-amber-50 text-amber-800":"bg-emerald-50 text-emerald-800"}`}>{offer.operationStatus==="SUSPENDED"?"متوقف مؤقتاً":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح للاستفسار"}</span>
+                      </div>
+                      {(offer.description||offer.operationNote)&&<p className="border-t border-[#0D3B34]/10 px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.operationNote||offer.description}</p>}
+                    </article>
+                  ))}
+                </div>
+                <div className="relative z-10 flex items-center justify-center gap-2 pb-1 pt-2" aria-label="التنقل بين العروض">
+                  {offers.map((offer,index)=><button key={offer.id} type="button" onClick={()=>setOfferIndex(index)} aria-label={`عرض ${index+1}: ${offer.title}`} aria-current={index===offerIndex%offers.length?"true":undefined} className={`h-2 rounded-full transition-all duration-300 ${index===offerIndex%offers.length?"w-8 bg-[#E8CC85]":"w-2 bg-white/45 hover:bg-white/75"}`}/>)}
+                  <span className="mr-2 text-[10px] font-bold text-white/70">{offerIndex%offers.length+1} / {offers.length}</span>
+                </div>
+                {offers.length>1&&<p className="relative z-10 text-center text-[10px] text-white/50">يتغير العرض تلقائياً · أوقفه بالمرور أو التركيز</p>}
+              </>}
+              {!offersError&&offers.length===0&&<div className="relative z-10 rounded-2xl border border-dashed border-white/25 bg-white/5 p-6 text-sm leading-8 text-white/85">سيتم عرض الأسعار ومواعيد الرحلات هنا عند نشرها من إدارة أريس.</div>}
+            </div>
+            {offers.length>0&&<section aria-labelledby="offer-schedule-heading" className="overflow-hidden rounded-[24px] border border-[#D4AF37]/35 bg-white shadow-[0_12px_38px_rgba(13,59,52,.06)]">
+              <div className="flex items-center justify-between gap-3 border-b border-[#0D3B34]/10 bg-[#FBF8EF] px-4 py-3">
+                <div><h3 id="offer-schedule-heading" className="text-sm font-black">{ferry?"مواعيد البواخر المنشورة":"مواعيد الرحلات المنشورة"}</h3><p className="mt-1 text-[10px] text-[#0D3B34]/60">اختر موعداً للاطلاع على العرض</p></div>
+                <span className="rounded-full bg-[#0D3B34]/5 px-2.5 py-1 text-[10px] font-bold">{offers.filter(o=>o.travelDate).length} مواعيد</span>
+              </div>
+              <div className="max-h-56 overflow-y-auto">
+                {offers.filter(o=>o.travelDate).slice().sort((a,b)=>(a.travelDate||"").localeCompare(b.travelDate||"")).map(offer=>{
+                  const index=offers.findIndex(item=>item.id===offer.id), selected=index===offerIndex%offers.length;
+                  return <button key={offer.id} type="button" onClick={()=>setOfferIndex(index)} className={`grid w-full grid-cols-[1fr_auto] items-center gap-3 border-b border-[#0D3B34]/5 px-4 py-3 text-right transition last:border-b-0 hover:bg-[#FAF6E9] ${selected?"bg-[#F8F3E2]":"bg-white"}`}>
+                    <span className="min-w-0"><span className="block truncate text-xs font-black">{offer.origin&&offer.destination?`${offer.origin} ← ${offer.destination}`:offer.title}</span><time dateTime={offer.travelDate||undefined} className="mt-1 block text-[10px] text-[#0D3B34]/60">{new Date(offer.travelDate!).toLocaleDateString("ar-SA",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"})}</time></span>
+                    <span className="text-left"><span className="block text-xs font-black text-[#9C7922]">{offer.amountSar!==null?`${offer.amountSar.toLocaleString("ar-SA")} ر.س`:"اطلب السعر"}</span><span className={`mt-1 block text-[10px] font-bold ${offer.operationStatus==="SUSPENDED"?"text-red-700":offer.operationStatus==="UNKNOWN"?"text-amber-700":"text-emerald-700"}`}>{offer.operationStatus==="SUSPENDED"?"متوقف":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح للاستفسار"}</span></span>
+                  </button>;
+                })}
+                {offers.every(o=>!o.travelDate)&&<p className="px-4 py-5 text-xs leading-6 text-[#0D3B34]/65">لا توجد مواعيد منشورة حالياً. أرسل طلباً وسيتأكد الفريق من أقرب موعد متاح.</p>}
+              </div>
+              <p className="border-t border-[#0D3B34]/10 px-4 py-2 text-[10px] leading-5 text-[#0D3B34]/55">المواعيد والأسعار إرشادية؛ تأكيد المقعد والسعر النهائي من فريق أريس بعد مراجعة الطلب.</p>
+            </section>}
             <div className="rounded-[24px] border border-[#D4AF37]/35 bg-[#FFFAEE] p-5 text-sm leading-8">
               <h3 className="font-black">مهم قبل إرسال الطلب</h3>
               <p className="mt-2">{policies[kind]}</p>

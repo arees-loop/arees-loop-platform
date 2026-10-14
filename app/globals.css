@@ -83,6 +83,33 @@ body {
     );
 }
 
+@keyframes offer-studio-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -5px, 0) scale(1.025); }
+}
+
+@keyframes offer-studio-orbit {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(10deg) scale(1.08); }
+}
+
+@keyframes offer-studio-enter {
+  from { opacity: 0; transform: translateY(8px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.offer-studio-slide { animation: offer-studio-enter .48s ease-out both; }
+.offer-studio-art { animation: offer-studio-drift 8s ease-in-out infinite; }
+.offer-studio-ship { animation: offer-studio-drift 5s ease-in-out infinite; }
+.offer-studio-orbit { animation: offer-studio-orbit 9s ease-in-out infinite; }
+.offer-studio-orbit-slow { animation-duration: 13s; animation-direction: reverse; }
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-studio-slide, .offer-studio-art, .offer-studio-ship, .offer-studio-orbit {
+    animation: none !important;
+  }
+}
+
 .arees-card {
   border: 1px solid rgba(255, 255, 255, 0.82);
   background: rgba(255, 255, 255, 0.63);

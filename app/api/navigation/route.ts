@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-export const NAV_KEYS=["discover","how","programs","guides","hotels","flights","cruise","partners"] as const;
+const NAV_KEYS=["discover","how","programs","guides","hotels","flights","cruise","partners"] as const;
 export async function GET(){
  try{const rows=await prisma.navigationVisibility.findMany();return NextResponse.json({success:true,data:Object.fromEntries(NAV_KEYS.map(k=>[k,rows.find(r=>r.key===k)?.visible??true]))});}
  catch{return NextResponse.json({success:true,data:Object.fromEntries(NAV_KEYS.map(k=>[k,true])),pendingMigration:true});}
