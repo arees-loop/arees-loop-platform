@@ -11,6 +11,7 @@ export default function GlobalHeader() {
   const [language, setLanguage] = useState<"ar" | "en">("ar");
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [navVisible, setNavVisible] = useState<Record<string,boolean>>({});
   useEffect(() => { let mounted=true; fetch("/api/navigation",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(mounted&&d.success)setNavVisible(d.data)}).catch(()=>{});return()=>{mounted=false}; }, []);
@@ -51,11 +52,13 @@ export default function GlobalHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-[100] w-full border-b border-[#0D3B34]/10 bg-[#F7F4EA] px-4 shadow-sm md:px-8">
+    <header className="relative sticky top-0 z-[100] w-full border-b border-[#0D3B34]/10 bg-[#F7F4EA] px-4 shadow-sm md:px-8">
       <nav className="mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 px-0 md:h-[82px] md:px-6">
         <Link href="/" aria-label="Arees Loop">
-          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[132px] md:w-[154px]" />
+          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[92px] sm:w-[120px] md:w-[154px]" />
         </Link>
+
+        <button type="button" aria-label={mobileNavOpen ? "إغلاق قائمة التنقل" : "فتح قائمة التنقل"} aria-expanded={mobileNavOpen} aria-controls="arees-mobile-navigation" onClick={() => setMobileNavOpen(value => !value)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#0D3B34]/15 text-xl font-bold text-[#0D3B34] lg:hidden">{mobileNavOpen ? "×" : "☰"}</button>
 
         <div dir="rtl" className={`hidden items-center gap-5 text-[13px] font-bold lg:flex xl:gap-7 ${text}`}>
           {navVisible.discover !== false && (<Link href="/discover" className="transition hover:text-[#D4AF37]">اكتشف</Link>)}
@@ -112,7 +115,7 @@ export default function GlobalHeader() {
               <div className="relative" onMouseEnter={() => setAccountOpen(true)} onMouseLeave={() => setAccountOpen(false)}>
                 <button type="button" onClick={() => setAccountOpen((value) => !value)} aria-expanded={accountOpen} aria-haspopup="menu" className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
                   {user.profileImageUrl && <img src={user.profileImageUrl} alt="صورتي" className="h-8 w-8 rounded-full border border-white/25 object-cover" />}
-                  <span>مرحباً، {displayName}</span>
+                  <span className="max-w-[76px] truncate sm:max-w-none">مرحباً، {displayName}</span>
                   <span className={`text-[#D4AF37] transition-transform ${accountOpen ? "rotate-180" : ""}`}>⌄</span>
                 </button>
                 {accountOpen && (
@@ -137,6 +140,23 @@ export default function GlobalHeader() {
           )}
         </div>
       </nav>
+      {mobileNavOpen && (
+        <nav id="arees-mobile-navigation" aria-label="التنقل الرئيسي" dir="rtl" className="absolute inset-x-0 top-full z-[110] border-t border-[#0D3B34]/10 bg-[#F7F4EA]/[0.98] px-4 pb-4 pt-3 shadow-[0_18px_35px_rgba(13,59,52,.16)] backdrop-blur-xl lg:hidden">
+          <div className="mx-auto grid max-w-xl grid-cols-2 gap-2 text-right text-sm font-bold text-[#0D3B34]">
+            {navVisible.discover !== false && <Link href="/discover" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">اكتشف التجارب</Link>}
+            {navVisible.hotels !== false && <Link href="/hotels" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الفنادق</Link>}
+            {navVisible.flights !== false && <Link href="/flights" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">✈ الطيران</Link>}
+            {navVisible.flights !== false && <Link href="/ferries" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">⚓ البواخر</Link>}
+            {navVisible.cruise !== false && <Link href="/discover?type=cruise" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الكروز</Link>}
+            {navVisible.programs !== false && <Link href="/discover?type=domestic" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">برامج سياحية</Link>}
+            {navVisible.guides !== false && <Link href="/#tour-guides" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">المرشدون السياحيون</Link>}
+            {navVisible.partners !== false && <Link href="/partner/select-type" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">انضم كشريك</Link>}
+            {navVisible.partners !== false && <Link href="/partner/login" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">دخول الشركاء</Link>}
+            {navVisible.partners !== false && <Link href="/partner/government" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الجهات الحكومية</Link>}
+            {user && <Link href="/bookings" onClick={() => setMobileNavOpen(false)} className="col-span-2 rounded-xl border-t border-[#0D3B34]/10 px-3 py-3 text-[#9A741D] hover:bg-[#D4AF37]/15">حجوزاتي وطلباتي</Link>}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
