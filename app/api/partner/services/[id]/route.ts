@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { userHasPartnerPermission } from "@/lib/partner-permissions";
 
 async function ownedService(userId:string,id:string){
+  if(!await userHasPartnerPermission(userId,"services")) return null;
   const membership=await prisma.partnerMember.findFirst({where:{userId,isActive:true},select:{partnerId:true}});
   if(!membership) return null;
   return prisma.service.findFirst({where:{id,partnerId:membership.partnerId},include:{_count:{select:{bookings:true}}}});
