@@ -1324,9 +1324,9 @@ export default function Home() {
           depend on externally hosted or short-lived chat attachments.
       ====================================================== */}
       <section id="travel-bookings" dir="rtl" aria-label="حجوزات الطيران والبواخر" className="relative isolate scroll-mt-24 overflow-hidden border-y border-[#D4AF37]/30 bg-[linear-gradient(180deg,#dceaf0_0%,#fff4dc_57%,#5f9aa4_100%)]">
-        <div className="pointer-events-none absolute inset-0 bg-[url('/Image/hero/arees-air-sea-bookings.svg')] bg-cover bg-center" aria-hidden="true"/>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,253,245,.89)_0%,rgba(255,253,245,.76)_30%,rgba(255,253,245,.29)_65%,rgba(255,253,245,.06)_100%)]" aria-hidden="true"/>
-        <div className="relative z-10 mx-auto flex min-h-[540px] max-w-7xl flex-col items-center justify-center px-5 py-20 text-center md:min-h-[630px]">
+        <div className="pointer-events-none absolute inset-0 bg-[url('/Image/hero/arees-air-sea-approved.webp')] bg-cover bg-center" aria-hidden="true"/>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,253,245,.97)_0%,rgba(255,253,245,.87)_28%,rgba(255,253,245,.35)_60%,rgba(255,253,245,.02)_100%)]" aria-hidden="true"/>
+        <div className="relative z-10 mx-auto flex min-h-[600px] max-w-7xl flex-col items-center justify-center px-5 py-24 text-center md:min-h-[760px]">
           <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={190} height={95} className="h-auto w-[145px] md:w-[177px]" />
           <h2 className="mt-7 max-w-5xl text-4xl font-black leading-[1.45] text-[#0D3B34] drop-shadow-[0_1px_0_rgba(255,255,255,.8)] md:text-6xl">
             حجوزات الطيران <span className="text-[#AC8125]">والبواخر</span>
