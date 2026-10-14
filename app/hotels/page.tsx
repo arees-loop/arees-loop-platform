@@ -43,7 +43,7 @@ export default function HotelsPage(){
   },[]);
   useEffect(()=>{
     if(offers.length<2||offersPaused||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    const timer=window.setInterval(()=>setIndex(i=>(i+1)%offers.length),7000);
+    const timer=window.setInterval(()=>setIndex(i=>(i+1)%offers.length),2000);
     return()=>window.clearInterval(timer);
   },[offers.length,offersPaused]);
   async function submit(event:FormEvent<HTMLFormElement>){
@@ -100,9 +100,13 @@ export default function HotelsPage(){
                   {offer.description&&<p className="px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.description}</p>}
                 </article>)}
               </div>
-              <div className="relative z-10 flex items-center justify-center gap-2 pb-1 pt-2" aria-label="التنقل بين العروض">
-                {offers.map((offer,i)=><button key={offer.id} type="button" onClick={()=>setIndex(i)} aria-label={`عرض ${i+1}: ${offer.title}`} aria-current={i===index%offers.length?"true":undefined} className={"h-2 rounded-full transition-all duration-300 "+(i===index%offers.length?"w-8 bg-[#E8CC85]":"w-2 bg-white/45 hover:bg-white/75")}/>)}
-                <span className="mr-2 text-[10px] font-bold text-white/70">{index%offers.length+1} / {offers.length}</span>
+              <div className="relative z-10 flex items-center justify-between gap-2 pb-1 pt-2" aria-label="التنقل بين العروض">
+                <button type="button" aria-label="العرض السابق" onClick={()=>setIndex(i=>(i-1+offers.length)%offers.length)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/50 bg-white/10 text-xl font-black text-white shadow hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E8CC85]">→</button>
+                <div className="flex min-w-0 items-center justify-center gap-2">
+                  {offers.map((offer,i)=><button key={offer.id} type="button" onClick={()=>setIndex(i)} aria-label={`عرض ${i+1}: ${offer.title}`} aria-current={i===index%offers.length?"true":undefined} className={"h-2 rounded-full transition-all duration-300 "+(i===index%offers.length?"w-8 bg-[#E8CC85]":"w-2 bg-white/45 hover:bg-white/75")}/>)}
+                  <span className="mr-1 whitespace-nowrap text-[10px] font-bold text-white/70">{index%offers.length+1} / {offers.length}</span>
+                </div>
+                <button type="button" aria-label="العرض التالي" onClick={()=>setIndex(i=>(i+1)%offers.length)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/50 bg-white/10 text-xl font-black text-white shadow hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E8CC85]">←</button>
               </div>
               {offers.length>1&&<p className="relative z-10 text-center text-[10px] text-white/50">يتغير العرض تلقائياً · أوقفه بالمرور أو التركيز</p>}
             </>}
