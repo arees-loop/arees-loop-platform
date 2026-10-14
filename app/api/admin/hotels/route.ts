@@ -4,6 +4,14 @@ import { getCurrentSession } from "@/lib/session";
 import { canManageHotel } from "@/lib/hotel-permissions";
 export const runtime="nodejs";
 const fail=(message:string,status=400)=>NextResponse.json({success:false,message},{status});
+function parseOfferImages(value:unknown,fallback:string|null,previous?:unknown){
+  const input=value===undefined?previous:value;
+  if(input===undefined||input===null)return fallback?[fallback]:[];
+  if(!Array.isArray(input)||input.length>10)throw new Error("يمكن إضافة 10 صور كحد أقصى لكل عرض.");
+  const urls=input.map(item=>clean(item,500));
+  if(urls.some(url=>!url||(!url.startsWith("/Image/")&&!url.startsWith("/api/media?pathname="))))throw new Error("تأكد من روابط صور العرض.");
+  return [...new Set(urls)];
+}
 const clean=(x:unknown,max=2500)=>String(x??"").trim().slice(0,max);
 const money=(x:unknown)=>{
   if(x===""||x===null||x===undefined)return null;
@@ -40,7 +48,7 @@ export async function GET(request:NextRequest){
     if(mode==="offers"){
       if(actor.user?.role!=="SUPER_ADMIN")return NextResponse.json({success:true,data:[]});
       const items=await prisma.hotelOffer.findMany({where:{deletedAt:null},orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],take:200});
-      return NextResponse.json({success:true,data:items.map(x=>({...x,amountSar:x.amountSar===null?null:Number(x.amountSar)}))},{headers:{"Cache-Control":"no-store"}});
+      return NextResponse.json({success:true,data:items.map(x=>({...x,imageUrls:Array.isArray(x.imageUrls)?x.imageUrls:(x.bannerUrl?[x.bannerUrl]:[]),amountSar:x.amountSar===null?null:Number(x.amountSar)}))},{headers:{"Cache-Control":"no-store"}});
     }
     if(mode==="staff"){
       if(actor.user?.role!=="SUPER_ADMIN")return fail("إسناد الموظفين للسوبر أدمن.",403);
@@ -125,10 +133,11 @@ export async function POST(request:NextRequest){
     const amountSar=money(body.amountSar);
     const bannerUrl=clean(body.bannerUrl,500)||null;
     if(bannerUrl&&!bannerUrl.startsWith("/Image/")&&!bannerUrl.startsWith("/api/media?pathname="))return fail("رابط الصورة غير صالح.");
+    const imageUrls=parseOfferImages(body.imageUrls,bannerUrl);
     const offer=await prisma.hotelOffer.create({data:{
       title,destination:clean(body.destination,100)||null,hotelName:clean(body.hotelName,160)||null,
       description:clean(body.description)||null,amountSar,priceUnit:clean(body.priceUnit,50)||null,
-      bannerUrl,startsAt,endsAt,isVisible:body.isVisible===true,sortOrder:Number.isInteger(body.sortOrder)?Math.max(0,Math.min(9999,body.sortOrder)):0,
+      bannerUrl,imageUrls:imageUrls as never,startsAt,endsAt,isVisible:body.isVisible===true,sortOrder:Number.isInteger(body.sortOrder)?Math.max(0,Math.min(9999,body.sortOrder)):0,
     }});
     await prisma.auditLog.create({data:{userId:actor.user!.id,action:"HOTEL_OFFER_ADDED",entityType:"HotelOffer",entityId:offer.id}}).catch(()=>{});
     return NextResponse.json({success:true,data:offer},{status:201});
@@ -147,6 +156,7 @@ export async function PUT(request:NextRequest){
     if(startsAt&&endsAt&&startsAt>endsAt)return fail("تاريخ انتهاء العرض قبل بدايته.");
     const bannerUrl=clean(body.bannerUrl,500)||null;
     if(bannerUrl&&!bannerUrl.startsWith("/Image/")&&!bannerUrl.startsWith("/api/media?pathname="))return fail("رابط صورة غير صالح.");
+    const imageUrls=parseOfferImages(body.imageUrls,bannerUrl,previous.imageUrls);
     const updated=await prisma.hotelOffer.update({where:{id},data:{
       title,destination:clean(body.destination,100)||null,hotelName:clean(body.hotelName,160)||null,
       description:clean(body.description)||null,amountSar:money(body.amountSar),priceUnit:clean(body.priceUnit,50)||null,
