@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { userHasPartnerPermission } from "@/lib/partner-permissions";
 
 async function membershipFor(userId: string) {
   return prisma.partnerMember.findFirst({
