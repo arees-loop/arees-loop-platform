@@ -1,11 +1,12 @@
 "use client";
 import { AirportLookup } from "@/app/components/AviationLookup";
+import OfferImageCarousel from "@/app/components/OfferImageCarousel";
 import Link from "next/link";
 import { storeCustomerClaim } from "@/lib/customer-request-claims";
 import { useEffect, useState, type FormEvent } from "react";
 
 type Kind="FLIGHT"|"FERRY";
-type Offer={id:string;title:string;description:string|null;carrierName:string|null;origin:string|null;destination:string|null;travelDate:string|null;scheduleType?:string;scheduleData?:unknown;amountSar:number|null;adultPriceSar:number|null;childPriceSar:number|null;infantPriceSar:number|null;priceUnit:string|null;bannerUrl:string|null;operationStatus:string;operationNote:string|null};
+type Offer={id:string;title:string;description:string|null;carrierName:string|null;origin:string|null;destination:string|null;travelDate:string|null;scheduleType?:string;scheduleData?:unknown;imageUrls:string[];amountSar:number|null;adultPriceSar:number|null;childPriceSar:number|null;infantPriceSar:number|null;priceUnit:string|null;bannerUrl:string|null;operationStatus:string;operationNote:string|null};
 type Confirmation={reference:string;trackingToken:string;kind:string;customerName:string;origin:string;destination:string;travelDate:string;adults:number;children:number;infants:number;phone:string;notice:string;tripType?:string;returnDate?:string|null;itinerary?:{origin:string;destination:string;travelDate:string}[]};
 const codes=[["966","السعودية +966"],["249","السودان +249"],["20","مصر +20"],["971","الإمارات +971"],["974","قطر +974"],["965","الكويت +965"],["973","البحرين +973"],["968","عُمان +968"],["1","أمريكا/كندا +1"],["44","بريطانيا +44"],["other","دولة أخرى"]];
 const field="w-full min-w-0 rounded-2xl border border-[#C5AE73]/35 bg-[#FCFBF6] px-4 py-3.5 text-sm text-[#0D3B34] outline-[#B69034]";
@@ -129,10 +130,9 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   {offers.filter((_,index)=>index===offerIndex%offers.length).map(offer=>(
                     <article key={offer.id} className="offer-studio-slide relative overflow-hidden rounded-[24px] border border-white/20 bg-[#F7F4ED] text-[#0D3B34] shadow-2xl" aria-live="polite">
                       <div className="relative aspect-[2/1] overflow-hidden bg-[radial-gradient(circle_at_75%_15%,#EBD38B,#F7F4ED_48%,#D8E9E2)]">
-                        {offer.bannerUrl? <>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={offer.bannerUrl} alt={offer.title} className="offer-studio-art h-full w-full object-cover"/>
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#082F2A]/80 via-[#082F2A]/10 to-transparent" />
+                        {(offer.imageUrls?.length||offer.bannerUrl)? <>
+                          <OfferImageCarousel images={offer.imageUrls} fallback={offer.bannerUrl} title={offer.title} imageClassName="offer-studio-art"/>
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#082F2A]/80 via-[#082F2A]/10 to-transparent" />
                         </>:<div className="absolute inset-0 overflow-hidden bg-[linear-gradient(135deg,#F8F2DF,#DCEAE3_48%,#C4D9D0)]">
                           <span className="offer-studio-ship absolute -bottom-5 left-8 text-[112px] leading-none drop-shadow-xl" aria-hidden="true">{ferry?"⛴":"✈"}</span>
                           <span className="absolute right-5 top-5 h-20 w-20 rounded-full bg-white/40 blur-xl" />
@@ -146,10 +146,6 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                           </div>
                           {offer.amountSar!==null&&<div className="shrink-0 rounded-2xl border border-white/20 bg-[#0D3B34]/85 px-3 py-2 text-left shadow-lg backdrop-blur-sm"><span className="block text-[10px] text-white/75">يبدأ من</span><strong className="text-lg font-black text-[#F1D98E]">{offer.amountSar.toLocaleString("ar-SA")} <small className="text-[10px]">ر.س</small></strong></div>}
                         </div>
-                        {offers.length>1&&<div className="absolute inset-x-3 top-1/2 z-10 flex -translate-y-1/2 justify-between">
-                          <button type="button" aria-label="العرض السابق" onClick={()=>setOfferIndex(i=>(i-1+offers.length)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-white/55 bg-[#0D3B34]/75 text-xl font-black text-white shadow-lg backdrop-blur transition hover:scale-105 hover:bg-[#0D3B34]">→</button>
-                          <button type="button" aria-label="العرض التالي" onClick={()=>setOfferIndex(i=>(i+1)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-white/55 bg-[#0D3B34]/75 text-xl font-black text-white shadow-lg backdrop-blur transition hover:scale-105 hover:bg-[#0D3B34]">←</button>
-                        </div>}
                       </div>
                       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 text-xs">
                         <p className="font-bold">{offer.travelDate?<>موعد الرحلة: <time dateTime={offer.travelDate}>{new Date(offer.travelDate).toLocaleDateString("ar-SA",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"})}</time></>:"الموعد يؤكد عند إرسال الطلب"}</p>
