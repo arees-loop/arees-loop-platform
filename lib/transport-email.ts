@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 export type TransportEmailData = {
   reference: string;
-  kind: "FLIGHT" | "FERRY";
+  kind: "FLIGHT" | "FERRY" | "VISA" | "DRIVING_LICENSE";
   customerName: string;
   customerEmail: string | null;
   countryCode: string;
@@ -26,7 +26,7 @@ export async function sendTransportInquiryNotification(q: TransportEmailData): P
   const admins = (process.env.AREES_ADMIN_EMAILS || "")
     .split(/[;,]/).map(s => s.trim()).filter(s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)).slice(0,12);
   if (!apiKey || !from || admins.length === 0) throw new Error("Transport email is not fully configured");
-  const type = q.kind === "FERRY" ? "البواخر" : "الطيران";
+  const type = q.kind === "FERRY" ? "البواخر" : q.kind === "VISA" ? "التأشيرات" : q.kind === "DRIVING_LICENSE" ? "رخصة القيادة الدولية" : "الطيران";
   const rows: Array<[string, string]> = [
     ["رقم الطلب",q.reference],["نوع الطلب",type],["الاسم",q.customerName],
     ["الجوال",`+${q.countryCode} ${q.phone}`],
