@@ -21,7 +21,7 @@ type Offer={
   priceUnit:string|null;bannerUrl:string|null;imageUrls:string[];operationStatus:string;operationNote:string|null;
   isVisible:boolean;sortOrder:number;startsAt:string|null;endsAt:string|null;
 };
-const operators={FLIGHT:["تاركو للطيران","بدر للطيران","الخطوط الجوية السودانية","أخرى"],FERRY:["الجودي","دليلة","عمان","مونتي","أخرى"]};
+const operators={FLIGHT:["تاركو للطيران","بدر للطيران","الخطوط الجوية السودانية","أخرى"],FERRY:["الجودي","دليلة","عمان","مونتي","أخرى"],VISA:["سياحية","زيارة عائلية","أعمال","عبور","أخرى"]};
 type Staff={id:string;firstName:string|null;lastName:string|null;email:string;role:string;adminPermissions:unknown};
 type HistoryEvent={id:string;actorName:string;action:string;fromStatus:string|null;toStatus:string|null;details:unknown;createdAt:string};
 const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"تم الإلغاء"};
@@ -37,7 +37,7 @@ const label="flex flex-col gap-1.5 text-xs font-semibold";
 const day=(d:string|null)=>d?d.slice(0,10):"";
 const offerDay=(d:string|null)=>d?new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Riyadh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d)):"";
 
-export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"}={}) {
+export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE"}={}) {
   const [tab,setTab]=useState<"requests"|"offers">("requests");
   const [requests,setRequests]=useState<RequestRow[]>([]);
   const [offers,setOffers]=useState<Offer[]>([]);
@@ -47,7 +47,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [cancelReason,setCancelReason]=useState("");
   const [replyDraft,setReplyDraft]=useState("");
   const [cancelBy,setCancelBy]=useState("STAFF");
-  const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY">(initialOfferKind);
+  const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE">(initialOfferKind);
   const [offerView,setOfferView]=useState<"CARDS"|"LIST">("CARDS");
   const [offerFilter,setOfferFilter]=useState<"ALL"|"ACTIVE"|"PAUSED"|"UPCOMING"|"EXPIRED">("ALL");
   const [bannerFile,setBannerFile]=useState<File|null>(null);
@@ -56,7 +56,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
   const [selected,setSelected]=useState<RequestRow|null>(null);
   const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
-  const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":blankOffer.origin,destination:initialOfferKind==="FLIGHT"?"":blankOffer.destination});
+  const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?blankOffer.origin:"",destination:initialOfferKind==="FERRY"?blankOffer.destination:""});
   const [status,setStatus]=useState("");
   const [error,setError]=useState("");
   const [busy,setBusy]=useState(false);
@@ -174,7 +174,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const customerWhatsApp = selected
     ? (selected.whatsappPhone ? (selected.whatsappCountryCode||"")+selected.whatsappPhone : selected.countryCode+selected.phone).replace(/\D/g,"")
     : "";
-  const message = selected ? `السلام عليكم، بناءً على طلبكم لدى شركة أريس للحجز ${selected.kind==="FERRY"?"بالباخرة":"بالطيران"} رقم ${selected.reference} (${selected.origin} - ${selected.destination})، أعددنا عرض السعر لدى ${selected.carrierName||"الناقل المختار"}. المبلغ ${selected.quoteAmountSar===null?"قيد التحديد":selected.quoteAmountSar+" ريال سعودي"}. سنرفق عرض السعر PDF بهذه المحادثة. نؤكد أن العرض ليس حجزاً نهائياً، وشروط الاسترداد والتعديل وفق الناقل. ${selected.quoteNotes||""}` : "";
+  const message = selected ? `السلام عليكم، بناءً على طلبكم لدى شركة أريس لخدمة ${selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":selected.kind==="DRIVING_LICENSE"?"رخصة القيادة الدولية":"الطيران"} رقم ${selected.reference} (${selected.origin} - ${selected.destination})، أعددنا عرض السعر لدى ${selected.carrierName||"الناقل المختار"}. المبلغ ${selected.quoteAmountSar===null?"قيد التحديد":selected.quoteAmountSar+" ريال سعودي"}. سنرفق عرض السعر PDF بهذه المحادثة. نؤكد أن العرض ليس حجزاً نهائياً، وشروط الاسترداد والتعديل وفق الناقل. ${selected.quoteNotes||""}` : "";
 
   function startOffer(offer?:Offer) {
     setBannerFile(null);
@@ -220,7 +220,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر حفظ العرض.");return;}
       setStatus("تم حفظ العرض أو الجدول. سيظهر للزوار إذا اخترت «ظاهر» والبيانات متصلة.");
-      setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});
+      setOfferForm({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?"سواكن":"",destination:initialOfferKind==="FERRY"?"جدة":""});
       setBannerFile(null);setExtraBannerFiles([]);
       await load();
     }catch{setError("تعذر الاتصال بالخادم لحفظ العرض.");}
@@ -281,21 +281,21 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     <main dir="rtl" className="mx-auto max-w-[1600px] px-5 py-8 text-[#0D3B34]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-black tracking-widest text-[#A78332]">AREES LOOP · AREES TRAVEL</p>
-          <h1 className="mt-2 text-3xl font-black">{initialOfferKind==="FLIGHT"?"إدارة حجوزات الطيران":initialOfferKind==="FERRY"?"إدارة حجوزات البواخر":"حجوزات الطيران والبواخر"}</h1>
+          <h1 className="mt-2 text-3xl font-black">{initialOfferKind==="FLIGHT"?"إدارة حجوزات الطيران":initialOfferKind==="FERRY"?"إدارة حجوزات البواخر":initialOfferKind==="VISA"?"طلبات وعروض التأشيرات":initialOfferKind==="DRIVING_LICENSE"?"طلبات رخصة القيادة الدولية":"حجوزات الطيران والبواخر"}</h1>
           <p className="mt-2 text-sm leading-8 text-[#0D3B34]/70">استقبال الطلبات، إعداد عروض الأسعار، متابعة التواصل، وإدارة إعلانات الأسعار وجداول البواخر.</p>
         </div>
         <div className="flex gap-2">
           <Link href="/flights" className="rounded-full border border-[#D4AF37] bg-white px-4 py-2.5 text-sm font-bold">معاينة الطيران</Link>
-          <Link href="/ferries" className="rounded-full border border-[#D4AF37] bg-white px-4 py-2.5 text-sm font-bold">معاينة البواخر</Link>
+          <Link href="/ferries" className="rounded-full border border-[#D4AF37] bg-white px-4 py-2.5 text-sm font-bold">معاينة البواخر</Link>{initialOfferKind==="VISA"&&<Link href="/visas" className="rounded-full border border-[#D4AF37] bg-white px-4 py-2.5 text-sm font-bold">معاينة التأشيرات</Link>}
         </div>
       </div>
       <div className="mt-7 flex flex-wrap gap-2">
         <button onClick={()=>setTab("requests")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="requests"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>طلبات العملاء ({filteredRequests.length})</button>
-        <button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.filter(x=>initialOfferKind==="ALL"||x.kind===initialOfferKind).length})</button>
+        {initialOfferKind!=="DRIVING_LICENSE"&&<button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.filter(x=>initialOfferKind==="ALL"||x.kind===initialOfferKind).length})</button>}
         {tab==="offers"&&initialOfferKind==="ALL"&&<div className="flex flex-wrap gap-2">
           <button type="button" onClick={()=>{setFilterKind("FLIGHT");startOffer();setOfferForm(f=>({...f,kind:"FLIGHT",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FLIGHT"?"bg-[#D4AF37]":"bg-white"}`}>✈ عروض الطيران</button>
           <button type="button" onClick={()=>{setFilterKind("FERRY");startOffer();}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FERRY"?"bg-[#D4AF37]":"bg-white"}`}>⚓ عروض البواخر</button>
-          <button type="button" onClick={()=>setFilterKind("ALL")} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="ALL"?"bg-[#D4AF37]":"bg-white"}`}>جميع العروض</button>
+          <button type="button" onClick={()=>{setFilterKind("VISA");startOffer();setOfferForm(f=>({...f,kind:"VISA",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="VISA"?"bg-[#D4AF37]":"bg-white"}`}>🛂 عروض التأشيرات</button><button type="button" onClick={()=>setFilterKind("ALL")} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="ALL"?"bg-[#D4AF37]":"bg-white"}`}>جميع العروض</button>
         </div>}
         <button onClick={()=>void load()} disabled={busy||loading} className="rounded-full border border-[#D4AF37]/40 px-5 py-3 text-sm font-bold disabled:opacity-40">تحديث</button>
       </div>
@@ -309,7 +309,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             {filteredRequests.map(q=>(
               <button key={q.id} onClick={()=>choose(q)} className={`w-full rounded-[20px] border p-5 text-right transition hover:shadow-lg ${selected?.id===q.id?"border-[#D4AF37] bg-[#FFF9E7]":"border-[#D4AF37]/25 bg-white"}`}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="font-black">{q.kind==="FERRY"?"⚓ باخرة":"✈ طيران"} · {q.customerName}</span>
+                  <span className="font-black">{q.kind==="FERRY"?"⚓ باخرة":q.kind==="VISA"?"🛂 تأشيرة":q.kind==="DRIVING_LICENSE"?"🚘 رخصة دولية":"✈ طيران"} · {q.customerName}</span>
                   <span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-xs font-bold">{q.status}</span>
                 </div>
                 <p className="mt-2 text-sm">{q.origin} ← {q.destination} · {day(q.travelDate)}</p>
@@ -351,7 +351,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   {showSuper&&<div className="mt-3 flex flex-wrap gap-2">
                     <select aria-label="إسناد الطلب لموظف" className={field+" min-w-0 flex-1"} value={selected.assignedToId||""} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})} disabled={busy}>
                       <option value="">غير مسند</option>
-                      {staff.filter(u=>u.role==="SUPER_ADMIN"||(Array.isArray(u.adminPermissions)&&u.adminPermissions.includes(selected.kind==="FERRY"?"TRANSPORT_FERRIES":"TRANSPORT_FLIGHTS"))).map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email} · {u.role}</option>)}
+                      {staff.filter(u=>u.role==="SUPER_ADMIN"||(Array.isArray(u.adminPermissions)&&u.adminPermissions.includes(selected.kind==="FERRY"?"TRANSPORT_FERRIES":selected.kind==="VISA"?"TRANSPORT_VISAS":selected.kind==="DRIVING_LICENSE"?"TRANSPORT_DRIVING_LICENSE":"TRANSPORT_FLIGHTS"))).map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email} · {u.role}</option>)}
                     </select>
                   </div>}
                   <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-bold">الحالة: {statusNames[selected.status]||selected.status}</p>
@@ -416,9 +416,9 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             {!showSuper&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-bold text-amber-800">تعديل العروض والأسعار والصور متاح للسوبر أدمن فقط.</p>}
             <p className="mt-2 text-xs leading-7">الأسعار تظهر في البطاقات الجانبية، وليس داخل نموذج طلب العميل. في البواخر أضف حالة التشغيل والملاحظات عند توقف أي باخرة.</p>
             <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <label className={label}>الخدمة<select className={field} disabled={initialOfferKind!=="ALL"} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option></select></label>
+              <label className={label}>الخدمة<select className={field} disabled={initialOfferKind!=="ALL"} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option><option value="VISA">تأشيرات</option></select></label>
               <label className={label}>الناقل / الباخرة
-                {offerForm.kind==="FLIGHT" ? <AirlineLookup ariaLabel="شركة الطيران في الإعلان" value={offerForm.carrierName} onChange={v=>setOfferForm(f=>({...f,carrierName:v}))} /> :
+                {offerForm.kind==="FLIGHT" ? <AirlineLookup ariaLabel="شركة الطيران في الإعلان" value={offerForm.carrierName} onChange={v=>setOfferForm(f=>({...f,carrierName:v}))} /> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="جهة أو نوع الخدمة"/> :
                   <><input className={field} list="offer-operators" value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="اختر الباخرة"/><datalist id="offer-operators">{ferryOperators.map(v=><option key={v} value={v}/>)}</datalist></>}
               </label>
               <label className={label+" sm:col-span-2 xl:col-span-2"}>اسم العرض / الجدول<input required maxLength={160} className={field} value={offerForm.title} onChange={e=>setOfferForm(f=>({...f,title:e.target.value}))}/></label>
@@ -485,7 +485,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/30 p-3 text-sm font-bold"><input type="checkbox" checked={offerForm.isVisible} onChange={e=>setOfferForm(f=>({...f,isVisible:e.target.checked}))}/> ظاهر للزوار</label>
               <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
                 <button disabled={busy||!showSuper||Boolean(bannerFile&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
-                <button type="button" onClick={()=>{setBannerFile(null);setExtraBannerFiles([]);setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});}} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
+                <button type="button" onClick={()=>{setBannerFile(null);setExtraBannerFiles([]);setOfferForm({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?"سواكن":"",destination:initialOfferKind==="FERRY"?"جدة":""});}} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
               </div>
             </form>
           </section>
@@ -512,7 +512,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <img src={offer.bannerUrl} alt={offer.title} className="h-full w-full object-contain" />
                 </div>}
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div><p className="text-xs font-semibold text-[#947426]">{offer.kind==="FERRY"?"بواخر":"طيران"} · {offer.carrierName}</p>
+                  <div><p className="text-xs font-semibold text-[#947426]">{offer.kind==="FERRY"?"بواخر":offer.kind==="VISA"?"تأشيرات":"طيران"} · {offer.carrierName}</p>
                     <h3 className="mt-1 text-lg font-black">{offer.title}</h3>
                     <p className="mt-2 text-sm">{offer.origin} ← {offer.destination} · {day(offer.travelDate)}</p>
                     {(offer.adultPriceSar!==null||offer.childPriceSar!==null||offer.infantPriceSar!==null)&&<p className="mt-1 text-xs font-black text-[#9A7020]">{offer.adultPriceSar!==null&&`بالغ ${offer.adultPriceSar.toLocaleString("ar-SA")} ر.س `}{offer.childPriceSar!==null&&`طفل ${offer.childPriceSar.toLocaleString("ar-SA")} ر.س `}{offer.infantPriceSar!==null&&`رضيع ${offer.infantPriceSar.toLocaleString("ar-SA")} ر.س`}</p>}
