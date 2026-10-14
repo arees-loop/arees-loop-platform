@@ -53,13 +53,7 @@ export default function HotelsPage(){
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/Image/hero/arees-hotel-banner.webp" alt="حجز الفنادق — إقامتك المميزة تبدأ هنا" className="block aspect-[2.1/1] w-full object-cover object-[65%_center] md:aspect-[4.2/1] md:object-center" />
       </div>
-      <div className="mb-4 mt-3 flex justify-center">
-        <a href="https://wa.me/966580091220?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D8%AD%D8%AC%D8%B2%20%D9%81%D9%86%D8%AF%D9%82."
-          target="_blank" rel="noopener noreferrer"
-          className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF9EB]">
-          تواصل عبر الواتساب
-        </a>
-      </div>
+      
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(290px,.9fr)_minmax(0,1.3fr)]">
         <aside className="space-y-4 lg:sticky lg:top-28">
           <div className="rounded-[26px] bg-[#0D3B34] p-6 text-white shadow-xl">
@@ -108,7 +102,7 @@ export default function HotelsPage(){
             <h2 className="text-2xl font-black">إرسال طلب حجز فندق</h2>
             <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">املأ البيانات المطلوبة لنتواصل معك بعرض السعر والتوفر.</p>
             {error&&<p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{error}</p>}
-            <form onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2">
+            <form id="hotel-request-form-fields" onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2">
               <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true"/>
               <label className={label}>الاسم الكامل *<input className={field} required minLength={2} maxLength={120} value={form.customerName} onChange={e=>edit("customerName",e.target.value)}/></label>
               <label className={label}>البريد الإلكتروني (اختياري)<input className={field} type="email" maxLength={180} value={form.customerEmail} onChange={e=>edit("customerEmail",e.target.value)}/></label>
@@ -137,11 +131,20 @@ export default function HotelsPage(){
               </div>
               <label className={label+" sm:col-span-2"}>ملاحظات ومتطلبات خاصة<textarea className={field} maxLength={1500} rows={3} value={form.notes} onChange={e=>edit("notes",e.target.value)} placeholder="نوع الغرفة، الإطلالة، الإفطار، طلب غرف متجاورة..."/></label>
               <p className="rounded-xl bg-[#F7F1E5] px-4 py-3 text-xs leading-7 sm:col-span-2">بإرسال الطلب تسمح لأريس باستخدام بيانات التواصل للرد على الاستعلام. يخضع الحجز النهائي لتوفر الفندق وشروط الإلغاء والاسترداد.</p>
-              <button type="submit" disabled={busy} className="rounded-xl bg-[#0D3B34] px-7 py-4 text-base font-black text-white disabled:opacity-40 sm:col-span-2">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
             </form>
           </>}
         </section>
       </div>
+      {!success&&<div className="fixed inset-x-0 bottom-0 z-50 border-t border-[#D4AF37]/25 bg-white/95 px-4 py-3 shadow-[0_-10px_30px_rgba(13,59,52,.12)] backdrop-blur-xl">
+        <div dir="rtl" className="mx-auto flex max-w-[1450px] justify-center gap-3">
+          <a href="https://wa.me/966580091220?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%A7%D8%B1%20%D8%B9%D9%86%20%D8%AD%D8%AC%D8%B2%20%D9%81%D9%86%D8%AF%D9%82."
+          target="_blank" rel="noopener noreferrer"
+          className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] shadow-sm transition hover:bg-[#FFF9EB]">
+          تواصل عبر الواتساب
+        </a>
+          <button form="hotel-request-form-fields" type="submit" disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
+        </div>
+      </div>}
     </div>
   </main>;
 }
