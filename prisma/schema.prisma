@@ -960,6 +960,8 @@ model TransportOffer {
   origin       String?
   destination  String?
   travelDate   DateTime?
+  scheduleType String   @default("SINGLE")
+  scheduleData Json?
   amountSar    Decimal? @db.Decimal(12,2)
   priceUnit    String?
   bannerUrl    String?
