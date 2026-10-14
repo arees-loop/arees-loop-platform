@@ -1,5 +1,4 @@
 "use client";
-import ServiceHistory from "./ServiceHistory";
 import PartnerTeamManagement from "./PartnerTeamManagement";
 import {useEffect,useMemo,useState} from "react";
 type Kind="dashboard"|"bookings"|"settlements"|"invoices"|"reports"|"team"|"business";
@@ -8,7 +7,7 @@ const money=(v:any)=>new Intl.NumberFormat("ar-SA",{minimumFractionDigits:2,maxi
 const date=(v:any)=>v?new Date(v).toLocaleDateString("ar-SA"):"—";
 export default function PartnerDataPage({kind}:{kind:Kind}){
  const [d,setD]=useState<any>(null);const [error,setError]=useState("");
- useEffect(()=>{if(kind==="team")return;fetch("/api/partner/portal?section="+kind,{credentials:"include",cache:"no-store"}).then(r=>r.json()).then(x=>x.success?setD(x):setError(x.message||"تعذر تحميل البيانات")).catch(()=>setError("تعذر تحميل البيانات"));},[]);
+ useEffect(()=>{if(kind==="team")return;fetch("/api/partner/portal?section="+kind,{credentials:"include",cache:"no-store"}).then(r=>r.json()).then(x=>x.success?setD(x):setError(x.message||"تعذر تحميل البيانات")).catch(()=>setError("تعذر تحميل البيانات"));},[kind]);
  const [bookingQuery,setBookingQuery]=useState("");
  const [bookingStatus,setBookingStatus]=useState("ALL");
  const stats=useMemo(()=>{if(!d)return null;if(d.dashboardSummary)return{sales:d.dashboardSummary.sales,bookings:d.dashboardSummary.bookings,services:d.dashboardSummary.services,settlements:d.dashboardSummary.settlements};const sales=d.bookings.reduce((a:number,b:any)=>a+Number(b.totalAmount||0),0);return{sales,bookings:d.bookings.length,services:d.services.length,settlements:d.settlements.reduce((a:number,s:any)=>a+Number(s.netAmount||0),0)}},[d]);
