@@ -447,7 +447,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} onLoad={e=>{if(bannerFile)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="h-44 w-full object-contain"/>
                 </div>}
               </div>
-              <div className="sm:col-span-2 xl:col-span-2 xl:col-start-1 overflow-hidden rounded-[24px] border border-[#D4AF37]/40 bg-white shadow-lg">
+              <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3 overflow-hidden rounded-[24px] border border-[#D4AF37]/40 bg-white shadow-lg">
                 <div className="bg-[#0D3B34] px-5 py-3 text-sm font-black text-white">معاينة بطاقة العرض — نص مع صورة</div>
                 {(bannerPreview||offerForm.bannerUrl)&&
                   /* eslint-disable-next-line @next/next/no-img-element */
