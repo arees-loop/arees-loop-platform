@@ -1319,53 +1319,30 @@ export default function Home() {
       </section>
 
       {/* =====================================================
-          FINAL CTA
+          AIR & SEA BOOKINGS — replaces the legacy city CTA
+          The image source is a local static asset so production does not
+          depend on externally hosted or short-lived chat attachments.
       ====================================================== */}
-
-      <section className="relative overflow-hidden border-y border-[#0D3B34]/10 px-6 py-20 md:px-10">
-        {/* خلفية تراثية سعودية هادئة */}
-        <div className="absolute inset-0">
-          <Image
-            src="/Image/hero/saudi-heritage-collage-bg.png"
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover object-center"
-          />
-
-          {/* طبقة فاتحة تجعل الصورة هافتون وتحافظ على وضوح النص */}
-          <div className="absolute inset-0 bg-white/58" />
-
-          {/* تدرج ناعم يحافظ على نظافة مركز النص */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.72)_0%,rgba(255,255,255,0.38)_48%,rgba(247,247,242,0.18)_100%)]" />
-        </div>
-
-        <div
-          dir="rtl"
-          className="relative z-10 mx-auto max-w-5xl text-center"
-        >
-          <Image
-            src="/Logo/arees-loop-logo.png"
-            alt="Arees Loop"
-            width={190}
-            height={95}
-            className="mx-auto h-auto w-[160px]"
-          />
-
-          <h2 className="mt-8 text-4xl font-black text-[#0D3B34] drop-shadow-[0_1px_0_rgba(255,255,255,0.75)] md:text-5xl">
-            مدينتك مليئة بالتجارب
+      <section id="travel-bookings" dir="rtl" aria-label="حجوزات الطيران والبواخر" className="relative isolate scroll-mt-24 overflow-hidden border-y border-[#D4AF37]/30 bg-[linear-gradient(180deg,#dceaf0_0%,#fff4dc_57%,#5f9aa4_100%)]">
+        <div className="pointer-events-none absolute inset-0 bg-[url('/Image/hero/arees-air-sea-bookings.webp')] bg-cover bg-center" aria-hidden="true"/>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,253,245,.89)_0%,rgba(255,253,245,.76)_30%,rgba(255,253,245,.29)_65%,rgba(255,253,245,.06)_100%)]" aria-hidden="true"/>
+        <div className="relative z-10 mx-auto flex min-h-[540px] max-w-7xl flex-col items-center justify-center px-5 py-20 text-center md:min-h-[630px]">
+          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={190} height={95} className="h-auto w-[145px] md:w-[177px]" />
+          <h2 className="mt-7 max-w-5xl text-4xl font-black leading-[1.45] text-[#0D3B34] drop-shadow-[0_1px_0_rgba(255,255,255,.8)] md:text-6xl">
+            حجوزات الطيران <span className="text-[#AC8125]">والبواخر</span>
           </h2>
-
-          <p className="mx-auto mt-5 max-w-2xl text-lg font-medium leading-8 text-[#0D3B34]/70">
-            أريس لوب تساعدك على اكتشاف التجربة المناسبة في اللحظة المناسبة.
+          <p className="mt-4 max-w-3xl text-base font-bold leading-9 text-[#365A53] md:text-xl">
+            بين أمواج البحر ورحابة السماء، نقرّب لك رحلتك بخيارات حجز سهلة وواضحة.
           </p>
-
-          <Link
-            href="/auth"
-            className="mt-8 inline-flex rounded-full bg-[#0D3B34] px-9 py-4 font-bold text-white shadow-[0_12px_30px_rgba(13,59,52,0.18)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#145347] hover:shadow-[0_16px_34px_rgba(13,59,52,0.24)]"
-          >
-            ابدأ الاستكشاف
-          </Link>
+          <div className="mt-9 flex w-full flex-wrap items-center justify-center gap-4">
+            <Link href="/flights" className="inline-flex min-w-[215px] items-center justify-center gap-2 rounded-full bg-[#0D3B34] px-7 py-4 text-base font-black text-white shadow-[0_12px_35px_rgba(13,59,52,.26)] transition hover:-translate-y-1 hover:bg-[#165b50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+              <span aria-hidden="true">✈</span> احجز تذكرة طيران
+            </Link>
+            <Link href="/ferries" className="inline-flex min-w-[215px] items-center justify-center gap-2 rounded-full border-2 border-[#B88A30] bg-white/90 px-7 py-4 text-base font-black text-[#0D3B34] shadow-[0_10px_30px_rgba(13,59,52,.11)] transition hover:-translate-y-1 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+              <span aria-hidden="true">⚓</span> احجز تذكرة باخرة
+            </Link>
+          </div>
+          <p className="mt-7 rounded-full border border-[#CBA85A]/40 bg-white/75 px-5 py-2 text-xs font-semibold text-[#0D3B34]/75">أرسل طلبك الآن، ولا يوجد دفع أو إصدار تذاكر قبل مراجعة أريس والتأكيد.</p>
         </div>
       </section>
 
