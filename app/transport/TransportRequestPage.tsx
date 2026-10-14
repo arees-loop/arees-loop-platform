@@ -27,8 +27,6 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   const [claimSaved,setClaimSaved]=useState(true);
   const [countryCode,setCountryCode]=useState("966");
   const [customCountryCode,setCustomCountryCode]=useState("");
-  const [altCountryCode,setAltCountryCode]=useState("966");
-  const [altCustomCountryCode,setAltCustomCountryCode]=useState("");
   const [origin,setOrigin]=useState(ferry?"سواكن":"");
   const [destination,setDestination]=useState(ferry?"جدة":"");
   const [travelDate,setTravelDate]=useState("");
@@ -37,7 +35,6 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   const [legs,setLegs]=useState([{origin:"",destination:"",travelDate:""},{origin:"",destination:"",travelDate:""}]);
   const [name,setName]=useState("");
   const [phone,setPhone]=useState("");
-  const [whatsappPhone,setWhatsappPhone]=useState("");
   const [email,setEmail]=useState("");
   const [adults,setAdults]=useState(1);
   const [children,setChildren]=useState(0);
@@ -75,8 +72,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
         body:JSON.stringify({
           kind,customerName:name,customerEmail:email,
           countryCode:countryCode==="other"?customCountryCode:countryCode,phone,
-          whatsappCountryCode:whatsappPhone?(altCountryCode==="other"?altCustomCountryCode:altCountryCode):"",
-          whatsappPhone,origin:kind==="FLIGHT"&&tripType==="MULTI_CITY"?legs[0].origin:origin,
+          origin:kind==="FLIGHT"&&tripType==="MULTI_CITY"?legs[0].origin:origin,
           destination:kind==="FLIGHT"&&tripType==="MULTI_CITY"?legs[0].destination:destination,
           travelDate:kind==="FLIGHT"&&tripType==="MULTI_CITY"?legs[0].travelDate:travelDate,
           tripType:kind==="FERRY"?"ONE_WAY":tripType,returnDate:tripType==="ROUND_TRIP"?returnDate:"",
@@ -93,14 +89,14 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   }
 
   return (
-    <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
+    <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-12 pt-32 text-[#0D3B34] md:px-8">
       <section className="mx-auto max-w-[1450px]">
-        <div className="overflow-hidden">
-          {/* Browser-native image preserves the approved artwork and embedded typography without cropping. */}
+        <div className="mb-3">
+          {/* Keep the complete supplied banner visible without a white frame or forced crop. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={ferry?"/Image/hero/arees-ferry-banner.webp":"/Image/hero/arees-flight-banner.webp"}
             alt={ferry?"حجز البواخر — رحلتك البحرية تبدأ هنا":"حجز الطيران — رحلتك الجوية تبدأ هنا"}
-            className="block aspect-[2.1/1] w-full object-cover object-[65%_center] md:aspect-[4.2/1] md:object-center" />
+            className="block h-auto w-full" />
         </div>
         
 
@@ -190,14 +186,6 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                     </div>
                     {countryCode==="other"&&<input required inputMode="numeric" aria-label="مفتاح دولة آخر" className={field+" mt-2"} placeholder="مفتاح الدولة بالأرقام" value={customCountryCode} onChange={e=>setCustomCountryCode(e.target.value)}/>}
                   </div>
-                  <div className="sm:col-span-2">
-                    <p className="mb-2 text-sm font-bold">واتساب بديل (اختياري إذا كنت خارج بلدك)</p>
-                    <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
-                      <select aria-label="مفتاح دولة واتساب البديل" className={field} value={altCountryCode} onChange={e=>setAltCountryCode(e.target.value)}>{codes.map(([v,t])=><option value={v} key={v}>{t}</option>)}</select>
-                      <input aria-label="رقم واتساب البديل" className={field} inputMode="tel" value={whatsappPhone} onChange={e=>setWhatsappPhone(e.target.value)} placeholder="رقم واتساب آخر"/>
-                    </div>
-                    {altCountryCode==="other"&&whatsappPhone&&<input required inputMode="numeric" className={field+" mt-2"} aria-label="مفتاح دولة واتساب آخر" value={altCustomCountryCode} onChange={e=>setAltCustomCountryCode(e.target.value)}/>}
-                  </div>
                   {!ferry&&<fieldset className="sm:col-span-2 rounded-[22px] border border-[#D4AF37]/35 bg-[#F8F5EC] px-5 py-4">
                     <legend className="px-2 text-sm font-black">اتجاه رحلة الطيران *</legend>
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -245,22 +233,20 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   </div>
                   <label className={label+" sm:col-span-2"}>ملاحظات أو متطلبات خاصة<textarea className={field} value={notes} onChange={e=>setNotes(e.target.value)} rows={4} maxLength={1200} placeholder="رحلة ذهاب فقط/ملاحظات الأمتعة أو المقاعد أو غيرها..."/></label>
                   <div className="sm:col-span-2 rounded-2xl bg-[#F7F2E6] p-4 text-xs leading-7 text-[#0D3B34]/80">بإرسال الطلب، أوافق على استخدام بيانات التواصل المقدمة للرد على الاستفسار. {policies[kind]}</div>
+                  <div className="sm:col-span-2 mt-2 flex flex-wrap justify-center gap-3">
+                    <a href={`https://wa.me/966580091220?text=${encodeURIComponent(ferry?"السلام عليكم، أرغب في الاستفسار عن حجز باخرة.":"السلام عليكم، أرغب في الاستفسار عن حجز طيران.")}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] shadow-sm transition hover:bg-[#FFF9EB]">
+                      تواصل عبر الواتساب
+                    </a>
+                    <button type="submit" disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
+                  </div>
                 </form>
               </>
             )}
           </section>
         </div>
       </section>
-      {!confirmation&&<div className="fixed inset-x-0 bottom-0 z-50 border-t border-[#D4AF37]/25 bg-white/95 px-4 py-3 shadow-[0_-10px_30px_rgba(13,59,52,.12)] backdrop-blur-xl">
-        <div dir="rtl" className="mx-auto flex max-w-[1450px] justify-center gap-3">
-          <a href={`https://wa.me/966580091220?text=${encodeURIComponent(ferry?"السلام عليكم، أرغب في الاستفسار عن حجز باخرة.":"السلام عليكم، أرغب في الاستفسار عن حجز طيران.")}`}
-            target="_blank" rel="noopener noreferrer"
-            className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] shadow-sm transition hover:bg-[#FFF9EB]">
-            تواصل عبر الواتساب
-          </a>
-          <button form="transport-request-form-fields" type="submit" disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
-        </div>
-      </div>}
     </main>
   );
 }
