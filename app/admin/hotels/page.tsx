@@ -14,11 +14,11 @@ type HotelCase={
 };
 type Staff={id:string;firstName:string|null;lastName:string|null;email:string};
 type Offer={id:string;title:string;destination:string|null;hotelName:string|null;description:string|null;
- amountSar:number|null;priceUnit:string|null;bannerUrl:string|null;startsAt:string|null;endsAt:string|null;isVisible:boolean;sortOrder:number};
+ amountSar:number|null;priceUnit:string|null;bannerUrl:string|null;imageUrls:string[];startsAt:string|null;endsAt:string|null;isVisible:boolean;sortOrder:number};
 type Event={id:string;actorName:string;action:string;fromStatus:string|null;toStatus:string|null;createdAt:string};
 const stages:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال العرض",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"ملغى"};
 const next:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["CANCELED"],QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
-const blank={id:"",title:"",destination:"",hotelName:"",description:"",amountSar:"",priceUnit:"لليلة",bannerUrl:"",startsAt:"",endsAt:"",isVisible:false,sortOrder:0};
+const blank={id:"",title:"",destination:"",hotelName:"",description:"",amountSar:"",priceUnit:"لليلة",bannerUrl:"",imageUrls:[] as string[],startsAt:"",endsAt:"",isVisible:false,sortOrder:0};
 type Form=typeof blank;
 const field="w-full rounded-xl border border-[#D4AF37]/40 bg-[#FFFCF5] px-4 py-3 text-sm outline-[#B69034]";
 const day=(v:string|null)=>v?new Date(v).toISOString().slice(0,10):"";
@@ -37,6 +37,7 @@ export default function HotelAdminPage(){
  const [cancelReason,setCancelReason]=useState("");
  const [edit,setEdit]=useState<Form>({...blank});
  const [banner,setBanner]=useState<File|null>(null);
+ const [extraBanners,setExtraBanners]=useState<File[]>([]);
  const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
  const [preview,setPreview]=useState("");
  const [view,setView]=useState<"cards"|"list">("cards");
@@ -86,11 +87,12 @@ export default function HotelAdminPage(){
  }
  function selectOffer(o?:Offer){
    setBanner(null);
+   setExtraBanners([]);
    setBannerDimensions(null);
    setEdit(o?{
      id:o.id,title:o.title,destination:o.destination||"",hotelName:o.hotelName||"",description:o.description||"",
      amountSar:o.amountSar===null?"":String(o.amountSar),priceUnit:o.priceUnit||"",
-     bannerUrl:o.bannerUrl||"",startsAt:day(o.startsAt),endsAt:day(o.endsAt),
+     bannerUrl:o.bannerUrl||"",imageUrls:o.imageUrls?.length?o.imageUrls:(o.bannerUrl?[o.bannerUrl]:[]),startsAt:day(o.startsAt),endsAt:day(o.endsAt),
      isVisible:o.isVisible,sortOrder:o.sortOrder,
    }:{...blank});
  }
@@ -100,15 +102,22 @@ export default function HotelAdminPage(){
    setBusy(true);setError("");setNotice("");
    try{
      let bannerUrl=edit.bannerUrl;
-     if(banner){
-       const form=new FormData();form.set("file",banner);form.set("kind","HOTEL");
-       const uploaded=await fetch("/api/admin/transport/image",{method:"POST",body:form});
-       const json=await uploaded.json();
-       if(!uploaded.ok||!json.success){setError(json.message||"تعذر رفع الصورة.");return;}
-       bannerUrl=json.url;
+     let imageUrls=edit.imageUrls;
+     const selectedImages=[banner,...extraBanners].filter((file):file is File=>Boolean(file));
+     if(selectedImages.length){
+       const uploadedImages:string[]=[];
+       for(const file of selectedImages){
+         const form=new FormData();form.set("file",file);form.set("kind","HOTEL");
+         const uploaded=await fetch("/api/admin/transport/image",{method:"POST",body:form});
+         const json=await uploaded.json();
+         if(!uploaded.ok||!json.success){setError(json.message||"تعذر رفع إحدى الصور.");return;}
+         uploadedImages.push(json.url);
+       }
+       imageUrls=uploadedImages;
+       bannerUrl=imageUrls[0]||"";
      }
      const res=await fetch("/api/admin/hotels",{method:edit.id?"PUT":"POST",headers:{"Content-Type":"application/json"},
-       body:JSON.stringify({...edit,bannerUrl})});
+       body:JSON.stringify({...edit,bannerUrl,imageUrls})});
      const d=await res.json();
      if(!res.ok||!d.success){setError(d.message||"تعذر حفظ العرض.");return;}
      setNotice("تم حفظ إعلان الفندق. يظهر في الموقع إذا كان مفعلاً وضمن تواريخ النشر.");
@@ -228,11 +237,11 @@ export default function HotelAdminPage(){
          </label>
          <label className="text-xs font-bold">بداية النشر<input className={field+" mt-2"} type="date" value={edit.startsAt} onChange={e=>setEdit(f=>({...f,startsAt:e.target.value}))}/></label>
          <label className="text-xs font-bold">آخر يوم للنشر<input className={field+" mt-2"} type="date" min={edit.startsAt||undefined} value={edit.endsAt} onChange={e=>setEdit(f=>({...f,endsAt:e.target.value}))}/></label>
-         <label className="text-xs font-bold sm:col-span-2 xl:col-span-2 xl:col-start-3">صورة العرض (PNG / JPG / WEBP)
-           <input type="file" accept="image/png,image/jpeg,image/webp" className={field+" mt-2"} onChange={e=>{setBanner(e.target.files?.[0]||null);setBannerDimensions(null);}}/>
+         <label className="text-xs font-bold sm:col-span-2 xl:col-span-2 xl:col-start-3">صور العرض — يمكنك اختيار عدة صور (PNG / JPG / WEBP)
+           <input type="file" accept="image/png,image/jpeg,image/webp" className={field+" mt-2"} multiple onChange={e=>{const files=Array.from(e.target.files||[]);setBanner(files[0]||null);setExtraBanners(files.slice(1));setBannerDimensions(null);}}/>
          </label>
-         <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={banner?bannerDimensions:null}/><p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت. لن يُحفظ العرض إذا كانت أبعاد الصورة مختلفة.</p></div>
-         {!banner&&edit.bannerUrl&&<p className="text-xs font-bold text-[#0D3B34]/65 sm:col-span-2">الصورة الحالية محفوظة. لاختيار بديل، ارفع صورة بالمقاس المحدد أعلاه.</p>}
+         <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={banner?bannerDimensions:null}/><p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت للصورة وبحد أقصى 10 صور. كل صورة لازم تكون بالمقاس المحدد، وإلا يرفضها النظام.</p></div>
+         {!banner&&edit.imageUrls.length>0&&<p className="text-xs font-bold text-[#0D3B34]/65 sm:col-span-2">الصور الحالية محفوظة ({edit.imageUrls.length}). اختيار صور جديدة يستبدل الصور الحالية.</p>}
          <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={edit.isVisible} onChange={e=>setEdit(f=>({...f,isVisible:e.target.checked}))}/>نشر الإعلان</label>
          <label className="text-xs font-bold">ترتيب الإعلان<input type="number" min={0} className={field+" mt-2"} value={edit.sortOrder} onChange={e=>setEdit(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
          <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
