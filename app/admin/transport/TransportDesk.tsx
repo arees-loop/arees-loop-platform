@@ -50,6 +50,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [offerFilter,setOfferFilter]=useState<"ALL"|"ACTIVE"|"PAUSED"|"UPCOMING"|"EXPIRED">("ALL");
   const [bannerFile,setBannerFile]=useState<File|null>(null);
   const [bannerPreview,setBannerPreview]=useState("");
+  const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
   const [selected,setSelected]=useState<RequestRow|null>(null);
   const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
   const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":blankOffer.origin,destination:initialOfferKind==="FLIGHT"?"":blankOffer.destination});
@@ -175,6 +176,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   function startOffer(offer?:Offer) {
     setBannerFile(null);
     setBannerFile(null);
+    setBannerDimensions(null);
     setStatus("");setError("");setTab("offers");
     setOfferForm(offer?{
       id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
@@ -428,15 +430,19 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className={label+" sm:col-span-2"}>ملاحظات التشغيل التي تظهر للعميل<textarea className={field} rows={2} value={offerForm.operationNote} onChange={e=>setOfferForm(f=>({...f,operationNote:e.target.value}))} placeholder="مثلاً: الباخرة متوقفة حالياً حتى إشعار آخر"/></label>
               <div className="sm:col-span-2 rounded-[20px] border border-[#D4AF37]/35 bg-[#F8F5EC] p-4">
                 <label className={label}>صورة الإعلان أو تصميم العرض (PNG / JPG / WEBP)
-                  <input type="file" accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>setBannerFile(e.target.files?.[0]||null)} />
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>{setBannerFile(e.target.files?.[0]||null);setBannerDimensions(null);}} />
                 </label>
-                <p className="mt-2 text-xs text-[#0D3B34]/65">حتى 4 ميجابايت. هذه معاينة للصورة والنص قبل الحفظ؛ التخزين يتطلب اتصال Vercel Blob.</p>
+                <div className="mt-3 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">
+                  <p className="font-black">مقاس صورة العروض للطيران والبواخر: 1200 × 600 بكسل — أفقي (2:1).</p>
+                  <p className="text-xs">الحد الأقصى 4 ميجابايت. قد يقص الموقع أطراف الصورة حسب الشاشة؛ خلي العنصر المهم في المنتصف.</p>
+                  {bannerFile&&bannerDimensions&&<p className="mt-1 font-black">مقاس الصورة المختارة: {bannerDimensions.width} × {bannerDimensions.height} بكسل</p>}
+                </div>
                 {!bannerFile&&<label className={label+" mt-3"}>أو رابط صورة موجودة في ملفات المشروع
                   <input className={field} value={offerForm.bannerUrl} onChange={e=>setOfferForm(f=>({...f,bannerUrl:e.target.value}))} placeholder="/Image/..."/>
                 </label>}
                 {(bannerPreview||offerForm.bannerUrl)&&<div className="mt-4 overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} className="h-44 w-full object-contain"/>
+                  <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} onLoad={e=>{if(bannerFile)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="h-44 w-full object-contain"/>
                 </div>}
               </div>
               <div className="sm:col-span-2 overflow-hidden rounded-[24px] border border-[#D4AF37]/40 bg-white shadow-lg">

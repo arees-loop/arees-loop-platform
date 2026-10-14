@@ -35,6 +35,7 @@ export default function HotelAdminPage(){
  const [cancelReason,setCancelReason]=useState("");
  const [edit,setEdit]=useState<Form>({...blank});
  const [banner,setBanner]=useState<File|null>(null);
+ const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
  const [preview,setPreview]=useState("");
  const [view,setView]=useState<"cards"|"list">("cards");
  const [filter,setFilter]=useState<"ALL"|"ACTIVE"|"PAUSED">("ALL");
@@ -83,6 +84,7 @@ export default function HotelAdminPage(){
  }
  function selectOffer(o?:Offer){
    setBanner(null);
+   setBannerDimensions(null);
    setEdit(o?{
      id:o.id,title:o.title,destination:o.destination||"",hotelName:o.hotelName||"",description:o.description||"",
      amountSar:o.amountSar===null?"":String(o.amountSar),priceUnit:o.priceUnit||"",
@@ -223,9 +225,14 @@ export default function HotelAdminPage(){
          </label>
          <label className="text-xs font-bold">بداية النشر<input className={field+" mt-2"} type="date" value={edit.startsAt} onChange={e=>setEdit(f=>({...f,startsAt:e.target.value}))}/></label>
          <label className="text-xs font-bold">آخر يوم للنشر<input className={field+" mt-2"} type="date" min={edit.startsAt||undefined} value={edit.endsAt} onChange={e=>setEdit(f=>({...f,endsAt:e.target.value}))}/></label>
-         <label className="text-xs font-bold sm:col-span-2">صورة العرض (PNG / JPG / WEBP حتى 4MB)
-           <input type="file" accept="image/png,image/jpeg,image/webp" className={field+" mt-2"} onChange={e=>setBanner(e.target.files?.[0]||null)}/>
+         <label className="text-xs font-bold sm:col-span-2">صورة العرض (PNG / JPG / WEBP)
+           <input type="file" accept="image/png,image/jpeg,image/webp" className={field+" mt-2"} onChange={e=>{setBanner(e.target.files?.[0]||null);setBannerDimensions(null);}}/>
          </label>
+         <div className="sm:col-span-2 rounded-xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">
+           <p className="font-black">مقاس صورة عروض الفنادق: 1200 × 600 بكسل — أفقي (2:1).</p>
+           <p className="text-xs">الحد الأقصى 4 ميجابايت. قد يقص الموقع أطراف الصورة حسب الشاشة؛ خلي العنصر المهم في المنتصف.</p>
+           {banner&&bannerDimensions&&<p className="mt-1 font-black">مقاس الصورة المختارة: {bannerDimensions.width} × {bannerDimensions.height} بكسل</p>}
+         </div>
          <label className="text-xs font-bold sm:col-span-2">أو مسار صورة بالمشروع
            <input className={field+" mt-2"} value={edit.bannerUrl} onChange={e=>setEdit(f=>({...f,bannerUrl:e.target.value}))} placeholder="/Image/..."/>
          </label>
@@ -240,7 +247,7 @@ export default function HotelAdminPage(){
          <p className="bg-[#0D3B34] px-5 py-3 text-xs font-black text-white">معاينة إعلانك قبل الحفظ</p>
          {(preview||edit.bannerUrl)&&<>
            {/* eslint-disable-next-line @next/next/no-img-element */}
-           <img alt="معاينة الفندق" src={preview||edit.bannerUrl} className="h-40 w-full object-contain"/>
+           <img alt="معاينة الفندق" src={preview||edit.bannerUrl} onLoad={e=>{if(banner)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="h-40 w-full object-contain"/>
          </>}
          <div className="p-5"><p className="text-xs text-[#B18B2C]">{edit.hotelName}</p><h3 className="mt-2 text-xl font-black">{edit.title||"عنوان الإعلان"}</h3>
          <p className="mt-2 text-xs">{edit.destination}</p>
