@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const data = body as Record<string, unknown>;
     if (data.website) return msg("الطلب غير صالح.",400); // Honeypot
     const kind = data.kind;
-    if (kind !== "FLIGHT" && kind !== "FERRY") return msg("اختر الطيران أو البواخر.",400);
+    if (kind !== "FLIGHT" && kind !== "FERRY" && kind !== "VISA" && kind !== "DRIVING_LICENSE") return msg("نوع الخدمة غير صالح.",400);
     const name = String(data.customerName??"").trim();
     const email = String(data.customerEmail??"").trim().toLowerCase() || null;
     const countryCode = String(data.countryCode??"").replace(/\D/g,"");
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (email && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length>180)) return msg("البريد الإلكتروني غير صحيح.",400);
     if (!CODE.test(countryCode) || !PHONE.test(phone)) return msg("رقم الجوال مع مفتاح الدولة إلزامي ويجب أن يكون فعالاً.",400);
     if ((waPhone && (!PHONE.test(waPhone) || !CODE.test(waCountryCode))) || (waCountryCode && !waPhone)) return msg("راجع رقم واتساب البديل ومفتاح الدولة.",400);
-    if (!origin || !destination || origin.length>100 || destination.length>100 || origin === destination) return msg("حدد مدينتي المغادرة والوصول.",400);
+    if (!origin || !destination || origin.length>100 || destination.length>100 || (origin === destination && kind !== "VISA" && kind !== "DRIVING_LICENSE")) return msg("حدد بيانات الخدمة والوجهة بشكل صحيح.",400);
     if (kind === "FERRY" && !((origin==="سواكن"&&destination==="جدة")||(origin==="جدة"&&destination==="سواكن"))) return msg("مسار البواخر الحالي هو سواكن–جدة أو جدة–سواكن فقط.",400);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return msg("تاريخ السفر غير صالح.",400);
     const travelDate = new Date(day+"T12:00:00.000Z");
@@ -74,7 +74,8 @@ export async function POST(request: NextRequest) {
     // Low-volume per phone safeguard for an anonymous public form.
     const recent = await prisma.transportRequest.count({where:{countryCode,phone,createdAt:{gte:new Date(Date.now()-24*60*60*1000)}}});
     if (recent>=5) return msg("تم استقبال طلبات متعددة لهذا الرقم اليوم؛ تواصل مع خدمة العملاء.",429);
-    const reference="AR-"+(kind==="FERRY"?"SEA":"AIR")+"-"+crypto.randomUUID().replaceAll("-","").slice(0,10).toUpperCase();
+    const prefix=kind==="FERRY"?"SEA":kind==="VISA"?"VISA":kind==="DRIVING_LICENSE"?"IDL":"AIR";
+    const reference="AR-"+prefix+"-"+crypto.randomUUID().replaceAll("-","").slice(0,10).toUpperCase();
     const created = await prisma.transportRequest.create({data:{
       reference,kind,customerName:name,customerEmail:email,countryCode,phone,
       userId:session?.user.id||null,trackingTokenHash,
