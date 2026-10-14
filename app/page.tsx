@@ -1349,24 +1349,28 @@ export default function Home() {
           className="absolute inset-0 h-full w-full object-cover object-[50%_72%]"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#071713]/25 via-[#071713]/35 to-[#071713]/65" aria-hidden="true" />
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-8 text-center text-white">
-          <img src="/Logo/arees-loop-logo.png" alt="أريس لوب" className="mb-2 h-12 w-auto object-contain drop-shadow-md sm:h-14" />
-          <p className="text-sm font-black tracking-[0.18em] text-[#F0D37D]">
-            {isArabic ? "أريس لوب · رحلتك تبدأ هنا" : "AREES LOOP · YOUR JOURNEY STARTS HERE"}
-          </p>
-          <h2 className="mt-3 text-3xl font-black leading-tight drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] sm:text-4xl md:text-6xl">
-            {isArabic ? "من البحر إلى السماء" : "From Sea to Sky"}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/5 to-[#0D3B34]/10" aria-hidden="true" />
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-6 text-center">
+          <img src="/Logo/arees-loop-logo.png" alt="شعار أريس لوب" className="mb-2 h-16 w-auto object-contain sm:h-[76px]" />
+          <h2 className="mt-2 flex flex-wrap justify-center gap-x-3 text-4xl font-black leading-tight sm:text-5xl md:text-6xl lg:text-[72px]">
+            <span className="text-[#0D3B34] drop-shadow-[0_2px_12px_rgba(255,255,255,0.7)]">{isArabic ? "حجوزات الطيران" : "Flight Bookings"}</span>
+            <span className="text-[#A87516] drop-shadow-[0_2px_12px_rgba(255,255,255,0.7)]">{isArabic ? "والبواخر" : "and Ferries"}</span>
           </h2>
-          <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] sm:text-base md:text-lg">
-            {isArabic ? "اختر رحلتك البحرية أو الجوية، واتجه إلى صفحة الطلب مباشرة." : "Choose a sea or air journey and go directly to its request page."}
+          <p className="mt-3 max-w-4xl text-base font-semibold leading-8 text-[#55736C] sm:text-lg md:text-2xl">
+            {isArabic ? "بين أمواج البحر ورحابة السماء، نقرب لك رحلتك بخيارات حجز سهلة وواضحة." : "Between the sea and open skies, find easy, clear booking options for your journey."}
           </p>
-          <div className="mt-6 flex w-full max-w-xl flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/flights" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full bg-[#0D3B34] px-7 py-3.5 text-sm font-black text-white shadow-[0_10px_30px_rgba(0,0,0,0.28)] ring-1 ring-white/45 transition hover:bg-[#145347]">
-              {isArabic ? "حجوزات الطيران" : "Flight bookings"}
+          <div className="mt-6 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-5">
+            <Link href="/flights" className="inline-flex min-h-[66px] min-w-[250px] items-center justify-center gap-3 rounded-full bg-[#063F36] px-8 py-4 text-lg font-black text-white shadow-[0_12px_28px_rgba(13,59,52,0.22)] transition hover:bg-[#145347] sm:min-w-[270px] sm:text-xl">
+              <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M3 13.5 21 3l-7.5 18-2.7-7.2L3 13.5Z" /><path d="m10.8 13.8 4.8-4.8" />
+              </svg>
+              {isArabic ? "احجز تذكرة طيران" : "Book a flight"}
             </Link>
-            <Link href="/ferries" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full border-2 border-[#F0D37D] bg-white/95 px-7 py-3.5 text-sm font-black text-[#0D3B34] shadow-[0_10px_30px_rgba(0,0,0,0.28)] transition hover:bg-[#FFF8E7]">
-              {isArabic ? "حجوزات البواخر" : "Ferry bookings"}
+            <Link href="/ferries" className="inline-flex min-h-[66px] min-w-[250px] items-center justify-center gap-3 rounded-full border-2 border-[#B8862B] bg-[#FFFDF7] px-8 py-4 text-lg font-black text-[#0D3B34] shadow-[0_12px_28px_rgba(13,59,52,0.14)] transition hover:bg-[#FFF5DF] sm:min-w-[270px] sm:text-xl">
+              <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+                <path d="M3 15h18l-2.2 4H6l-3-4Z" /><path d="M7 15V9h10v6M10 9V5h4v4M4 21c1.2-1 2.4-1 3.6 0s2.4 1 3.6 0 2.4-1 3.6 0 2.4 1 3.6 0 2.4-1 3.6 0" />
+              </svg>
+              {isArabic ? "احجز تذكرة باخرة" : "Book a ferry"}
             </Link>
           </div>
         </div>
