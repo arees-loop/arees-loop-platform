@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo-metadata";
 import { prisma } from "@/lib/prisma";
 
-export const metadata: Metadata = buildPageMetadata({title:"ابحث عن مرشد سياحي",description:"اعثر على مرشدين سياحيين مرخصين حسب المدينة والخبرة، واختر الجولة المناسبة لرحلتك.",path:"/guides/directory",image:"/Image/social/arees-guide-share.webp",imageWidth:1254,imageHeight:1254,imageType:"image/webp",imageAlt:"دليل المرشدين السياحيين في أريس لوب"});
+export const metadata: Metadata = buildPageMetadata({title:"ابحث عن مرشد سياحي",description:"اعثر على مرشدين سياحيين مرخصين حسب المدينة والخبرة، واختر الجولة المناسبة لرحلتك.",path:"/guides/directory",image:"/api/og/guides?type=directory",imageWidth:1200,imageHeight:630,imageType:"image/png",imageAlt:"ابحث عن مرشد سياحي محلي عبر أريس لوب"});
 export const dynamic = "force-dynamic";
 
 export default async function GuidesPage({ searchParams }: { searchParams: Promise<{ city?: string; specialty?: string; lat?: string; lng?: string }> }) {
