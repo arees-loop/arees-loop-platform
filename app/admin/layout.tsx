@@ -33,6 +33,8 @@ const platformNav: NavItem[] = [
   { href: "/admin/success-partners", label: "شركاء النجاح (المتحرك)", icon: "✧", superOnly: true, permission: null },
   { href: "/admin/transport/flights", label: "إدارة حجوزات الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
   { href: "/admin/transport/ferries", label: "إدارة حجوزات البواخر", icon: "⚓", permission: "TRANSPORT_FERRIES" },
+  { href: "/admin/transport/visas", label: "طلبات وعروض التأشيرات", icon: "🛂", superOnly: true, permission: null },
+  { href: "/admin/transport/driving-licenses", label: "طلبات رخص القيادة الدولية", icon: "🚘", superOnly: true, permission: null },
   { href: "/admin/hotels", label: "إدارة طلبات وعروض الفنادق", icon: "▤", permission: "HOTEL_REQUESTS" },
 ];
 
