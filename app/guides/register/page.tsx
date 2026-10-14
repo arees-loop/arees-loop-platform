@@ -1,5 +1,8 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { buildPageMetadata } from "@/lib/seo-metadata";
 
+export const metadata: Metadata = buildPageMetadata({title:"سجّل كمرشد سياحي",description:"عرّف الزوار بخبرتك المحلية، واعرض جولاتك السياحية واستقبل طلبات الإرشاد عبر أريس لوب.",path:"/guides/register",image:"/Image/social/arees-guide-share.webp",imageWidth:1254,imageHeight:1254,imageType:"image/webp",imageAlt:"سجّل كمرشد سياحي في أريس لوب"});
 export default function GuideRegisterPage() {
   return <main dir="rtl" className="min-h-screen bg-[#F8F5ED] px-5 pb-24 pt-32 text-[#0D3B34]">
     <section className="mx-auto max-w-4xl overflow-hidden rounded-[30px] border border-[#D4AF37]/30 bg-white shadow-xl">
