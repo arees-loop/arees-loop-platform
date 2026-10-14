@@ -3,7 +3,7 @@ import HomeClient from "./HomeClient";
 import { buildPageMetadata } from "@/lib/seo-metadata";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Arees Loop | اكتشف تجارب ووجهات السعودية",
+  title: "اكتشف تجارب ووجهات السعودية",
   description: "اكتشف واحجز التجارب والوجهات السياحية في السعودية، واكسب المكافآت في تجربة واحدة ذكية.",
   path: "/",
   image: "/Image/social/arees-loop-whatsapp-preview.png",
