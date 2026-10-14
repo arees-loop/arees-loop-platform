@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const url =
       `https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json` +
       `?key=${encodeURIComponent(apiKey)}` +
-      `&language=ar-SA` +
+      `&language=ar` +
       `&limit=8` +
       `&typeahead=true`;
 
