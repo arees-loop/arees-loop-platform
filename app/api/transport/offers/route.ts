@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
           {OR:[{endsAt:null},{endsAt:{gte:new Date()}}]},
         ],
       },
-      select:{id:true,title:true,description:true,carrierName:true,origin:true,destination:true,travelDate:true,amountSar:true,priceUnit:true,bannerUrl:true,operationStatus:true,operationNote:true},
+      select:{id:true,title:true,description:true,carrierName:true,origin:true,destination:true,travelDate:true,scheduleType:true,scheduleData:true,amountSar:true,adultPriceSar:true,childPriceSar:true,infantPriceSar:true,priceUnit:true,bannerUrl:true,operationStatus:true,operationNote:true},
       orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],take:30,
     });
-    return NextResponse.json({success:true,data:offers.map(x=>({...x,amountSar:x.amountSar===null?null:Number(x.amountSar)}))},
+    return NextResponse.json({success:true,data:offers.map(x=>({...x,amountSar:x.amountSar===null?null:Number(x.amountSar),adultPriceSar:x.adultPriceSar===null?null:Number(x.adultPriceSar),childPriceSar:x.childPriceSar===null?null:Number(x.childPriceSar),infantPriceSar:x.infantPriceSar===null?null:Number(x.infantPriceSar)}))},
       {headers:{"Cache-Control":"public, max-age=0, s-maxage=30"}});
   } catch(error) {
     console.error("GET transport offers failed",error);
