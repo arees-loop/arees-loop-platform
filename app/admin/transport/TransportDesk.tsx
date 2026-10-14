@@ -422,12 +422,12 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <><input className={field} list="offer-operators" value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="اختر الباخرة"/><datalist id="offer-operators">{ferryOperators.map(v=><option key={v} value={v}/>)}</datalist></>}
               </label>
               <label className={label+" sm:col-span-2 xl:col-span-2"}>اسم العرض / الجدول<input required maxLength={160} className={field} value={offerForm.title} onChange={e=>setOfferForm(f=>({...f,title:e.target.value}))}/></label>
-              <label className={label}>من
-                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة المغادرة" value={offerForm.origin} onChange={v=>setOfferForm(f=>({...f,origin:v}))}/> :
+              <label className={label}>{offerForm.kind==="VISA"?"بلد الإقامة أو الجنسية":"من"}
+                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة المغادرة" value={offerForm.origin} onChange={v=>setOfferForm(f=>({...f,origin:v}))}/> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value}))} placeholder="بلد الإقامة أو الجنسية"/> :
                   <select className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value,destination:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="سواكن">سواكن</option><option value="جدة">جدة</option></select>}
               </label>
-              <label className={label}>إلى
-                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة الوصول" value={offerForm.destination} onChange={v=>setOfferForm(f=>({...f,destination:v}))}/> :
+              <label className={label}>{offerForm.kind==="VISA"?"الدولة":"إلى"}
+                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة الوصول" value={offerForm.destination} onChange={v=>setOfferForm(f=>({...f,destination:v}))}/> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value}))} placeholder="الدولة أو الوجهة"/> :
                   <select className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value,origin:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="جدة">جدة</option><option value="سواكن">سواكن</option></select>}
               </label>
               <label className={label}>تاريخ بدء ظهور العرض
