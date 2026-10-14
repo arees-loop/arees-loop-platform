@@ -1323,26 +1323,22 @@ export default function Home() {
           The image source is a local static asset so production does not
           depend on externally hosted or short-lived chat attachments.
       ====================================================== */}
-      <section id="travel-bookings" dir="rtl" aria-label="حجوزات الطيران والبواخر" className="relative isolate scroll-mt-24 overflow-hidden border-y border-[#D4AF37]/30 bg-[linear-gradient(180deg,#dceaf0_0%,#fff4dc_57%,#5f9aa4_100%)]">
-        <div className="pointer-events-none absolute inset-0 bg-[url('/Image/hero/arees-air-sea-approved.webp')] bg-cover bg-center" aria-hidden="true"/>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,253,245,.97)_0%,rgba(255,253,245,.87)_28%,rgba(255,253,245,.35)_60%,rgba(255,253,245,.02)_100%)]" aria-hidden="true"/>
-        <div className="relative z-10 mx-auto flex min-h-[600px] max-w-7xl flex-col items-center justify-center px-5 py-24 text-center md:min-h-[760px]">
-          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={190} height={95} className="h-auto w-[145px] md:w-[177px]" />
-          <h2 className="mt-7 max-w-5xl text-4xl font-black leading-[1.45] text-[#0D3B34] drop-shadow-[0_1px_0_rgba(255,255,255,.8)] md:text-6xl">
-            حجوزات الطيران <span className="text-[#AC8125]">والبواخر</span>
-          </h2>
-          <p className="mt-4 max-w-3xl text-base font-bold leading-9 text-[#365A53] md:text-xl">
-            بين أمواج البحر ورحابة السماء، نقرّب لك رحلتك بخيارات حجز سهلة وواضحة.
-          </p>
-          <div className="mt-9 flex w-full flex-wrap items-center justify-center gap-4">
-            <Link href="/flights" className="inline-flex min-w-[215px] items-center justify-center gap-2 rounded-full bg-[#0D3B34] px-7 py-4 text-base font-black text-white shadow-[0_12px_35px_rgba(13,59,52,.26)] transition hover:-translate-y-1 hover:bg-[#165b50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
-              <span aria-hidden="true">✈</span> احجز تذكرة طيران
-            </Link>
-            <Link href="/ferries" className="inline-flex min-w-[215px] items-center justify-center gap-2 rounded-full border-2 border-[#B88A30] bg-white/90 px-7 py-4 text-base font-black text-[#0D3B34] shadow-[0_10px_30px_rgba(13,59,52,.11)] transition hover:-translate-y-1 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
-              <span aria-hidden="true">⚓</span> احجز تذكرة باخرة
-            </Link>
-          </div>
-          <p className="mt-7 rounded-full border border-[#CBA85A]/40 bg-white/75 px-5 py-2 text-xs font-semibold text-[#0D3B34]/75">أرسل طلبك الآن، ولا يوجد دفع أو إصدار تذاكر قبل مراجعة أريس والتأكيد.</p>
+      <section id="travel-bookings" dir="rtl" aria-label="حجوزات الطيران والبواخر" className="scroll-mt-24 bg-[#f7f7f2]">
+        {/* Clean approved artwork shown at its native 16:9 ratio, with no veil, transparency, overlay or duplicate labels. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/Image/hero/arees-air-sea-clean-banner.webp"
+          alt="منظر بحري عند الغروب مع باخرة وطائرة وأفق جدة"
+          className="block h-auto w-full"
+          loading="lazy"
+        />
+        <div className="flex flex-wrap justify-center gap-3 px-4 py-5">
+          <Link href="/flights" className="inline-flex min-w-[175px] items-center justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white transition hover:bg-[#145347]">
+            احجز تذكرة طيران
+          </Link>
+          <Link href="/ferries" className="inline-flex min-w-[175px] items-center justify-center rounded-full border-2 border-[#D4AF37] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF8E7]">
+            احجز تذكرة باخرة
+          </Link>
         </div>
       </section>
 
