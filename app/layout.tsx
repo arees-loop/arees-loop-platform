@@ -140,7 +140,7 @@ export default function RootLayout({
             </span>
 
             <span className="whitespace-nowrap text-[12px] font-semibold tracking-wide text-white md:text-[13px]">
-              إصدار تجريبي
+              تحت التطوير
             </span>
 
             <span className="h-3 w-px bg-white/20" />
