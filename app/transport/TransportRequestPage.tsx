@@ -95,6 +95,19 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   return (
     <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
       <section className="mx-auto max-w-[1260px]">
+        <div
+          role="img"
+          aria-label={ferry?"مشهد باخرة ركاب على مياه البحر الأحمر":"مشهد طائرة ركاب تحلق في السماء"}
+          className="relative mb-7 h-[225px] overflow-hidden rounded-[30px] border border-[#D4AF37]/35 bg-[#DBEDE9] bg-cover bg-center shadow-[0_18px_45px_rgba(13,59,52,.12)] md:h-[285px]"
+          style={{backgroundImage:`url("/Image/hero/arees-${ferry?"ferry":"flight"}-booking.svg")`}}
+        >
+          <div className="absolute inset-0 bg-gradient-to-l from-[#0D3B34]/45 via-transparent to-transparent" aria-hidden="true" />
+          <div className="absolute inset-y-0 right-0 flex max-w-[70%] flex-col justify-end p-6 text-right text-white drop-shadow-[0_2px_7px_rgba(0,0,0,.75)] md:p-9">
+            <span className="text-xs font-black tracking-wide text-[#F2D585]">AREES LOOP · AREES TRAVEL</span>
+            <p className="mt-2 text-2xl font-black md:text-4xl">{ferry?"رحلتك البحرية تبدأ هنا":"رحلتك الجوية تبدأ هنا"}</p>
+            <p className="mt-1 text-xs font-semibold md:text-sm">{ferry?"بين الموانئ والأمواج، نقرب لك وجهتك.":"رحلات ووجهات كثيرة، وطلبك معنا أسهل."}</p>
+          </div>
+        </div>
         <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs font-black tracking-[.18em] text-[#AA822A]">AREES LOOP · AREES TRAVEL</p>
