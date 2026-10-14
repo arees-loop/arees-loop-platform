@@ -91,12 +91,12 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
   return (
     <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-12 pt-32 text-[#0D3B34] md:px-8">
       <section className="mx-auto max-w-[1450px]">
-        <div className="mb-3">
-          {/* Keep the complete supplied banner visible without a white frame or forced crop. */}
+        <div className="mb-3 overflow-hidden bg-[#F7F4ED]">
+          {/* Crop the artwork's white outer margin; preserve its designed banner and current gap below. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={ferry?"/Image/hero/arees-ferry-banner.webp":"/Image/hero/arees-flight-banner.webp"}
             alt={ferry?"حجز البواخر — رحلتك البحرية تبدأ هنا":"حجز الطيران — رحلتك الجوية تبدأ هنا"}
-            className="block h-auto w-full" />
+            className="block aspect-[4.2/1] w-full object-cover object-center" />
         </div>
         
 
