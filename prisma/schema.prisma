@@ -968,6 +968,7 @@ model TransportOffer {
   infantPriceSar Decimal? @db.Decimal(12,2)
   priceUnit    String?
   bannerUrl    String?
+  imageUrls    Json?
   operationStatus String @default("AVAILABLE")
   operationNote String? @db.Text
   isVisible    Boolean  @default(true)
@@ -1046,6 +1047,7 @@ model HotelOffer {
   amountSar   Decimal?  @db.Decimal(12,2)
   priceUnit   String?
   bannerUrl   String?
+  imageUrls   Json?
   isVisible   Boolean   @default(false)
   startsAt    DateTime?
   endsAt      DateTime?
