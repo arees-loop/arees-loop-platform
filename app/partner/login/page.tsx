@@ -223,9 +223,9 @@ const inputClass =
 
 function Value({ title, text }: { title: string; text: string }) {
   return (
-    <div className="group cursor-default rounded-[18px] border border-white/35 bg-[#0D3B34]/70 px-3 py-4 shadow-[0_8px_24px_rgba(0,0,0,.18)] backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.04] hover:border-[#D4AF37]/80 hover:bg-[#C99616] hover:shadow-[0_18px_42px_rgba(212,175,55,.48)]">
-      <p className="text-sm font-extrabold text-white drop-shadow-[0_1px_5px_rgba(0,0,0,.65)]">{title}</p>
-      <p className="mt-1 text-[11px] font-semibold text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,.55)]">{text}</p>
+    <div className="group cursor-default rounded-[18px] border border-[#D4AF37]/45 bg-[#0D3B34] px-3 py-4 shadow-[0_8px_24px_rgba(0,0,0,.18)] transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.04] hover:border-[#D4AF37]/80 hover:bg-[#124B42] hover:shadow-[0_18px_42px_rgba(13,59,52,.35)]">
+      <p className="text-sm font-extrabold text-[#D4AF37]">{title}</p>
+      <p className="mt-1 text-[11px] font-semibold text-white">{text}</p>
     </div>
   );
 }
