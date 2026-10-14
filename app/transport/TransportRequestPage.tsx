@@ -117,7 +117,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
               <div className="relative z-10 flex items-start justify-between gap-3 px-1 pb-4">
                 <div>
                   <p className="text-xs font-black tracking-wide text-[#E8CC85]">{ferry?"جداول البواخر والعروض":"عروض الطيران والوجهات"}</p>
-                  <h2 className="mt-1 text-xl font-black sm:text-2xl">استديو عروض أريس</h2>
+                  <h2 className="mt-1 text-xl font-black sm:text-2xl">العروض والتخفيضات</h2>
                 </div>
                 <span className="mt-1 inline-flex shrink-0 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-white/85"><span className="h-2 w-2 animate-pulse rounded-full bg-[#E8CC85]"/> عروض محدثة</span>
               </div>
