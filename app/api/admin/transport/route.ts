@@ -16,6 +16,14 @@ async function adminAccess(superOnly=false) {
 const fail=(message:string,status=400)=>NextResponse.json({success:false,message},{status});
 const num=(value:unknown)=>value===null||value===undefined||value===""?null:Number(value);
 function cleanText(input:unknown,max:number){return String(input??"").trim().slice(0,max);}
+function parseOfferImages(value:unknown, fallback:string|null, previous?:unknown){
+  const input=value===undefined?previous:value;
+  if(input===undefined||input===null)return fallback?[fallback]:[];
+  if(!Array.isArray(input)||input.length>10)throw new Error("يمكن إضافة 10 صور كحد أقصى لكل عرض.");
+  const urls=input.map(item=>cleanText(item,500));
+  if(urls.some(url=>!url||(!url.startsWith("/Image/")&&!url.startsWith("/api/media?pathname="))))throw new Error("تأكد من روابط صور العرض.");
+  return [...new Set(urls)];
+}
 function parseDay(value:unknown){
   const s=String(value??"");
   if(!s)return null;
@@ -82,7 +90,7 @@ export async function GET(request:NextRequest) {
     if(mode==="offers"){
       if(access.role!=="SUPER_ADMIN")return NextResponse.json({success:true,data:[]},{headers:{"Cache-Control":"no-store"}});
       const offers=await prisma.transportOffer.findMany({where:{deletedAt:null},orderBy:[{kind:"asc"},{sortOrder:"asc"},{createdAt:"desc"}],take:200});
-      return NextResponse.json({success:true,data:offers.map(o=>({...o,amountSar:o.amountSar===null?null:Number(o.amountSar),adultPriceSar:o.adultPriceSar===null?null:Number(o.adultPriceSar),childPriceSar:o.childPriceSar===null?null:Number(o.childPriceSar),infantPriceSar:o.infantPriceSar===null?null:Number(o.infantPriceSar)}))},{headers:{"Cache-Control":"no-store"}});
+      return NextResponse.json({success:true,data:offers.map(o=>({...o,imageUrls:Array.isArray(o.imageUrls)?o.imageUrls:(o.bannerUrl?[o.bannerUrl]:[]),amountSar:o.amountSar===null?null:Number(o.amountSar),adultPriceSar:o.adultPriceSar===null?null:Number(o.adultPriceSar),childPriceSar:o.childPriceSar===null?null:Number(o.childPriceSar),infantPriceSar:o.infantPriceSar===null?null:Number(o.infantPriceSar)}))},{headers:{"Cache-Control":"no-store"}});
     }
     const visible=access.role==="SUPER_ADMIN"?{}:{assignedToId:access.id,kind:{in:access.allowedKinds}};
     if(mode==="history"){
@@ -215,9 +223,10 @@ export async function POST(request:NextRequest) {
     const amount=parseAmount(data.amountSar);
     const status=cleanText(data.operationStatus,30)||"AVAILABLE";
     if(!["AVAILABLE","SUSPENDED","UNKNOWN"].includes(status))return fail("حالة تشغيل غير صحيحة.");
-    const url=cleanText(data.bannerUrl,500);
+    const url=cleanText(data.bannerUrl,500)||null;
     if(url&&!url.startsWith("/Image/")&&!url.startsWith("/api/media?pathname="))return fail("أضف رابطاً لصورة موجودة في مكتبة المشروع.");
     const period=offerPeriod(data.startsAt,data.endsAt);
+    const imageUrls=parseOfferImages(data.imageUrls,url);
     const offer=await prisma.transportOffer.create({data:{...period,
       kind:data.kind,title,description:cleanText(data.description,2500)||null,
       carrierName:cleanText(data.carrierName,100)||null,
@@ -225,7 +234,7 @@ export async function POST(request:NextRequest) {
       travelDate:schedule.travelDate,scheduleType:schedule.scheduleType,scheduleData:schedule.scheduleData as never,amountSar:amount,
       adultPriceSar:parseAmount(data.adultPriceSar),childPriceSar:parseAmount(data.childPriceSar),infantPriceSar:parseAmount(data.infantPriceSar),
       priceUnit:cleanText(data.priceUnit,50)||null,
-      bannerUrl:url||null,operationStatus:status,operationNote:cleanText(data.operationNote,1000)||null,
+      bannerUrl:url,imageUrls:imageUrls as never,operationStatus:status,operationNote:cleanText(data.operationNote,1000)||null,
       isVisible: Boolean(data.isVisible),sortOrder:Number.isInteger(data.sortOrder)?Math.max(0,Math.min(9999,data.sortOrder)):0,
     }});
     await prisma.auditLog.create({data:{userId:access.id,action:"TRANSPORT_OFFER_CREATED",entityType:"TransportOffer",entityId:offer.id}}).catch(()=>{});
@@ -243,10 +252,11 @@ export async function PUT(request:NextRequest) {
     if(!title)return fail("العنوان مطلوب.");
     const status=cleanText(data.operationStatus,30)||"AVAILABLE";
     if(!["AVAILABLE","SUSPENDED","UNKNOWN"].includes(status))return fail("حالة التشغيل غير صحيحة.");
-    const url=cleanText(data.bannerUrl,500);
+    const url=cleanText(data.bannerUrl,500)||null;
     if(url&&!url.startsWith("/Image/")&&!url.startsWith("/api/media?pathname="))return fail("رابط صورة غير معتمد.");
     const period=offerPeriod(data.startsAt,data.endsAt);
     const schedule=parseSchedule(data.scheduleType,data.scheduleData,data.travelDate);
+    const imageUrls=parseOfferImages(data.imageUrls,url,current.imageUrls);
     const updated=await prisma.transportOffer.update({where:{id},data:{...period,
       title,description:cleanText(data.description,2500)||null,
       carrierName:cleanText(data.carrierName,100)||null,
