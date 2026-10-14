@@ -127,7 +127,7 @@ export default function RootLayout({
 
       
         {/* ختم التوثيق الرسمي — المركز السعودي للأعمال. يُحمّل من المصدر الرسمي فقط. */}
-        <div className="sbc-verify-seal" data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QT09" data-position="bottom-right" />
+        <div className="sbc-verify-seal" data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QT09" data-position="bottom-left" />
         <Script src="https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js" strategy="afterInteractive" />
 
         {/* AREES LOOP — BETA STATUS */}
