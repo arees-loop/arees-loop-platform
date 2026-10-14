@@ -81,6 +81,7 @@ export default function PartnerShell({
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [access, setAccess] = useState<{ isManager: boolean; permissions: Record<string, boolean> } | null>(null);
 
   const [partner, setPartner] = useState<PartnerInfo>({
     tradeName: "جاري تحميل بيانات الشريك...",
@@ -88,6 +89,15 @@ export default function PartnerShell({
     status: "",
     partnerType: "",
   });
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/partner/access", { credentials: "include", cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => { if (alive && data?.success) setAccess({ isManager: !!data.isManager, permissions: data.permissions || {} }); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -136,6 +146,19 @@ export default function PartnerShell({
     partner.status === "ACTIVE"
       ? "معتمد ونشط"
       : partner.status || "حساب الشريك";
+  const permissionForHref: Record<string, string> = {
+    "/partner/dashboard":"dashboard", "/partner/bookings":"bookings",
+    "/partner/services":"services", "/partner/coupons":"coupons",
+    "/partner/loyalty":"loyalty", "/partner/settlements":"settlements",
+    "/partner/invoices":"invoices", "/partner/reports":"reports",
+    "/partner/business":"business", "/partner/contracts/current":"business",
+    "/partner/public-events":"services",
+  };
+  const visibleItems = (partner.partnerType === "GOVERNMENT_NONPROFIT"
+    ? items.filter(([href]) => !["/partner/services","/partner/bookings","/partner/coupons","/partner/loyalty","/partner/settlements","/partner/invoices"].includes(href)).concat([["/partner/public-events", "services", "الفعاليات والبرامج"] as const])
+    : items).filter(([href]) => href === "/partner/team"
+      ? access?.isManager === true
+      : access?.permissions[permissionForHref[href]] === true);
 
   return (
     <div
@@ -383,9 +406,7 @@ export default function PartnerShell({
 
           {/* Navigation */}
           <nav className="mt-2 space-y-2">
-            {(partner.partnerType === "GOVERNMENT_NONPROFIT"
-              ? items.filter(([href]) => !["/partner/services","/partner/bookings","/partner/coupons","/partner/loyalty","/partner/settlements","/partner/invoices"].includes(href)).concat([["/partner/public-events", "services", "الفعاليات والبرامج"] as const])
-              : items).map(([href, icon, label]) => {
+            {visibleItems.map(([href, icon, label]) => {
               const active =
                 pathname === href ||
                 pathname.startsWith(`${href}/`);
