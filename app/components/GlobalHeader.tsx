@@ -75,7 +75,7 @@ export default function GlobalHeader() {
           {navVisible.flights !== false && (
             <>
               <Link href="/flights" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">✈ الطيران</Link>
-              <Link href="/ferries" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">⚓ البواخر</Link>
+              <Link href="/ferries" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">⚓ البواخر</Link><Link href="/visas" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">🛂 التأشيرات</Link><Link href="/international-driving-license" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">🚘 رخصة دولية</Link>
             </>
           )}
           {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}
@@ -146,7 +146,7 @@ export default function GlobalHeader() {
             {navVisible.discover !== false && <Link href="/discover" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">اكتشف التجارب</Link>}
             {navVisible.hotels !== false && <Link href="/hotels" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الفنادق</Link>}
             {navVisible.flights !== false && <Link href="/flights" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">✈ الطيران</Link>}
-            {navVisible.flights !== false && <Link href="/ferries" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">⚓ البواخر</Link>}
+            {navVisible.flights !== false && <Link href="/ferries" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">⚓ البواخر</Link>}{navVisible.flights !== false && <Link href="/visas" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">🛂 التأشيرات</Link>}{navVisible.flights !== false && <Link href="/international-driving-license" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">🚘 رخصة القيادة الدولية</Link>}
             {navVisible.cruise !== false && <Link href="/discover?type=cruise" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الكروز</Link>}
             {navVisible.programs !== false && <Link href="/discover?type=domestic" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">برامج سياحية</Link>}
             {navVisible.guides !== false && <Link href="/#tour-guides" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">المرشدون السياحيون</Link>}
