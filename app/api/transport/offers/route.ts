@@ -4,7 +4,7 @@ export const runtime="nodejs";
 
 export async function GET(request: NextRequest) {
   const kind=request.nextUrl.searchParams.get("kind");
-  if(kind!=="FLIGHT"&&kind!=="FERRY") return NextResponse.json({success:false,message:"نوع الخدمة غير صالح."},{status:400});
+  if(kind!=="FLIGHT"&&kind!=="FERRY"&&kind!=="VISA") return NextResponse.json({success:false,message:"نوع الخدمة غير صالح."},{status:400});
   try {
     const offers=await prisma.transportOffer.findMany({
       where:{kind,isVisible:true,deletedAt:null,
