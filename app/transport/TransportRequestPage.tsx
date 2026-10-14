@@ -94,29 +94,26 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
 
   return (
     <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
-      <section className="mx-auto max-w-[1260px]">
-        <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-black tracking-[.18em] text-[#AA822A]">AREES LOOP · AREES TRAVEL</p>
-            <div className="mt-2 flex flex-wrap items-center gap-4">
-              <h1 className="text-3xl font-black md:text-5xl">{title}</h1>
-              <div className="h-[80px] w-[132px] overflow-hidden rounded-2xl border-2 border-[#D4AF37]/55 bg-white shadow-[0_8px_24px_rgba(13,59,52,.12)] md:h-[92px] md:w-[160px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={ferry?"/Image/hero/arees-ferry-photo.webp":"/Image/hero/arees-flight-photo.webp"} alt={ferry?"باخرة ركاب وسط البحر":"طائرة ركاب تحلق في السماء"} className="h-full w-full object-cover" />
-              </div>
-            </div>
-            <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/72">قدّم طلبك، ثم يتواصل معك فريق أريس لتحديد التوفر والسعر وإرسال عرض رسمي. <strong>لا يوجد سداد أو إصدار تذاكر في هذه الصفحة.</strong></p>
-          </div>
-          <div className="flex gap-2">
-            {ferry ? (
-              <span className="rounded-full bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white">⚓ حجز باخرة</span>
-            ) : (
-              <span className="rounded-full bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white">✈ حجز طيران</span>
-            )}
-          </div>
+      <section className="mx-auto max-w-[1450px]">
+        <div className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_15px_35px_rgba(13,59,52,.09)]">
+          {/* Browser-native image preserves the approved artwork and embedded typography without cropping. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={ferry?"/Image/hero/arees-ferry-banner.webp":"/Image/hero/arees-flight-banner.webp"}
+            alt={ferry?"حجز البواخر — رحلتك البحرية تبدأ هنا":"حجز الطيران — رحلتك الجوية تبدأ هنا"}
+            className="block h-auto w-full" />
+        </div>
+        <div className="mb-4 mt-3 flex flex-wrap items-center justify-center gap-3">
+          <a href="#travel-request-form" className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154]">
+            إرسال طلب
+          </a>
+          <a href={`https://wa.me/966580091220?text=${encodeURIComponent(ferry?"السلام عليكم، أرغب في الاستفسار عن حجز باخرة.":"السلام عليكم، أرغب في الاستفسار عن حجز طيران.")}`}
+            target="_blank" rel="noopener noreferrer"
+            className="inline-flex min-w-[170px] justify-center rounded-full border-2 border-[#B88A30] bg-white px-6 py-3.5 text-sm font-black text-[#0D3B34] transition hover:bg-[#FFF9EB]">
+            تواصل عبر الواتساب
+          </a>
         </div>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(300px,0.9fr)_minmax(0,1.3fr)]">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(300px,0.9fr)_minmax(0,1.3fr)]">
           <aside className="min-w-0 space-y-4 lg:sticky lg:top-28">
             <div className="overflow-hidden rounded-[28px] bg-[#0D3B34] px-6 py-7 text-white shadow-xl">
               <p className="text-sm font-bold text-[#E8CC85]">{ferry?"جداول البواخر والعروض":"عروض الطيران والوجهات"}</p>
@@ -159,7 +156,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
             </div>
           </aside>
 
-          <section className="min-w-0 rounded-[30px] border border-[#D4AF37]/30 bg-white p-5 shadow-[0_20px_60px_rgba(13,59,52,.08)] md:p-8">
+          <section id="travel-request-form" className="min-w-0 scroll-mt-28 rounded-[30px] border border-[#D4AF37]/30 bg-white p-5 shadow-[0_20px_60px_rgba(13,59,52,.08)] md:p-8">
             {confirmation?(
               <div role="status">
                 <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-3xl text-emerald-700">✓</div>
