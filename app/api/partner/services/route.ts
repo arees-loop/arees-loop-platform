@@ -12,6 +12,7 @@ export async function POST(request:Request){
   try{
     const session=await getCurrentSession();
     if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
+    if(!await userHasPartnerPermission(session.user.id,"services")) return NextResponse.json({success:false,message:"ما عندك صلاحية لإدارة الخدمات والبرامج."},{status:403});
     const membership=await getPartner(session.user.id);
     if(!membership) return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});
     if(membership.partner.status!=="ACTIVE") return NextResponse.json({success:false,message:"حساب الشريك غير مفعل."},{status:403});
