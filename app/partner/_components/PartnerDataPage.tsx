@@ -1,5 +1,6 @@
 "use client";
 import ServiceHistory from "./ServiceHistory";
+import PartnerTeamManagement from "./PartnerTeamManagement";
 import {useEffect,useMemo,useState} from "react";
 type Kind="dashboard"|"bookings"|"settlements"|"invoices"|"reports"|"team"|"business";
 const titles={dashboard:"الرئيسية",bookings:"الحجوزات",settlements:"التسويات",invoices:"الفواتير",reports:"التقارير",team:"الموظفون والصلاحيات",business:"المنشأة والتراخيص"};
@@ -7,10 +8,11 @@ const money=(v:any)=>new Intl.NumberFormat("ar-SA",{minimumFractionDigits:2,maxi
 const date=(v:any)=>v?new Date(v).toLocaleDateString("ar-SA"):"—";
 export default function PartnerDataPage({kind}:{kind:Kind}){
  const [d,setD]=useState<any>(null);const [error,setError]=useState("");
- useEffect(()=>{fetch("/api/partner/portal",{credentials:"include",cache:"no-store"}).then(r=>r.json()).then(x=>x.success?setD(x):setError(x.message||"تعذر تحميل البيانات")).catch(()=>setError("تعذر تحميل البيانات"));},[]);
+ useEffect(()=>{if(kind==="team")return;fetch("/api/partner/portal?section="+kind,{credentials:"include",cache:"no-store"}).then(r=>r.json()).then(x=>x.success?setD(x):setError(x.message||"تعذر تحميل البيانات")).catch(()=>setError("تعذر تحميل البيانات"));},[]);
  const [bookingQuery,setBookingQuery]=useState("");
  const [bookingStatus,setBookingStatus]=useState("ALL");
  const stats=useMemo(()=>{if(!d)return null;const sales=d.bookings.reduce((a:number,b:any)=>a+Number(b.totalAmount||0),0);return{sales,bookings:d.bookings.length,services:d.services.length,settlements:d.settlements.reduce((a:number,s:any)=>a+Number(s.netAmount||0),0)}},[d]);
+ if(kind==="team")return <main dir="rtl" className="min-h-screen bg-[#F7F4EA] p-5 text-[#0D3B34] md:p-8"><div className="mx-auto max-w-7xl"><p className="text-xs font-bold text-[#B99124]">AREES LOOP PARTNER</p><h1 className="mt-2 text-3xl font-bold">{titles.team}</h1><PartnerTeamManagement/></div></main>;
  if(error)return <main className="p-8"><div className="rounded-3xl bg-white p-8 text-red-700">{error}</div></main>;
  if(!d)return <main className="p-8">جاري تحميل بيانات الشريك...</main>;
  const empty=(s:string)=><div className="rounded-3xl border border-dashed border-[#0D3B34]/20 bg-white p-10 text-center text-sm text-[#0D3B34]/55">لا توجد {s} حالياً</div>;
@@ -21,8 +23,6 @@ export default function PartnerDataPage({kind}:{kind:Kind}){
  {kind==="settlements"&&(d.settlements.length?table(["رقم التسوية","الفترة","المبيعات","عمولة المنصة","الاستردادات","الصافي","الحالة"],d.settlements.map((s:any)=>[s.settlementNumber,date(s.periodStart)+" - "+date(s.periodEnd),money(s.grossSales),money(s.platformCommission),money(s.refunds),money(s.netAmount),s.status])):empty("تسويات"))}
  {kind==="invoices"&&(d.invoices.length?table(["الفاتورة","الحجز","العميل","الخدمة","الإجمالي","الحالة"],d.invoices.map((i:any)=>[i.invoiceNumber,i.booking?.reference,i.booking?.customerName,i.booking?.service?.nameAr,money(i.totalAmount)+" ر.س",i.status])):empty("فواتير"))}
  {kind==="reports"&&<div className="my-7 grid gap-4 md:grid-cols-4">{[["الحجوزات",stats?.bookings],["الخدمات",stats?.services],["إجمالي المبيعات",money(stats?.sales)+" ر.س"],["صافي التسويات",money(stats?.settlements)+" ر.س"]].map(x=><div key={x[0] as string} className="rounded-3xl bg-white p-6"><p className="text-xs opacity-55">{x[0]}</p><b className="mt-2 block text-2xl">{x[1]}</b></div>)}</div>}
- {kind==="team"&&(d.members.length?table(["المستخدم","البريد","الجوال","المسمى","الحالة"],d.members.map((m:any)=>[[m.user?.firstName,m.user?.lastName].filter(Boolean).join(" ")||"—",m.user?.email,m.user?.phone,m.jobTitle,m.isActive?"نشط":"غير نشط"])):empty("موظفين"))}
- {kind==="team"&&<ServiceHistory/>}
  {kind==="business"&&<><div className="my-7 grid gap-4 md:grid-cols-2"><div className="rounded-3xl bg-white p-6"><h2 className="font-bold">بيانات المنشأة</h2><div className="mt-4 space-y-3 text-sm"><p>الاسم: <b>{d.partner?.legalNameAr||"—"}</b></p><p>الاسم التجاري: <b>{d.partner?.tradeNameAr||"—"}</b></p><p>الرقم الموحد: <b>{d.partner?.unifiedNumber||"—"}</b></p><p>السجل التجاري: <b>{d.partner?.commercialRegister||"—"}</b></p><p>الرقم الضريبي: <b>{d.partner?.vatNumber||"—"}</b></p><p>المدينة: <b>{d.partner?.city||"—"}</b></p></div></div><div className="rounded-3xl bg-white p-6"><h2 className="font-bold">الحساب والتواصل</h2><div className="mt-4 space-y-3 text-sm"><p>البريد: <b>{d.partner?.businessEmail||"—"}</b></p><p>الجوال: <b>{d.partner?.businessPhone||"—"}</b></p><p>البنك: <b>{d.partner?.bankName||"—"}</b></p><p>IBAN: <b>{d.partner?.iban||"—"}</b></p></div></div></div>{d.licenses.length?table(["الترخيص","الجهة","الرقم","الانتهاء","الحالة"],d.licenses.map((l:any)=>[l.type,l.issuer,l.licenseNumber,date(l.expiryDate),l.status])):empty("تراخيص")}</>}
  </div></main>
 }
