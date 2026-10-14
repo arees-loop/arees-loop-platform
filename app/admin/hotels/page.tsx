@@ -139,7 +139,7 @@ export default function HotelAdminPage(){
    }finally{setBusy(false);}
  }
  const display=offers.filter(o=>filter==="ALL"||(filter==="ACTIVE"?o.isVisible:!o.isVisible));
- return <main dir="rtl" className="mx-auto max-w-[1300px] px-5 py-8 text-[#0D3B34]">
+ return <main dir="rtl" className="mx-auto max-w-[1600px] px-5 py-8 text-[#0D3B34]">
    <div className="flex flex-wrap items-start justify-between gap-4">
      <div><p className="text-xs font-black text-[#AE8529]">AREES LOOP · HOTEL DESK</p>
      <h1 className="mt-2 text-3xl font-black">إدارة حجوزات وعروض الفنادق</h1>
@@ -210,14 +210,14 @@ export default function HotelAdminPage(){
        </>}
      </section>
    </div>}
-   {tab==="offers"&&<div className="mt-7 grid gap-6 xl:grid-cols-2">
+   {tab==="offers"&&<div className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
      <section className="rounded-3xl border border-[#D4AF37]/30 bg-white p-6">
        <h2 className="text-xl font-black">إضافة أو تعديل إعلان فندق</h2>
        {!admin&&<p className="mt-3 text-xs text-amber-700">إدارة العروض للسوبر أدمن فقط.</p>}
-       <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2">
+       <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
          {([["عنوان العرض","title"],["المدينة","destination"],["اسم الفندق","hotelName"]] as const).map(([label,key])=>
            <label key={key} className="text-xs font-bold">{label}<input required={key==="title"} maxLength={160} className={field+" mt-2"} value={edit[key]} onChange={e=>setEdit(f=>({...f,[key]:e.target.value}))}/></label>)}
-         <label className="text-xs font-bold sm:col-span-2">وصف العرض
+         <label className="text-xs font-bold sm:col-span-2 xl:col-span-2 xl:col-start-3">وصف العرض
            <textarea rows={3} className={field+" mt-2"} value={edit.description} onChange={e=>setEdit(f=>({...f,description:e.target.value}))}/>
          </label>
          <label className="text-xs font-bold">السعر بالريال
@@ -228,19 +228,18 @@ export default function HotelAdminPage(){
          </label>
          <label className="text-xs font-bold">بداية النشر<input className={field+" mt-2"} type="date" value={edit.startsAt} onChange={e=>setEdit(f=>({...f,startsAt:e.target.value}))}/></label>
          <label className="text-xs font-bold">آخر يوم للنشر<input className={field+" mt-2"} type="date" min={edit.startsAt||undefined} value={edit.endsAt} onChange={e=>setEdit(f=>({...f,endsAt:e.target.value}))}/></label>
-         <label className="text-xs font-bold sm:col-span-2">صورة العرض (PNG / JPG / WEBP)
+         <label className="text-xs font-bold sm:col-span-2 xl:col-span-2 xl:col-start-3">صورة العرض (PNG / JPG / WEBP)
            <input type="file" accept="image/png,image/jpeg,image/webp" className={field+" mt-2"} onChange={e=>{setBanner(e.target.files?.[0]||null);setBannerDimensions(null);}}/>
          </label>
-         <div className="sm:col-span-2"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={banner?bannerDimensions:null}/><p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت. لن يُحفظ العرض إذا كانت أبعاد الصورة مختلفة.</p></div>
+         <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={banner?bannerDimensions:null}/><p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت. لن يُحفظ العرض إذا كانت أبعاد الصورة مختلفة.</p></div>
          {!banner&&edit.bannerUrl&&<p className="text-xs font-bold text-[#0D3B34]/65 sm:col-span-2">الصورة الحالية محفوظة. لاختيار بديل، ارفع صورة بالمقاس المحدد أعلاه.</p>}
          <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={edit.isVisible} onChange={e=>setEdit(f=>({...f,isVisible:e.target.checked}))}/>نشر الإعلان</label>
          <label className="text-xs font-bold">ترتيب الإعلان<input type="number" min={0} className={field+" mt-2"} value={edit.sortOrder} onChange={e=>setEdit(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
-         <div className="flex flex-wrap gap-3 sm:col-span-2">
+         <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
            <button disabled={!admin||busy||Boolean(banner&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">حفظ الإعلان</button>
            <button type="button" onClick={()=>selectOffer()} className="rounded-xl border px-5 py-3 text-sm">عرض جديد</button>
          </div>
-       </form>
-       <div className="mt-6 overflow-hidden rounded-[22px] border border-[#D4AF37]/40 bg-[#FFFDF8]">
+       <div className="mt-6 overflow-hidden rounded-[22px] border border-[#D4AF37]/40 bg-[#FFFDF8] sm:col-span-2 xl:col-span-2 xl:col-start-3">
          <p className="bg-[#0D3B34] px-5 py-3 text-xs font-black text-white">معاينة إعلانك قبل الحفظ</p>
          {(preview||edit.bannerUrl)&&<>
            {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -251,6 +250,7 @@ export default function HotelAdminPage(){
          {edit.amountSar!==""&&<p className="mt-3 text-xl font-black text-[#B18B2C]">{Number(edit.amountSar).toLocaleString("ar-SA")} ر.س</p>}
          <p className="mt-2 whitespace-pre-wrap text-xs leading-7">{edit.description}</p></div>
        </div>
+       </form>
      </section>
      <section className="space-y-3">
        <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">العروض والإعلانات ({display.length})</h2>
