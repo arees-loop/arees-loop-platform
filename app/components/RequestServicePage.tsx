@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import {useEffect,useState,type FormEvent} from "react";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
 import {storeCustomerClaim} from "@/lib/customer-request-claims";
