@@ -18,5 +18,5 @@ export default function PublicGlobalHeader() {
 
   if (hidden) return null;
 
-  return <GlobalHeader overlay={pathname === "/"} />;
+  return <GlobalHeader />;
 }
