@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { hasPartnerPermission } from "@/lib/partner-permissions";
 import { getRequestIp } from "@/lib/rate-limit";
 import {
   getAdminNotificationEmails,
@@ -24,6 +25,7 @@ async function getPartnerMembership(userId: string) {
       isActive: true,
     },
     include: {
+      user: { select: { role: true } },
       partner: {
         include: {
           agreements: {
@@ -67,6 +69,10 @@ export async function GET() {
         },
         { status: 404 },
       );
+    }
+
+    if (!hasPartnerPermission(session.user.role, membership.permissions, "business")) {
+      return NextResponse.json({ success:false, message:"ما عندك صلاحية عرض الاتفاقية." }, { status:403 });
     }
 
     const agreement =
