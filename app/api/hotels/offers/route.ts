@@ -10,7 +10,7 @@ export async function GET(){
         {OR:[{endsAt:null},{endsAt:{gte:now}}]},
       ]},
       orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],take:30,
-      select:{id:true,title:true,destination:true,hotelName:true,description:true,amountSar:true,priceUnit:true,bannerUrl:true},
+      select:{id:true,title:true,destination:true,hotelName:true,description:true,amountSar:true,priceUnit:true,bannerUrl:true,startsAt:true,endsAt:true},
     });
     return NextResponse.json({success:true,data:data.map(x=>({...x,amountSar:x.amountSar===null?null:Number(x.amountSar)}))},
       {headers:{"Cache-Control":"public, max-age=0, s-maxage=30"}});
