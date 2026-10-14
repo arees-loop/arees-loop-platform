@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { getCurrentSession } from "@/lib/session";
+import { userHasPartnerPermission } from "@/lib/partner-permissions";
 
 export const runtime = "nodejs";
 
