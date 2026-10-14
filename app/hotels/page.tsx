@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { storeCustomerClaim } from "@/lib/customer-request-claims";
+import OfferImageCarousel from "@/app/components/OfferImageCarousel";
 
-type HotelOffer={id:string;title:string;destination:string|null;hotelName:string|null;description:string|null;amountSar:number|null;priceUnit:string|null;bannerUrl:string|null;startsAt:string|null;endsAt:string|null};
+type HotelOffer={id:string;title:string;destination:string|null;hotelName:string|null;description:string|null;amountSar:number|null;priceUnit:string|null;bannerUrl:string|null;imageUrls:string[];startsAt:string|null;endsAt:string|null};
 type Success={reference:string;trackingToken:string;customerName:string;destination:string;hotelName:string|null;checkInDate:string;checkOutDate:string;rooms:number;adults:number;children:number};
 const countries=[["966","السعودية +966"],["249","السودان +249"],["20","مصر +20"],["971","الإمارات +971"],["974","قطر +974"],["968","عُمان +968"],["44","بريطانيا +44"],["1","أمريكا/كندا +1"],["other","دولة أخرى"]];
 const field="w-full rounded-xl border border-[#D4AF37]/40 bg-[#FCFAF4] px-4 py-3 text-sm text-[#0D3B34] outline-[#B88B2B]";
@@ -83,10 +84,9 @@ export default function HotelsPage(){
                 <div className="pointer-events-none absolute inset-x-3 top-2 h-8 rounded-[28px] bg-white/10 offer-studio-layer offer-studio-layer-mid" />
                 {offers.filter((_,i)=>i===index%offers.length).map(offer=><article key={offer.id} className="offer-studio-slide relative overflow-hidden rounded-[24px] border border-white/20 bg-[#F7F4ED] text-[#0D3B34] shadow-2xl" aria-live="polite">
                   <div className="relative aspect-[2/1] overflow-hidden bg-[radial-gradient(circle_at_75%_15%,#EBD38B,#F7F4ED_48%,#D8E9E2)]">
-                    {offer.bannerUrl?<>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={offer.bannerUrl} alt={offer.title} className="offer-studio-art h-full w-full object-cover"/>
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#082F2A]/80 via-[#082F2A]/10 to-transparent" />
+                    {(offer.imageUrls?.length||offer.bannerUrl)?<>
+                      <OfferImageCarousel images={offer.imageUrls} fallback={offer.bannerUrl} title={offer.title} imageClassName="offer-studio-art"/>
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#082F2A]/80 via-[#082F2A]/10 to-transparent" />
                     </>:<div className="absolute inset-0 overflow-hidden bg-[linear-gradient(135deg,#F8F2DF,#DCEAE3_48%,#C4D9D0)]">
                       <span className="offer-studio-ship absolute -bottom-5 left-8 text-[112px] leading-none drop-shadow-xl" aria-hidden="true">🏨</span>
                       <span className="absolute right-5 top-5 h-20 w-20 rounded-full bg-white/40 blur-xl" />
@@ -96,10 +96,6 @@ export default function HotelsPage(){
                       <div className="min-w-0 drop-shadow-md">{offer.hotelName&&<p className="text-[11px] font-black text-[#F1D98E]">{offer.hotelName}</p>}<h3 className="mt-1 line-clamp-2 text-lg font-black sm:text-xl">{offer.title}</h3>{offer.destination&&<p className="mt-1 text-xs font-bold text-white/90">{offer.destination}</p>}</div>
                       {offer.amountSar!==null&&<div className="shrink-0 rounded-2xl border border-white/20 bg-[#0D3B34]/85 px-3 py-2 text-left shadow-lg backdrop-blur-sm"><span className="block text-[10px] text-white/75">السعر</span><strong className="text-lg font-black text-[#F1D98E]">{offer.amountSar.toLocaleString("ar-SA")} <small className="text-[10px]">ر.س</small></strong><span className="block text-[10px] text-white/75">{offer.priceUnit||"لليلة"}</span></div>}
                     </div>
-                    {offers.length>1&&<div className="absolute inset-x-3 top-1/2 z-10 flex -translate-y-1/2 justify-between">
-                      <button type="button" aria-label="العرض السابق" onClick={()=>setIndex(i=>(i-1+offers.length)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-white/55 bg-[#0D3B34]/75 text-xl font-black text-white shadow-lg backdrop-blur transition hover:scale-105 hover:bg-[#0D3B34]">→</button>
-                      <button type="button" aria-label="العرض التالي" onClick={()=>setIndex(i=>(i+1)%offers.length)} className="grid h-10 w-10 place-items-center rounded-full border border-white/55 bg-[#0D3B34]/75 text-xl font-black text-white shadow-lg backdrop-blur transition hover:scale-105 hover:bg-[#0D3B34]">←</button>
-                    </div>}
                   </div>
                   {offer.description&&<p className="px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.description}</p>}
                 </article>)}
