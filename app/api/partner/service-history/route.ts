@@ -1,12 +1,12 @@
 import {NextResponse} from "next/server";
 import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
-import {userHasPartnerPermission} from "@/lib/partner-permissions";
+import {getActivePartnerMembership,userHasPartnerPermission} from "@/lib/partner-permissions";
 export async function GET(){
  const session=await getCurrentSession();
  if(!session)return NextResponse.json({success:false,message:"يجب تسجيل الدخول."},{status:401});
  if(!await userHasPartnerPermission(session.user.id,"services"))return NextResponse.json({success:false,message:"ما عندك صلاحية."},{status:403});
- const membership=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true}});
+ const membership=await getActivePartnerMembership(session.user.id);
  if(!membership)return NextResponse.json({success:false,message:"غير مصرح."},{status:403});
  const services=await prisma.service.findMany({where:{partnerId:membership.partnerId},select:{id:true,nameAr:true}});
  const ids=services.map(s=>s.id);

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { userHasPartnerPermission } from "@/lib/partner-permissions";
+import { getActivePartnerMembership, userHasPartnerPermission } from "@/lib/partner-permissions";
 
 async function partnerFor(userId:string){
- return prisma.partnerMember.findFirst({where:{userId,isActive:true},include:{partner:true},orderBy:{createdAt:"desc"}});
+ return getActivePartnerMembership(userId);
 }
 
 export async function GET(){

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { hasPartnerPermission, type PartnerPermission } from "@/lib/partner-permissions";
+import { getActivePartnerMembership, hasPartnerPermission, type PartnerPermission } from "@/lib/partner-permissions";
 const n=(v:unknown)=>v==null?null:Number(v);
 export async function GET(request:Request){
  try{
   const session=await getCurrentSession();
   if(!session)return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
-  const member=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},orderBy:{createdAt:"desc"},include:{user:{select:{role:true}}}});
+  const member=await getActivePartnerMembership(session.user.id);
   if(!member)return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});
   const partnerId=member.partnerId;
   const section = new URL(request.url).searchParams.get("section") || "dashboard";

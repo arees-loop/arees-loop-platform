@@ -3,6 +3,7 @@ import { put } from "@vercel/blob";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { getActivePartnerMembership } from "@/lib/partner-permissions";
 
 const ALLOWED_TYPES = new Set([
   "application/pdf",
@@ -55,18 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const membership = await prisma.partnerMember.findFirst({
-      where: {
-        userId: session.user.id,
-        isActive: true,
-      },
-      select: {
-        partnerId: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const membership = await getActivePartnerMembership(session.user.id);
 
     if (!membership) {
       return NextResponse.json(

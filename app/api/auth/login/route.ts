@@ -321,6 +321,29 @@ export async function POST(
         request,
       );
 
+    // Keep partner login history after the session row is deleted on logout.
+    try {
+      const memberships = await prisma.partnerMember.findMany({
+        where: { userId: user.id, isActive: true },
+        select: { id: true, partnerId: true },
+      });
+      if (memberships.length) {
+        const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+        const userAgent = request.headers.get("user-agent") || null;
+        await prisma.auditLog.createMany({ data: memberships.map((membership) => ({
+          userId: user.id,
+          action: "PARTNER_USER_LOGIN",
+          entityType: "PartnerMember",
+          entityId: membership.id,
+          afterData: { partnerId: membership.partnerId, sessionExpiresAt: session.expiresAt.toISOString() },
+          ipAddress,
+          userAgent,
+        })) });
+      }
+    } catch (auditError) {
+      console.error("Partner login audit logging failed:", auditError);
+    }
+
     return NextResponse.json({
       success: true,
       message:

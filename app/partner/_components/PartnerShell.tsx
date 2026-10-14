@@ -46,6 +46,8 @@ type PartnerInfo = {
   partnerType?: string;
 };
 
+type PartnerMembershipOption = { id: string; name: string; legalName: string; partnerType: string | null; status: string; isSelected: boolean };
+
 function SidebarToggleIcon() {
   return (
     <svg
@@ -81,6 +83,11 @@ export default function PartnerShell({
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [partnerOptions, setPartnerOptions] = useState<PartnerMembershipOption[]>([]);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+  const [showPartnerChooser, setShowPartnerChooser] = useState(false);
+  const [switchingPartnerId, setSwitchingPartnerId] = useState("");
+  const [partnerSwitchError, setPartnerSwitchError] = useState("");
   const [access, setAccess] = useState<{ isManager: boolean; permissions: Record<string, boolean> } | null>(null);
 
   const [partner, setPartner] = useState<PartnerInfo>({
@@ -98,6 +105,43 @@ export default function PartnerShell({
       .catch(() => {});
     return () => { alive = false; };
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/partner/memberships", { credentials: "include", cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!alive || !data?.success) return;
+        const options = Array.isArray(data.memberships) ? data.memberships as PartnerMembershipOption[] : [];
+        setPartnerOptions(options);
+        setSelectedPartnerId(data.selectedPartnerId || null);
+        setShowPartnerChooser(!!data.requiresSelection);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  async function selectPartner(partnerId: string) {
+    if (!partnerId || switchingPartnerId) return;
+    setSwitchingPartnerId(partnerId);
+    setPartnerSwitchError("");
+    try {
+      const response = await fetch("/api/partner/memberships", {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ partnerId }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        setPartnerSwitchError(data?.message || "تعذر اختيار الشريك.");
+        setSwitchingPartnerId("");
+        return;
+      }
+      window.location.reload();
+    } catch {
+      setPartnerSwitchError("تعذر الاتصال بالخدمة. حاول مرة أخرى.");
+      setSwitchingPartnerId("");
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -287,6 +331,8 @@ export default function PartnerShell({
                         )}
                       </div>
 
+                      {partnerOptions.length > 1 && <button type="button" onClick={() => { setAccountMenuOpen(false); setPartnerSwitchError(""); setShowPartnerChooser(true); }} className="mt-1 block w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#0D3B34] transition hover:bg-[#F7F4EA]">تبديل جهة الشراكة</button>}
+
                       <Link
                         href="/partner/business"
                         onClick={() => setAccountMenuOpen(false)}
@@ -376,6 +422,8 @@ export default function PartnerShell({
                         </p>
                       )}
                     </div>
+
+                    {partnerOptions.length > 1 && <button type="button" onClick={() => { setAccountMenuOpen(false); setPartnerSwitchError(""); setShowPartnerChooser(true); }} className="mt-1 block w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold hover:bg-[#F7F4EA]">تبديل جهة الشراكة</button>}
 
                     <Link
                       href="/partner/business"
@@ -514,6 +562,21 @@ export default function PartnerShell({
           `}</style>
         </div>
       </div>
+      {showPartnerChooser && partnerOptions.length > 1 && <div className="fixed inset-0 z-[300] flex items-center justify-center bg-[#062D28]/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="partner-choice-title">
+        <section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[28px] border border-[#D4AF37]/35 bg-[#F8F6EF] p-5 shadow-2xl sm:p-8">
+          <p className="text-xs font-black tracking-wide text-[#A78225]">AREES LOOP PARTNER</p>
+          <h2 id="partner-choice-title" className="mt-2 text-2xl font-black text-[#0D3B34]">اختر جهة الشراكة</h2>
+          <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">هذا البريد مرتبط بأكثر من شريك. اختر الجهة التي تريد فتح لوحتها الآن.</p>
+          {partnerSwitchError && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{partnerSwitchError}</p>}
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {partnerOptions.map((option) => <button key={option.id} type="button" disabled={!!switchingPartnerId} onClick={() => void selectPartner(option.id)} className={`group flex min-h-28 items-center gap-4 rounded-2xl border bg-white p-4 text-right shadow-sm transition hover:-translate-y-0.5 hover:border-[#D4AF37] hover:shadow-md disabled:opacity-60 ${selectedPartnerId===option.id?"border-[#D4AF37] ring-2 ring-[#D4AF37]/20":"border-[#0D3B34]/10"}`}>
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#0D3B34] text-lg font-black text-[#E8CC85]">{(option.name||"ش").trim().charAt(0)}</span>
+              <span className="min-w-0 flex-1"><strong className="block truncate text-sm font-black text-[#0D3B34]">{option.name||option.legalName||"شريك أريس"}</strong><span className="mt-1 block truncate text-[11px] text-[#0D3B34]/55">{option.legalName}</span><span className="mt-2 inline-block rounded-full bg-[#EAF4EF] px-2.5 py-1 text-[10px] font-bold text-[#17614F]">{option.status==="ACTIVE"?"مفعّل":"قيد التفعيل"}</span></span>
+              <span className="shrink-0 rounded-full border border-[#0D3B34]/15 px-3 py-1.5 text-xs font-black text-[#0D3B34]">{switchingPartnerId===option.id?"جارٍ الفتح…":"دخول"}</span>
+            </button>)}
+          </div>
+        </section>
+      </div>}
     </div>
   );
 }

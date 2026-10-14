@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { getActivePartnerMembership } from "@/lib/partner-permissions";
 import { userHasPartnerPermission } from "@/lib/partner-permissions";
 
 export async function GET() {
   try {
     const session=await getCurrentSession();
     if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
-    const membership=await prisma.partnerMember.findFirst({where:{userId:session.user.id,isActive:true},select:{partnerId:true},orderBy:{createdAt:"desc"}});
+    const membership=await getActivePartnerMembership(session.user.id);
     if(!membership) return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});
     const partnerId=membership.partnerId;
     const [services,bookings]=await Promise.all([

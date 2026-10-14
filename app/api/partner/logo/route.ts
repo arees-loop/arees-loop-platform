@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { getActivePartnerMembership } from "@/lib/partner-permissions";
 
 export const runtime = "nodejs";
 
@@ -35,11 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success:false, message:"يجب توثيق حساب الشريك قبل رفع الشعار." }, { status:403 });
     }
 
-    const membership = await prisma.partnerMember.findFirst({
-      where: { userId:session.user.id, isActive:true },
-      include: { partner:{select:{ id:true, partnerType:true, status:true }} },
-      orderBy: { createdAt:"desc" },
-    });
+    const membership = await getActivePartnerMembership(session.user.id);
     if (!membership || membership.partner.partnerType !== "GOVERNMENT_NONPROFIT") {
       return NextResponse.json({success:false,message:"رفع شعار الجهة متاح لطلبات الجهات الحكومية وغير الربحية فقط."}, {status:403});
     }

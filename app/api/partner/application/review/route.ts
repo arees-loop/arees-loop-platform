@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { getActivePartnerMembership } from "@/lib/partner-permissions";
 import { runPartnerApplicationWorkflow } from "@/lib/partners/application-workflow";
 import {
   checkRateLimit,
@@ -59,26 +60,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const membership = await prisma.partnerMember.findFirst({
-      where: {
-        userId: session.user.id,
-        isActive: true,
-      },
-      include: {
-        partner: {
-          include: {
-            documents: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const active = await getActivePartnerMembership(session.user.id);
+    const membership = active ? await prisma.partnerMember.findFirst({
+      where: { userId: session.user.id, partnerId: active.partnerId, isActive: true },
+      include: { partner: { include: { documents: { select: { id: true } } } } },
+    }) : null;
 
     if (!membership) {
       return NextResponse.json(

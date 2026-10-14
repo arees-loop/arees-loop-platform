@@ -78,7 +78,7 @@ export default function NewPartnerServicePage() {
     setLocationError("");
     if(!navigator.geolocation){setLocationError("المتصفح لا يدعم تحديد الموقع.");return;}
     navigator.geolocation.getCurrentPosition(
-      p=>{const next={lat:p.coords.latitude,lng:p.coords.longitude};setLocation(next);void reverseLocation(next.lat,next.lng);},
+      p=>{const next={lat:p.coords.latitude,lng:p.coords.longitude};setLocation(next);setLocationName((current)=>current||"موقعي الحالي");void reverseLocation(next.lat,next.lng);},
       ()=>setLocationError("تعذر تحديد الموقع. تأكد من السماح للموقع في المتصفح."),
       {enableHighAccuracy:true,timeout:12000}
     );
@@ -92,7 +92,7 @@ export default function NewPartnerServicePage() {
       if(!r.ok) throw new Error();
       const items=Array.isArray(j.suggestions)?j.suggestions:[j];
       setLocationSuggestions(items);
-    }catch{setLocationError("لم نعثر على الموقع. جرّب اسم المكان مع المدينة أو الدولة.");setLocationSuggestions([]);}
+    }catch{setLocationError("البحث عن الأماكن غير متاح حالياً. استخدم موقعي الحالي أو أدخل الإحداثيات يدوياً.");setLocationSuggestions([]);}
     finally{setSearchingLocation(false);}
   };
   const selectExecutionLocation=(item:{name:string;address:string;city:string;country:string;countryCode:string;location:{lat:number;lng:number}})=>{
@@ -106,7 +106,7 @@ export default function NewPartnerServicePage() {
       const r=await fetch(`/api/location/search?query=${encodeURIComponent(meetingQuery.trim())}`,{cache:"no-store"});
       const j=await r.json();if(!r.ok) throw new Error();
       setMeetingSuggestions(Array.isArray(j.suggestions)?j.suggestions:[j]);
-    }catch{setLocationError("لم نعثر على نقطة التجمع. جرّب اسم المكان مع المدينة أو الدولة.");setMeetingSuggestions([]);}
+    }catch{setLocationError("البحث عن الأماكن غير متاح حالياً. استخدم موقعي الحالي أو أدخل اسم نقطة التجمع يدوياً.");setMeetingSuggestions([]);}
     finally{setSearchingMeeting(false);}
   };
   const selectMeetingLocation=(item:{name:string;address:string;city:string;country:string;countryCode:string;location:{lat:number;lng:number}})=>{

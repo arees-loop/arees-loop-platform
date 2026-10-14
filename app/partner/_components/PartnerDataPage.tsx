@@ -1,5 +1,6 @@
 "use client";
 import PartnerTeamManagement from "./PartnerTeamManagement";
+import PartnerActivityLog from "./PartnerActivityLog";
 import {useEffect,useMemo,useState} from "react";
 type Kind="dashboard"|"bookings"|"settlements"|"invoices"|"reports"|"team"|"business";
 const titles={dashboard:"الرئيسية",bookings:"الحجوزات",settlements:"التسويات",invoices:"الفواتير",reports:"التقارير",team:"الموظفون والصلاحيات",business:"المنشأة والتراخيص"};
@@ -11,7 +12,7 @@ export default function PartnerDataPage({kind}:{kind:Kind}){
  const [bookingQuery,setBookingQuery]=useState("");
  const [bookingStatus,setBookingStatus]=useState("ALL");
  const stats=useMemo(()=>{if(!d)return null;if(d.dashboardSummary)return{sales:d.dashboardSummary.sales,bookings:d.dashboardSummary.bookings,services:d.dashboardSummary.services,settlements:d.dashboardSummary.settlements};const sales=d.bookings.reduce((a:number,b:any)=>a+Number(b.totalAmount||0),0);return{sales,bookings:d.bookings.length,services:d.services.length,settlements:d.settlements.reduce((a:number,s:any)=>a+Number(s.netAmount||0),0)}},[d]);
- if(kind==="team")return <main dir="rtl" className="min-h-screen bg-[#F7F4EA] p-5 text-[#0D3B34] md:p-8"><div className="mx-auto max-w-7xl"><p className="text-xs font-bold text-[#B99124]">AREES LOOP PARTNER</p><h1 className="mt-2 text-3xl font-bold">{titles.team}</h1><PartnerTeamManagement/></div></main>;
+ if(kind==="team")return <main dir="rtl" className="min-h-screen bg-[#F7F4EA] p-5 text-[#0D3B34] md:p-8"><div className="mx-auto max-w-7xl space-y-6"><div><p className="text-xs font-bold text-[#B99124]">AREES LOOP PARTNER</p><h1 className="mt-2 text-3xl font-bold">{titles.team}</h1></div><PartnerTeamManagement/><PartnerActivityLog/></div></main>;
  if(error)return <main className="p-8"><div className="rounded-3xl bg-white p-8 text-red-700">{error}</div></main>;
  if(!d)return <main className="p-8">جاري تحميل بيانات الشريك...</main>;
  const empty=(s:string)=><div className="rounded-3xl border border-dashed border-[#0D3B34]/20 bg-white p-10 text-center text-sm text-[#0D3B34]/55">لا توجد {s} حالياً</div>;

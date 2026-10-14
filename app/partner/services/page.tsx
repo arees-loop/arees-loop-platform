@@ -575,7 +575,7 @@ export default function PartnerServicesPage() {
       const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [data];
       setLocationSuggestions(suggestions);
       setLocationMessage(suggestions.length ? "اختر الموقع الصحيح من النتائج أدناه." : "لم نجد نتائج.");
-    } catch { setLocationMessage("تعذر العثور على الموقع. جرّب اسم المكان مع المدينة."); }
+    } catch { setLocationMessage("البحث عن الأماكن غير متاح حالياً. استخدم موقعي الحالي أو أدخل الإحداثيات يدوياً."); }
     finally { setLocationBusy(false); }
   };
 
@@ -593,13 +593,13 @@ export default function PartnerServicesPage() {
     setLocationBusy(true);
     navigator.geolocation.getCurrentPosition(async (p)=>{
       const lat=p.coords.latitude,lng=p.coords.longitude;
-      setForm((x)=>({...x,latitude:lat,longitude:lng}));
+      setForm((x)=>({...x,latitude:lat,longitude:lng,locationName:x.locationName||"موقعي الحالي"}));
       try {
         const r=await fetch(`/api/location/reverse-geocode?lat=${lat}&lng=${lng}`,{cache:"no-store"});
         const data=await r.json();
         if(r.ok) setForm((x)=>({...x,latitude:lat,longitude:lng,formattedAddress:data.address||x.formattedAddress,locationName:x.locationName||data.address||"موقعي الحالي",placeId:data.placeId||x.placeId}));
       } catch {}
-      setLocationMessage("تم تحديد موقعك الحالي ✓"); setLocationBusy(false);
+      setLocationMessage("تم حفظ إحداثيات موقعك الحالي ✓ إذا لم يظهر اسم العنوان، أدخل المدينة يدوياً."); setLocationBusy(false);
     },()=>{setLocationMessage("تعذر تحديد موقعك. اسمح للموقع من إعدادات المتصفح.");setLocationBusy(false);},{enableHighAccuracy:true,timeout:12000});
   };
 

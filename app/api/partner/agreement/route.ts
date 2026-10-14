@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { hasPartnerPermission } from "@/lib/partner-permissions";
+import { getActivePartnerMembership, hasPartnerPermission } from "@/lib/partner-permissions";
 import { getRequestIp } from "@/lib/rate-limit";
 import {
   getAdminNotificationEmails,
@@ -19,9 +19,12 @@ function escapeHtml(value: string) {
 }
 
 async function getPartnerMembership(userId: string) {
+  const active = await getActivePartnerMembership(userId);
+  if (!active) return null;
   return prisma.partnerMember.findFirst({
     where: {
       userId,
+      partnerId: active.partnerId,
       isActive: true,
     },
     include: {
@@ -36,9 +39,6 @@ async function getPartnerMembership(userId: string) {
           },
         },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
     },
   });
 }

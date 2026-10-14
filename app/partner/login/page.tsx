@@ -59,6 +59,12 @@ export default function PartnerLoginPage() {
       }
 
       try {
+        const membershipsResponse = await fetch("/api/partner/memberships", { credentials: "include", cache: "no-store" });
+        const membershipsData = await membershipsResponse.json().catch(() => null);
+        if (Array.isArray(membershipsData?.memberships) && membershipsData.memberships.length > 1) {
+          window.location.href = "/partner/dashboard";
+          return;
+        }
         const applicationResponse = await fetch("/api/partner/application", {
           method: "GET",
           cache: "no-store",

@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
+
+export const ACTIVE_PARTNER_COOKIE = "arees_active_partner";
 
 export const PARTNER_PERMISSION_KEYS = [
   "dashboard",
@@ -51,10 +54,25 @@ export function normalizePartnerPermissions(value: unknown): PartnerPermissionSe
 }
 
 export async function getActivePartnerMembership(userId: string) {
-  return prisma.partnerMember.findFirst({
+  const active = await prisma.partnerMember.findMany({
     where: { userId, isActive: true },
-    include: { user: { select: { id: true, role: true, email: true } }, partner: true },
+    select: { partnerId: true },
     orderBy: { createdAt: "desc" },
+  });
+  if (!active.length) return null;
+  const selectedId = (await cookies()).get(ACTIVE_PARTNER_COOKIE)?.value;
+  if (selectedId) {
+    const selected = await prisma.partnerMember.findFirst({
+      where: { userId, isActive: true, partnerId: selectedId },
+      include: { user: { select: { id: true, role: true, email: true } }, partner: true },
+    });
+    if (selected) return selected;
+  }
+  // Keep the current one-partner experience. Multiple memberships require an explicit choice.
+  if (active.length > 1) return null;
+  return prisma.partnerMember.findFirst({
+    where: { userId, isActive: true, partnerId: active[0].partnerId },
+    include: { user: { select: { id: true, role: true, email: true } }, partner: true },
   });
 }
 

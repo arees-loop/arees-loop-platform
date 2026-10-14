@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 import { getCurrentSession } from "@/lib/session";
-import { hasPartnerPermission } from "@/lib/partner-permissions";
+import { getActivePartnerMembership, hasPartnerPermission } from "@/lib/partner-permissions";
 import {
   isSmsVerificationEnabled,
   normalizeSaudiMobile,
@@ -270,11 +270,14 @@ export async function GET() {
 
 
 
-    const membership = await prisma.partnerMember.findFirst({
+    const active = await getActivePartnerMembership(session.user.id);
+    const membership = active ? await prisma.partnerMember.findFirst({
 
       where: {
 
         userId: session.user.id,
+
+        partnerId: active.partnerId,
 
         isActive: true,
 
@@ -335,13 +338,7 @@ export async function GET() {
 
       },
 
-      orderBy: {
-
-        createdAt: "desc",
-
-      },
-
-    });
+    }) : null;
 
 
 
@@ -487,23 +484,7 @@ export async function POST(request: NextRequest) {
 
 
 
-    const existingMembership = await prisma.partnerMember.findFirst({
-
-      where: {
-
-        userId: session.user.id,
-
-        isActive: true,
-
-      },
-
-      include: {
-
-        partner: true,
-
-      },
-
-    });
+    const existingMembership = await getActivePartnerMembership(session.user.id);
 
 
 
@@ -1117,18 +1098,17 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const membership = await prisma.partnerMember.findFirst({
+    const active = await getActivePartnerMembership(session.user.id);
+    const membership = active ? await prisma.partnerMember.findFirst({
       where: {
         userId: session.user.id,
+        partnerId: active.partnerId,
         isActive: true,
       },
       include: {
         partner: true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    }) : null;
 
     if (!membership) {
       return NextResponse.json(
