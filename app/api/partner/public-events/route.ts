@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { userHasPartnerPermission } from "@/lib/partner-permissions";
 
 async function membership() {
   const session = await getCurrentSession();
   if (!session) return null;
+  if (!await userHasPartnerPermission(session.user.id, "services")) return { session, member: null };
   const member = await prisma.partnerMember.findFirst({
     where: { userId: session.user.id, isActive: true },
     include: { partner: { select: { id: true, partnerType: true, status: true, legalNameAr: true, publicName: true } } },
