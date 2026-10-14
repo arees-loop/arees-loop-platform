@@ -270,7 +270,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   );
   const ferryOperators=operators.FERRY;
   return (
-    <main dir="rtl" className="mx-auto max-w-[1300px] px-5 py-8 text-[#0D3B34]">
+    <main dir="rtl" className="mx-auto max-w-[1600px] px-5 py-8 text-[#0D3B34]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-black tracking-widest text-[#A78332]">AREES LOOP · AREES TRAVEL</p>
           <h1 className="mt-2 text-3xl font-black">{initialOfferKind==="FLIGHT"?"إدارة حجوزات الطيران":initialOfferKind==="FERRY"?"إدارة حجوزات البواخر":"حجوزات الطيران والبواخر"}</h1>
@@ -402,18 +402,18 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
         </div>
       )}
       {tab==="offers"&&(
-        <div className="mt-7 grid items-start gap-6 xl:grid-cols-2">
+        <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <section className="rounded-[25px] border border-[#D4AF37]/35 bg-white p-6">
             <h2 className="text-xl font-black">{offerForm.id?"تعديل عرض أو جدول":"إضافة عرض أو جدول جديد"}</h2>
             {!showSuper&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-bold text-amber-800">تعديل العروض والأسعار والصور متاح للسوبر أدمن فقط.</p>}
             <p className="mt-2 text-xs leading-7">الأسعار تظهر في البطاقات الجانبية، وليس داخل نموذج طلب العميل. في البواخر أضف حالة التشغيل والملاحظات عند توقف أي باخرة.</p>
-            <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2">
+            <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <label className={label}>الخدمة<select className={field} disabled={initialOfferKind!=="ALL"} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option></select></label>
               <label className={label}>الناقل / الباخرة
                 {offerForm.kind==="FLIGHT" ? <AirlineLookup ariaLabel="شركة الطيران في الإعلان" value={offerForm.carrierName} onChange={v=>setOfferForm(f=>({...f,carrierName:v}))} /> :
                   <><input className={field} list="offer-operators" value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="اختر الباخرة"/><datalist id="offer-operators">{ferryOperators.map(v=><option key={v} value={v}/>)}</datalist></>}
               </label>
-              <label className={label+" sm:col-span-2"}>اسم العرض / الجدول<input required maxLength={160} className={field} value={offerForm.title} onChange={e=>setOfferForm(f=>({...f,title:e.target.value}))}/></label>
+              <label className={label+" sm:col-span-2 xl:col-span-2"}>اسم العرض / الجدول<input required maxLength={160} className={field} value={offerForm.title} onChange={e=>setOfferForm(f=>({...f,title:e.target.value}))}/></label>
               <label className={label}>من
                 {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة المغادرة" value={offerForm.origin} onChange={v=>setOfferForm(f=>({...f,origin:v}))}/> :
                   <select className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value,destination:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="سواكن">سواكن</option><option value="جدة">جدة</option></select>}
@@ -428,14 +428,14 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className={label}>تاريخ آخر يوم لظهور العرض
                 <input className={field} type="date" min={offerForm.startsAt||undefined} value={offerForm.endsAt} onChange={e=>setOfferForm(f=>({...f,endsAt:e.target.value}))}/>
               </label>
-              <p className="sm:col-span-2 rounded-lg bg-[#F7F2E6] px-4 py-3 text-xs leading-6">تاريخ نهاية العرض شامل طوال اليوم المحدد. عند انتهاء المدة يختفي تلقائياً من صفحة العميل، ويظل محفوظاً في الإدارة.</p>
+              <p className="sm:col-span-2 xl:col-span-2 xl:col-start-3 rounded-lg bg-[#F7F2E6] px-4 py-3 text-xs leading-6">تاريخ نهاية العرض شامل طوال اليوم المحدد. عند انتهاء المدة يختفي تلقائياً من صفحة العميل، ويظل محفوظاً في الإدارة.</p>
               <label className={label}>موعد السفر/الإبحار<input className={field} type="date" value={offerForm.travelDate} onChange={e=>setOfferForm(f=>({...f,travelDate:e.target.value}))}/></label>
               <label className={label}>السعر المعلن (ريال)<input className={field} type="number" min="0" step=".01" value={offerForm.amountSar} onChange={e=>setOfferForm(f=>({...f,amountSar:e.target.value}))}/></label>
               <label className={label}>وحدة السعر<input className={field} placeholder="للبالغ / للطفل / يبدأ من" value={offerForm.priceUnit} onChange={e=>setOfferForm(f=>({...f,priceUnit:e.target.value}))}/></label>
               <label className={label}>حالة التشغيل<select className={field} value={offerForm.operationStatus} onChange={e=>setOfferForm(f=>({...f,operationStatus:e.target.value}))}><option value="AVAILABLE">تعمل / متاحة</option><option value="SUSPENDED">متوقفة حالياً</option><option value="UNKNOWN">غير مؤكد</option></select></label>
-              <label className={label+" sm:col-span-2"}>وصف العرض<textarea className={field} rows={3} value={offerForm.description} onChange={e=>setOfferForm(f=>({...f,description:e.target.value}))}/></label>
-              <label className={label+" sm:col-span-2"}>ملاحظات التشغيل التي تظهر للعميل<textarea className={field} rows={2} value={offerForm.operationNote} onChange={e=>setOfferForm(f=>({...f,operationNote:e.target.value}))} placeholder="مثلاً: الباخرة متوقفة حالياً حتى إشعار آخر"/></label>
-              <div className="sm:col-span-2 rounded-[20px] border border-[#D4AF37]/35 bg-[#F8F5EC] p-4">
+              <label className={label+" sm:col-span-2 xl:col-span-2 xl:col-start-3"}>وصف العرض<textarea className={field} rows={3} value={offerForm.description} onChange={e=>setOfferForm(f=>({...f,description:e.target.value}))}/></label>
+              <label className={label+" sm:col-span-2 xl:col-span-2 xl:col-start-3"}>ملاحظات التشغيل التي تظهر للعميل<textarea className={field} rows={2} value={offerForm.operationNote} onChange={e=>setOfferForm(f=>({...f,operationNote:e.target.value}))} placeholder="مثلاً: الباخرة متوقفة حالياً حتى إشعار آخر"/></label>
+              <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3 rounded-[20px] border border-[#D4AF37]/35 bg-[#F8F5EC] p-4">
                 <label className={label}>صورة الإعلان أو تصميم العرض (PNG / JPG / WEBP)
                   <input type="file" accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>{setBannerFile(e.target.files?.[0]||null);setBannerDimensions(null);}} />
                 </label>
@@ -447,7 +447,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} onLoad={e=>{if(bannerFile)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="h-44 w-full object-contain"/>
                 </div>}
               </div>
-              <div className="sm:col-span-2 overflow-hidden rounded-[24px] border border-[#D4AF37]/40 bg-white shadow-lg">
+              <div className="sm:col-span-2 xl:col-span-2 xl:col-start-1 overflow-hidden rounded-[24px] border border-[#D4AF37]/40 bg-white shadow-lg">
                 <div className="bg-[#0D3B34] px-5 py-3 text-sm font-black text-white">معاينة بطاقة العرض — نص مع صورة</div>
                 {(bannerPreview||offerForm.bannerUrl)&&
                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -464,7 +464,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               </div>
               <label className={label}>ترتيب العرض<input className={field} type="number" min={0} max={9999} value={offerForm.sortOrder} onChange={e=>setOfferForm(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
               <label className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/30 p-3 text-sm font-bold"><input type="checkbox" checked={offerForm.isVisible} onChange={e=>setOfferForm(f=>({...f,isVisible:e.target.checked}))}/> ظاهر للزوار</label>
-              <div className="flex flex-wrap gap-3 sm:col-span-2">
+              <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
                 <button disabled={busy||!showSuper||Boolean(bannerFile&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
                 <button type="button" onClick={()=>{setBannerFile(null);setOfferForm({...blankOffer,kind:initialOfferKind==="FLIGHT"?"FLIGHT":"FERRY",origin:initialOfferKind==="FLIGHT"?"":"سواكن",destination:initialOfferKind==="FLIGHT"?"":"جدة"});}} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
               </div>
