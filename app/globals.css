@@ -752,3 +752,10 @@ a.arees-primary-action[href]:active {
 @media(max-width:380px){
  .guide-team-frame{flex-basis:94px;width:94px;height:78px;border-radius:13px}
 }
+
+
+/* AREES global floor color: prevent the default white canvas around service banners. */
+html,
+body {
+  background-color: #F7F4ED;
+}
