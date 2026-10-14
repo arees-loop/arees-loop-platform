@@ -42,6 +42,20 @@ function parseAmount(value:unknown){
   if(!Number.isFinite(n)||n<0||n>1000000||Math.round(n*100)!==n*100)throw new Error("السعر يجب أن يكون بالريال ورقمين عشريين كحد أقصى.");
   return n;
 }
+function parseSchedule(typeValue:unknown,input:unknown,legacyDate:unknown){
+  const type=String(typeValue||"SINGLE");
+  const data=input&&typeof input==="object"?input as Record<string,unknown>:{};
+  const list=(value:unknown)=>String(value??"").split(/[\n,،;]+/).map(x=>x.trim()).filter(Boolean);
+  const date=(value:unknown)=>{const parsed=parseDay(value);if(!parsed)throw new Error("أدخل تاريخاً صحيحاً للجدول.");return parsed.toISOString().slice(0,10);};
+  let scheduleData:Record<string,unknown>={},travelDate:Date|null=null;
+  if(type==="SINGLE"){const value=data.date||legacyDate;if(value){const d=date(value);scheduleData={date:d};travelDate=parseDay(d);}}
+  else if(type==="MULTIPLE"){const values=Array.isArray(data.dates)?data.dates:list(data.datesText);const dates=[...new Set(values.map(date))].sort();if(!dates.length)throw new Error("أدخل تاريخاً واحداً على الأقل.");scheduleData={dates};travelDate=parseDay(dates[0]);}
+  else if(type==="RANGE"){const from=date(data.from),to=date(data.to);if(from>to)throw new Error("نهاية الفترة يجب ألا تسبق بدايتها.");scheduleData={from,to};travelDate=parseDay(from);}
+  else if(type==="WEEKLY"){const weekdays=(Array.isArray(data.weekdays)?data.weekdays:list(data.weekdaysText)).map(Number);if(!weekdays.length||weekdays.some(x=>!Number.isInteger(x)||x<0||x>6))throw new Error("اختر يوماً واحداً على الأقل من أيام الأسبوع.");scheduleData={weekdays:[...new Set(weekdays)].sort((a,b)=>a-b),until:data.until?date(data.until):null};}
+  else if(type==="MONTHLY"){const monthDays=(Array.isArray(data.monthDays)?data.monthDays:list(data.monthDaysText)).map(Number);if(!monthDays.length||monthDays.some(x=>!Number.isInteger(x)||x<1||x>31))throw new Error("أدخل أيام الشهر من 1 إلى 31.");scheduleData={monthDays:[...new Set(monthDays)].sort((a,b)=>a-b),until:data.until?date(data.until):null};}
+  else throw new Error("نوع جدول الرحلات غير صالح.");
+  return {scheduleType:type,scheduleData,travelDate};
+}
 const WORKFLOW=["NEW","PROCESSING","QUOTE_READY","QUOTE_SENT","PAID","EXECUTING","DONE","CANCELED"] as const;
 const TRANSITIONS:Record<string,string[]> = {
   NEW:["PROCESSING","CANCELED"],
@@ -197,7 +211,7 @@ export async function POST(request:NextRequest) {
     if(!["FLIGHT","FERRY"].includes(data.kind))return fail("نوع العرض غير صحيح.");
     const title=cleanText(data.title,160);
     if(!title)return fail("عنوان العرض مطلوب.");
-    const travelDate=parseDay(data.travelDate);
+    const schedule=parseSchedule(data.scheduleType,data.scheduleData,data.travelDate);
     const amount=parseAmount(data.amountSar);
     const status=cleanText(data.operationStatus,30)||"AVAILABLE";
     if(!["AVAILABLE","SUSPENDED","UNKNOWN"].includes(status))return fail("حالة تشغيل غير صحيحة.");
@@ -208,7 +222,7 @@ export async function POST(request:NextRequest) {
       kind:data.kind,title,description:cleanText(data.description,2500)||null,
       carrierName:cleanText(data.carrierName,100)||null,
       origin:cleanText(data.origin,80)||null,destination:cleanText(data.destination,80)||null,
-      travelDate,amountSar:amount,
+      travelDate:schedule.travelDate,scheduleType:schedule.scheduleType,scheduleData:schedule.scheduleData,amountSar:amount,
       adultPriceSar:parseAmount(data.adultPriceSar),childPriceSar:parseAmount(data.childPriceSar),infantPriceSar:parseAmount(data.infantPriceSar),
       priceUnit:cleanText(data.priceUnit,50)||null,
       bannerUrl:url||null,operationStatus:status,operationNote:cleanText(data.operationNote,1000)||null,
@@ -232,11 +246,12 @@ export async function PUT(request:NextRequest) {
     const url=cleanText(data.bannerUrl,500);
     if(url&&!url.startsWith("/Image/")&&!url.startsWith("/api/media?pathname="))return fail("رابط صورة غير معتمد.");
     const period=offerPeriod(data.startsAt,data.endsAt);
+    const schedule=parseSchedule(data.scheduleType,data.scheduleData,data.travelDate);
     const updated=await prisma.transportOffer.update({where:{id},data:{...period,
       title,description:cleanText(data.description,2500)||null,
       carrierName:cleanText(data.carrierName,100)||null,
       origin:cleanText(data.origin,80)||null,destination:cleanText(data.destination,80)||null,
-      travelDate:parseDay(data.travelDate),amountSar:parseAmount(data.amountSar),
+      travelDate:schedule.travelDate,scheduleType:schedule.scheduleType,scheduleData:schedule.scheduleData,amountSar:parseAmount(data.amountSar),
       adultPriceSar:parseAmount(data.adultPriceSar),childPriceSar:parseAmount(data.childPriceSar),infantPriceSar:parseAmount(data.infantPriceSar),
       priceUnit:cleanText(data.priceUnit,50)||null,
       bannerUrl:url||null,operationStatus:status,operationNote:cleanText(data.operationNote,1000)||null,
