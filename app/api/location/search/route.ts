@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const url =
       `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(query)}.json` +
       `?key=${encodeURIComponent(apiKey)}` +
-      `&language=ar-SA` +
+      `&language=ar` +
       `&countrySet=SA` +
       `&limit=1`;
 
