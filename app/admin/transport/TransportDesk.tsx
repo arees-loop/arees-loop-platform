@@ -1,5 +1,5 @@
-import RequestAttachmentsPanel from "@/app/components/RequestAttachmentsPanel";
 "use client";
+import RequestAttachmentsPanel from "@/app/components/RequestAttachmentsPanel";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
