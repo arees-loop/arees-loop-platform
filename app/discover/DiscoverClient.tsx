@@ -39,7 +39,8 @@ function PageContent(){
  const locationFromUrl=params.get("source")==="location"&&params.has("lat")&&params.has("lng")&&valid(urlLat,urlLng);
  const [services,setServices]=useState<Service[]>([]);
  const [loading,setLoading]=useState(true);
- const [loadError,setLoadError]=useState(false);
+ const [loadError,setLoadError]=useState("");
+ const [loadAttempt,setLoadAttempt]=useState(0);
  const [mode,setMode]=useState<Mode>(locationFromUrl?"nearby":queryFromUrl?"destination":"all");
  const [center,setCenter]=useState<Coordinates|null>(locationFromUrl?{lat:urlLat,lng:urlLng}:null);
  const [areaName,setAreaName]=useState("");
@@ -57,13 +58,20 @@ function PageContent(){
 
  useEffect(()=>{
   const controller=new AbortController();
+  setLoading(true);setLoadError("");
   void fetch("/api/services",{cache:"no-store",signal:controller.signal})
-   .then(async r=>{if(!r.ok)throw Error("LOAD_FAILED");return r.json()})
-   .then(data=>{if(data?.success&&Array.isArray(data.data))setServices(data.data);else setLoadError(true)})
-   .catch(()=>{if(!controller.signal.aborted)setLoadError(true)})
+   .then(async r=>{
+     const body=await r.json().catch(()=>null);
+     if(!r.ok||!body?.success||!Array.isArray(body.data)){
+       throw Error(typeof body?.message==="string"?body.message:"تعذر تحميل التجارب من الخادم.");
+     }
+     return body;
+   })
+   .then(data=>{if(!controller.signal.aborted)setServices(data.data)})
+   .catch(error=>{if(!controller.signal.aborted)setLoadError(error instanceof Error?error.message:"تعذر تحميل التجارب من الخادم.")})
    .finally(()=>{if(!controller.signal.aborted)setLoading(false)});
   return()=>controller.abort();
- },[]);
+ },[loadAttempt]);
  useEffect(()=>{
   if(!locationFromUrl)return;
   const controller=new AbortController();
@@ -202,7 +210,11 @@ function PageContent(){
      </div>}
    </section>
    {autoLocating?<p className="mt-8 rounded-2xl bg-white p-8 text-center">نحدد منطقتك أولاً حتى نعرض التجارب الأقرب لك...</p>:loading?<p className="mt-8 rounded-2xl bg-white p-8 text-center">جارٍ تحميل التجارب...</p>:
-   loadError?<p role="alert" className="mt-8 rounded-2xl border border-amber-200 bg-white p-8 text-center">تعذر تحميل التجارب حالياً. أعد المحاولة لاحقاً.</p>:
+   loadError?<div role="alert" className="mt-8 rounded-2xl border border-amber-200 bg-white p-8 text-center">
+    <p className="text-sm font-bold text-amber-900">{loadError}</p>
+    <p className="mt-2 text-xs text-[#0D3B34]/60">عند تعطل الاتصال، لا نعرض تجارب غير مؤكدة أو بيانات تجريبية بدلاً من النتائج الحقيقية.</p>
+    <button type="button" onClick={()=>setLoadAttempt(n=>n+1)} className="mt-4 rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-bold text-white">إعادة محاولة التحميل</button>
+   </div>:
    <section className="mt-7" aria-label="نتائج استكشاف التجارب">
     <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-black">التجارب المتاحة</h2>
      <p className="mt-1 text-xs text-[#0D3B34]/60">{locationCenter?"تُعرض فقط التجارب المطابقة للنطاق المكاني المختار.":"يمكنك اختيار مدينة أو استخدام الموقع لفرز التجارب."}</p></div>
