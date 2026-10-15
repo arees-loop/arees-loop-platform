@@ -123,7 +123,7 @@ export async function PATCH(request:NextRequest) {
     const action=cleanText(body.action,30);
 
     if(action==="REPLY_CUSTOMER"){
-      if(["CANCELED","DONE"].includes(current.status))return fail("لا يمكن الرد على طلب مغلق؛ أعد فتحه بإجراء معتمد أولاً.",409);
+      if(["CANCELED","DONE","CLOSED"].includes(current.status))return fail("لا يمكن نشر رد جديد على طلب انتهت حالته.",409);
       const customerReply=cleanText(body.customerReply,2500);
       if(!customerReply)return fail("اكتب الرد الذي سيظهر للعميل.",400);
       const [updated,event]=await prisma.$transaction([
@@ -159,7 +159,7 @@ export async function PATCH(request:NextRequest) {
     }
 
     if(action==="SAVE_QUOTE"){
-      if(["DONE","CANCELED","PAID","EXECUTING"].includes(current.status))return fail("لا يمكن تعديل عرض الطلب في هذه المرحلة.",409);
+      if(["DONE","CANCELED","CLOSED","PAID","EXECUTING"].includes(current.status))return fail("لا يمكن تعديل عرض الطلب في هذه المرحلة.",409);
       const carrier=cleanText(body.carrierName,100);
       const quoteNotes=cleanText(body.quoteNotes,2500);
       const internal=cleanText(body.adminNotes,2500);
@@ -204,7 +204,7 @@ export async function PATCH(request:NextRequest) {
       const [updated,event]=await prisma.$transaction([
         prisma.transportRequest.update({where:{id},data:{
           status,canceledBy:status==="CANCELED"?by:null,cancellationReason:status==="CANCELED"?reason:null,
-          ...(status==="CLOSED"?{customerReply:"نعتذر لكم، الخدمة أو العرض المطلوب غير متوفر حالياً. "+reason,quoteAmountSar:null,quoteValidUntil:null}:{}),
+          ...(status==="CLOSED"?{customerReply:"نعتذر لكم، الخدمة أو العرض المطلوب غير متوفر حالياً. "+reason,quoteAmountSar:null,quoteNotes:null,quoteValidUntil:null,whatsappStatus:"NOT_SENT"}:{}),
         }}),
         prisma.transportRequestEvent.create({data:{
           requestId:id,actorId,actorName,action:status==="CANCELED"?"CANCELED":status==="CLOSED"?"CLOSED_UNAVAILABLE":"STATUS_CHANGED",
