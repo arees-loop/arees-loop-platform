@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PartnerIcon from "./PartnerIcon";
+import NotificationBell from "./NotificationBell";
 
-type HeaderUser = { firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null };
+type HeaderUser = { id:string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null };
 
 export default function GlobalHeader() {
   const [language, setLanguage] = useState<"ar" | "en">("ar");
@@ -117,6 +118,7 @@ export default function GlobalHeader() {
 
           {user ? (
             <>
+              <NotificationBell role="customer" userId={user.id}/>
               <Link href="/cart" aria-label="السلة" className="relative grid h-11 w-11 place-items-center rounded-full bg-[#0D3B34] text-white shadow-[0_8px_22px_rgba(13,59,52,0.28)] transition hover:-translate-y-0.5 hover:bg-[#145347]">
                 <span className="text-[20px] leading-none">🛒</span>
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-[#D4AF37] px-1 text-[10px] font-black text-[#0D3B34]">{cartCount > 99 ? "99+" : cartCount}</span>}
