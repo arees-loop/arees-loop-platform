@@ -476,7 +476,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <div className="bg-[#0D3B34] px-5 py-3 text-sm font-black text-white">معاينة بطاقة العرض — نص مع صورة</div>
                 {(bannerPreview||offerForm.bannerUrl)&&
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img alt={offerForm.title||"صورة العرض"} src={bannerPreview||offerForm.bannerUrl} className="h-40 w-full bg-[#F8F5EC] object-contain"/>}
+                  <img alt={offerForm.title||"صورة العرض"} src={bannerPreview||offerForm.bannerUrl} className="aspect-[2/1] h-auto w-full bg-[#F8F5EC] object-cover"/>}
                 <div className="p-5">
                   <p className="text-xs font-bold text-[#A77B23]">{offerForm.carrierName||"الناقل / الباخرة"}</p>
                   <h3 className="mt-2 text-xl font-black">{offerForm.title||"عنوان العرض"}</h3>
