@@ -48,7 +48,7 @@ export default function AdminDashboardPage(){
   <section className="mt-8 rounded-[24px] border border-[#D4AF37]/35 bg-white p-5 shadow-sm" aria-label="إشعارات طلبات العملاء الجديدة">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-xl font-black text-[#0D3B34]">🔔 الطلبات الجديدة</h2><p className="mt-1 text-xs text-[#0D3B34]/60">اضغط على أي قسم للانتقال مباشرة إلى طلبات العملاء. تتجدد العدادات كل دقيقة.</p></div>
-      {requestAlerts&&<span className="rounded-full bg-[#F8F1DE] px-4 py-2 text-xs font-bold text-[#87641D]">إجمالي الجديد: {Object.values(requestAlerts).reduce((sum,value)=>sum+(value??0),0)}</span>}
+      {requestAlerts&&<span className="rounded-full bg-[#F8F1DE] px-4 py-2 text-xs font-bold text-[#87641D]">إجمالي الجديد: {Object.values(requestAlerts).reduce((sum:number,value)=>sum+(value??0),0)}</span>}
     </div>
     {alertsLoading&&!requestAlerts?<p className="mt-5 text-sm">جارٍ تحميل إشعارات الطلبات...</p>:null}
     {alertsError?<p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{alertsError}</p>:null}
