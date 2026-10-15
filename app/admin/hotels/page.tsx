@@ -153,7 +153,7 @@ export default function HotelAdminPage(){
      <div><p className="text-xs font-black text-[#AE8529]">AREES LOOP · HOTEL DESK</p>
      <h1 className="mt-2 text-3xl font-black">إدارة حجوزات وعروض الفنادق</h1>
      <p className="mt-3 text-sm text-[#0D3B34]/70">طلبات العملاء والإسناد والردود، وإعلانات الفنادق وأسعارها.</p></div>
-     <Link href="/hotels" className="rounded-full border border-[#D4AF37] bg-white px-5 py-3 text-sm font-bold">معاينة الفنادق ←</Link>
+     <nav aria-label="التنقل بين أقسام الحجوزات" className="flex flex-wrap items-center gap-2"><Link href="/admin/transport/flights" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF7DF]">✈ الطيران</Link><Link href="/admin/transport/ferries" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF7DF]">⚓ البواخر</Link><Link href="/admin/hotels" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF7DF]">▤ الفنادق</Link><Link href="/admin/transport/driving-licenses" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF7DF]">🚘 الرخصة الدولية</Link></nav>
    </div>
    <div className="mt-6 flex flex-wrap gap-3">
      <button onClick={()=>setTab("requests")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="requests"?"bg-[#0D3B34] text-white":"border bg-white"}`}>طلبات الفنادق ({rows.length})</button>
