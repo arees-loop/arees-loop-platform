@@ -67,6 +67,9 @@ export default function MyRequestsPage(){
   const [error,setError]=useState("");
   const [focus,setFocus]=useState("");
   const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL">("ALL");
+  const [statusFilter,setStatusFilter]=useState<"ALL"|"ACTIVE"|"EXPIRED"|"COMPLETED"|"CANCELED">("ALL");
+  const [view,setView]=useState<"CARDS"|"LIST">("CARDS");
+  const [expandedRef,setExpandedRef]=useState<string|null>(null);
   useEffect(()=>{
     const abort=new AbortController();
     const focusRef=new URLSearchParams(window.location.search).get("reference")||"";
@@ -87,7 +90,16 @@ export default function MyRequestsPage(){
       .finally(()=>{if(!abort.signal.aborted)setLoading(false);});
     return()=>abort.abort();
   },[]);
-  const visible=useMemo(()=>filter==="ALL"?requests:requests.filter(x=>x.kind===filter),[requests,filter]);
+  const visible=useMemo(()=>{
+    const now=Date.now();
+    const category=(item:CustomerRequest)=>{
+      if(item.group==="CANCELED")return "CANCELED";
+      if(item.group==="COMPLETED")return "COMPLETED";
+      if(item.quoteValidUntil&&new Date(item.quoteValidUntil).getTime()<now)return "EXPIRED";
+      return "ACTIVE";
+    };
+    return requests.filter(item=>(filter==="ALL"||item.kind===filter)&&(statusFilter==="ALL"||category(item)===statusFilter));
+  },[requests,filter,statusFilter]);
   return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
     <div className="mx-auto max-w-[1500px]">
       <p className="text-xs font-black tracking-[.15em] text-[#A78231]">AREES LOOP · MY REQUESTS</p>
@@ -102,10 +114,27 @@ export default function MyRequestsPage(){
           <button key={kind} onClick={()=>setFilter(kind)} className={`rounded-full px-5 py-2.5 text-xs font-bold ${filter===kind?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>{label}</button>)}
         <Link href="/cart" className="rounded-full border border-[#D4AF37]/40 bg-white px-5 py-2.5 text-xs font-bold">سلة الحجوزات</Link>
       </div>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-3">
+        <div className="flex flex-wrap gap-2" aria-label="فلترة الطلبات حسب الحالة">
+          {([["ALL","الكل"],["ACTIVE","النشطة"],["EXPIRED","المنتهية"],["COMPLETED","المنجزة"],["CANCELED","الملغية"]] as const).map(([status,name])=><button key={status} type="button" aria-pressed={statusFilter===status} onClick={()=>{setStatusFilter(status);setExpandedRef(null)}} className={`rounded-xl px-3 py-2 text-xs font-bold ${statusFilter===status?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/35"}`}>{name}</button>)}
+        </div>
+        <div className="flex gap-2" aria-label="طريقة عرض الطلبات">
+          <button type="button" aria-pressed={view==="CARDS"} onClick={()=>setView("CARDS")} className={`rounded-xl px-4 py-2 text-xs font-bold ${view==="CARDS"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/35"}`}>▦ بطاقات</button>
+          <button type="button" aria-pressed={view==="LIST"} onClick={()=>setView("LIST")} className={`rounded-xl px-4 py-2 text-xs font-bold ${view==="LIST"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/35"}`}>☷ قائمة</button>
+        </div>
+      </div>
       {loading&&<p className="mt-10 rounded-2xl bg-white p-7 text-sm">جاري تحميل طلباتك...</p>}
       {error&&<p role="alert" className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-7">{error}</p>}
       {!loading&&requests.length===0&&!error&&<div className="mt-8 rounded-2xl border bg-white p-8 text-sm leading-8">لا توجد طلبات في حسابك أو في هذا المتصفح حتى الآن. <Link className="font-black underline" href="/flights">إرسال طلب طيران</Link></div>}
-      {!loading&&<div className="mt-7 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {!loading&&requests.length>0&&visible.length===0&&<p className="mt-6 rounded-xl bg-white p-6 text-sm">لا توجد طلبات مطابقة للفلترة الحالية.</p>}
+      {!loading&&view==="LIST"&&visible.length>0&&<div className="mt-7 overflow-x-auto rounded-2xl border border-[#D4AF37]/30 bg-white">
+        <table className="w-full min-w-[720px] text-right text-sm">
+          <thead className="bg-[#F8F3E8] text-xs"><tr><th className="p-4">رقم الطلب</th><th className="p-4">نوع الخدمة</th><th className="p-4">المسار / الوجهة</th><th className="p-4">التاريخ</th><th className="p-4">الحالة</th><th className="p-4">الإجراء</th></tr></thead>
+          <tbody>{visible.map(item=><tr key={item.reference} className="border-t border-[#D4AF37]/20"><td dir="ltr" className="p-4 text-xs font-bold">{item.reference}</td><td className="p-4">{item.title}</td><td className="p-4">{item.route}</td><td className="p-4">{labelDate(item.travelDate)}</td><td className="p-4">{statuses[item.status]||item.status}</td><td className="p-4"><button type="button" onClick={()=>setExpandedRef(x=>x===item.reference?null:item.reference)} aria-expanded={expandedRef===item.reference} className="rounded-lg border border-[#D4AF37]/40 px-3 py-2 text-xs font-bold">{expandedRef===item.reference?"إغلاق":"التفاصيل"}</button></td></tr>)}</tbody>
+        </table>
+        {expandedRef&&visible.some(item=>item.reference===expandedRef)&&<div className="border-t border-[#D4AF37]/30 p-4"><RequestCard key={expandedRef} item={visible.find(item=>item.reference===expandedRef)!} featured={true}/></div>}
+      </div>}
+      {!loading&&view==="CARDS"&&<div className="mt-7 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stages.map(stage=>{
           const list=visible.filter(x=>x.group===stage.id);
           return <section key={stage.id} className="rounded-[24px] border border-[#D4AF37]/25 bg-[#F4F0E7] p-4">
