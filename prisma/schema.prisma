@@ -1101,3 +1101,15 @@ model PlatformPaymentSetting {
   updatedById String?
   updatedAt DateTime @updatedAt
 }
+
+// Platform-owned beneficiary account. Not used to confirm payment automatically.
+model PlatformBankAccount {
+  id String @id @default("primary")
+  bankName String
+  beneficiaryName String
+  iban String
+  qrImageUrl String?
+  enabled Boolean @default(false)
+  updatedById String?
+  updatedAt DateTime @updatedAt
+}
