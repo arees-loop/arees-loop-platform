@@ -8,6 +8,8 @@ export type AreesLocation = {
   coordinates: AreesCoordinates;
   address: string | null;
   placeId: string | null;
+  city: string | null;
+  area: string | null;
 };
 
 export type LocationErrorCode =
@@ -30,6 +32,8 @@ export class AreesLocationError extends Error {
 
 type ReverseGeocodeResponse = {
   address?: string;
+  city?: string;
+  area?: string;
   placeId?: string | null;
   location?: {
     lat: number;
@@ -121,6 +125,8 @@ export async function reverseGeocode(
 ): Promise<{
   address: string | null;
   placeId: string | null;
+  city: string | null;
+  area: string | null;
 }> {
   const params = new URLSearchParams({
     lat: String(lat),
@@ -156,6 +162,8 @@ export async function reverseGeocode(
   return {
     address: data?.address ?? null,
     placeId: data?.placeId ?? null,
+    city: data?.city?.trim() || null,
+    area: data?.area?.trim() || null,
   };
 }
 
@@ -176,6 +184,8 @@ export async function getCurrentLocation(
       coordinates,
       address: result.address,
       placeId: result.placeId,
+      city: result.city,
+      area: result.area,
     };
   } catch (error) {
     console.error("Arees Loop reverse geocoding failed:", error);
@@ -184,6 +194,8 @@ export async function getCurrentLocation(
       coordinates,
       address: null,
       placeId: null,
+      city: null,
+      area: null,
     };
   }
 }
