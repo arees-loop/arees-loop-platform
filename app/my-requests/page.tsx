@@ -92,6 +92,7 @@ export default function MyRequestsPage(){
     <div className="mx-auto max-w-[1500px]">
       <p className="text-xs font-black tracking-[.15em] text-[#A78231]">AREES LOOP · MY REQUESTS</p>
       <h1 className="mt-2 text-4xl font-black">طلباتي</h1>
+      <Link href="/my-bank-transfers" className="mt-4 inline-block rounded-full bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white">متابعة التحويلات البنكية وإرفاق الإيصال ←</Link>
       <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/70">تابع طلبات الطيران والبواخر والفنادق، وشاهد حالة كل طلب ورد أريس عليه من نفس الصفحة.</p>
       <div className="mt-5 rounded-xl border border-[#D4AF37]/30 bg-white px-4 py-3 text-xs leading-7 text-[#0D3B34]/70">
         الطلبات التي أرسلتها وأنت مسجّل الدخول مرتبطة بحسابك. طلبات الزائر مرتبطة بهذا المتصفح برمز خاص؛ للحفاظ على إمكانية متابعتها من جهاز آخر يُفضّل تسجيل الدخول قبل إرسال الطلب.
