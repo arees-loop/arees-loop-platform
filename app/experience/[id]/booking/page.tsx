@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import CustomerActionGate from "@/app/components/CustomerActionGate";
 import { useParams, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -107,6 +108,7 @@ export default function BookingPage() {
     `&guests=${guests}`;
 
   return (
+    <CustomerActionGate nextPath={"/experience/"+encodeURIComponent(id)+"/booking"} action="حجز التجربة">
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
@@ -521,6 +523,7 @@ export default function BookingPage() {
         </section>
       </div>
     </main>
+    </CustomerActionGate>
   );
 }
 
