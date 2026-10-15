@@ -207,6 +207,8 @@ export default function Home() {
   const [showLocationNotice, setShowLocationNotice] = useState(false);
   const [detectedLocationScene, setDetectedLocationScene] = useState<(typeof heroScenes)[number] | null>(null);
   const [detectedAddress, setDetectedAddress] = useState<string | null>(null);
+  const [detectedArea, setDetectedArea] = useState<string | null>(null);
+  const [detectedCity, setDetectedCity] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [heroLanguage, setHeroLanguage] = useState<"ar" | "en">("ar");
   const wheelLocked = useRef(false);
@@ -304,12 +306,16 @@ export default function Home() {
           setUserCoords(null);
           setDetectedLocationScene(null);
           setDetectedAddress(null);
+          setDetectedArea(null);
+          setDetectedCity(null);
           setShowLocationNotice(false);
           return;
         }
 
         setUserCoords({ lat, lng });
         setDetectedAddress(location.address);
+        setDetectedArea(location.area);
+        setDetectedCity(location.city);
 
         let nearestIndex = 0;
         let nearestDistance = Number.POSITIVE_INFINITY;
@@ -333,20 +339,22 @@ export default function Home() {
         if (nearestDistance <= 35) {
           setDetectedLocationScene(heroScenes[nearestIndex]);
           setActiveScene(nearestIndex);
-          noticeTimer = window.setTimeout(
-            () => setShowLocationNotice(true),
-            650,
-          );
+          // The location card is shown for any verified, precise location;
+          // a nearby hero city only changes the artwork, never the location label.
         } else {
           setDetectedLocationScene(null);
           setActiveScene(0);
         }
+        noticeTimer = window.setTimeout(() => setShowLocationNotice(true), 400);
       } catch (error) {
         console.error("Arees Loop location detection failed:", error);
 
         if (!cancelled) {
           setDetectedLocationScene(null);
           setDetectedAddress(null);
+          setDetectedArea(null);
+          setDetectedCity(null);
+          setShowLocationNotice(false);
           setActiveScene(0);
         }
       } finally {
@@ -520,78 +528,62 @@ export default function Home() {
         </div>
 
 
-        {showLocationNotice && detectedLocationScene && (
+        {showLocationNotice && userCoords && (
           <div
             dir={isArabic ? "rtl" : "ltr"}
-            className="absolute left-1/2 top-[112px] z-[70] w-[calc(100%-32px)] max-w-[520px] -translate-x-1/2 px-2 md:left-4 md:top-[116px] md:w-[min(34vw,420px)] md:max-w-[420px] md:translate-x-0"
+            className="relative z-30 mx-auto mt-5 w-[calc(100%-32px)] max-w-[560px] sm:mt-6 lg:absolute lg:left-[calc(50%-11rem)] lg:top-[20px] lg:mt-0 lg:w-[min(36vw,560px)] lg:-translate-x-1/2"
           >
-            <div className="relative overflow-hidden rounded-[24px] border border-white/35 bg-white/[0.035] px-5 py-4 text-white [text-shadow:0_2px_7px_rgba(0,0,0,.95)] shadow-[0_18px_55px_rgba(0,0,0,0.26),inset_0_1px_0_rgba(255,255,255,0.28)] backdrop-blur-[2px]">
-              <div className="pointer-events-none absolute inset-0 bg-transparent" />
-
+            <div className="relative overflow-hidden rounded-[26px] border border-white/45 bg-white/[0.13] px-4 py-3 text-white shadow-[0_16px_42px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.28)] backdrop-blur-xl backdrop-saturate-150 sm:px-5 sm:py-4">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.12] via-transparent to-[#D4AF37]/[0.08]" />
               <button
                 type="button"
                 onClick={() => setShowLocationNotice(false)}
-                aria-label={isArabic ? "إغلاق الإشعار" : "Close notification"}
-                className="absolute left-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-white/[0.06] text-sm text-white/75 transition hover:bg-white/15 hover:text-white"
+                aria-label={isArabic ? "إغلاق إشعار الموقع" : "Dismiss location notice"}
+                className="absolute left-3 top-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/35 bg-[#0D3B34]/25 text-sm text-white transition hover:bg-[#0D3B34]/50"
               >
                 ×
               </button>
 
-              <div className="relative z-10 flex items-center gap-4">
-                <div className="flex h-11 w-11 shrink-0 animate-bounce items-center justify-center rounded-2xl border border-[#D4AF37]/55 bg-[#D4AF37]/14 text-[#F0D37D] shadow-[inset_0_1px_0_rgba(255,255,255,0.20)]">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
+              <div className="relative z-10 flex items-center gap-3 sm:gap-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E8CC73]/60 bg-[#D4AF37]/15 text-[#F0D37D]" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" className="h-[20px] w-[20px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
                     <circle cx="12" cy="10" r="2.4" />
                   </svg>
-                </div>
+                </span>
 
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-black tracking-[0.12em] text-[#F0D37D]">
-                    {isArabic ? "تم تحديد موقعك" : "LOCATION DETECTED"}
+                <div className="min-w-0 flex-1 [text-shadow:0_2px_8px_rgba(0,0,0,0.72)]">
+                  <p className="text-[10px] font-black tracking-[0.10em] text-[#F0D37D]">
+                    {isArabic ? "تم تحديد موقعك · موقعك الحالي" : "YOUR CURRENT LOCATION"}
                   </p>
-
-                  <p className="mt-1 text-base font-black md:text-lg">
+                  <p className="mt-1 line-clamp-2 text-[15px] font-black leading-[1.6] sm:text-base">
                     {isArabic
-                      ? `أنت الآن في ${detectedLocationScene.nameAr}`
-                      : `You are now in ${detectedLocationScene.nameEn}`}
+                      ? detectedArea && detectedCity
+                        ? `أنت الآن في ${detectedArea}، ${detectedCity}`
+                        : detectedCity || detectedArea
+                          ? `أنت الآن في ${detectedCity || detectedArea}`
+                          : "تم تحديد موقعك الجغرافي"
+                      : detectedCity || detectedArea
+                        ? `You are now in ${[detectedArea, detectedCity].filter(Boolean).join(", ")}`
+                        : "Your location has been detected"}
                   </p>
-
-                  {detectedAddress && (
-                    <p className="mt-1 truncate text-[11px] text-white/65 md:text-xs">
-                      {detectedAddress}
-                    </p>
+                  <p className="mt-1 line-clamp-2 text-[11px] leading-[1.6] text-white/90">
+                    {isArabic
+                      ? "تجارب المنطقة المحيطة بك، مرتبة بالأقرب. ابحث عن وجهتك القادمة في «اكتشف»."
+                      : "Nearby experiences sorted by distance. Search your next destination in Discover."}
+                  </p>
+                  {!detectedCity && !detectedArea && detectedAddress && (
+                    <p className="mt-1 truncate text-[10px] text-white/70">{detectedAddress}</p>
                   )}
-
-                  <p className="mt-1 text-xs leading-6 text-white/78 md:text-sm">
-                    {isArabic
-                      ? "استكشف تجارب ومهام قريبة من موقعك، مصممة لتناسب لحظتك الحالية."
-                      : "Explore nearby experiences and missions selected around your current location."}
-                  </p>
                 </div>
 
                 <Link
                   href={nearbyDiscoverHref}
-                  className="hidden shrink-0 rounded-full bg-[#D4AF37] px-5 py-3 text-xs font-black text-[#10342C] shadow-[0_10px_28px_rgba(212,175,55,0.24)] transition hover:-translate-y-0.5 hover:bg-[#E6C45F] sm:inline-flex"
+                  className="shrink-0 self-end rounded-full bg-[#D4AF37] px-3 py-2.5 text-[11px] font-black text-[#10342C] shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition hover:bg-[#F0D37D] sm:px-4"
                 >
-                  {isArabic ? "اكتشف ما حولك" : "Explore nearby"}
+                  {isArabic ? "اكتشف حولك" : "Discover"}
                 </Link>
               </div>
-
-              <Link
-                href={nearbyDiscoverHref}
-                className="relative z-10 mt-3 flex w-full items-center justify-center rounded-full bg-[#D4AF37] px-5 py-3 text-xs font-black text-[#10342C] sm:hidden"
-              >
-                {isArabic ? "اكتشف ما حولك" : "Explore nearby"}
-              </Link>
             </div>
           </div>
         )}
