@@ -1,3 +1,4 @@
+import { bankTransferWritesAllowed } from "@/lib/bank-transfer-launch-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { put } from "@vercel/blob";
@@ -6,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime="nodejs";
 export async function POST(request:NextRequest,context:{params:Promise<{reference:string}>}) {
+  if(!bankTransferWritesAllowed())return NextResponse.json({success:false,message:"نظام التحويل قيد التجهيز."},{status:503});
   const session=await getCurrentSession();
   if(!session)return NextResponse.json({success:false,message:"سجّل الدخول أولاً."},{status:401});
   const {reference}=await context.params;
