@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { getCurrentSession } from "@/lib/session";
-import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
-import { checkServerImageDimensions } from "@/lib/server-image-dimensions";
+import { getServerImageDimensions } from "@/lib/server-image-dimensions";
 export const runtime="nodejs";
 const types:Record<string,string>={"image/png":"png","image/jpeg":"jpg","image/webp":"webp"};
 export async function POST(request:NextRequest){
@@ -22,11 +21,14 @@ export async function POST(request:NextRequest){
       file.type==="image/jpeg"?h[0]===255&&h[1]===216&&h[2]===255:
       String.fromCharCode(...h.slice(0,4))==="RIFF"&&String.fromCharCode(...h.slice(8,12))==="WEBP";
     if(!valid)return NextResponse.json({success:false,message:"محتوى الصورة غير متطابق مع امتدادها."},{status:415});
-    const dimensions = await checkServerImageDimensions(file, IMAGE_REQUIREMENTS.offer);
-    if (!dimensions.matches) return NextResponse.json({success:false,message:`${imageDimensionMessage(IMAGE_REQUIREMENTS.offer)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُرفع.`},{status:400});
+    // Dimensions are advisory. Sharp rejects decompression bombs (>40MP).
+    const dimensions=await getServerImageDimensions(file);
+    const ratio=dimensions.width/dimensions.height;
+    const cropWarning=Math.abs(ratio-2)>0.02;
+    if(dimensions.width<100||dimensions.height<100)return NextResponse.json({success:false,message:"دقة الصورة صغيرة للغاية. اختر صورة لا يقل أي ضلع فيها عن 100 بكسل."},{status:400});
     const pathname=`transport-offers/${kind}/${crypto.randomUUID()}.${ext}`;
     const blob=await put(pathname,file,{access:"private",addRandomSuffix:false,contentType:file.type});
-    return NextResponse.json({success:true,url:`/api/media?pathname=${encodeURIComponent(blob.pathname)}`});
+    return NextResponse.json({success:true,url:`/api/media?pathname=${encodeURIComponent(blob.pathname)}`,dimensions,cropWarning,message:cropWarning?"الصورة رُفعت بنجاح، لكن نسبة الأبعاد مختلفة وقد تُقص عند عرضها.":undefined});
   }catch(err){console.error("transport offer image upload failed",err);
     return NextResponse.json({success:false,message:"تعذر رفع الصورة. تحقق من اتصال Vercel Blob الخاص بالمشروع."},{status:503});
   }
