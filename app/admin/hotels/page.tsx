@@ -25,6 +25,7 @@ const day=(v:string|null)=>v?new Date(v).toISOString().slice(0,10):"";
 
 export default function HotelAdminPage(){
  const [tab,setTab]=useState<"requests"|"offers">("offers");
+  useEffect(()=>{if(new URLSearchParams(window.location.search).get("view")==="requests")setTab("requests");},[]);
  const [rows,setRows]=useState<HotelCase[]>([]);
  const [offers,setOffers]=useState<Offer[]>([]);
  const [staff,setStaff]=useState<Staff[]>([]);
