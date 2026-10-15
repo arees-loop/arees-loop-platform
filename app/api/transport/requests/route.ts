@@ -1,3 +1,4 @@
+import { notifyAdminsOfNewRequest } from "@/lib/request-notification";
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes, createHash } from "node:crypto";
 import { getCurrentSession } from "@/lib/session";
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest) {
       requestId:created.id,actorName:"العميل",action:"REQUEST_CREATED",toStatus:"NEW",
       details:{tripType,returnDate:returnDay||null,legs:itinerary.length||1},
     }}).catch(err=>console.error("Travel request event insert failed",err));
+    await notifyAdminsOfNewRequest({kind:kind as "FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE",requestId:created.id,reference:created.reference}).catch(err=>console.error("New travel request notification failed",err));
     let mailed = false;
     try {
       await sendTransportInquiryNotification({
