@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   let publicAsset = !logoMatch && !successMatch && !transportMatch && !hotelMatch;
   if(hotelMatch){
     const offer=await prisma.hotelOffer.findFirst({
-      where:{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`,deletedAt:null},
+      where:{deletedAt:null,OR:[{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`},{imageUrls:{array_contains:[`/api/media?pathname=${encodeURIComponent(pathname)}`]}}]},
       select:{isVisible:true,startsAt:true,endsAt:true},
     });
     if(!offer)return new Response("Not found",{status:404});
