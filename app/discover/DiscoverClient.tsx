@@ -4,7 +4,7 @@ import ExperiencePhoto from "@/app/components/ExperiencePhoto";
 import SaveExperienceButton from "@/app/components/SaveExperienceButton";
 import {getCurrentLocation} from "@/lib/location";
 import {useSearchParams} from "next/navigation";
-import {Suspense,useCallback,useEffect,useMemo,useState} from "react";
+import {Suspense,useCallback,useEffect,useMemo,useRef,useState} from "react";
 
 type Service={
  id:string;nameAr:string;category:string;subCategory?:string|null;city?:string|null;
@@ -51,7 +51,9 @@ function PageContent(){
  const [locating,setLocating]=useState(false);
  const [notice,setNotice]=useState("");
  const [cityFilter,setCityFilter]=useState("");
- const [locationRequested,setLocationRequested]=useState(false);
+ const [autoLocating,setAutoLocating]=useState(!locationFromUrl&&!queryFromUrl.trim());
+ const locationEpoch=useRef(0);
+ const autoStarted=useRef(false);
 
  useEffect(()=>{
   const controller=new AbortController();
@@ -85,33 +87,40 @@ function PageContent(){
   return()=>{window.clearTimeout(timer);controller.abort()};
  },[query,selectedPlace,mode]);
 
- const detect=useCallback(async()=>{
+ const detect=useCallback(async(auto=false)=>{
+  const epoch=++locationEpoch.current;
   setLocating(true);setNotice("");
+  if(auto)setAutoLocating(true);
   try{
    const location=await getCurrentLocation();
+   if(epoch!==locationEpoch.current)return; // Ignore GPS arriving after a new destination search.
    const {lat,lng,accuracy}=location.coordinates;
-   if(accuracy===null||accuracy>25000){setNotice("دقة موقعك الحالية غير كافية. حاول مرة أخرى أو اختر وجهتك يدوياً.");return;}
+   if(accuracy===null||accuracy>25000){
+    setNotice("دقة موقعك الحالية غير كافية لعرض تجارب المنطقة. جرّب إعادة تحديد الموقع أو ابحث عن وجهتك يدوياً.");
+    return;
+   }
    setCenter({lat,lng});setAreaName(location.city||"");setDistrict(location.area||"");
    setQuery("");setCityFilter("");setSelectedPlace(null);setSuggestions([]);setMode("nearby");
-  }catch{
-   setNotice("لم نتمكن من تحديد الموقع. يمكنك السماح بالموقع من المتصفح أو البحث عن المدينة والوجهة يدوياً.");
-  }finally{setLocating(false)}
- },[]);
- // Restore nearby discovery only after the browser has already granted permission.
- // Never force a geolocation prompt just because someone visited the page.
- useEffect(()=>{
-   if(locationFromUrl||queryFromUrl.trim()||locationRequested)return;
-   let active=true;
-   async function checkPermission(){
-     try{
-       if(!("permissions" in navigator))return;
-       const p=await navigator.permissions.query({name:"geolocation"});
-       if(active&&p.state==="granted"){setLocationRequested(true);void detect();}
-     }catch{}
+   if(!location.city&&!location.area){
+    setNotice("تم تحديد موقعك الجغرافي، لكن اسم الحي والمدينة لم يصل من خدمة المواقع. ستظهر التجارب القريبة حسب الإحداثيات عند توفر بياناتها.");
    }
-   void checkPermission();
-   return()=>{active=false};
- },[locationFromUrl,queryFromUrl,locationRequested,detect]);
+  }catch(error){
+   if(epoch!==locationEpoch.current)return;
+   const denied=error instanceof Error&&"code" in error&&(error as Error&{code?:string}).code==="PERMISSION_DENIED";
+   setNotice(denied
+     ?"لم يُسمح باستخدام موقعك. يمكن السماح به من إعدادات المتصفح أو البحث عن مدينة ووجهة يدوياً."
+     :"تعذر تحديد موقعك تلقائياً. يمكنك إعادة المحاولة أو البحث عن المدينة أو الوجهة يدوياً.");
+  }finally{
+   if(epoch===locationEpoch.current){setLocating(false);setAutoLocating(false);}
+  }
+ },[]);
+ // Automatically start nearby discovery. The browser retains full control
+ // of location permission. An explicit destination always takes priority.
+ useEffect(()=>{
+   if(locationFromUrl||queryFromUrl.trim()||autoStarted.current)return;
+   autoStarted.current=true;
+   void detect(true);
+ },[locationFromUrl,queryFromUrl,detect]);
  const typed=useMemo(()=>services.filter(s=>matchesType(s,type)),[services,type]);
  const cities=useMemo(()=>Array.from(new Set(typed.map(s=>s.city).filter((x):x is string=>!!x))).sort((a,b)=>a.localeCompare(b,"ar")),[typed]);
  const nearby=mode==="nearby"&&center!==null;
@@ -135,30 +144,35 @@ function PageContent(){
   });
  },[typed,locationCenter,cityFilter,mode,selectedPlace,query]);
  const locationLabel=[district,areaName].filter(Boolean).join("، ");
- const title=mode==="nearby"&&center?"التجارب القريبة منك":
+ const title=autoLocating?"نبحث عن التجارب القريبة منك":mode==="nearby"&&center?"التجارب القريبة منك":
    mode==="destination"?"استكشف وجهتك القادمة":labels[type]||"البرامج والتجارب";
  function changeSearch(text:string){
+  locationEpoch.current+=1;setLocating(false);setAutoLocating(false);
   setQuery(text);setSelectedPlace(null);setSuggestions([]);setCityFilter("");
   setMode(text.trim()?"destination":"all");setNotice("");
  }
  function pickPlace(place:Place){
   if(!place.location||!valid(place.location.lat,place.location.lng))return;
+  locationEpoch.current+=1;setLocating(false);setAutoLocating(false);
   setQuery(place.name||place.city||place.address);
   setSelectedPlace(place);setCityFilter("");setSuggestions([]);setAreaName("");setDistrict("");
   setMode("destination");setNotice("");
  }
- function resetAll(){setMode("all");setCenter(null);setAreaName("");setDistrict("");setQuery("");setCityFilter("");setSelectedPlace(null);setSuggestions([]);setNotice("")}
+ function resetAll(){locationEpoch.current+=1;setLocating(false);setAutoLocating(false);setMode("all");setCenter(null);setAreaName("");setDistrict("");setQuery("");setCityFilter("");setSelectedPlace(null);setSuggestions([]);setNotice("")}
  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
   <div className="mx-auto max-w-[1380px]">
    <p className="text-[11px] font-bold tracking-[.17em] text-[#B99124]">AREES LOOP · DISCOVER</p>
    <h1 className="mt-2 text-3xl font-black md:text-4xl">{title}</h1>
    <section className="mt-6 rounded-[24px] border border-[#D4AF37]/30 bg-white p-4 shadow-sm md:p-6" aria-label="الموقع والوجهات">
+     {autoLocating&&<div role="status" className="mb-5 rounded-2xl bg-[#EAF5EF] p-4 text-sm font-bold text-[#0D3B34]">
+        📍 جارٍ تحديد موقعك وعرض تجارب المنطقة المحيطة بك... قد يطلب المتصفح الإذن بالموقع.
+      </div>}
      {nearby&&<div role="status" className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[#EAF5EF] p-4">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#116547]" aria-hidden="true">
          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
         </span>
         <div className="min-w-0 flex-1"><p className="text-[11px] font-semibold text-[#0D3B34]/60">موقعك الحالي</p><p className="mt-1 max-w-[260px] whitespace-normal break-words text-sm font-black leading-7 sm:max-w-none">أنت الآن {locationLabel?"في "+locationLabel:"تستكشف من موقعك الحالي"}</p>
-         <p className="mt-1 text-xs leading-6 text-[#0D3B34]/65">تظهر التجارب المنشورة ضمن {RADIUS_KM} كم من موقعك، مرتبة بالأقرب. التجارب بلا موقع محدد لا تظهر في النتائج القريبة.</p>
+         <p className="mt-1 text-xs leading-6 text-[#0D3B34]/65">تظهر تجارب المنطقة المحيطة، مرتبة بالأقرب، ضمن {RADIUS_KM} كم من موقعك. يمكنك البحث عن وجهتك القادمة أو اختيار «كل الوجهات» في أي وقت.</p>
         </div>
      </div>}
      {chosen&&<div role="status" className="mb-5 rounded-2xl bg-[#F6EED9] p-4"><p className="text-sm font-black">وجهتك المختارة: {selectedPlace.name}</p><p className="mt-1 text-xs text-[#0D3B34]/70">{selectedPlace.address}</p><p className="mt-2 text-xs text-[#0D3B34]/70">نعرض التجارب ضمن {RADIUS_KM} كم من الوجهة المختارة، وليس موقعك الحالي.</p></div>}
@@ -175,11 +189,11 @@ function PageContent(){
        </div>}
       </div>
       <div className="flex flex-wrap items-end gap-2">
-       <button type="button" disabled={locating} onClick={()=>{setLocationRequested(true);void detect()}} className="rounded-xl bg-[#0D3B34] px-5 py-3.5 text-sm font-black text-white disabled:opacity-50">{locating?"جارٍ تحديد الموقع...":"📍 استخدم موقعي"}</button>
+       {!autoLocating&&!nearby&&<button type="button" disabled={locating} onClick={()=>void detect()} className="rounded-xl bg-[#0D3B34] px-5 py-3.5 text-sm font-black text-white disabled:opacity-50">{locating?"جارٍ تحديد الموقع...":"📍 استخدم موقعي"}</button>}
        <button type="button" onClick={resetAll} className="rounded-xl border border-[#D4AF37]/40 bg-white px-4 py-3.5 text-xs font-bold">كل الوجهات</button>
       </div>
      </div>
-     <p className="mt-3 text-xs leading-6 text-[#0D3B34]/60">يمكنك تصفح كل المناطق دون تشغيل الموقع. اختر اقتراحاً من البحث لعرض تجارب تلك المنطقة على الخريطة الجغرافية.</p>
+     <p className="mt-3 text-xs leading-6 text-[#0D3B34]/60">تبدأ الصفحة من موقعك تلقائياً إذا سمح المتصفح بذلك. عند اختيار وجهة أخرى يمكنك العودة لتجارب منطقتك بزر «استخدم موقعي».</p>
      {notice&&<p role="alert" className="mt-3 rounded-xl bg-amber-50 p-3 text-xs leading-6 text-amber-900">{notice}</p>}
      {!locationCenter&&cities.length>0&&<div className="mt-4 flex flex-wrap gap-2">
        <button type="button" onClick={()=>setCityFilter("")} className={`rounded-full px-4 py-2 text-xs font-bold ${!cityFilter?"bg-[#0D3B34] text-white":"bg-[#F8F3E7]"}`}>كل المدن</button>
@@ -187,7 +201,7 @@ function PageContent(){
          className={`rounded-full px-4 py-2 text-xs font-bold ${cityFilter===city?"bg-[#0D3B34] text-white":"bg-[#F8F3E7]"}`}>{city}</button>)}
      </div>}
    </section>
-   {loading?<p className="mt-8 rounded-2xl bg-white p-8 text-center">جارٍ تحميل التجارب...</p>:
+   {autoLocating?<p className="mt-8 rounded-2xl bg-white p-8 text-center">نحدد منطقتك أولاً حتى نعرض التجارب الأقرب لك...</p>:loading?<p className="mt-8 rounded-2xl bg-white p-8 text-center">جارٍ تحميل التجارب...</p>:
    loadError?<p role="alert" className="mt-8 rounded-2xl border border-amber-200 bg-white p-8 text-center">تعذر تحميل التجارب حالياً. أعد المحاولة لاحقاً.</p>:
    <section className="mt-7" aria-label="نتائج استكشاف التجارب">
     <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-black">التجارب المتاحة</h2>
