@@ -1,3 +1,4 @@
+import { bankTransferWritesAllowed } from "@/lib/bank-transfer-launch-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +11,7 @@ export async function GET() {
 }
 
 export async function PUT(request:NextRequest) {
+  if(!bankTransferWritesAllowed())return NextResponse.json({success:false,message:"إعداد الحساب البنكي قيد التجهيز."},{status:503});
   const session = await getCurrentSession();
   if (session?.user.role !== "SUPER_ADMIN") return NextResponse.json({success:false},{status:403});
   const fields = await request.json();
