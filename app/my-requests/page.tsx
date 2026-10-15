@@ -43,7 +43,10 @@ function RequestCard({item,featured}:{item:CustomerRequest;featured:boolean}){
       <p className="text-xs font-black text-[#946F18]">رد أريس على طلبك</p>
       <p className="mt-1 whitespace-pre-wrap text-xs leading-7">{item.customerReply}</p>
     </div>}
-    {item.quoteAmountSar!==null&&<p className="mt-4 text-lg font-black text-[#99731E]">عرض السعر: {money(item.quoteAmountSar)}</p>}
+    {item.quoteAmountSar!==null&&item.status!=="CLOSED"&&<p className="mt-4 text-lg font-black text-[#99731E]">عرض السعر: {money(item.quoteAmountSar)}</p>}
+    {item.status==="QUOTE_SENT"&&item.quoteAmountSar!==null&&item.quoteAmountSar>0&&(!item.quoteValidUntil||new Date(item.quoteValidUntil).getTime()>=Date.now())&&<Link href={`/checkout/request/${encodeURIComponent(item.reference)}`} className="mt-4 block rounded-xl bg-[#0D3B34] px-4 py-3 text-center text-sm font-black text-white">عرض وسائل السداد ←</Link>}
+    {item.status==="QUOTE_READY"&&<p className="mt-3 rounded-xl bg-[#FFF5D9] px-3 py-2 text-xs text-[#8B671E]">عرض السعر قيد الإرسال؛ يظهر اختيار وسيلة الدفع بعد اعتماد إرساله لك.</p>}
+    {item.status==="QUOTE_SENT"&&item.quoteValidUntil&&new Date(item.quoteValidUntil).getTime()<Date.now()&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">انتهت صلاحية العرض. يرجى التواصل مع الإدارة للحصول على عرض جديد.</p>}
     <button type="button" onClick={()=>setExpanded(x=>!x)} className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-[#F8F5EC] px-3 py-3 text-sm font-bold">
       {expanded?"إخفاء التفاصيل":"عرض تفاصيل الطلب"}
     </button>
@@ -67,7 +70,7 @@ export default function MyRequestsPage(){
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
   const [focus,setFocus]=useState("");
-  const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL">("ALL");
+  const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE">("ALL");
   const [statusFilter,setStatusFilter]=useState<"ALL"|"ACTIVE"|"EXPIRED"|"COMPLETED"|"CANCELED"|"CLOSED">("ALL");
   const [view,setView]=useState<"CARDS"|"LIST">("CARDS");
   const [expandedRef,setExpandedRef]=useState<string|null>(null);
@@ -107,12 +110,12 @@ export default function MyRequestsPage(){
       <p className="text-xs font-black tracking-[.15em] text-[#A78231]">AREES LOOP · MY REQUESTS</p>
       <h1 className="mt-2 text-4xl font-black">طلباتي</h1>
       <Link href="/my-bank-transfers" className="mt-4 inline-block rounded-full bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white">متابعة التحويلات البنكية وإرفاق الإيصال ←</Link>
-      <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/70">تابع طلبات الطيران والبواخر والفنادق، وشاهد حالة كل طلب ورد أريس عليه من نفس الصفحة.</p>
+      <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/70">تابع طلبات الطيران والبواخر والفنادق والتأشيرات والرخصة الدولية، واطلع على حالة كل طلب وردود الإدارة وخيارات السداد عند اعتماد العرض.</p>
       <div className="mt-5 rounded-xl border border-[#D4AF37]/30 bg-white px-4 py-3 text-xs leading-7 text-[#0D3B34]/70">
         الطلبات التي أرسلتها وأنت مسجّل الدخول مرتبطة بحسابك. طلبات الزائر مرتبطة بهذا المتصفح برمز خاص؛ للحفاظ على إمكانية متابعتها من جهاز آخر يُفضّل تسجيل الدخول قبل إرسال الطلب.
       </div>
       <div className="mt-6 flex flex-wrap gap-2">
-        {([["ALL","كل الطلبات"],["FLIGHT","الطيران"],["FERRY","البواخر"],["HOTEL","الفنادق"]] as const).map(([kind,label])=>
+        {([["ALL","كل الطلبات"],["FLIGHT","الطيران"],["FERRY","البواخر"],["HOTEL","الفنادق"],["VISA","التأشيرات"],["DRIVING_LICENSE","الرخصة الدولية"]] as const).map(([kind,label])=>
           <button key={kind} onClick={()=>setFilter(kind)} className={`rounded-full px-5 py-2.5 text-xs font-bold ${filter===kind?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>{label}</button>)}
         <Link href="/cart" className="rounded-full border border-[#D4AF37]/40 bg-white px-5 py-2.5 text-xs font-bold">سلة الحجوزات</Link>
       </div>
