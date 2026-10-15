@@ -24,7 +24,7 @@ export async function PATCH(request:NextRequest){
  else if(action==="REQUEST_CORRECTION"&&current.status==="RECEIPT_UNDER_REVIEW"&&notes)status="NEEDS_CORRECTION";
  else if(action==="START_PROCESSING"&&current.status==="PAYMENT_CONFIRMED")status="IN_PROGRESS";
  else if(action==="START_DELIVERY"&&current.status==="IN_PROGRESS"&&Array.isArray(current.items)&&(current.items as Array<{itemType?:string}>).some(x=>x.itemType==="DRIVING_LICENSE"))status="OUT_FOR_DELIVERY";
- else if(action==="COMPLETE"&&["IN_PROGRESS","OUT_FOR_DELIVERY"].includes(current.status))status="COMPLETED";
+ else if(action==="COMPLETE"&&["IN_PROGRESS","OUT_FOR_DELIVERY"].includes(current.status) && (!Array.isArray(current.items) || !(current.items as Array<{itemType?:string}>).some(x=>x.itemType==="DRIVING_LICENSE") || current.status==="OUT_FOR_DELIVERY"))status="COMPLETED";
  else return NextResponse.json({success:false,message:"هذا الانتقال غير مسموح من حالة الطلب الحالية."},{status:409});
  const result=await prisma.$transaction(async(tx)=>{
    const changed=await tx.bankTransferOrder.updateMany({where:{id:current.id,status:current.status},data:{status,reviewedById:session.user.id,reviewedAt:new Date(),reviewNotes:notes||null}});
