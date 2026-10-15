@@ -8,6 +8,8 @@ type TomTomReverseGeocodeResult = {
     formattedAddress?: string;
     municipality?: string;
     municipalitySubdivision?: string;
+    countrySecondarySubdivision?: string;
+    countrySubdivision?: string;
     country?: string;
     countryCode?: string;
   };
@@ -77,13 +79,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-
-      console.error(
-        "TomTom Reverse Geocoding API error:",
-        response.status,
-        errorText
-      );
+      console.error("TomTom reverse geocoding failed", {status:response.status});
 
       return NextResponse.json(
         {
@@ -128,7 +124,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       address,
       placeId: result.id ?? null,
-      city: result.address?.municipality || result.address?.municipalitySubdivision || "",
+      city: result.address?.municipality || result.address?.countrySecondarySubdivision || result.address?.countrySubdivision || "",
+      area: result.address?.municipalitySubdivision || "",
       country: result.address?.country || "",
       countryCode: result.address?.countryCode || "",
       location: {
