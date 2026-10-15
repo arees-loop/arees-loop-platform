@@ -13,9 +13,9 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
   try{
     const session=await getCurrentSession(); if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
     const {id}=await context.params; const current=await ownedService(session.user.id,id); if(!current) return NextResponse.json({success:false,message:"الخدمة غير موجودة."},{status:404});
-    const body=await request.json(); const basePrice=Number(body.basePrice||0); const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150))); const latitude=Number(body.latitude); const longitude=Number(body.longitude);
+    const body=await request.json(); const basePrice=Number(body.basePrice||0); const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150))); const latitude=Number(body.latitude); const longitude=Number(body.longitude); const invalidCoordinates=(typeof body.latitude!=="number"||typeof body.longitude!=="number"||!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180);
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
-    if(!body.city?.trim()||!body.locationName?.trim()||!Number.isFinite(latitude)||!Number.isFinite(longitude)) return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة."},{status:400});
+    if(!body.city?.trim()||!body.locationName?.trim()||invalidCoordinates) return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة."},{status:400});
     const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
     const status=body.submitForReview ? "UNDER_REVIEW" : current.status;
     const service=await prisma.$transaction(async(tx)=>{
