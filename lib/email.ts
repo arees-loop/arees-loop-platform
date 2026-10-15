@@ -471,8 +471,8 @@ export async function sendBankTransferOrderReceivedEmail(input:{to:string;refere
  const reference=escapeHtml(input.reference);
  const amount=input.amountSar.toFixed(2);
  const {data,error}=await resend.emails.send({
-  from:getEmailFrom(),to:[input.to],subject:"تم استلام طلبك | Arees Loop",
-  html:`<div dir="rtl" style="font-family:Arial,sans-serif;background:#f8f6ef;padding:30px;color:#0d3b34"><h2>تم استلام طلبك في أريس لوب</h2><p>رقم الطلب: <strong>${reference}</strong></p><p>المبلغ المستحق: <strong>${amount} ريال سعودي</strong></p><p>طلبك بانتظار تحويل المبلغ ورفع إشعار الحوالة. <strong>لم يتم تأكيد الدفع أو الحجز بعد.</strong></p><p><a href="https://www.areesloop.com/my-bank-transfers">متابعة طلبك وإرفاق إشعار التحويل</a></p></div>`
+  from:getEmailFrom(),to:[input.to],subject:"تم إرسال طلبك للتحقق من التحويل البنكي | Arees Loop",
+  html:`<div dir="rtl" style="font-family:Arial,sans-serif;background:#f8f6ef;padding:30px;color:#0d3b34"><h2>تم استلام طلبك في أريس لوب</h2><p>رقم الطلب: <strong>${reference}</strong></p><p>المبلغ المستحق: <strong>${amount} ريال سعودي</strong></p><p>تم إرسال إشعار الحوالة وطلبك قيد المراجعة. <strong>لا يعني هذا تأكيد استلام المبلغ أو تنفيذ الخدمة.</strong></p><p><a href="https://www.areesloop.com/my-bank-transfers">متابعة حالة طلبك</a></p></div>`
  });
  if(error)throw new Error(error.message);
  return data?.id||null;
