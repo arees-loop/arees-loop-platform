@@ -1,3 +1,4 @@
+import { bankTransferWritesAllowed } from "@/lib/bank-transfer-launch-guard";
 import { NextRequest,NextResponse } from "next/server";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
@@ -9,6 +10,7 @@ export async function GET(){
  return NextResponse.json({success:true,enabled:setting?.enabled??false,points:150});
 }
 export async function PUT(request:NextRequest){
+ if(!bankTransferWritesAllowed())return NextResponse.json({success:false,message:"إعداد النقاط قيد التجهيز."},{status:503});
  const session=await getCurrentSession();
  if(session?.user.role!=="SUPER_ADMIN")return NextResponse.json({success:false},{status:403});
  let input:unknown;
