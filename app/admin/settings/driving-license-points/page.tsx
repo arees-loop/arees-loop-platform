@@ -1,0 +1,9 @@
+"use client";
+import {useEffect,useState} from "react";
+import Link from "next/link";
+export default function DrivingLicensePointsSettings(){
+ const [enabled,setEnabled]=useState(false),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+ useEffect(()=>{fetch("/api/admin/settings/driving-license-points",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success)setEnabled(d.enabled);else setMessage("تعذر تحميل الإعداد.");}).catch(()=>setMessage("تعذر الاتصال بالخادم.")).finally(()=>setLoading(false));},[]);
+ async function save(){setBusy(true);setMessage("");try{const r=await fetch("/api/admin/settings/driving-license-points",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({enabled})});const d=await r.json();setMessage(d.success?"تم حفظ إعداد نقاط الرخصة.":"تعذر حفظ الإعداد.");}catch{setMessage("تعذر الاتصال بالخادم.");}finally{setBusy(false)}}
+ return <main dir="rtl" className="mx-auto max-w-3xl px-5 py-12 text-[#0D3B34]"><Link href="/admin/settings" className="text-sm underline">← إعدادات المنصة</Link><h1 className="mt-5 text-3xl font-black">نقاط رخصة القيادة الدولية</h1><p className="mt-3 text-sm">يحصل العميل على 150 نقطة بعد تأكيد الدفع وإكمال تنفيذ الخدمة، وليس عند إضافة الرخصة للسلة أو رفع الحوالة.</p>{loading?<p className="mt-7">جارٍ التحميل...</p>:<div className="mt-7 rounded-2xl border border-[#D4AF37]/25 bg-white p-7"><label className="flex items-center gap-3 font-bold"><input type="checkbox" checked={enabled} onChange={e=>setEnabled(e.target.checked)}/> تفعيل منح 150 نقطة للرخصة الدولية بعد إتمام الطلب</label><button type="button" disabled={busy} onClick={save} className="mt-6 rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-50">{busy?"جارٍ الحفظ...":"حفظ الإعدادات"}</button>{message&&<p role="status" className="mt-3 text-sm">{message}</p>}</div>}</main>;
+}
