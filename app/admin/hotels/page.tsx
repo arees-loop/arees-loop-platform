@@ -1,3 +1,4 @@
+import RequestAttachmentsPanel from "@/app/components/RequestAttachmentsPanel";
 "use client";
 
 import Link from "next/link";
@@ -195,7 +196,8 @@ export default function HotelAdminPage(){
            <textarea rows={3} maxLength={2500} className={field+" mt-2"} value={reply} onChange={e=>setReply(e.target.value)}/>
          </label>
          <button type="button" disabled={busy||!reply.trim()} onClick={()=>void action("REPLY",{customerReply:reply})} className="mt-2 rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-bold text-white disabled:opacity-40">نشر رد العميل</button>
-         <div className="mt-5 grid gap-3 sm:grid-cols-2">
+         <RequestAttachmentsPanel reference={selected.reference} staff requestStatus={selected.status}/>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
            <label className="text-xs font-bold">إجمالي العرض بالريال
              <input className={field+" mt-2"} type="number" min="0" step=".01" value={amount} onChange={e=>setAmount(e.target.value)}/>
            </label>
