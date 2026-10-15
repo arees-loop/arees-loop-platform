@@ -27,8 +27,8 @@ export async function POST(request:NextRequest,context:{params:Promise<{referenc
   if(!(ext==="png"&&isPng||ext==="jpg"&&isJpg||ext==="pdf"&&isPdf))return NextResponse.json({success:false,message:"محتوى الملف غير مطابق لنوعه."},{status:415});
   try{
     const blob=await put("bank-transfer-receipts/"+order.id+"/"+randomUUID()+"."+ext,file,{access:"private",contentType:file.type,addRandomSuffix:false});
-    const changed=await prisma.bankTransferOrder.updateMany({where:{id:order.id,userId:session.user.id,status:{in:["AWAITING_TRANSFER","NEEDS_CORRECTION"]}},data:{receiptPath:blob.pathname,receiptUploadedAt:new Date(),status:"RECEIPT_UNDER_REVIEW",reviewNotes:null}});
+    const changed=await prisma.bankTransferOrder.updateMany({where:{id:order.id,userId:session.user.id,status:{in:["AWAITING_TRANSFER","NEEDS_CORRECTION"]}},data:{receiptPath:blob.pathname,receiptUploadedAt:new Date(),reviewNotes:null}});
     if(changed.count!==1)return NextResponse.json({success:false,message:"تغيّرت حالة الطلب أثناء رفع الملف، أعد تحميل الصفحة."},{status:409});
-    return NextResponse.json({success:true,status:"RECEIPT_UNDER_REVIEW",message:"تم استلام إشعار التحويل للمراجعة. هذا لا يؤكد وصول المبلغ."});
+    return NextResponse.json({success:true,status:order.status,message:"تم رفع إشعار التحويل. اضغط «إرسال الطلب» لإرساله للمراجعة، ولا يُعتبر المبلغ مدفوعاً."});
   }catch(e){console.error("Bank transfer receipt upload error",e);return NextResponse.json({success:false,message:"تعذر رفع الإيصال حالياً."},{status:503});}
 }
