@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   let publicAsset = !logoMatch && !successMatch && !transportMatch && !hotelMatch;
   if(hotelMatch){
     const offer=await prisma.hotelOffer.findFirst({
-      where:{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`,deletedAt:null},
+      where:{deletedAt:null,OR:[{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`},{imageUrls:{array_contains:[`/api/media?pathname=${encodeURIComponent(pathname)}`]}}]},
       select:{isVisible:true,startsAt:true,endsAt:true},
     });
     if(!offer)return new Response("Not found",{status:404});
@@ -32,11 +32,12 @@ export async function GET(request: NextRequest) {
   }
   if (transportMatch) {
     const offer = await prisma.transportOffer.findFirst({
-      where: { bannerUrl: `/api/media?pathname=${encodeURIComponent(pathname)}` },
-      select: { isVisible: true },
+      where: { deletedAt:null,OR:[{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`},{imageUrls:{array_contains:[`/api/media?pathname=${encodeURIComponent(pathname)}`]}}] },
+      select: { isVisible: true,startsAt:true,endsAt:true },
     });
     if (!offer) return new Response("Not found", { status: 404 });
-    publicAsset = offer.isVisible;
+    const now=new Date();
+    publicAsset = offer.isVisible && (!offer.startsAt||offer.startsAt<=now) && (!offer.endsAt||offer.endsAt>=now);
     if (!publicAsset) {
       const session = await getCurrentSession();
       if (session?.user.role !== "SUPER_ADMIN") return new Response("Not found", { status: 404 });
