@@ -1,3 +1,4 @@
+import { notifyCustomerOfRequestUpdate } from "@/lib/request-notification";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -124,7 +125,7 @@ export async function PATCH(request:NextRequest) {
       if(["CANCELED","DONE"].includes(current.status))return fail("لا يمكن الرد على طلب مغلق؛ أعد فتحه بإجراء معتمد أولاً.",409);
       const customerReply=cleanText(body.customerReply,2500);
       if(!customerReply)return fail("اكتب الرد الذي سيظهر للعميل.",400);
-      const [updated]=await prisma.$transaction([
+      const [updated,event]=await prisma.$transaction([
         prisma.transportRequest.update({where:{id},data:{customerReply}}),
         prisma.transportRequestEvent.create({data:{
           requestId:id,actorId,actorName,action:"CUSTOMER_REPLY_PUBLISHED",
@@ -132,6 +133,7 @@ export async function PATCH(request:NextRequest) {
           details:{messageLength:customerReply.length},
         }}),
       ]);
+      await notifyCustomerOfRequestUpdate({kind:current.kind as "FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE",requestId:id,reference:current.reference,userId:current.userId,eventId:event.id}).catch(error=>console.error("Customer reply notification failed",error));
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
 
