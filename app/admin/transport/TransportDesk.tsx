@@ -1,3 +1,4 @@
+import RequestAttachmentsPanel from "@/app/components/RequestAttachmentsPanel";
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
@@ -347,7 +348,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <textarea maxLength={2500} rows={3} className={field+" mt-3"} value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="اكتب رد أريس على العميل..."/>
                   <button type="button" onClick={()=>void publishReply()} disabled={busy||replyDraft.trim().length<1} className="mt-3 rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-black text-white disabled:opacity-40">نشر الرد للعميل</button>
                 </section>
-                <section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4">
+                <RequestAttachmentsPanel reference={selected.reference} staff requestStatus={selected.status}/>
+                 <section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4">
                   <h3 className="text-base font-black">الإسناد وسير العمل</h3>
                   <p className="mt-2 text-sm">الموظف المسؤول: <b>{staffName(selected.assignedToId)}</b></p>
                   {showSuper&&<div className="mt-3 flex flex-wrap gap-2">
