@@ -10,6 +10,8 @@ export default function InitialSplash() {
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
+    // Avoid replaying the introduction every time a returning customer opens the site.
+    try { const seenAt=Number(window.localStorage.getItem("arees-loop-splash-seen-at")||0); if(seenAt>0&&Date.now()-seenAt<24*60*60*1000){setVisible(false);return;}window.localStorage.setItem("arees-loop-splash-seen-at",String(Date.now()));}catch{}
     const closeTimer = window.setTimeout(() => {
       setClosing(true);
     }, SPLASH_VISIBLE_MS);
