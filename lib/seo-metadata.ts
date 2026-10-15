@@ -26,15 +26,16 @@ export function buildPageMetadata({
   const pageTitle = title.replace(/\s*\|\s*Arees Loop$/, "");
   const imageUrl = new URL(image, SITE_URL).toString();
   const pageUrl = new URL(path, SITE_URL).toString();
+  const indexable=process.env.VERCEL_ENV==="production";
 
   return {
     title: pageTitle,
     description,
     alternates: { canonical: pageUrl },
     robots: {
-      index: true,
-      follow: true,
-      googleBot: { index: true, follow: true },
+      index: indexable,
+      follow: indexable,
+      googleBot: { index: indexable, follow: indexable },
     },
     openGraph: {
       type: "website",
