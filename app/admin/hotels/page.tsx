@@ -24,7 +24,7 @@ const field="w-full rounded-xl border border-[#D4AF37]/40 bg-[#FFFCF5] px-4 py-3
 const day=(v:string|null)=>v?new Date(v).toISOString().slice(0,10):"";
 
 export default function HotelAdminPage(){
- const [tab,setTab]=useState<"requests"|"offers">("requests");
+ const [tab,setTab]=useState<"requests"|"offers">("offers");
  const [rows,setRows]=useState<HotelCase[]>([]);
  const [offers,setOffers]=useState<Offer[]>([]);
  const [staff,setStaff]=useState<Staff[]>([]);
@@ -40,6 +40,7 @@ export default function HotelAdminPage(){
  const [extraBanners,setExtraBanners]=useState<File[]>([]);
  const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
  const [preview,setPreview]=useState("");
+ const [offerEditorOpen,setOfferEditorOpen]=useState(false);
  const [view,setView]=useState<"cards"|"list">("cards");
  const [filter,setFilter]=useState<"ALL"|"ACTIVE"|"PAUSED">("ALL");
  const [busy,setBusy]=useState(false);
@@ -86,6 +87,8 @@ export default function HotelAdminPage(){
    finally{setBusy(false);}
  }
  function selectOffer(o?:Offer){
+   setOfferEditorOpen(true);
+   setTab("offers");
    setBanner(null);
    setExtraBanners([]);
    setBannerDimensions(null);
@@ -121,7 +124,7 @@ export default function HotelAdminPage(){
      const d=await res.json();
      if(!res.ok||!d.success){setError(d.message||"تعذر حفظ العرض.");return;}
      setNotice("تم حفظ إعلان الفندق. يظهر في الموقع إذا كان مفعلاً وضمن تواريخ النشر.");
-     selectOffer();await load();
+     selectOffer();setOfferEditorOpen(false);await load();
    }catch{setError("تعذر حفظ الإعلان.");}
    finally{setBusy(false);}
  }
@@ -219,8 +222,8 @@ export default function HotelAdminPage(){
        </>}
      </section>
    </div>}
-   {tab==="offers"&&<div className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-     <section className="rounded-3xl border border-[#D4AF37]/30 bg-white p-6">
+   {tab==="offers"&&<div className={`mt-7 grid gap-6 ${offerEditorOpen?"xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]":""}`}>
+     {offerEditorOpen&&<section className="rounded-3xl border border-[#D4AF37]/30 bg-white p-6">
        <h2 className="text-xl font-black">إضافة أو تعديل إعلان فندق</h2>
        {!admin&&<p className="mt-3 text-xs text-amber-700">إدارة العروض للسوبر أدمن فقط.</p>}
        <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -246,7 +249,7 @@ export default function HotelAdminPage(){
          <label className="text-xs font-bold">ترتيب الإعلان<input type="number" min={0} className={field+" mt-2"} value={edit.sortOrder} onChange={e=>setEdit(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
          <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
            <button disabled={!admin||busy||Boolean(banner&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">حفظ الإعلان</button>
-           <button type="button" onClick={()=>selectOffer()} className="rounded-xl border px-5 py-3 text-sm">عرض جديد</button>
+           <button type="button" onClick={()=>setOfferEditorOpen(false)} className="rounded-xl border px-5 py-3 text-sm">إلغاء وإغلاق</button>
          </div>
        <div className="mt-6 overflow-hidden rounded-[22px] border border-[#D4AF37]/40 bg-[#FFFDF8] sm:col-span-2 xl:col-span-2 xl:col-start-3">
          <p className="bg-[#0D3B34] px-5 py-3 text-xs font-black text-white">معاينة إعلانك قبل الحفظ</p>
@@ -260,9 +263,9 @@ export default function HotelAdminPage(){
          <p className="mt-2 whitespace-pre-wrap text-xs leading-7">{edit.description}</p></div>
        </div>
        </form>
-     </section>
+     </section>}
      <section className="space-y-3">
-       <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">العروض والإعلانات ({display.length})</h2>
+       <div className="flex items-center justify-between gap-3"><div className="flex flex-wrap items-center gap-3"><h2 className="text-xl font-black">العروض والإعلانات ({display.length})</h2><button type="button" disabled={!admin} onClick={()=>selectOffer()} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white disabled:opacity-40">+ إضافة عرض</button></div>
          <div className="flex gap-2"><button onClick={()=>setView("cards")} className="rounded-xl border px-3 py-2 text-xs">بطاقات</button><button onClick={()=>setView("list")} className="rounded-xl border px-3 py-2 text-xs">قائمة</button></div>
        </div>
        <select className={field} value={filter} onChange={e=>setFilter(e.target.value as typeof filter)}><option value="ALL">الكل</option><option value="ACTIVE">مفعّل</option><option value="PAUSED">موقوف</option></select>
