@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (!pathname) return new Response("Not found", { status: 404 });
   const logoMatch = new RegExp("^partners/([^/]+)/logos/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   const successMatch = new RegExp("^success-partners/([a-zA-Z0-9_-]+)/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
-  const transportMatch = /^transport-offers\/(FLIGHT|FERRY)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
+  const transportMatch = /^transport-offers\/(FLIGHT|FERRY|VISA|DRIVING_LICENSE)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
   const hotelMatch = /^transport-offers\/HOTEL\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
   if (!pathname.startsWith("services/") && !logoMatch && !successMatch && !transportMatch && !hotelMatch) {
     return new Response("Not found", { status: 404 });
@@ -32,11 +32,12 @@ export async function GET(request: NextRequest) {
   }
   if (transportMatch) {
     const offer = await prisma.transportOffer.findFirst({
-      where: { bannerUrl: `/api/media?pathname=${encodeURIComponent(pathname)}` },
-      select: { isVisible: true },
+      where: { deletedAt:null,OR:[{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`},{imageUrls:{array_contains:[`/api/media?pathname=${encodeURIComponent(pathname)}`]}}] },
+      select: { isVisible: true, startsAt:true, endsAt:true },
     });
     if (!offer) return new Response("Not found", { status: 404 });
-    publicAsset = offer.isVisible;
+    const now=new Date();
+    publicAsset = offer.isVisible && (!offer.startsAt || offer.startsAt<=now) && (!offer.endsAt || offer.endsAt>=now);
     if (!publicAsset) {
       const session = await getCurrentSession();
       if (session?.user.role !== "SUPER_ADMIN") return new Response("Not found", { status: 404 });
