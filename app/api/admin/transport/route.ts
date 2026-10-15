@@ -185,10 +185,11 @@ export async function PATCH(request:NextRequest) {
     if(action==="MARK_MANUAL_WHATSAPP"){
       if(current.status!=="QUOTE_READY"||!current.carrierName||current.quoteAmountSar===null)return fail("احفظ عرض السعر أولاً قبل تسجيل إرساله.",409);
       if(body.confirmed!==true)return fail("يجب تأكيد الإرسال الفعلي من حساب واتساب الشركة.",400);
-      const [updated]=await prisma.$transaction([
+      const [updated,event]=await prisma.$transaction([
         prisma.transportRequest.update({where:{id},data:{status:"QUOTE_SENT",whatsappStatus:"MANUALLY_MARKED_SENT"}}),
         prisma.transportRequestEvent.create({data:{requestId:id,actorId,actorName,action:"QUOTE_MARKED_SENT_MANUALLY",fromStatus:current.status,toStatus:"QUOTE_SENT",details:{method:"manual",proof:"staff_confirmation_only"}}}),
       ]);
+      await notifyCustomerOfRequestUpdate({kind:current.kind as "FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE",requestId:id,reference:current.reference,userId:current.userId,eventId:event.id,title:"عرض السعر جاهز للسداد",body:"تم اعتماد عرض السعر لطلبك. افتح «طلباتي» لمراجعة المبلغ وخيارات السداد المتاحة."}).catch(error=>console.error("Quote sent alert failed",error));
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
 
