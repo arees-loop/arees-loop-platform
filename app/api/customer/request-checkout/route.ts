@@ -42,7 +42,7 @@ export async function POST(request:NextRequest){
     const expiry="quoteValidUntil" in requestItem?requestItem.quoteValidUntil:null;
     const expired=expiry instanceof Date&&expiry.getTime()<Date.now();
     const eligible=requestItem.status==="QUOTE_SENT"&&amount!==null&&Number.isFinite(amount)&&amount>0&&!expired;
-    const kind="kind" in requestItem?requestItem.kind:"HOTEL";
+    const kind="kind" in requestItem&&typeof requestItem.kind==="string"?requestItem.kind:"HOTEL";
     const reason=["CLOSED","CANCELED","CANCELLED"].includes(requestItem.status)?
       "هذا الطلب مغلق أو ملغى ولا يقبل السداد.":
       expired?"انتهت صلاحية عرض السعر. يرجى التواصل مع الإدارة للحصول على عرض جديد.":
