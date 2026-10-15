@@ -38,3 +38,19 @@ test("Preview rejects identical target even with different credentials", () => {
 test("Preview rejects loopback database address", () => {
   assert.throws(() => resolve({ VERCEL_ENV: "preview", DATABASE_URL: prod, AREES_PREVIEW_DATABASE_URL: "postgresql://a:b@127.0.0.1:5432/arees" }), /loopback/);
 });
+
+test("Preview ignores staging override and uses explicitly isolated preview URL", () => {
+  assert.equal(resolve({
+    VERCEL_ENV: "preview",
+    DATABASE_URL: prod,
+    AREES_PREVIEW_DATABASE_URL: isolated,
+    AREES_STAGING_DATABASE_DATABASE_URL: "postgresql://user:pw@staging.example:5432/arees",
+  }), isolated);
+});
+test("Preview cannot use staging URL as fallback when preview URL is absent", () => {
+  assert.throws(() => resolve({
+    VERCEL_ENV: "preview",
+    DATABASE_URL: prod,
+    AREES_STAGING_DATABASE_DATABASE_URL: isolated,
+  }), /Isolated Preview/);
+});
