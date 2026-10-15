@@ -136,7 +136,9 @@ export default function OnboardingPage() {
         if (savedInterests.length) setSelectedInterests(savedInterests);
 
         if (savedUserType && savedInterests.length > 0) {
-          window.location.replace("/discover");
+          const requested=params.get("next");
+          const safeNext=requested?.startsWith("/")&&!requested.startsWith("//")&&!requested.includes("\\")&&!/[\r\n]/.test(requested)?requested:"/discover";
+          window.location.replace(safeNext);
           return;
         }
 
@@ -460,7 +462,9 @@ export default function OnboardingPage() {
         return;
       }
 
-      window.location.replace("/discover");
+      const requested=new URLSearchParams(window.location.search).get("next");
+      const safeNext=requested?.startsWith("/")&&!requested.startsWith("//")&&!requested.includes("\\")&&!/[\r\n]/.test(requested)?requested:"/discover";
+      window.location.replace(safeNext);
     } catch {
       setProfileError(
         "تعذر الاتصال بالخدمة حاليًا. تحقق من الاتصال ثم حاول مرة أخرى.",
