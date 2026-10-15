@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getActivePartnerMembership, userHasPartnerPermission } from "@/lib/partner-permissions";
+import {validatePartnerServiceImages} from "@/lib/partner-service-image-access";
 
 async function ownedService(userId:string,id:string){
   if(!await userHasPartnerPermission(userId,"services")) return null;
@@ -44,9 +45,20 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
     const basePrice=Number(body.basePrice||0); const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150))); const latitude=Number(body.latitude); const longitude=Number(body.longitude); const invalidCoordinates=(typeof body.latitude!=="number"||typeof body.longitude!=="number"||!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180);
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     if(!body.city?.trim()||!body.locationName?.trim()||invalidCoordinates) return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة."},{status:400});
-    const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
-    const status=body.submitForReview ? "UNDER_REVIEW" : current.status;
     const syncImages=body.syncImages===true;
+    const membership=syncImages?await getActivePartnerMembership(session.user.id):null;
+    if(syncImages&&!membership)return NextResponse.json({success:false,message:"تعذر تأكيد منشأتك النشطة."},{status:403});
+    const validated=syncImages
+      ?await validatePartnerServiceImages(body.images,session.user.id,membership!.partnerId)
+      :{valid:true as const,images:[]};
+    if(!validated.valid)return NextResponse.json({success:false,message:validated.message},{status:400});
+    const images=validated.images;
+    const status=body.submitForReview ? "UNDER_REVIEW" : current.status;
+    if(syncImages){
+      const previous=await prisma.serviceImage.findMany({where:{serviceId:id},select:{url:true}});
+      const additions=images.filter(image=>!previous.some(p=>p.url===image.url));
+      if(previous.length+additions.length>10)return NextResponse.json({success:false,message:"الخدمة تحتوي بالفعل على صور؛ الحد الأقصى 10. لن تُحذف الصور القديمة تلقائياً."},{status:409});
+    }
     const service=await prisma.$transaction(async(tx)=>{
       if(syncImages){
         const existing=await tx.serviceImage.findMany({where:{serviceId:id},select:{id:true,url:true}});
