@@ -4,8 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import NotificationBell from "@/app/components/NotificationBell";
 
 type AdminIdentity = {
+  id: string;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -266,6 +268,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               {/* لمعة زجاجية علوية */}
               <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
 
+              {admin?.id && <div className="relative z-30"><NotificationBell role="admin" userId={admin.id}/></div>}
               {/* =====================
                   RIGHT - ADMIN
               ====================== */}
