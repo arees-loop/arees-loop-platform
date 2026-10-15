@@ -466,3 +466,14 @@ function escapeHtml(value: string) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+export async function sendBankTransferOrderReceivedEmail(input:{to:string;reference:string;amountSar:number}) {
+ const resend=getResendClient();
+ const reference=escapeHtml(input.reference);
+ const amount=input.amountSar.toFixed(2);
+ const {data,error}=await resend.emails.send({
+  from:getEmailFrom(),to:[input.to],subject:"تم استلام طلبك | Arees Loop",
+  html:`<div dir="rtl" style="font-family:Arial,sans-serif;background:#f8f6ef;padding:30px;color:#0d3b34"><h2>تم استلام طلبك في أريس لوب</h2><p>رقم الطلب: <strong>${reference}</strong></p><p>المبلغ المستحق: <strong>${amount} ريال سعودي</strong></p><p>طلبك بانتظار تحويل المبلغ ورفع إشعار الحوالة. <strong>لم يتم تأكيد الدفع أو الحجز بعد.</strong></p><p><a href="https://www.areesloop.com/my-bank-transfers">متابعة طلبك وإرفاق إشعار التحويل</a></p></div>`
+ });
+ if(error)throw new Error(error.message);
+ return data?.id||null;
+}
