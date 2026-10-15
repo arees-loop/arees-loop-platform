@@ -1,3 +1,4 @@
+import { bankTransferWritesAllowed } from "@/lib/bank-transfer-launch-guard";
 import { NextRequest,NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +9,7 @@ export async function GET(){
  return NextResponse.json({success:true,orders:orders.map(o=>({...o,amountSar:Number(o.amountSar)}))});
 }
 export async function PATCH(request:NextRequest){
+ if(!bankTransferWritesAllowed())return NextResponse.json({success:false,message:"نظام التحويل قيد التجهيز."},{status:503});
  const session=await getCurrentSession();
  if(session?.user.role!=="SUPER_ADMIN")return NextResponse.json({success:false},{status:403});
  let input:unknown;try{input=await request.json()}catch{return NextResponse.json({success:false},{status:400})}
