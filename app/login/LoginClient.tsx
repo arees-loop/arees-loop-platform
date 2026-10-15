@@ -70,7 +70,9 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.href = "/discover";
+      const requested=new URLSearchParams(window.location.search).get("next");
+      const safeNext=requested?.startsWith("/")&&!requested.startsWith("//")&&!requested.includes("\\")&&!/[\r\n]/.test(requested)?requested:"/discover";
+      window.location.assign(safeNext);
     } catch (loginError) {
       console.error("Unable to sign in:", loginError);
       setError("تعذر الاتصال بالخادم. حاول مرة أخرى.");
