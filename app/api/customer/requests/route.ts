@@ -13,7 +13,7 @@ function claimsFrom(body: unknown): {reference:string;trackingTokenHash:string}[
   if(!Array.isArray(raw))return [];
   const normalized:Claim[]=raw.filter((x):x is Claim=>
     !!x && typeof x==="object" && typeof x.reference==="string" && typeof x.token==="string" &&
-    /^AR-(AIR|SEA|HOT)-[A-F0-9]{10}$/.test(x.reference) &&
+    /^AR-(AIR|SEA|HOT|VISA|IDL)-[A-F0-9]{10}$/.test(x.reference) &&
     /^[A-Za-z0-9_-]{43}$/.test(x.token)).slice(0,40);
   return normalized.map(x=>({
     reference:x.reference,
