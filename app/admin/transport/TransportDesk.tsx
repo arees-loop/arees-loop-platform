@@ -38,7 +38,7 @@ const day=(d:string|null)=>d?d.slice(0,10):"";
 const offerDay=(d:string|null)=>d?new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Riyadh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d)):"";
 
 export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE"}={}) {
-  const [tab,setTab]=useState<"requests"|"offers">("requests");
+  const [tab,setTab]=useState<"requests"|"offers">(initialOfferKind==="ALL"?"requests":"offers");
   const [requests,setRequests]=useState<RequestRow[]>([]);
   const [offers,setOffers]=useState<Offer[]>([]);
   const [staff,setStaff]=useState<Staff[]>([]);
@@ -48,6 +48,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [replyDraft,setReplyDraft]=useState("");
   const [cancelBy,setCancelBy]=useState("STAFF");
   const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE">(initialOfferKind);
+  const [offerEditorOpen,setOfferEditorOpen]=useState(false);
   const [offerView,setOfferView]=useState<"CARDS"|"LIST">("CARDS");
   const [offerFilter,setOfferFilter]=useState<"ALL"|"ACTIVE"|"PAUSED"|"UPCOMING"|"EXPIRED">("ALL");
   const [bannerFile,setBannerFile]=useState<File|null>(null);
@@ -180,7 +181,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     setBannerFile(null);
     setExtraBannerFiles([]);
     setBannerDimensions(null);
-    setStatus("");setError("");setTab("offers");
+    setStatus("");setError("");setTab("offers");setOfferEditorOpen(true);
     setOfferForm(offer?{
       id:offer.id,kind:offer.kind,title:offer.title,description:offer.description||"",
       carrierName:offer.carrierName||"",origin:offer.origin||"",destination:offer.destination||"",
@@ -221,7 +222,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       if(!r.ok||!d.success){setError(d.message||"تعذر حفظ العرض.");return;}
       setStatus("تم حفظ العرض أو الجدول. سيظهر للزوار إذا اخترت «ظاهر» والبيانات متصلة.");
       setOfferForm({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?"سواكن":"",destination:initialOfferKind==="FERRY"?"جدة":""});
-      setBannerFile(null);setExtraBannerFiles([]);
+      setBannerFile(null);setExtraBannerFiles([]);setOfferEditorOpen(false);
       await load();
     }catch{setError("تعذر الاتصال بالخادم لحفظ العرض.");}
     finally{setBusy(false);}
@@ -410,8 +411,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
         </div>
       )}
       {tab==="offers"&&(
-        <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-          <section className="rounded-[25px] border border-[#D4AF37]/35 bg-white p-6">
+        <div className={`mt-7 grid items-start gap-6 ${offerEditorOpen?"xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]":""}`}>
+          {offerEditorOpen&&<section className="rounded-[25px] border border-[#D4AF37]/35 bg-white p-6">
             <h2 className="text-xl font-black">{offerForm.id?"تعديل عرض أو جدول":"إضافة عرض أو جدول جديد"}</h2>
             {!showSuper&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-bold text-amber-800">تعديل العروض والأسعار والصور متاح للسوبر أدمن فقط.</p>}
             <p className="mt-2 text-xs leading-7">الأسعار تظهر في البطاقات الجانبية، وليس داخل نموذج طلب العميل. في البواخر أضف حالة التشغيل والملاحظات عند توقف أي باخرة.</p>
@@ -485,13 +486,13 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/30 p-3 text-sm font-bold"><input type="checkbox" checked={offerForm.isVisible} onChange={e=>setOfferForm(f=>({...f,isVisible:e.target.checked}))}/> ظاهر للزوار</label>
               <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
                 <button disabled={busy||!showSuper||Boolean(bannerFile&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
-                <button type="button" onClick={()=>{setBannerFile(null);setExtraBannerFiles([]);setOfferForm({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?"سواكن":"",destination:initialOfferKind==="FERRY"?"جدة":""});}} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">عرض جديد</button>
+                <button type="button" onClick={()=>setOfferEditorOpen(false)} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">إلغاء وإغلاق</button>
               </div>
             </form>
-          </section>
+          </section>}
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-black">إدارة العروض ({filteredOffers.length})</h2>
+              <div className="flex flex-wrap items-center gap-3"><h2 className="text-xl font-black">إدارة العروض ({filteredOffers.length})</h2><button type="button" disabled={!showSuper} onClick={()=>startOffer()} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white disabled:opacity-40">+ إضافة عرض</button></div>
               <div className="flex gap-2">
                 <button type="button" onClick={()=>setOfferView("CARDS")} className={`rounded-lg border px-4 py-2 text-xs font-bold ${offerView==="CARDS"?"bg-[#0D3B34] text-white":"bg-white"}`}>▦ بطاقات</button>
                 <button type="button" onClick={()=>setOfferView("LIST")} className={`rounded-lg border px-4 py-2 text-xs font-bold ${offerView==="LIST"?"bg-[#0D3B34] text-white":"bg-white"}`}>☷ قائمة</button>
