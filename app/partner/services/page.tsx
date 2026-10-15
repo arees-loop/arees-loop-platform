@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { IMAGE_REQUIREMENTS } from "@/lib/image-requirements";
 import { readImageDimensions } from "@/lib/client-image-dimensions";
 import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
 
@@ -1213,9 +1213,9 @@ export default function PartnerServicesPage() {
               {/* IMAGES */}
               <FormSection eyebrow="MEDIA" title="صور الخدمة">
                 <div className="mb-3 text-xs leading-5 text-[#0D3B34]/55">
-                  <span className="font-black text-red-600">{imageDimensionMessage(IMAGE_REQUIREMENTS.servicePhoto)} · الحد الأقصى 5 MB للصورة.</span> <span>حتى 10 صور · JPG / PNG / WebP.</span>
+                  <span className="font-black text-[#0D3B34]">المقاس الموصى به 1200×900 بكسل، وليس إلزامياً.</span> <span>حتى 10 صور · JPG / PNG / WebP · 5 MB لكل صورة.</span>
                 </div>
-                <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.servicePhoto} actual={imageUploadDimensions}/>
+                <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.servicePhoto} actual={imageUploadDimensions} flexible/>
                 <label className="flex cursor-pointer items-center justify-center rounded-[18px] border border-dashed border-[#B88A13]/45 bg-white px-5 py-5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF9E8]">
                   + إضافة صور
                   <input type="file" multiple accept="image/png,image/jpeg,image/webp" className="hidden"
@@ -1225,7 +1225,7 @@ export default function PartnerServicesPage() {
                       const acceptable=[] as File[];
                       for(const file of selected.slice(0,remaining)){
                         if(file.size>5*1024*1024) continue;
-                        try{const d=await readImageDimensions(file);setImageUploadDimensions(d);if(d.width===IMAGE_REQUIREMENTS.servicePhoto.width&&d.height===IMAGE_REQUIREMENTS.servicePhoto.height) acceptable.push(file);else setSubmitMessage(`${file.name}: ${imageDimensionMessage(IMAGE_REQUIREMENTS.servicePhoto)} لم تُرفع.`)}catch{setSubmitMessage(`تعذر قراءة أبعاد ${file.name}.`)}
+                        try{const d=await readImageDimensions(file);setImageUploadDimensions(d);if(d.width>=100&&d.height>=100)acceptable.push(file);else setSubmitMessage(`${file.name}: الصورة صغيرة للغاية.`)}catch{setSubmitMessage(`تعذر قراءة أبعاد ${file.name}.`)}
                       }
                       const files=acceptable;
                       const rejected=selected.filter((file)=>file.size>5*1024*1024);
