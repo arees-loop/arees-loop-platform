@@ -6,6 +6,7 @@ import PublicGlobalHeader from "./components/PublicGlobalHeader";
 import "./globals.css";
 
 const SITE_URL = "https://www.areesloop.com";
+const IS_PRODUCTION=process.env.VERCEL_ENV==="production";
 
 const SOCIAL_IMAGE =
   `${SITE_URL}/Image/social/arees-loop-whatsapp-preview.png`;
@@ -52,12 +53,12 @@ export const metadata: Metadata = {
   },
 
   robots: {
-    index: false,
-    follow: false,
+    index: IS_PRODUCTION,
+    follow: IS_PRODUCTION,
 
     googleBot: {
-      index: false,
-      follow: false,
+      index: IS_PRODUCTION,
+      follow: IS_PRODUCTION,
       noimageindex: false,
     },
   },
