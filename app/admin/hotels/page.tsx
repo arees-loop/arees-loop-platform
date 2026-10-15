@@ -16,8 +16,8 @@ type Staff={id:string;firstName:string|null;lastName:string|null;email:string};
 type Offer={id:string;title:string;destination:string|null;hotelName:string|null;description:string|null;
  amountSar:number|null;priceUnit:string|null;bannerUrl:string|null;imageUrls:string[];startsAt:string|null;endsAt:string|null;isVisible:boolean;sortOrder:number};
 type Event={id:string;actorName:string;action:string;fromStatus:string|null;toStatus:string|null;createdAt:string};
-const stages:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال العرض",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"ملغى"};
-const next:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["CANCELED"],QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
+const stages:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال العرض",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"ملغى",CLOSED:"مغلق — غير متاح"};
+const next:Record<string,string[]>={NEW:["PROCESSING","CANCELED","CLOSED"],PROCESSING:["CANCELED","CLOSED"],QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED","CLOSED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED","CLOSED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[],CLOSED:[]};
 const blank={id:"",title:"",destination:"",hotelName:"",description:"",amountSar:"",priceUnit:"لليلة",bannerUrl:"",imageUrls:[] as string[],startsAt:"",endsAt:"",isVisible:false,sortOrder:0};
 type Form=typeof blank;
 const field="w-full rounded-xl border border-[#D4AF37]/40 bg-[#FFFCF5] px-4 py-3 text-sm outline-[#B69034]";
@@ -205,8 +205,16 @@ export default function HotelAdminPage(){
            <button type="button" disabled={busy||!amount} onClick={()=>void action("QUOTE",{quoteAmountSar:amount,quoteNotes})} className="rounded-xl border border-[#D4AF37] bg-[#FFF8DE] px-5 py-3 text-sm font-bold disabled:opacity-40">حفظ عرض الفندق</button>
          </div>
          <div className="mt-6 flex flex-wrap gap-2">
-           {(next[selected.status]||[]).filter(v=>v!=="CANCELED").map(v=><button key={v} disabled={busy} onClick={()=>void action("STATUS",{status:v})} className="rounded-xl border border-[#D4AF37] px-4 py-2.5 text-xs font-bold disabled:opacity-40">{stages[v]}</button>)}
+           {(next[selected.status]||[]).filter(v=>v!=="CANCELED"&&v!=="CLOSED").map(v=><button key={v} disabled={busy} onClick={()=>void action("STATUS",{status:v})} className="rounded-xl border border-[#D4AF37] px-4 py-2.5 text-xs font-bold disabled:opacity-40">{stages[v]}</button>)}
          </div>
+         {(next[selected.status]||[]).includes("CLOSED")&&<div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <h3 className="text-sm font-black text-amber-900">الرد بعدم توفر الفندق</h3>
+            <p className="mt-2 text-xs leading-6 text-amber-800">يُرسل اعتذار للعميل ويُغلق الطلب دون دفع أو تأكيد حجز.</p>
+            <label className="mt-3 block text-xs font-bold">سبب عدم التوفر
+              <textarea className={field+" mt-2"} rows={2} maxLength={1500} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/>
+            </label>
+            <button disabled={busy||cancelReason.trim().length<5} onClick={()=>void action("STATUS",{status:"CLOSED",reason:cancelReason})} className="mt-3 rounded-xl bg-amber-700 px-5 py-3 text-xs font-bold text-white disabled:opacity-40">غير متاح — اعتذار وإغلاق</button>
+         </div>}
          {(next[selected.status]||[]).includes("CANCELED")&&<div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
            <label className="text-xs font-bold">سبب الإلغاء<input className={field+" mt-2"} maxLength={1500} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/></label>
            <button disabled={busy||cancelReason.trim().length<5} onClick={()=>void action("STATUS",{status:"CANCELED",reason:cancelReason})} className="mt-3 rounded-xl bg-red-700 px-5 py-3 text-xs font-bold text-white disabled:opacity-40">إلغاء الطلب</button>
