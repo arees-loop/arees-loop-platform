@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import CustomerActionGate from "@/app/components/CustomerActionGate";
 import { useParams, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -80,6 +81,7 @@ export default function ReviewBookingPage() {
     `&guests=${guests}`;
 
   return (
+    <CustomerActionGate nextPath={"/experience/"+encodeURIComponent(id)+"/booking/review"} action="حجز التجربة">
     <main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
@@ -487,6 +489,7 @@ export default function ReviewBookingPage() {
         </section>
       </div>
     </main>
+    </CustomerActionGate>
   );
 }
 
