@@ -22,12 +22,30 @@ export default function GlobalHeader() {
   const border = "border-[#0D3B34]/15";
 
   useEffect(() => {
-    let active = true;
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then(async (response) => response.ok ? (await response.json())?.data?.user ?? null : null)
-      .then((nextUser) => { if (active) setUser(nextUser); })
-      .catch(() => { if (active) setUser(null); });
-    return () => { active = false; };
+    let active=true;
+    let inFlight=false;
+    // Recheck the existing HTTP-only session when returning to the mobile browser.
+    // A temporary network/DB error MUST NOT silently log the user out in the UI.
+    async function syncSession(){
+      if(!active||inFlight)return;
+      inFlight=true;
+      try{
+        const response=await fetch("/api/auth/me",{cache:"no-store",credentials:"include"});
+        if(!active)return;
+        if(response.status===401){setUser(null);return;}
+        if(!response.ok)return;
+        const result=await response.json();
+        if(active&&result?.data?.user)setUser(result.data.user);
+      }catch{
+        // Keep last known state until a confirmed session check succeeds.
+      }finally{inFlight=false;}
+    }
+    const whenVisible=()=>{if(document.visibilityState==="visible")void syncSession()};
+    void syncSession();
+    window.addEventListener("focus",syncSession);
+    window.addEventListener("pageshow",syncSession);
+    document.addEventListener("visibilitychange",whenVisible);
+    return()=>{active=false;window.removeEventListener("focus",syncSession);window.removeEventListener("pageshow",syncSession);document.removeEventListener("visibilitychange",whenVisible);};
   }, []);
 
   useEffect(() => {
