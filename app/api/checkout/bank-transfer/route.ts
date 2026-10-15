@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
-type CartLine = {serviceId:string; quantity:number; itemType?:string};
+type CartLine = {serviceId:string; quantity:number; itemType?:string; application?:unknown};
 export async function POST(request:NextRequest) {
   const session=await getCurrentSession();
   if(!session) return NextResponse.json({success:false,message:"سجّل الدخول أولاً لإتمام الحجز."},{status:401});
@@ -18,7 +18,7 @@ export async function POST(request:NextRequest) {
     if(!line||typeof line!=="object")return NextResponse.json({success:false,message:"عنصر غير صالح."},{status:400});
     const item=line as Record<string,unknown>;
     if(typeof item.serviceId!=="string"||!Number.isInteger(item.quantity)||Number(item.quantity)<1||Number(item.quantity)>30)return NextResponse.json({success:false,message:"كمية أو خدمة غير صالحة."},{status:400});
-    items.push({serviceId:item.serviceId,quantity:Number(item.quantity),itemType:typeof item.itemType==="string"?item.itemType:undefined});
+    items.push({serviceId:item.serviceId,quantity:Number(item.quantity),itemType:typeof item.itemType==="string"?item.itemType:undefined,application:item.application});
   }
   if(new Set(items.map(x=>x.serviceId)).size!==items.length)return NextResponse.json({success:false,message:"خدمات مكررة في السلة."},{status:400});
   const account=await prisma.platformBankAccount.findUnique({where:{id:"primary"}});
@@ -28,12 +28,20 @@ export async function POST(request:NextRequest) {
   const services=await prisma.service.findMany({where:{id:{in:ids},status:"PUBLISHED"},select:{id:true,nameAr:true,finalPrice:true}});
   if(services.length!==ids.length)return NextResponse.json({success:false,message:"إحدى الخدمات لم تعد متاحة. حدّث السلة."},{status:409});
   let totalHalalas=0;
-  const details:Array<{serviceId:string;title:string;quantity:number;unitPriceSar:number;itemType?:string}>=[];
+  const details:Array<{serviceId:string;title:string;quantity:number;unitPriceSar:number;itemType?:string;application?:Record<string,string>}>=[];
   for(const item of items){
     if(item.itemType==="DRIVING_LICENSE"){
       if(item.serviceId!=="international-driving-license-1")return NextResponse.json({success:false,message:"مدة الرخصة غير مدعومة."},{status:409});
-      // Disable licence checkout until the customer's application data is persisted and validated.
-      return NextResponse.json({success:false,message:"استكمال بيانات الرخصة والتحقق منها غير متاح بعد في مسار الدفع. لم يتم إنشاء طلب."},{status:409});
+      if(item.quantity!==1||!item.application||typeof item.application!=="object"||Array.isArray(item.application))return NextResponse.json({success:false,message:"بيانات الرخصة غير مكتملة."},{status:400});
+      const raw=item.application as Record<string,unknown>;
+      const keys=["name","phone","countryCode","nationality","residence","destination","serviceType","travelDate","height","eyeColor","licenseValidUntil","deliveryAddress","deliveryLink"];
+      if(keys.some(key=>typeof raw[key]!=="string"||!(raw[key] as string).trim()||(raw[key] as string).length>240))return NextResponse.json({success:false,message:"أكمل بيانات الرخصة الأساسية."},{status:400});
+      const application:Record<string,string>={};
+      for(const key of [...keys,"email","notes"]){if(raw[key]!==undefined){if(typeof raw[key]!=="string"||raw[key].length>800)return NextResponse.json({success:false,message:"بيانات الرخصة طويلة أو غير صالحة."},{status:400});application[key]=(raw[key] as string).trim();}}
+      if(!application.deliveryLink.startsWith("https://")||!/^\\d{4}-\\d{2}-\\d{2}$/.test(application.licenseValidUntil))return NextResponse.json({success:false,message:"رابط أو تاريخ بيانات الرخصة غير صالح."},{status:400});
+      totalHalalas+=19900;
+      details.push({serviceId:item.serviceId,title:"رخصة القيادة الدولية — سنة واحدة",quantity:1,unitPriceSar:199,itemType:"DRIVING_LICENSE",application});
+      continue;
     }
     const service=services.find(s=>s.id===item.serviceId);
     if(!service)return NextResponse.json({success:false,message:"خدمة غير متاحة."},{status:409});
