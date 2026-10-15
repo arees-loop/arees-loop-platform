@@ -1,3 +1,4 @@
+import { bankTransferWritesAllowed } from "@/lib/bank-transfer-launch-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getCurrentSession } from "@/lib/session";
@@ -6,6 +7,7 @@ import { sendBankTransferOrderReceivedEmail } from "@/lib/email";
 
 type CartLine = {serviceId:string; quantity:number; itemType?:string; application?:unknown};
 export async function POST(request:NextRequest) {
+  if(!bankTransferWritesAllowed())return NextResponse.json({success:false,message:"نظام التحويل قيد التجهيز."},{status:503});
   const session=await getCurrentSession();
   if(!session) return NextResponse.json({success:false,message:"سجّل الدخول أولاً لإتمام الحجز."},{status:401});
   let input:unknown;
