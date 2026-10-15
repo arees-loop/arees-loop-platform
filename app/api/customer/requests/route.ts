@@ -23,6 +23,7 @@ function claimsFrom(body: unknown): {reference:string;trackingTokenHash:string}[
 function customerStatus(status:string){
   if(status==="DONE"||status==="COMPLETED")return "COMPLETED";
   if(status==="CANCELED"||status==="CANCELLED")return "CANCELED";
+  if(status==="CLOSED")return "CLOSED";
   if(status==="NEW")return "NEW";
   return "PROCESSING";
 }
@@ -62,7 +63,7 @@ export async function POST(request:NextRequest){
     ]);
     const data=[
       ...travel.map(x=>({
-        reference:x.reference,kind:x.kind,title:x.kind==="FERRY"?"طلب حجز باخرة":"طلب حجز طيران",
+        reference:x.reference,kind:x.kind,title:x.kind==="FERRY"?"طلب حجز باخرة":x.kind==="VISA"?"طلب تأشيرة":x.kind==="DRIVING_LICENSE"?"طلب رخصة دولية":"طلب حجز طيران",
         route:x.origin+" ← "+x.destination,
         travelDate:x.travelDate,returnDate:x.returnDate,tripType:x.tripType,itinerary:x.itinerary,
         guests:x.adults+x.children+x.infants,status:x.status,group:customerStatus(x.status),
