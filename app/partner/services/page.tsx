@@ -468,7 +468,7 @@ export default function PartnerServicesPage() {
     if(uploadingImages){ setSubmitMessage("جارٍ رفع الصورة، سيتم تفعيل الحفظ فور اكتمال الرفع."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
-      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(false),submitForReview:false})});
+      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(false),submitForReview:false,syncImages:true})});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||"تعذر حفظ التعديلات.");
       await refreshServices(); closeServiceForm(); setSubmitMessage("✓ تم حفظ التعديلات بنجاح."); window.scrollTo({top:0,behavior:"smooth"});
       window.setTimeout(()=>setSubmitMessage(""),6000);
@@ -480,7 +480,7 @@ export default function PartnerServicesPage() {
     if(uploadingImages){ setSubmitMessage("انتظر حتى يكتمل رفع الصور."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
-      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(false),submitForReview:false})});
+      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(false),submitForReview:false,syncImages:label==="الصور"})});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||`تعذر حفظ ${label}.`);
       await refreshServices(); setSubmitMessage(`✓ تم حفظ ${label} بنجاح.`); window.setTimeout(()=>setSubmitMessage(""),4500);
     }catch(error:any){setSubmitMessage(error?.message||`تعذر حفظ ${label}.`);}finally{setSubmitting(false);}
@@ -512,7 +512,7 @@ export default function PartnerServicesPage() {
           cancellationPolicy: form.cancellationPolicy, organizerType:form.organizerType, organizerName:form.organizerName, organizerLicenseNumber:form.organizerLicenseNumber, organizerLicenseIssuer:form.organizerLicenseIssuer, programApprovalNumber:form.programApprovalNumber, bookingMode: form.bookingMode,
           availableDays: form.availableDays, startDate: form.startDate, endDate: form.endDate,
           startTime: form.startTime, endTime: form.endTime,
-          images: form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})), submitForReview: !editingServiceId
+          images: form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})), syncImages:true, submitForReview: !editingServiceId
         }),
       });
       const data = await response.json();
