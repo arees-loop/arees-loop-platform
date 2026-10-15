@@ -43,7 +43,7 @@ export default function HotelsPage(){
   },[]);
   useEffect(()=>{
     if(offers.length<2||offersPaused||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    const timer=window.setInterval(()=>setIndex(i=>(i+1)%offers.length),2000);
+    const timer=window.setInterval(()=>setIndex(i=>(i+1)%offers.length),3000);
     return()=>window.clearInterval(timer);
   },[offers.length,offersPaused]);
   async function submit(event:FormEvent<HTMLFormElement>){
