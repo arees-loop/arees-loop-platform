@@ -92,3 +92,9 @@
 - ✅ أضيفت اختبارات انحدار دون اتصال بقاعدة فعلية في `tests/database-url.test.cjs` على Commit `aff27b64` (Production، Preview بدون URL، قاعدة منفصلة، وجهة إنتاج مماثلة، وloopback).
 - ✅ أضيف أمر `npm run test:db-isolation` إلى `package.json` في Commit `ec072735`.
 - 🟡 الاختبارات أُضيفت إلى GitHub لكن لا توجد نتيجة تنفيذ مؤكدة بعد؛ لا دمج ولا إطلاق Production اعتماداً على مجرد وجود الاختبارات.
+
+## مراجعة لاحقة — 16 أكتوبر 2026: أولوية اختيار قاعدة Preview
+- ✅ تأكد غياب نتائج CI status وPR workflow المبلغ عنها لآخر Commit مفحوص؛ غياب النتائج لا يثبت نجاح الاختبارات أو فشلها.
+- ✅ Commit `223b4d00`: عُدّل ترتيب اختيار اتصال قاعدة البيانات بحيث تكون `AREES_PREVIEW_DATABASE_URL` إلزامية لبيئة Vercel Preview حتى مع وجود متغير Staging؛ لا رجوع تلقائي إلى Production.
+- ✅ Commit `d2384911`: أضيف اختباران لانحدار أولوية Preview ورفض Staging كبديل في غياب رابط Preview.
+- 🟡 لم يثبت تشغيل الاختبارات على GitHub أو قاعدة فعلية. لا تحديث متغيرات Vercel ولا Migrations ولا نشر Production.
