@@ -1,3 +1,4 @@
+import { notifyCustomerOfRequestUpdate } from "@/lib/request-notification";
 import { NextRequest,NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -92,10 +93,11 @@ export async function PATCH(request:NextRequest){
     if(action==="REPLY"){
       const reply=clean(body.customerReply);
       if(!reply)return fail("الرد على العميل مطلوب.");
-      const [updated]=await prisma.$transaction([
+      const [updated,event]=await prisma.$transaction([
         prisma.hotelInquiry.update({where:{id},data:{customerReply:reply}}),
         prisma.hotelInquiryEvent.create({data:{requestId:id,actorId:u.id,actorName:name(u),action:"REPLY_PUBLISHED",fromStatus:current.status,toStatus:current.status,details:{chars:reply.length}}}),
       ]);
+      await notifyCustomerOfRequestUpdate({kind:"HOTEL",requestId:id,reference:current.reference,userId:current.userId,eventId:event.id}).catch(error=>console.error("Customer reply notification failed",error));
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
     if(action==="QUOTE"){
