@@ -51,6 +51,7 @@ function PageContent(){
  const [locating,setLocating]=useState(false);
  const [notice,setNotice]=useState("");
  const [cityFilter,setCityFilter]=useState("");
+ const [locationRequested,setLocationRequested]=useState(false);
 
  useEffect(()=>{
   const controller=new AbortController();
@@ -96,6 +97,21 @@ function PageContent(){
    setNotice("لم نتمكن من تحديد الموقع. يمكنك السماح بالموقع من المتصفح أو البحث عن المدينة والوجهة يدوياً.");
   }finally{setLocating(false)}
  },[]);
+ // Restore nearby discovery only after the browser has already granted permission.
+ // Never force a geolocation prompt just because someone visited the page.
+ useEffect(()=>{
+   if(locationFromUrl||queryFromUrl.trim()||locationRequested)return;
+   let active=true;
+   async function checkPermission(){
+     try{
+       if(!("permissions" in navigator))return;
+       const p=await navigator.permissions.query({name:"geolocation"});
+       if(active&&p.state==="granted"){setLocationRequested(true);void detect();}
+     }catch{}
+   }
+   void checkPermission();
+   return()=>{active=false};
+ },[locationFromUrl,queryFromUrl,locationRequested,detect]);
  const typed=useMemo(()=>services.filter(s=>matchesType(s,type)),[services,type]);
  const cities=useMemo(()=>Array.from(new Set(typed.map(s=>s.city).filter((x):x is string=>!!x))).sort((a,b)=>a.localeCompare(b,"ar")),[typed]);
  const nearby=mode==="nearby"&&center!==null;
@@ -141,7 +157,7 @@ function PageContent(){
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#116547]" aria-hidden="true">
          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
         </span>
-        <div className="flex-1"><p className="text-sm font-black">أنت الآن {locationLabel?"في "+locationLabel:"تستكشف من موقعك الحالي"}</p>
+        <div className="min-w-0 flex-1"><p className="text-[11px] font-semibold text-[#0D3B34]/60">موقعك الحالي</p><p className="mt-1 max-w-[260px] whitespace-normal break-words text-sm font-black leading-7 sm:max-w-none">أنت الآن {locationLabel?"في "+locationLabel:"تستكشف من موقعك الحالي"}</p>
          <p className="mt-1 text-xs leading-6 text-[#0D3B34]/65">تظهر التجارب المنشورة ضمن {RADIUS_KM} كم من موقعك، مرتبة بالأقرب. التجارب بلا موقع محدد لا تظهر في النتائج القريبة.</p>
         </div>
      </div>}
@@ -159,7 +175,7 @@ function PageContent(){
        </div>}
       </div>
       <div className="flex flex-wrap items-end gap-2">
-       <button type="button" disabled={locating} onClick={()=>void detect()} className="rounded-xl bg-[#0D3B34] px-5 py-3.5 text-sm font-black text-white disabled:opacity-50">{locating?"جارٍ تحديد الموقع...":"📍 استخدم موقعي"}</button>
+       <button type="button" disabled={locating} onClick={()=>{setLocationRequested(true);void detect()}} className="rounded-xl bg-[#0D3B34] px-5 py-3.5 text-sm font-black text-white disabled:opacity-50">{locating?"جارٍ تحديد الموقع...":"📍 استخدم موقعي"}</button>
        <button type="button" onClick={resetAll} className="rounded-xl border border-[#D4AF37]/40 bg-white px-4 py-3.5 text-xs font-bold">كل الوجهات</button>
       </div>
      </div>
