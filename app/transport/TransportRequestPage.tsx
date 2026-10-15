@@ -148,11 +148,11 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 text-xs">
-                        <p className="font-bold">{offer.travelDate?<>موعد الرحلة: <time dateTime={offer.travelDate}>{new Date(offer.travelDate).toLocaleDateString("ar-SA",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"})}</time></>:"الموعد يؤكد عند إرسال الطلب"}</p>
+                        {offer.travelDate&&<p className="font-bold">موعد الرحلة: <time dateTime={offer.travelDate}>{new Date(offer.travelDate).toLocaleDateString("ar-SA",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"})}</time></p>}
                         <div className="flex flex-wrap gap-2">{offer.adultPriceSar!==null&&<span className="rounded-full bg-[#E8CC85]/20 px-2.5 py-1 font-black">بالغ {offer.adultPriceSar.toLocaleString("ar-SA")} ر.س</span>}{offer.childPriceSar!==null&&<span className="rounded-full bg-[#E8CC85]/20 px-2.5 py-1 font-black">طفل {offer.childPriceSar.toLocaleString("ar-SA")} ر.س</span>}{offer.infantPriceSar!==null&&<span className="rounded-full bg-[#E8CC85]/20 px-2.5 py-1 font-black">رضيع {offer.infantPriceSar.toLocaleString("ar-SA")} ر.س</span>}</div>
-                        <span className={`rounded-full px-3 py-1 font-black ${offer.operationStatus==="SUSPENDED"?"bg-red-50 text-red-800":offer.operationStatus==="UNKNOWN"?"bg-amber-50 text-amber-800":"bg-emerald-50 text-emerald-800"}`}>{offer.operationStatus==="SUSPENDED"?"متوقف مؤقتاً":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح للاستفسار"}</span>
+                        {offer.operationStatus!=="UNKNOWN"&&<span className={`rounded-full px-3 py-1 font-black ${offer.operationStatus==="SUSPENDED"?"bg-red-50 text-red-800":offer.operationStatus==="UNKNOWN"?"bg-amber-50 text-amber-800":"bg-emerald-50 text-emerald-800"}`}>{offer.operationStatus==="SUSPENDED"?"متوقف مؤقتاً":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح للاستفسار"}</span>}
                       </div>
-                      {(offer.description||offer.operationNote)&&<p className="border-t border-[#0D3B34]/10 px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.operationNote||offer.description}</p>}
+                      {offer.description?.trim()&&<p className="border-t border-[#0D3B34]/10 px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.description}</p>}{offer.operationNote?.trim()&&<p className="border-t border-[#0D3B34]/10 px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.operationNote}</p>}
                     </article>
                   ))}
                 </div>
