@@ -33,7 +33,7 @@ export default function CustomerActionGate({
    <p className="mt-1 text-xs text-[#0D3B34]/65">يمكنك تصفح العروض دون حساب. بعد تسجيل الدخول ستعود إلى هذه الصفحة لإكمال {action}.</p>
    <div className="mt-5 flex flex-wrap gap-3">
     <Link href={target} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white">تسجيل الدخول</Link>
-    <Link href={"/register?next="+encodeURIComponent(path)} className="rounded-xl border border-[#D4AF37]/50 bg-white px-5 py-3 text-sm font-bold">إنشاء حساب</Link>
+    <Link href={"/onboarding?mode=new&next="+encodeURIComponent(path)} className="rounded-xl border border-[#D4AF37]/50 bg-white px-5 py-3 text-sm font-bold">إنشاء حساب</Link>
    </div>
   </section>;
  }
