@@ -1,0 +1,5 @@
+CREATE TABLE "BankTransferOrder" ("id" TEXT NOT NULL, "reference" TEXT NOT NULL, "userId" TEXT NOT NULL, "customerEmail" TEXT NOT NULL, "items" JSONB NOT NULL, "amountSar" DECIMAL(12,2) NOT NULL, "status" TEXT NOT NULL DEFAULT 'AWAITING_TRANSFER', "receiptPath" TEXT, "receiptUploadedAt" TIMESTAMP(3), "reviewedById" TEXT, "reviewedAt" TIMESTAMP(3), "reviewNotes" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "BankTransferOrder_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "BankTransferOrder_reference_key" ON "BankTransferOrder"("reference");
+CREATE INDEX "BankTransferOrder_userId_createdAt_idx" ON "BankTransferOrder"("userId","createdAt");
+CREATE INDEX "BankTransferOrder_status_createdAt_idx" ON "BankTransferOrder"("status","createdAt");
+CREATE TABLE "PlatformPaymentSetting" ("key" TEXT NOT NULL, "enabled" BOOLEAN NOT NULL DEFAULT false, "updatedById" TEXT, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "PlatformPaymentSetting_pkey" PRIMARY KEY ("key"));
