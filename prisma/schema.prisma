@@ -1074,3 +1074,30 @@ model HotelInquiryEvent {
 
   @@index([requestId, createdAt])
 }
+
+// Bank transfer checkout requests: kept separate from paid bookings until staff verification.
+model BankTransferOrder {
+  id String @id @default(cuid())
+  reference String @unique
+  userId String
+  customerEmail String
+  items Json
+  amountSar Decimal @db.Decimal(12,2)
+  status String @default("AWAITING_TRANSFER")
+  receiptPath String?
+  receiptUploadedAt DateTime?
+  reviewedById String?
+  reviewedAt DateTime?
+  reviewNotes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId,createdAt])
+  @@index([status,createdAt])
+}
+
+model PlatformPaymentSetting {
+  key String @id
+  enabled Boolean @default(false)
+  updatedById String?
+  updatedAt DateTime @updatedAt
+}
