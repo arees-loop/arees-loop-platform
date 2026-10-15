@@ -39,6 +39,7 @@ const offerDay=(d:string|null)=>d?new Intl.DateTimeFormat("en-CA",{timeZone:"Asi
 
 export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE"}={}) {
   const [tab,setTab]=useState<"requests"|"offers">(initialOfferKind==="ALL"?"requests":"offers");
+  useEffect(()=>{if(new URLSearchParams(window.location.search).get("view")==="requests")setTab("requests");},[]);
   const [requests,setRequests]=useState<RequestRow[]>([]);
   const [offers,setOffers]=useState<Offer[]>([]);
   const [staff,setStaff]=useState<Staff[]>([]);
