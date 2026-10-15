@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import CustomerActionGate from "@/app/components/CustomerActionGate";
+import {requireCustomerSession} from "@/lib/customer-auth-client";
 import ExperiencePhoto from "@/app/components/ExperiencePhoto";
 import SaveExperienceButton from "@/app/components/SaveExperienceButton";
 import ExperienceDistance from "@/app/components/ExperienceDistance";
@@ -9,7 +11,7 @@ type Service={id:string;nameAr:string;nameEn?:string|null;category:string;subCat
 export default function ServiceDetails(){
  const {id}=useParams<{id:string}>(); const [service,setService]=useState<Service|null>(null); const [loading,setLoading]=useState(true); const [qty,setQty]=useState(1); const [imageIndex,setImageIndex]=useState(0); const [cartNotice,setCartNotice]=useState("");
  useEffect(()=>{fetch("/api/services",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d?.success)setService((d.data||[]).find((x:Service)=>x.id===id)||null)}).finally(()=>setLoading(false))},[id]);
- const addToCart=()=>{if(!service)return;try{const key="arees-loop-cart-v1";const current=JSON.parse(localStorage.getItem(key)||"[]") as {serviceId:string;quantity:number}[];const existing=current.find(x=>x.serviceId===service.id);if(existing)existing.quantity+=qty;else current.push({serviceId:service.id,quantity:qty});localStorage.setItem(key,JSON.stringify(current));window.dispatchEvent(new Event("arees-cart-updated"));setCartNotice("تمت إضافة الخدمة للسلة بنجاح.");}catch{setCartNotice("تعذر حفظ السلة على هذا الجهاز.");}};
+ const addToCart=async ():Promise<boolean>=>{if(!service)return false;if(!(await requireCustomerSession("/services/"+encodeURIComponent(service.id))))return false;try{const key="arees-loop-cart-v1";const current=JSON.parse(localStorage.getItem(key)||"[]") as {serviceId:string;quantity:number}[];const existing=current.find(x=>x.serviceId===service.id);if(existing)existing.quantity+=qty;else current.push({serviceId:service.id,quantity:qty});localStorage.setItem(key,JSON.stringify(current));window.dispatchEvent(new Event("arees-cart-updated"));setCartNotice("تمت إضافة الخدمة للسلة بنجاح.");return true;}catch{setCartNotice("تعذر حفظ السلة على هذا الجهاز.");return false;}};
  if(loading)return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] p-10 text-center text-[#0D3B34]">جارٍ تحميل البرنامج...</main>;
  if(!service)return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] p-10 text-center text-[#0D3B34]"><h1 className="text-2xl font-bold">الخدمة غير متاحة</h1><Link href="/services" className="mt-5 inline-block underline">العودة للخدمات والتجارب</Link></main>;
  const subtotal=Number(service.finalPrice||0)*qty, total=subtotal, images=service.images||[];
@@ -42,7 +44,7 @@ export default function ServiceDetails(){
      <aside className="mx-auto mt-4 w-full max-w-[520px] rounded-[24px] border border-[#B99124]/20 bg-white p-5 shadow-sm">
       <div className="border-b border-[#0D3B34]/10 pb-4"><div><p className="text-[11px] opacity-50">السعر يبدأ من</p><p className="mt-1 text-2xl font-bold">{Number(service.finalPrice).toLocaleString("ar-SA")} <span className="text-sm">ر.س</span></p></div></div><div className="mt-4 flex items-center justify-between gap-4"><div><p className="mb-1 text-[11px] opacity-50">الكمية</p><div className="flex items-center rounded-xl border border-[#0D3B34]/15"><button onClick={()=>setQty(q=>Math.max(1,q-1))} className="h-9 w-9 text-lg">−</button><b className="min-w-9 text-center">{qty}</b><button onClick={()=>setQty(q=>q+1)} className="h-9 w-9 text-lg">+</button></div></div></div>
       <div className="mt-4 border-t border-[#0D3B34]/8 pt-3 text-sm"><div className="flex items-center justify-between"><span>الإجمالي</span><b>{total.toLocaleString("ar-SA")} ر.س</b></div></div>
-      <div className="mt-4 grid grid-cols-2 gap-2"><button onClick={addToCart} className="flex items-center justify-center gap-2 rounded-xl border border-[#0D3B34] py-3 text-xs font-bold"><span className="text-base">🛒</span> ضع في السلة</button><button type="button" onClick={()=>{addToCart();window.location.href="/cart";}} className="flex items-center justify-center gap-2 rounded-xl bg-[#0D3B34] py-3 text-xs font-bold text-white"><span aria-hidden="true">💰</span> احجز الآن</button></div>
+      <CustomerActionGate nextPath={"/services/"+encodeURIComponent(service.id)} action="حجز الخدمة"><div className="mt-4 grid grid-cols-2 gap-2"><button onClick={()=>void addToCart()} className="flex items-center justify-center gap-2 rounded-xl border border-[#0D3B34] py-3 text-xs font-bold"><span className="text-base">🛒</span> ضع في السلة</button><button type="button" onClick={async()=>{if(await addToCart())window.location.href="/cart";}} className="flex items-center justify-center gap-2 rounded-xl bg-[#0D3B34] py-3 text-xs font-bold text-white"><span aria-hidden="true">💰</span> احجز الآن</button></div></CustomerActionGate>
       {cartNotice&&<p role="status" className="mt-2 text-xs font-bold text-[#0D3B34]">{cartNotice} <Link href="/cart" className="underline">عرض السلة</Link></p>}
       
      </aside>
