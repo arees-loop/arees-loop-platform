@@ -66,7 +66,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
     if(offers.length<2||offersPaused)return;
     const media=window.matchMedia("(prefers-reduced-motion: reduce)");
     if(media.matches)return;
-    const timer=window.setInterval(()=>setOfferIndex(index=>(index+1)%offers.length),2000);
+    const timer=window.setInterval(()=>setOfferIndex(index=>(index+1)%offers.length),3000);
     return()=>window.clearInterval(timer);
   },[offers.length,offersPaused]);
 
