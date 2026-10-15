@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (!pathname) return new Response("Not found", { status: 404 });
   const logoMatch = new RegExp("^partners/([^/]+)/logos/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   const successMatch = new RegExp("^success-partners/([a-zA-Z0-9_-]+)/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
-  const transportMatch = /^transport-offers\/(FLIGHT|FERRY)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
+  const transportMatch = /^transport-offers\/(FLIGHT|FERRY|VISA|DRIVING_LICENSE)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
   const hotelMatch = /^transport-offers\/HOTEL\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
   if (!pathname.startsWith("services/") && !logoMatch && !successMatch && !transportMatch && !hotelMatch) {
     return new Response("Not found", { status: 404 });
