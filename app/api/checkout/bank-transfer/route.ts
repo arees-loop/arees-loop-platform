@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { sendBankTransferOrderReceivedEmail } from "@/lib/email";
 
 type CartLine = {serviceId:string; quantity:number; itemType?:string; application?:unknown};
 export async function POST(request:NextRequest) {
@@ -57,5 +58,7 @@ export async function POST(request:NextRequest) {
   if(!user?.email)return NextResponse.json({success:false,message:"أضف بريداً إلكترونياً إلى حسابك."},{status:409});
   const reference="ALB-"+randomUUID().slice(0,12).toUpperCase();
   const order=await prisma.bankTransferOrder.create({data:{reference,userId:session.user.id,customerEmail:user.email,items:details,amountSar:totalHalalas/100,status:"AWAITING_TRANSFER"}});
-  return NextResponse.json({success:true,order:{reference:order.reference,status:order.status,amountSar:totalHalalas/100},account:{bankName:account.bankName,beneficiaryName:account.beneficiaryName,iban:account.iban,qrImageUrl:account.qrImageUrl}},{status:201});
+  let emailSent=false;
+  try { await sendBankTransferOrderReceivedEmail({to:user.email,reference:order.reference,amountSar:totalHalalas/100}); emailSent=true; } catch(err) { console.error("Order confirmation email failed",err); }
+  return NextResponse.json({success:true,emailSent,order:{reference:order.reference,status:order.status,amountSar:totalHalalas/100},account:{bankName:account.bankName,beneficiaryName:account.beneficiaryName,iban:account.iban,qrImageUrl:account.qrImageUrl}},{status:201});
 }
