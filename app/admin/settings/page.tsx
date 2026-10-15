@@ -18,6 +18,7 @@ export default function PlatformSettingsPage(){
    <span className="mt-6 inline-block text-sm font-bold text-[#B38A25]">إدارة الشعارات ←</span>
   </Link>
   <Link href="/admin/settings/bank-account" className="group rounded-3xl border border-[#D4AF37]/30 bg-white p-7 shadow-sm transition hover:border-[#D4AF37]"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl">🏦</span><h2 className="mt-5 text-lg font-black">الحساب البنكي للمنصة</h2><p className="mt-2 text-sm leading-7">إدارة اسم البنك والمستفيد ورقم الآيبان ورابط رمز QR بواسطة السوبر أدمن فقط.</p><span className="mt-6 inline-block text-sm font-bold text-[#B38A25]">فتح الإعدادات ←</span></Link>
+  <Link href="/admin/settings/driving-license-points" className="group rounded-3xl border border-[#D4AF37]/30 bg-white p-7 shadow-sm"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl">✦</span><h2 className="mt-5 text-lg font-black">نقاط الرخصة الدولية</h2><p className="mt-2 text-sm leading-7">تفعيل أو إيقاف منح 150 نقطة بعد تنفيذ رخصة القيادة الدولية.</p><span className="mt-6 inline-block text-sm font-bold text-[#B38A25]">فتح الإعدادات ←</span></Link>
   <div className="rounded-3xl border border-dashed border-[#D4AF37]/35 bg-white/60 p-7">
    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl text-[#B38A25]">＋</span>
    <h2 className="mt-5 text-lg font-black">إعدادات إضافية</h2>
