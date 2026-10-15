@@ -18,8 +18,19 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
     if(!body.city?.trim()||!body.locationName?.trim()||invalidCoordinates) return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة."},{status:400});
     const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
     const status=body.submitForReview ? "UNDER_REVIEW" : current.status;
+    const syncImages=body.syncImages===true;
     const service=await prisma.$transaction(async(tx)=>{
-      await tx.serviceImage.deleteMany({where:{serviceId:id}});
+      if(syncImages){
+        const existing=await tx.serviceImage.findMany({where:{serviceId:id},select:{id:true,url:true}});
+        for(const [index,image] of images.entries()){
+          const sortOrder=Number.isFinite(Number(image.sortOrder))?Number(image.sortOrder):index;
+          const found=existing.find(x=>x.url===image.url);
+          if(found)await tx.serviceImage.update({where:{id:found.id},data:{sortOrder}});
+          else await tx.serviceImage.create({data:{serviceId:id,url:image.url,sortOrder}});
+        }
+        // Omitted images remain intact. Removing prior images needs a separate
+        // explicit, audited destructive action; section saves must never erase them.
+      }
       return tx.service.update({where:{id},data:{
         nameAr:body.nameAr.trim(),nameEn:body.nameEn?.trim()||null,category:body.category.trim(),subCategory:body.subCategory?.trim()||null,
         descriptionAr:body.descriptionAr?.trim()||null,descriptionEn:body.descriptionEn?.trim()||null,city:body.city.trim(),locationName:body.locationName.trim(),
@@ -28,7 +39,6 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
         cancellationPolicy:body.cancellationPolicy?.trim()||null,meetingInstructions:body.meetingInstructions?.trim()||null,
         organizerType:body.organizerType==="OTHER"?"OTHER":"SELF",organizerName:body.organizerName?.trim()||null,organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null,
         organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,programApprovalNumber:body.programApprovalNumber?.trim()||null,status,
-        images:{create:images.map((x:any,index:number)=>({url:x.url,sortOrder:Number.isFinite(Number(x.sortOrder))?Number(x.sortOrder):index}))}
       },include:{images:true}});
     });
     await prisma.auditLog.create({data:{userId:session.user.id,action:"PARTNER_SERVICE_UPDATED",entityType:"Service",entityId:id,beforeData:{nameAr:current.nameAr,status:current.status,finalPrice:String(current.finalPrice)},afterData:{nameAr:service.nameAr,status:service.status,finalPrice:String(service.finalPrice)}}});
