@@ -480,7 +480,10 @@ export default function PartnerServicesPage() {
     if(uploadingImages){ setSubmitMessage("انتظر حتى يكتمل رفع الصور."); return; }
     if(submitting)return; setSubmitting(true); setSubmitMessage("");
     try{
-      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({...servicePayload(false),submitForReview:false,syncImages:label==="الصور"})});
+      const payload=label==="الموقع"
+        ? {section:"LOCATION",city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,placeId:form.placeId,latitude:form.latitude,longitude:form.longitude}
+        : {...servicePayload(false),submitForReview:false,syncImages:label==="الصور"};
+      const response=await fetch(`/api/partner/services/${editingServiceId}`,{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const data=await response.json(); if(!response.ok||!data?.success)throw new Error(data?.message||`تعذر حفظ ${label}.`);
       await refreshServices(); setSubmitMessage(`✓ تم حفظ ${label} بنجاح.`); window.setTimeout(()=>setSubmitMessage(""),4500);
     }catch(error:any){setSubmitMessage(error?.message||`تعذر حفظ ${label}.`);}finally{setSubmitting(false);}
