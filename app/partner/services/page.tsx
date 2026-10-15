@@ -333,6 +333,7 @@ export default function PartnerServicesPage() {
     setEditingServiceId(null);
     setEditingOriginalService(null);
     resetForm();
+    setLocationQuery("");setLocationSuggestions([]);setLocationMessage("");
     setPendingImageFiles([]);
     setShowForm(true);
   };
@@ -340,6 +341,7 @@ export default function PartnerServicesPage() {
   const openEditServiceForm = (service: Service) => {
     setEditingServiceId(service.id);
     setEditingOriginalService(service);
+    setLocationQuery("");setLocationSuggestions([]);setLocationMessage("");
     setForm({
       nameAr: service.nameAr,
       nameEn: service.nameEn,
@@ -1032,8 +1034,8 @@ export default function PartnerServicesPage() {
                     <button type="button" onClick={useCurrentServiceLocation} disabled={locationBusy} className="shrink-0 rounded-2xl border border-[#0D3B34]/15 bg-white px-5 py-3 text-sm font-bold disabled:opacity-50">استخدام موقعي الحالي</button>
                   </div>
                   {locationMessage&&<p className="mt-3 text-xs font-bold">{locationMessage}</p>}
-                  {locationSuggestions.length>0&&<div className="mt-3 overflow-hidden rounded-xl border border-[#0D3B34]/10 bg-white">{locationSuggestions.map((s,i)=><button key={i} type="button" onClick={()=>{setForm((x)=>({...x,city:s.city||x.city,locationName:s.name,formattedAddress:s.address,latitude:s.location.lat,longitude:s.location.lng}));setLocationQuery(s.address);setLocationSuggestions([]);setLocationMessage("تم اختيار وتثبيت الموقع ✓");}} className="block w-full border-b border-[#0D3B34]/8 px-4 py-3 text-right last:border-0 hover:bg-[#F8F5ED]"><b className="block text-sm">{s.name}</b><span className="mt-1 block text-xs text-[#0D3B34]/55">{s.address}</span></button>)}</div>}
-                  {Number.isFinite(form.latitude)&&Number.isFinite(form.longitude)&&<div className="mt-3 rounded-xl bg-[#F8F5ED] p-3 text-xs"><b>الموقع مثبت ✓</b><p className="mt-1" dir="ltr">{form.latitude?.toFixed(6)}, {form.longitude?.toFixed(6)}</p></div>}
+                  {locationSuggestions.length>0&&<div className="mt-3 overflow-hidden rounded-xl border border-[#0D3B34]/10 bg-white">{locationSuggestions.map((s,i)=><button key={i} type="button" onClick={()=>{setForm((x)=>({...x,city:s.city||x.city,locationName:s.name,formattedAddress:s.address,placeId:"",latitude:s.location.lat,longitude:s.location.lng}));setLocationQuery(s.name||s.address);setLocationSuggestions([]);setLocationMessage("تم اختيار وتثبيت الموقع ✓");}} className="block w-full border-b border-[#0D3B34]/8 px-4 py-3 text-right last:border-0 hover:bg-[#F8F5ED]"><b className="block text-sm">{s.name}</b><span className="mt-1 block text-xs text-[#0D3B34]/55">{s.address}</span></button>)}</div>}
+                  {Number.isFinite(form.latitude)&&Number.isFinite(form.longitude)&&<div className="mt-3 rounded-xl bg-[#F8F5ED] p-3 text-xs"><b>الموقع المثبت لهذه الخدمة فقط ✓</b><p className="mt-1 font-bold text-[#0D3B34]">{form.locationName||"موقع محدد من الخريطة"}{form.city?` — ${form.city}`:""}</p>{form.formattedAddress&&<p className="mt-1 text-[#0D3B34]/70">{form.formattedAddress}</p>}<p className="mt-1 text-[#0D3B34]/55" dir="ltr">{form.latitude?.toFixed(6)}, {form.longitude?.toFixed(6)}</p></div>}
                 </div>
                 <div className="mt-4 rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
                   <p className="text-sm font-bold">هل توجد نقطة تجمع؟</p>
