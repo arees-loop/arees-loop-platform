@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import NotificationBell from "@/app/components/NotificationBell";
+import AdminIcon, {type AdminIconName} from "./AdminIcon";
 
 type AdminIdentity = {
   id: string;
@@ -16,29 +17,14 @@ type AdminIdentity = {
   profileImageUrl: string | null;
 };
 
-type NavItem = { href: string; label: string; icon: string; permission: string | null; superOnly?: boolean; badge?: string | number };
-
-const nav: NavItem[] = [
-  { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
-  { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
-  { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
-  { href: "/admin/users", label: "المستخدمين", icon: "♙", superOnly: true, permission: null },
-  { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
-  { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
-  { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
-  { href: "/admin/bank-transfers", label: "مراجعة التحويلات البنكية", icon: "▣", superOnly: true, permission: null },
-  { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
-  { href: "/admin/rewards", label: "النقاط وتقارير الاستبدال", icon: "✦", permission: "REPORTS_ANALYTICS" },
-];
-
-const platformNav: NavItem[] = [
-  { href: "/admin/settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
-  { href: "/admin/success-partners", label: "شركاء النجاح (المتحرك)", icon: "✧", superOnly: true, permission: null },
-  { href: "/admin/transport/flights", label: "إدارة حجوزات الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
-  { href: "/admin/transport/ferries", label: "إدارة حجوزات البواخر", icon: "⚓", permission: "TRANSPORT_FERRIES" },
-  { href: "/admin/transport/visas", label: "طلبات وعروض التأشيرات", icon: "🛂", superOnly: true, permission: null },
-  { href: "/admin/transport/driving-licenses", label: "طلبات رخص القيادة الدولية", icon: "🚘", superOnly: true, permission: null },
-  { href: "/admin/hotels", label: "إدارة طلبات وعروض الفنادق", icon: "▤", permission: "HOTEL_REQUESTS" },
+type NavItem = { href:string; label:string; icon:AdminIconName; permission:string|null; superOnly?:boolean };
+const requestsNav:NavItem[]=[
+ {href:"/admin/transport/flights?view=requests",label:"الطيران",icon:"plane",permission:"TRANSPORT_FLIGHTS"},
+ {href:"/admin/transport/ferries?view=requests",label:"البواخر",icon:"ship",permission:"TRANSPORT_FERRIES"},
+ {href:"/admin/hotels?view=requests",label:"الفنادق",icon:"hotel",permission:"HOTEL_REQUESTS"},
+ {href:"/admin/transport/visas?view=requests",label:"التأشيرات",icon:"globe",permission:"TRANSPORT_VISAS"},
+ {href:"/admin/transport/driving-licenses?view=requests",label:"الرخص الدولية",icon:"car",permission:"TRANSPORT_DRIVING_LICENSE"},
+ {href:"/admin/bank-transfers",label:"مراجعة التحويلات",icon:"credit",superOnly:true,permission:null},
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -49,7 +35,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [platformMenuOpen, setPlatformMenuOpen] = useState(false);
+  const [requestsMenuOpen, setRequestsMenuOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
   const [pendingServiceCount, setPendingServiceCount] = useState(0);
 
@@ -62,7 +48,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
-    if (platformNav.some((item) => pathname === item.href.split("?")[0])) setPlatformMenuOpen(true);
+    if (requestsNav.some((item) => pathname === item.href.split("?")[0])) setRequestsMenuOpen(true);
   }, [pathname]);
 
   useEffect(() => {
@@ -85,15 +71,10 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     : [];
   const hasNavAccess = (item: NavItem) =>
     isSuperAdmin || (!item.superOnly && (!item.permission || grantedPermissions.includes(item.permission)));
-  const visibleNav = nav.filter(hasNavAccess);
-  const visiblePlatformNav = platformNav.filter(hasNavAccess);
-  const isActive = (item: NavItem) => {
-    const base = item.href.split("?")[0];
-    return item.href.includes("?")
-      ? pathname === base && searchParams.get("view") === "active"
-      : pathname === base && !(base === "/admin/partners" && searchParams.get("view") === "active");
-  };
-  const platformMenuActive = visiblePlatformNav.some(isActive);
+  const visibleRequests=requestsNav.filter(hasNavAccess);
+  const requestsMenuActive=visibleRequests.some(item=>pathname===item.href.split("?")[0]);
+  const platformMenuActive=pathname==="/admin/settings"||pathname.startsWith("/admin/settings/")||
+    ["/admin/partners","/admin/users","/admin/services","/admin/success-partners","/admin/navigation","/admin/rewards"].some(p=>pathname===p);
   const fullName = [admin?.firstName, admin?.lastName].filter(Boolean).join(" ") || (isSuperAdmin ? "Arees Admin" : "Admin");
   const initials = fullName.split(" ").filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "A";
 
@@ -139,80 +120,28 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
           {/* فاصل ناعم */}
           <div className="mx-6 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/25 to-transparent" />
 
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1.5 px-4 py-5">
-            {visibleNav.map((item) => {
-              const active = isActive(item);
-
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`
-                    group flex items-center gap-3
-                    rounded-[14px]
-                    px-3 py-3
-                    text-[14px] font-semibold
-                    transition-all duration-200
-                    ${
-                      active
-                        ? "bg-[#F3E5BD]/75 text-[#171717] shadow-[0_5px_16px_rgba(181,138,37,.09)]"
-                        : "text-[#171717]/72 hover:bg-[#D4AF37]/10 hover:text-[#171717] hover:shadow-[0_7px_20px_rgba(181,138,37,.13)]"
-                    }
-                  `}
-                >
-                  <span
-                    className={`
-                      flex h-8 w-8 items-center justify-center
-                      rounded-[10px] text-lg
-                      transition-all duration-200
-                      ${
-                        active
-                          ? "bg-[#B68A21] text-white shadow-[0_4px_12px_rgba(182,138,33,.22)]"
-                          : "text-[#171717] group-hover:bg-white/65 group-hover:text-[#B68A21]"
-                      }
-                    `}
-                  >
-                    {item.icon}
-                  </span>
-
-                  <span className="flex-1">{item.label}</span>
-
-                  {((item.href === "/admin/services" && pendingServiceCount > 0) || item.badge) && (
-                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#D39B16] px-1.5 text-[12px] font-extrabold text-white shadow-[0_3px_8px_rgba(211,155,22,.28)]">
-                      {item.href === "/admin/services" ? pendingServiceCount : item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-            {visiblePlatformNav.length > 0 && (
-              <div className="pt-1">
-                <button
-                  type="button"
-                  aria-expanded={platformMenuOpen}
-                  onClick={() => setPlatformMenuOpen((open) => !open)}
-                  className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all duration-200 ${platformMenuActive ? "bg-[#F3E5BD]/75 text-[#171717] shadow-[0_5px_16px_rgba(181,138,37,.09)]" : "text-[#171717]/72 hover:bg-[#D4AF37]/10 hover:text-[#171717]"}`}
-                >
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] text-lg ${platformMenuActive ? "bg-[#B68A21] text-white" : "text-[#171717] group-hover:bg-white/65 group-hover:text-[#B68A21]"}`}>⚙</span>
-                  <span className="flex-1 text-right">إدارة المنصة</span>
-                  <span className="text-xs text-[#171717]/55">{platformMenuOpen ? "⌃" : "⌄"}</span>
-                </button>
-                {platformMenuOpen && (
-                  <div className="mr-5 mt-1 space-y-1 border-r border-[#D4AF37]/30 pr-3">
-                    {visiblePlatformNav.map((item) => {
-                      const active = isActive(item);
-                      return (
-                        <Link key={item.href} href={item.href} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold transition ${active ? "bg-[#F3E5BD]/75 text-[#171717]" : "text-[#171717]/70 hover:bg-[#D4AF37]/10 hover:text-[#171717]"}`}>
-                          <span className="w-5 text-center text-base">{item.icon}</span>
-                          <span>{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Three clear primary destinations; operational sections are grouped rather than duplicated. */}
+          <nav className="flex-1 space-y-2 px-4 py-5" aria-label="تنقل الإدارة الرئيسي">
+            <Link href="/admin/dashboard" className={`flex items-center gap-3 rounded-2xl px-3 py-3.5 text-sm font-bold transition ${pathname==="/admin/dashboard"?"bg-[#0D3B34] text-white":"text-[#0D3B34] hover:bg-[#F5EDD9]"}`}>
+              <AdminIcon name="dashboard" size={23}/> الرئيسية
+            </Link>
+            {visibleRequests.length>0&&<div>
+              <button type="button" aria-expanded={requestsMenuOpen} onClick={()=>setRequestsMenuOpen(v=>!v)}
+                className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-right text-sm font-bold transition ${requestsMenuActive?"bg-[#F2E5BF] text-[#0D3B34]":"text-[#0D3B34] hover:bg-[#F5EDD9]"}`}>
+                <AdminIcon name="requests" size={23}/><span className="flex-1">إدارة الطلبات والعروض</span>
+                <span aria-hidden="true">{requestsMenuOpen?"⌃":"⌄"}</span>
+              </button>
+              {requestsMenuOpen&&<div className="mr-5 mt-1 space-y-1 border-r border-[#D4AF37]/40 pr-3">
+                {visibleRequests.map(item=><Link key={item.href} href={item.href}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition ${pathname===item.href.split("?")[0]?"bg-[#EEDDB4] text-[#0D3B34]":"text-[#0D3B34]/75 hover:bg-[#F5EDD9]"}`}>
+                    <AdminIcon name={item.icon} size={19}/>{item.label}
+                </Link>)}
+              </div>}
+            </div>}
+            <Link href="/admin/settings" className={`flex items-center gap-3 rounded-2xl px-3 py-3.5 text-sm font-bold transition ${platformMenuActive?"bg-[#0D3B34] text-white":"text-[#0D3B34] hover:bg-[#F5EDD9]"}`}>
+              <AdminIcon name="settings" size={23}/> إدارة المنصة
+              {pendingServiceCount>0&&<span className="mr-auto rounded-full bg-[#D4AF37] px-2 py-0.5 text-[10px] font-bold text-[#0D3B34]">{pendingServiceCount}</span>}
+            </Link>
           </nav>
 
           {/* Platform Link */}
@@ -268,7 +197,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               {/* لمعة زجاجية علوية */}
               <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
 
-              {admin?.id && <div className="relative z-30"><NotificationBell role="admin" userId={admin.id}/></div>}
+
               {/* =====================
                   RIGHT - ADMIN
               ====================== */}
@@ -359,25 +288,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               ====================== */}
               <div className="flex items-center gap-4">
 
-                {/* Notification */}
-                <button
-                  className="
-                    relative flex h-10 w-10
-                    items-center justify-center
-                    rounded-[13px]
-                    bg-white/40
-                    text-lg
-                    transition-all duration-200
-                    hover:bg-[#D4AF37]/10
-                    hover:text-[#B68A21]
-                    hover:shadow-[0_6px_20px_rgba(181,138,37,.13)]
-                  "
-                >
-                  ♧
-
-                  <span className="absolute right-[8px] top-[8px] h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-                </button>
-
+                {admin?.id&&<NotificationBell role="admin" userId={admin.id}/>}
                 <div className="hidden text-left md:block">
                   <p className="text-[9px] font-bold tracking-[.18em] text-[#B68A21]">
                     AREES LOOP ADMIN
