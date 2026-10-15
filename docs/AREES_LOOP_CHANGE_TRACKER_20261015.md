@@ -86,3 +86,9 @@
 - **TomTom:** `TOMTOM_API_KEY` موجود في production/development ولا يظهر في Preview؛ اختبار البحث العكسي في Preview ما زال معلقاً.
 - ✅ **Commit 892e0f9:** ضبط `resolveDatabaseUrl` لرفض الاتصال بـlocalhost/127.0.0.1 في Preview ومنع أن يحل متغير staging محل قاعدة الإنتاج عند تشغيل Vercel production.
 - ⚠️ لا ترحيلات، ولا كتابة للبيانات، ولا تعديل على متغيرات Vercel، ولا دمج في main. يلزم فحص CI واختبار سلوك الإنتاج وPreview قبل أي اعتماد.
+
+## متابعة فحص قاعدة البيانات — 16 أكتوبر 2026
+- ✅ أصلح Commit `59efa143` محارف `\\n` الحرفية التي تسربت إلى `lib/database-url.ts` في التعديل السابق وكانت تجعل شفرة TypeScript غير صالحة. الخطأ في توصية/تنفيذ سابق وتم تصحيحه صراحةً.
+- ✅ أضيفت اختبارات انحدار دون اتصال بقاعدة فعلية في `tests/database-url.test.cjs` على Commit `aff27b64` (Production، Preview بدون URL، قاعدة منفصلة، وجهة إنتاج مماثلة، وloopback).
+- ✅ أضيف أمر `npm run test:db-isolation` إلى `package.json` في Commit `ec072735`.
+- 🟡 الاختبارات أُضيفت إلى GitHub لكن لا توجد نتيجة تنفيذ مؤكدة بعد؛ لا دمج ولا إطلاق Production اعتماداً على مجرد وجود الاختبارات.
