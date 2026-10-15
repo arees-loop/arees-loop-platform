@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { AirportLookup, AirlineLookup } from "@/app/components/AviationLookup";
 import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
-import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
+import { IMAGE_REQUIREMENTS } from "@/lib/image-requirements";
 
 type RequestRow={
   id:string;reference:string;kind:string;customerName:string;customerEmail:string|null;
@@ -197,11 +197,6 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
 
   async function saveOffer(event:FormEvent) {
     event.preventDefault();if(busy)return;setBusy(true);setError("");setStatus("");
-    if (bannerFile && (bannerDimensions?.width !== IMAGE_REQUIREMENTS.offer.width || bannerDimensions?.height !== IMAGE_REQUIREMENTS.offer.height)) {
-      setError(imageDimensionMessage(IMAGE_REQUIREMENTS.offer));
-      setBusy(false);
-      return;
-    }
     try{
       const method=offerForm.id?"PUT":"POST";
       let imageUrl=offerForm.bannerUrl;
@@ -468,8 +463,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <label className={label}>صور الإعلان أو تصميم العرض (PNG / JPG / WEBP — حتى 10 صور)
                   <input type="file" multiple accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>{const files=Array.from(e.target.files||[]);setBannerFile(files[0]||null);setExtraBannerFiles(files.slice(1));setBannerDimensions(null);}} />
                 </label>
-                <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={bannerFile ? bannerDimensions : null} />
-                <p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت للصورة و10 صور للعرض. يجب أن تطابق كل صورة المقاس المحدد وإلا يرفضها النظام.</p>
+                <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={bannerFile ? bannerDimensions : null} flexible />
+                <p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت للصورة و10 صور للعرض. المقاس 1200×600 مقترح، لا يمنع رفع أبعاد أخرى. تحذير القص يظهر في المعاينة.</p>
                 {!bannerFile&&offerForm.imageUrls.length>0&&<p className="mt-3 text-xs font-bold text-[#0D3B34]/65">الصور الحالية محفوظة ({offerForm.imageUrls.length}). اختيار صور جديدة يستبدل الصور الحالية.</p>}
                 {bannerFile&&<p className="mt-2 text-xs font-bold text-[#0D3B34]/65">سيتم رفع {1+extraBannerFiles.length} صور للعرض.</p>}
                 {(bannerPreview||offerForm.bannerUrl)&&<div className="mt-4 overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white">
@@ -496,7 +491,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className={label}>ترتيب العرض<input className={field} type="number" min={0} max={9999} value={offerForm.sortOrder} onChange={e=>setOfferForm(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
               <label className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/30 p-3 text-sm font-bold"><input type="checkbox" checked={offerForm.isVisible} onChange={e=>setOfferForm(f=>({...f,isVisible:e.target.checked}))}/> ظاهر للزوار</label>
               <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
-                <button disabled={busy||!showSuper||Boolean(bannerFile&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
+                <button disabled={busy||!showSuper} className="rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white disabled:opacity-40">حفظ العرض</button>
                 <button type="button" onClick={()=>setOfferEditorOpen(false)} className="rounded-xl border border-[#D4AF37] px-5 py-3 text-sm font-bold">إلغاء وإغلاق</button>
               </div>
             </form>
