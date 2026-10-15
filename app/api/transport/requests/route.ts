@@ -12,6 +12,9 @@ const PHONE = /^\d{6,15}$/;
 const CODE = /^\d{1,4}$/;
 
 export async function POST(request: NextRequest) {
+  const session=await getCurrentSession();
+  if(!session)return msg("يرجى تسجيل الدخول أو إنشاء حساب قبل إرسال الطلب.",401);
+
   try {
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") return msg("الطلب غير صالح.",400);
@@ -71,7 +74,7 @@ export async function POST(request: NextRequest) {
     // A high-entropy capability permits secure follow-up for guests without logging in.
     const trackingToken=randomBytes(32).toString("base64url");
     const trackingTokenHash=createHash("sha256").update(trackingToken).digest("hex");
-    const session=await getCurrentSession();
+    // Customer session was validated before the request body was processed.
     // Low-volume per phone safeguard for an anonymous public form.
     const recent = await prisma.transportRequest.count({where:{countryCode,phone,createdAt:{gte:new Date(Date.now()-24*60*60*1000)}}});
     if (recent>=5) return msg("تم استقبال طلبات متعددة لهذا الرقم اليوم؛ تواصل مع خدمة العملاء.",429);
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest) {
     const reference="AR-"+prefix+"-"+crypto.randomUUID().replaceAll("-","").slice(0,10).toUpperCase();
     const created = await prisma.transportRequest.create({data:{
       reference,kind,customerName:name,customerEmail:email,countryCode,phone,
-      userId:session?.user.id||null,trackingTokenHash,
+      userId:session.user.id,trackingTokenHash,
       whatsappCountryCode:waPhone?waCountryCode:null,whatsappPhone:waPhone||null,
       origin,destination,travelDate,tripType,returnDate,itinerary,adults,children,infants,notes,
     }});
