@@ -91,6 +91,7 @@ export async function PATCH(request:NextRequest){
       return NextResponse.json({success:true,data:updated});
     }
     if(action==="REPLY"){
+      if(["CANCELED","DONE","CLOSED"].includes(current.status))return fail("لا يمكن نشر رد جديد على طلب انتهت حالته.",409);
       const reply=clean(body.customerReply);
       if(!reply)return fail("الرد على العميل مطلوب.");
       const [updated,event]=await prisma.$transaction([
@@ -101,7 +102,7 @@ export async function PATCH(request:NextRequest){
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
     if(action==="QUOTE"){
-      if(["DONE","CANCELED"].includes(current.status))return fail("الطلب مغلق.",409);
+      if(["DONE","CANCELED","CLOSED"].includes(current.status))return fail("الطلب مغلق.",409);
       const amount=money(body.quoteAmountSar),quoteNotes=clean(body.quoteNotes);
       if(amount===null)return fail("أدخل السعر الإجمالي لإعداد عرض الفندق.");
       const [updated]=await prisma.$transaction([
@@ -117,7 +118,7 @@ export async function PATCH(request:NextRequest){
       if(status==="CANCELED"&&reason.length<5)return fail("سبب الإلغاء مطلوب (5 حروف على الأقل).");
       if(status==="CLOSED"&&reason.length<5)return fail("اذكر سبب عدم توفر الخدمة.");
       const [updated,event]=await prisma.$transaction([
-        prisma.hotelInquiry.update({where:{id},data:{status,adminNotes:["CANCELED","CLOSED"].includes(status)?reason:current.adminNotes,...(status==="CLOSED"?{customerReply:"نعتذر لكم، العرض أو الخدمة المطلوبة غير متوفرة حالياً. "+reason,quoteAmountSar:null}:{})}}),
+        prisma.hotelInquiry.update({where:{id},data:{status,adminNotes:["CANCELED","CLOSED"].includes(status)?reason:current.adminNotes,...(status==="CLOSED"?{customerReply:"نعتذر لكم، العرض أو الخدمة المطلوبة غير متوفرة حالياً. "+reason,quoteAmountSar:null,quoteNotes:null}:{})}}),
         prisma.hotelInquiryEvent.create({data:{requestId:id,actorId:u.id,actorName:name(u),action:status==="CANCELED"?"CANCELED":status==="CLOSED"?"CLOSED_UNAVAILABLE":"STATUS_CHANGED",fromStatus:current.status,toStatus:status,details:["CANCELED","CLOSED"].includes(status)?{reason}:undefined}}),
       ]);
       await notifyCustomerOfRequestUpdate({kind:"HOTEL",requestId:id,reference:current.reference,userId:current.userId,eventId:event.id,title:status==="CLOSED"?"نعتذر، العرض غير متوفر":"تحديث حالة طلب الفندق",body:status==="CLOSED"?"تم إغلاق الطلب لعدم توفر الخدمة. راجع تفاصيل طلبك.":"تغيّرت حالة طلب الفندق."}).catch(error=>console.error("Hotel status notification failed",error));
