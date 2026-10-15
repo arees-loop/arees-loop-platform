@@ -1,3 +1,4 @@
+import { notifyAdminsOfNewRequest } from "@/lib/request-notification";
 import { randomBytes,createHash } from "node:crypto";
 import { NextRequest,NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -51,6 +52,7 @@ export async function POST(request:NextRequest){
       requestId:created.id,actorName:"العميل",action:"REQUEST_CREATED",toStatus:"NEW",
       details:{rooms,adults,children},
     }}).catch(error=>console.error("Hotel creation event insert failed",error));
+    await notifyAdminsOfNewRequest({kind:"HOTEL",requestId:created.id,reference:created.reference}).catch(error=>console.error("New hotel request notification failed",error));
     let sent=false;
     try{
       await sendHotelInquiryNotification({
