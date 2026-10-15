@@ -10,6 +10,9 @@ const fail=(message:string,status=400)=>NextResponse.json({success:false,message
 const day=(s:string)=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(new Date(s+"T12:00:00Z").getTime())&&new Date(s+"T12:00:00Z").toISOString().slice(0,10)===s;
 
 export async function POST(request:NextRequest){
+  const session=await getCurrentSession();
+  if(!session)return fail("يرجى تسجيل الدخول أو إنشاء حساب قبل إرسال الطلب.",401);
+
   try{
     const raw:unknown=await request.json();
     if(!raw||typeof raw!=="object"||Array.isArray(raw))return fail("بيانات الطلب غير صحيحة.");
@@ -36,12 +39,12 @@ export async function POST(request:NextRequest){
     if(notes&&notes.length>1500)return fail("الملاحظات طويلة جداً.");
     const latest=await prisma.hotelInquiry.count({where:{countryCode,phone,createdAt:{gte:new Date(Date.now()-86400000)}}});
     if(latest>=5)return fail("تم استلام عدة طلبات من هذا الرقم اليوم، تواصل مع أريس مباشرة.",429);
-    const session=await getCurrentSession();
+    // Customer session was validated before the request body was processed.
     const token=randomBytes(32).toString("base64url");
     const trackingTokenHash=createHash("sha256").update(token).digest("hex");
     const reference="AR-HOT-"+randomBytes(5).toString("hex").toUpperCase();
     const created=await prisma.hotelInquiry.create({data:{
-      reference,userId:session?.user.id||null,trackingTokenHash,customerName:name,customerEmail:email,
+      reference,userId:session.user.id,trackingTokenHash,customerName:name,customerEmail:email,
       countryCode,phone,whatsappCountryCode:whatsappPhone?whatsappCountryCode:null,
       whatsappPhone:whatsappPhone||null,destination,hotelName,
       checkInDate:new Date(checkInDate+"T12:00:00.000Z"),
