@@ -24,8 +24,8 @@ type Offer={
 const operators={FLIGHT:["تاركو للطيران","بدر للطيران","الخطوط الجوية السودانية","أخرى"],FERRY:["الجودي","دليلة","عمان","مونتي","أخرى"],VISA:["سياحية","زيارة عائلية","أعمال","عبور","أخرى"]};
 type Staff={id:string;firstName:string|null;lastName:string|null;email:string;role:string;adminPermissions:unknown};
 type HistoryEvent={id:string;actorName:string;action:string;fromStatus:string|null;toStatus:string|null;details:unknown;createdAt:string};
-const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"تم الإلغاء"};
-const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],QUOTE_READY:["PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
+const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"تم الإلغاء",CLOSED:"مغلق — غير متاح"};
+const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED","CLOSED"],PROCESSING:["QUOTE_READY","CANCELED","CLOSED"],QUOTE_READY:["PROCESSING","CANCELED","CLOSED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED","CLOSED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[],CLOSED:[]};
 const blankOffer={
   id:"",kind:"FERRY",title:"",description:"",carrierName:"",origin:"سواكن",destination:"جدة",
   travelDate:"",scheduleType:"SINGLE",scheduleDates:"",rangeFrom:"",rangeTo:"",weekdaysText:"",monthDaysText:"",scheduleUntil:"",amountSar:"",adultPriceSar:"",childPriceSar:"",infantPriceSar:"",priceUnit:"للبالغ",bannerUrl:"",imageUrls:[] as string[],operationStatus:"AVAILABLE",operationNote:"",
@@ -358,12 +358,20 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   </div>}
                   <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-bold">الحالة: {statusNames[selected.status]||selected.status}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {(transitions[selected.status]||[]).filter(x=>x!=="CANCELED"&&x!=="QUOTE_READY").map(next=>
+                    {(transitions[selected.status]||[]).filter(x=>x!=="CANCELED"&&x!=="QUOTE_READY"&&x!=="CLOSED").map(next=>
                       <button key={next} type="button" disabled={busy} onClick={()=>void performAction("SET_STATUS",{status:next})}
                         className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2 text-xs font-bold disabled:opacity-40">
                         {statusNames[next]}
                       </button>)}
                   </div>
+                  {(transitions[selected.status]||[]).includes("CLOSED")&&<div className="mt-4 grid gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <h4 className="text-sm font-black text-amber-900">الخدمة غير متوفرة</h4>
+                    <p className="text-xs leading-6 text-amber-800">سيتم الاعتذار للعميل، ومسح مبلغ العرض من هذا الطلب وإغلاقه نهائياً دون إتاحة الدفع.</p>
+                    <label className={label}>سبب عدم التوفر (إلزامي)
+                      <textarea className={field} minLength={5} maxLength={1500} rows={2} value={cancelReason} onChange={e=>setCancelReason(e.target.value)} placeholder="مثلاً: لا توجد مقاعد متاحة في الموعد المطلوب"/>
+                    </label>
+                    <button type="button" disabled={busy||cancelReason.trim().length<5} onClick={()=>void performAction("SET_STATUS",{status:"CLOSED",cancellationReason:cancelReason})} className="rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-40">غير متاح — اعتذار وإغلاق الطلب</button>
+                  </div>}
                   {(transitions[selected.status]||[]).includes("CANCELED")&&<div className="mt-4 grid gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
                     <label className={label}>جهة الإلغاء
                       <select className={field} value={cancelBy} onChange={e=>setCancelBy(e.target.value)}>
