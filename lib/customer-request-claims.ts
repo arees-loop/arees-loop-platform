@@ -7,7 +7,7 @@ export function readCustomerClaims():CustomerClaim[]{
     if(!Array.isArray(data))return [];
     return data.filter((item):item is CustomerClaim=>
       !!item&&typeof item==="object"&&
-      typeof item.reference==="string"&&/^AR-(AIR|SEA|HOT)-[A-F0-9]{10}$/.test(item.reference)&&
+      typeof item.reference==="string"&&/^AR-(AIR|SEA|HOT|VISA|IDL)-[A-F0-9]{10}$/.test(item.reference)&&
       typeof item.token==="string"&&/^[A-Za-z0-9_-]{43}$/.test(item.token)).slice(-40);
   }catch{return [];}
 }
