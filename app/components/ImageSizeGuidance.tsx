@@ -12,9 +12,12 @@ export default function ImageSizeGuidance({
 }) {
   const valid = actual?.width === requirement.width && actual?.height === requirement.height;
   const sameRatio=!!actual&&Math.abs(actual.width/actual.height-requirement.width/requirement.height)<0.02;
+  const divisor=(a:number,b:number):number=>b?divisor(b,a%b):a;
+  const ratioDivisor=divisor(requirement.width,requirement.height);
+  const ratioLabel=`${requirement.width/ratioDivisor}:${requirement.height/ratioDivisor}`;
   if(flexible)return <div className="mt-2 rounded-xl border border-[#D4AF37]/45 bg-[#FFF9E9] px-4 py-3 text-xs leading-6 text-[#0D3B34]">
     <p className="font-black">المقاس الموصى به: {requirement.width} × {requirement.height} بكسل — {requirement.label}.</p>
-    <p className="mt-1">يمكنك رفع أي أبعاد مناسبة؛ الصور المخالفة للنسبة المقترحة لا تُرفض، وقد يُقص جزء منها عند عرضها داخل بطاقة بنسبة 2:1.</p>
+    <p className="mt-1">يمكنك رفع أبعاد مختلفة؛ النسبة الموصى بها {ratioLabel}. الاختلاف لا يمنع الرفع، لكن قد يُقص جزء من الصورة في البطاقات التي تستخدم القص. راجع المعاينة، خاصة النصوص والشعارات.</p>
     {actual&&<p className={`mt-1 font-bold ${valid||sameRatio?"text-emerald-800":"text-amber-800"}`}>
       صورتك: {actual.width} × {actual.height} بكسل — {valid?"✓ المقاس المقترح":sameRatio?"✓ النسبة مناسبة وقد يتغير الحجم":"⚠ نسبة مختلفة، راجع معاينة القص قبل النشر"}
     </p>}
