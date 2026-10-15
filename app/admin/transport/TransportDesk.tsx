@@ -285,8 +285,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
           <p className="mt-2 text-sm leading-8 text-[#0D3B34]/70">استقبال الطلبات، إعداد عروض الأسعار، متابعة التواصل، وإدارة إعلانات الأسعار وجداول البواخر.</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/flights" className="rounded-full border border-[#D4AF37] bg-white px-4 py-2.5 text-sm font-bold">معاينة الطيران</Link>
-          <Link href="/ferries" className="rounded-full border border-[#D4AF37] bg-white px-4 py-2.5 text-sm font-bold">معاينة البواخر</Link>{initialOfferKind==="VISA"&&<Link href="/visas" className="rounded-full border border-[#D4AF37] bg-white px-4 py-2.5 text-sm font-bold">معاينة التأشيرات</Link>}
+          <nav aria-label="التنقل بين أقسام الحجوزات" className="flex flex-wrap items-center gap-2"><Link href="/admin/transport/flights" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF7DF]">✈ الطيران</Link><Link href="/admin/transport/ferries" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF7DF]">⚓ البواخر</Link><Link href="/admin/hotels" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF7DF]">▤ الفنادق</Link><Link href="/admin/transport/driving-licenses" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2.5 text-sm font-bold text-[#0D3B34] hover:bg-[#FFF7DF]">🚘 الرخصة الدولية</Link></nav>
+          {initialOfferKind==="VISA"&&<Link href="/admin/transport/visas" className="rounded-full border border-[#D4AF37] bg-white px-4 py-2.5 text-sm font-bold">إدارة التأشيرات</Link>}
         </div>
       </div>
       <div className="mt-7 flex flex-wrap gap-2">
