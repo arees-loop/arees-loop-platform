@@ -21,7 +21,26 @@ export default function RequestServicePage({kind}:{kind:Kind}){
   const details=["نوع الخدمة: "+title,"الجنسية: "+nationality.trim(),"بلد الإقامة: "+residence.trim(),"الوجهة: "+destination.trim(),(visa?"نوع التأشيرة: ":"فئة الرخصة: ")+serviceType.trim(),!visa?"مدة الرخصة الدولية المطلوبة: "+duration+" سنة":"",!visa?"الطول التقريبي: "+height.trim():"",!visa?"لون العين: "+eyeColor.trim():"",!visa?"صلاحية الرخصة المحلية حتى: "+licenseValidUntil:"",!visa?"عنوان المدينة والحي: "+deliveryAddress.trim():"",!visa?"رابط موقع التوصيل: "+deliveryLink.trim():"",!visa?"الرسوم: 199 ريال شامل التوصيل؛ مدة الرخصة سنة واحدة":"","موعد السفر المتوقع: "+travelDate,"عدد المتقدمين: "+applicants,notes.trim()?"ملاحظات إضافية: "+notes.trim():""].filter(Boolean).join("\n");
   try{const r=await fetch("/api/transport/requests",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind,customerName:name,customerEmail:email,countryCode:countryCode==="other"?customCode:countryCode,phone,origin:residence,destination,travelDate,tripType:"ONE_WAY",adults:applicants,children:0,infants:0,notes:details})});const d=await r.json().catch(()=>null);if(!r.ok||!d?.success){setError(d?.message||"تعذر تسجيل الطلب. أعد المحاولة.");return;}setClaimSaved(storeCustomerClaim({reference:d.data.reference,token:d.data.trackingToken}));setReference(d.data.reference);setNotice("تم استلام طلبك. سيراجع فريق أريس البيانات ويتواصل معك لاستكمال المتطلبات. إرسال الطلب لا يعني صدور التأشيرة أو الرخصة.");}catch{setError("تعذر الاتصال بالخدمة حالياً. أعد المحاولة.");}finally{setBusy(false);}
  }
- function addLicenseToCart(goToCart=false){try{const key="arees-loop-cart-v1",serviceId="international-driving-license-"+duration;const current=JSON.parse(localStorage.getItem(key)||"[]");const saved=Array.isArray(current)?current.filter((x:any)=>x&&typeof x.serviceId==="string"&&Number.isInteger(x.quantity)&&x.quantity>0):[];const exists=saved.find((x:any)=>x.serviceId===serviceId);const next=exists?saved.map((x:any)=>x.serviceId===serviceId?{...x,quantity:x.quantity+1}:x):[...saved,{serviceId,quantity:1,itemType:"DRIVING_LICENSE",title:"رخصة القيادة الدولية",durationYears:Number(duration),unitPriceSar:199,imageUrl:"/Image/social/arees-international-driving-license.webp"}];localStorage.setItem(key,JSON.stringify(next));window.dispatchEvent(new Event("arees-cart-updated"));setCartNotice("أُضيفت الرخصة إلى السلة ب199 ريال شامل التوصيل.");if(goToCart)window.location.assign("/cart");}catch{setCartNotice("تعذر الإضافة إلى السلة. أعد المحاولة.");}}
+ function addLicenseToCart(goToCart=false){
+  if(visa)return;
+  if(duration!=="1"){setCartNotice("المتاح حالياً رخصة دولية لمدة سنة واحدة فقط.");return;}
+  if(![name,nationality,residence,destination,serviceType,travelDate,height,eyeColor,licenseValidUntil,deliveryAddress,phone].every(x=>x.trim())||!deliveryLink.startsWith("https://")){
+    setCartNotice("أكمل بيانات الرخصة المطلوبة ورابط موقع التوصيل في النموذج قبل إضافتها إلى السلة.");
+    return;
+  }
+  const application={name:name.trim(),email:email.trim(),phone:phone.trim(),countryCode:countryCode==="other"?customCode:countryCode,nationality:nationality.trim(),residence:residence.trim(),destination:destination.trim(),serviceType,travelDate,height:height.trim(),eyeColor:eyeColor.trim(),licenseValidUntil,deliveryAddress:deliveryAddress.trim(),deliveryLink:deliveryLink.trim(),notes:notes.trim()};
+  try{
+    const key="arees-loop-cart-v1",serviceId="international-driving-license-1";
+    const raw=JSON.parse(localStorage.getItem(key)||"[]");
+    const previous=Array.isArray(raw)?raw.filter((x:any)=>x&&typeof x.serviceId==="string"&&Number.isInteger(x.quantity)&&x.quantity>0&&x.serviceId!==serviceId):[];
+    const next=[...previous,{serviceId,quantity:1,itemType:"DRIVING_LICENSE",title:"رخصة القيادة الدولية",durationYears:1,unitPriceSar:199,imageUrl:"/Image/social/arees-international-driving-license.webp",application}];
+    localStorage.setItem(key,JSON.stringify(next));
+    window.dispatchEvent(new Event("arees-cart-updated"));
+    setCartNotice("حُفظت بيانات طلب الرخصة في السلة؛ لم يتم الدفع أو تأكيد الإصدار.");
+    if(goToCart)window.location.assign("/cart");
+  }catch{setCartNotice("تعذر الإضافة إلى السلة. أعد المحاولة.");}
+}
+
  const offer=offers[index];
  return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-14 pt-28 text-[#0D3B34] md:px-8 md:pt-32"><section className="mx-auto max-w-[1450px]">
  <div className="mb-4 overflow-hidden rounded-[28px] bg-[#F7F4ED]"><img src={visa?"/Image/hero/arees-visas-banner.webp":"/Image/hero/arees-driving-license-banner.webp"} alt={visa?"إصدار التأشيرات حول العالم مع أريس لوب":"إصدار رخصة القيادة الدولية مع أريس لوب"} className="block h-auto w-full"/></div>
