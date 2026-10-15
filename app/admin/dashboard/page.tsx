@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import AdminIcon, {type AdminIconName} from "../AdminIcon";
 
 type Partner={id:string;legalNameAr?:string|null;tradeNameAr?:string|null;partnerType?:string|null;submittedAt?:string|null;status?:string|null};
 type Service={id:string;nameAr?:string|null;status?:string|null};
-type RequestAlerts={ferries:number|null;flights:number|null;hotels:number|null;drivingLicenses:number|null};
-const shortcuts=[
- {key:"ferries",label:"طلبات البواخر",symbol:"⚓",href:"/admin/transport/ferries?view=requests"},
- {key:"flights",label:"طلبات الطيران",symbol:"✈️",href:"/admin/transport/flights?view=requests"},
- {key:"hotels",label:"طلبات الفنادق",symbol:"🏨",href:"/admin/hotels?view=requests"},
- {key:"drivingLicenses",label:"الرخص الدولية",symbol:"🚘",href:"/admin/transport/driving-licenses?view=requests"}
-] as const;
+type RequestAlerts={ferries:number|null;flights:number|null;hotels:number|null;drivingLicenses:number|null;visas:number|null};
+type QuickLink={key:keyof RequestAlerts;label:string;icon:AdminIconName;href:string;bg:string;iconColor:string};
+const shortcuts:QuickLink[]=[
+ {key:"ferries",label:"طلبات البواخر",icon:"ship",href:"/admin/transport/ferries?view=requests",bg:"bg-[#E8F3FF]",iconColor:"text-[#2365A5]"},
+ {key:"flights",label:"طلبات الطيران",icon:"plane",href:"/admin/transport/flights?view=requests",bg:"bg-[#EDF0FF]",iconColor:"text-[#4759B1]"},
+ {key:"hotels",label:"طلبات الفنادق",icon:"hotel",href:"/admin/hotels?view=requests",bg:"bg-[#F5EDFF]",iconColor:"text-[#7955A3]"},
+ {key:"visas",label:"طلبات التأشيرات",icon:"globe",href:"/admin/transport/visas?view=requests",bg:"bg-[#FFF3E5]",iconColor:"text-[#B97922]"},
+ {key:"drivingLicenses",label:"الرخص الدولية",icon:"car",href:"/admin/transport/driving-licenses?view=requests",bg:"bg-[#E8F7EE]",iconColor:"text-[#1E8053]"},
+];
 
 const label=(s?:string|null)=>({ACTIVE:"معتمد ونشط",UNDER_REVIEW:"تحت التدقيق",SUBMITTED:"تم استلام الطلب",NEEDS_COMPLETION:"مطلوب استكمال",NEEDS_INFO:"مطلوب استكمال",REJECTED:"مرفوض"}[s||""]||s||"غير محدد");
 const tone=(s?:string|null)=>s==="ACTIVE"?"bg-[#E2F4E9] text-[#287B50]":s==="REJECTED"?"bg-[#FFE8E8] text-[#E44C4C]":s==="NEEDS_COMPLETION"||s==="NEEDS_INFO"?"bg-[#FFF2D5] text-[#B67C00]":"bg-[#E5F3FF] text-[#1880D0]";
@@ -52,12 +55,16 @@ export default function AdminDashboardPage(){
     </div>
     {alertsLoading&&!requestAlerts?<p className="mt-5 text-sm">جارٍ تحميل إشعارات الطلبات...</p>:null}
     {alertsError?<p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{alertsError}</p>:null}
-    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {shortcuts.filter(item=>requestAlerts?.[item.key]!==null).map(item=>{
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      {shortcuts.filter(item=>!requestAlerts||requestAlerts[item.key]!==null).map(item=>{
         const count=requestAlerts?.[item.key];
-        return <Link key={item.key} href={item.href} className="flex items-center justify-between gap-3 rounded-2xl border border-[#D4AF37]/30 bg-[#FFFCF5] p-4 transition hover:border-[#B88A30] hover:bg-[#FFF7E5]">
-          <div><span className="text-xl" aria-hidden="true">{item.symbol}</span><p className="mt-2 text-sm font-black text-[#0D3B34]">{item.label}</p><p className="mt-1 text-xs text-[#0D3B34]/55">عرض الطلبات ←</p></div>
-          <span className={`rounded-full px-4 py-2 text-lg font-black ${count?"bg-[#0D3B34] text-white":"bg-[#EEEAE0] text-[#0D3B34]"}`}>{count??"—"}</span>
+        return <Link key={item.key} href={item.href} className={`group rounded-2xl border border-white p-4 transition hover:-translate-y-0.5 hover:shadow-lg ${item.bg}`}>
+          <div className="flex items-center justify-between gap-3">
+            <span className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-white/85 shadow-sm ${item.iconColor}`}><AdminIcon name={item.icon} size={27}/></span>
+            <span className={`text-3xl font-black tabular-nums ${item.iconColor}`}>{count??"—"}</span>
+          </div>
+          <p className="mt-4 text-sm font-black text-[#0D3B34]">{item.label}</p>
+          <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-[#0D3B34]/65">فتح الطلبات <AdminIcon name="arrow" size={15}/></p>
         </Link>;
       })}
     </div>
