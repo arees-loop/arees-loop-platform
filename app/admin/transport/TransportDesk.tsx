@@ -1,7 +1,7 @@
 "use client";
 import RequestAttachmentsPanel from "@/app/components/RequestAttachmentsPanel";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { AirportLookup, AirlineLookup } from "@/app/components/AviationLookup";
 import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
@@ -58,6 +58,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [bannerPreview,setBannerPreview]=useState("");
   const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
   const [selected,setSelected]=useState<RequestRow|null>(null);
+  const initialRequestOpened=useRef(false);
   const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
   const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?blankOffer.origin:"",destination:initialOfferKind==="FERRY"?blankOffer.destination:""});
   const [status,setStatus]=useState("");
@@ -79,6 +80,18 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     finally{setLoading(false);}
   },[]);
   useEffect(()=>{void load();},[load]);
+  useEffect(()=>{
+    if(initialRequestOpened.current||!requests.length)return;
+    const reference=new URLSearchParams(window.location.search).get("reference");
+    if(!reference)return;
+    initialRequestOpened.current=true;
+    const target=requests.find(item=>item.reference===reference);
+    setTab("requests");
+    if(target&&(initialOfferKind==="ALL"||target.kind===initialOfferKind)){
+      choose(target);
+      window.setTimeout(()=>document.getElementById("arees-request-details")?.scrollIntoView({block:"nearest",behavior:"smooth"}),100);
+    }else setError("الطلب المطلوب غير موجود ضمن الطلبات المصرح لك بعرضها.");
+  },[requests,initialOfferKind]);
   useEffect(()=>{
     void fetch("/api/admin/me",{cache:"no-store"}).then(r=>r.json()).then(d=>{
       if(d.success)setIdentity({role:d.data.role,id:d.data.id});
@@ -316,7 +329,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               </button>
             ))}
           </section>
-          <section className="min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6">
+          <section id="arees-request-details" className="min-w-0 scroll-mt-24 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6">
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
               <>
                 <h2 className="text-xl font-black">طلب {selected.reference}</h2>
