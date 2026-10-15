@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       const superAdmin=session.user.role==="SUPER_ADMIN";
       const ownerOfNewImage=serviceMatch[1]===session.user.id&&
         await userHasPartnerPermission(session.user.id,"services");
-      const memberOfExistingService=!!image&&await prisma.partnerMember.findFirst({
+      const memberOfExistingService=!!image&&await userHasPartnerPermission(session.user.id,"services")&&await prisma.partnerMember.findFirst({
         where:{userId:session.user.id,partnerId:image.service.partnerId,isActive:true},
         select:{id:true}
       });
