@@ -81,8 +81,17 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error("GET /api/services error:", error);
-    return NextResponse.json({ success: false, error: "SERVICES_FETCH_FAILED", message: "Unable to load services." }, { status: 500 });
+    const errorCode=typeof error==="object"&&error!==null&&"code" in error?String((error as {code?:unknown}).code):"UNKNOWN";
+    console.error("GET /api/services error:", errorCode);
+    if(errorCode==="P1001"||errorCode==="P1002"||errorCode==="P1017"){
+      return NextResponse.json({
+        success:false,error:"SERVICE_DATABASE_UNAVAILABLE",
+        message:process.env.VERCEL_ENV==="preview"
+          ?"قاعدة بيانات المعاينة غير متصلة حالياً. لا يمكن عرض تجارب فعلية حتى تهيئة قاعدة اختبار معزولة."
+          :"تعذر الاتصال بالتجارب حالياً. يرجى المحاولة لاحقاً."
+      },{status:503,headers:{"Cache-Control":"no-store"}});
+    }
+    return NextResponse.json({success:false,error:"SERVICES_FETCH_FAILED",message:"تعذر جلب التجارب حالياً."},{status:500,headers:{"Cache-Control":"no-store"}});
   }
 }
 
