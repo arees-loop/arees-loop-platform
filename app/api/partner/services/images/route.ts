@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { getCurrentSession } from "@/lib/session";
 import { userHasPartnerPermission } from "@/lib/partner-permissions";
-import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
-import { checkServerImageDimensions } from "@/lib/server-image-dimensions";
+import { getServerImageDimensions } from "@/lib/server-image-dimensions";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ success: false, message: "غير مصرح." }, { status: 401 });
+  if(!await userHasPartnerPermission(session.user.id,"services"))return NextResponse.json({success:false,message:"لا توجد صلاحية لإضافة صور الخدمة."},{status:403});
 
   const formData = await request.formData();
   const file = formData.get("file");
@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
   if (!["image/jpeg","image/png","image/webp"].includes(file.type)) return NextResponse.json({ success: false, message: "نوع الصورة غير مدعوم." }, { status: 400 });
   if (file.size > 5 * 1024 * 1024) return NextResponse.json({ success: false, message: "حجم الصورة غير مناسب. الحد الأقصى 5 MB." }, { status: 400 });
   try {
-    const dimensions = await checkServerImageDimensions(file, IMAGE_REQUIREMENTS.servicePhoto);
-    if (!dimensions.matches) return NextResponse.json({ success: false, message: `${imageDimensionMessage(IMAGE_REQUIREMENTS.servicePhoto)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُرفع.` }, { status: 400 });
+    const dimensions = await getServerImageDimensions(file);
+    if(dimensions.width<100||dimensions.height<100)return NextResponse.json({success:false,message:"الصورة صغيرة للغاية."},{status:400});
   } catch {
     return NextResponse.json({ success: false, message: "تعذر قراءة أبعاد الصورة." }, { status: 400 });
   }
