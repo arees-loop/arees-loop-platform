@@ -25,7 +25,8 @@ export async function POST(request:Request){
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     const latitude=Number(body.latitude);
     const longitude=Number(body.longitude);
-    if(!body.city?.trim()||!body.locationName?.trim()||!Number.isFinite(latitude)||!Number.isFinite(longitude)){
+    const invalidCoordinates=(typeof body.latitude!=="number"||typeof body.longitude!=="number"||!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180);
+    if(!body.city?.trim()||!body.locationName?.trim()||invalidCoordinates){
       return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة قبل الإرسال."},{status:400});
     }
     const service=await prisma.service.create({
