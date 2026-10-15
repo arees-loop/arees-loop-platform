@@ -192,7 +192,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       priceUnit:offer.priceUnit||"",bannerUrl:offer.bannerUrl||"",imageUrls:offer.imageUrls?.length?offer.imageUrls:(offer.bannerUrl?[offer.bannerUrl]:[]),
       operationStatus:offer.operationStatus,operationNote:offer.operationNote||"",
       isVisible:offer.isVisible,sortOrder:offer.sortOrder,startsAt:offerDay(offer.startsAt),endsAt:offerDay(offer.endsAt),
-    }:{...blankOffer});
+    }:{...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind});
   }
 
   async function saveOffer(event:FormEvent) {
