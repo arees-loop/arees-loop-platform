@@ -265,7 +265,7 @@ export default function HotelAdminPage(){
          <p className="bg-[#0D3B34] px-5 py-3 text-xs font-black text-white">معاينة إعلانك قبل الحفظ</p>
          {(preview||edit.bannerUrl)&&<>
            {/* eslint-disable-next-line @next/next/no-img-element */}
-           <img alt="معاينة الفندق" src={preview||edit.bannerUrl} onLoad={e=>{if(banner)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="h-40 w-full object-contain"/>
+           <img alt="معاينة الفندق" src={preview||edit.bannerUrl} onLoad={e=>{if(banner)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="aspect-[2/1] h-auto w-full object-cover"/>
          </>}
          <div className="p-5"><p className="text-xs text-[#B18B2C]">{edit.hotelName}</p><h3 className="mt-2 text-xl font-black">{edit.title||"عنوان الإعلان"}</h3>
          <p className="mt-2 text-xs">{edit.destination}</p>
