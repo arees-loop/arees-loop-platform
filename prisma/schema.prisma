@@ -1154,3 +1154,16 @@ model RequestAttachment {
   @@index([hotelInquiryId, createdAt])
   @@index([uploaderId, createdAt])
 }
+
+/** Private IDP draft photos. A private Blob path is never exposed to a customer. */
+model InternationalLicenseDocument {
+  id          String   @id @default(cuid())
+  userId      String
+  slot        String
+  blobPath    String   @unique
+  mimeType    String
+  byteSize    Int
+  createdAt   DateTime @default(now())
+
+  @@index([userId, slot, createdAt])
+}
