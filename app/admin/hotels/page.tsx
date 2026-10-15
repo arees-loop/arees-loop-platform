@@ -2,7 +2,7 @@
 import RequestAttachmentsPanel from "@/app/components/RequestAttachmentsPanel";
 
 import Link from "next/link";
-import { useCallback,useEffect,useState,type FormEvent } from "react";
+import { useCallback,useEffect,useRef,useState,type FormEvent } from "react";
 import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
 import { IMAGE_REQUIREMENTS } from "@/lib/image-requirements";
 
@@ -32,6 +32,7 @@ export default function HotelAdminPage(){
  const [staff,setStaff]=useState<Staff[]>([]);
  const [admin,setAdmin]=useState(false);
  const [selected,setSelected]=useState<HotelCase|null>(null);
+ const initialRequestOpened=useRef(false);
  const [events,setEvents]=useState<Event[]>([]);
  const [reply,setReply]=useState("");
  const [amount,setAmount]=useState("");
@@ -62,6 +63,18 @@ export default function HotelAdminPage(){
    }catch{setError("تعذر الاتصال ببيانات الفنادق.");}
    finally{setLoading(false);}
  },[]);
+ useEffect(()=>{
+   if(initialRequestOpened.current||!rows.length)return;
+   const reference=new URLSearchParams(window.location.search).get("reference");
+   if(!reference)return;
+   initialRequestOpened.current=true;
+   const target=rows.find(item=>item.reference===reference);
+   setTab("requests");
+   if(target){
+     choose(target);
+     window.setTimeout(()=>document.getElementById("arees-hotel-request-details")?.scrollIntoView({block:"nearest",behavior:"smooth"}),100);
+   }else setError("الطلب المطلوب غير موجود ضمن طلبات الفنادق المصرح لك بعرضها.");
+ },[rows]);
  useEffect(()=>{void load();
    void fetch("/api/admin/me",{cache:"no-store"}).then(r=>r.json()).then(x=>{if(x.success&&x.data.role==="SUPER_ADMIN")setAdmin(true);}).catch(()=>{});
    void fetch("/api/admin/hotels?mode=staff",{cache:"no-store"}).then(r=>r.json()).then(x=>{if(x.success)setStaff(x.data||[]);}).catch(()=>{});
@@ -177,7 +190,7 @@ export default function HotelAdminPage(){
          {item.notificationStatus==="FAILED"&&<p className="mt-2 text-xs text-amber-800">الطلب محفوظ لكن تعذر إرسال بريد التنبيه.</p>}
        </button>)}
      </section>
-     <section className="rounded-[24px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm">
+     <section id="arees-hotel-request-details" className="scroll-mt-24 rounded-[24px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm">
        {!selected?<p className="text-sm">اختر طلباً لمراجعة التفاصيل والرد عليه.</p>:<>
          <h2 className="text-xl font-black">{selected.reference}</h2>
          <p className="mt-3 text-sm leading-7">{selected.customerName} · {selected.destination} · {selected.hotelName||"فندق حسب الطلب"}</p>
