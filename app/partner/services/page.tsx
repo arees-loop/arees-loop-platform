@@ -333,6 +333,7 @@ export default function PartnerServicesPage() {
     setEditingServiceId(null);
     setEditingOriginalService(null);
     resetForm();
+    cancelLocationSearch();locationServiceContext.current=null;
     setLocationQuery("");setLocationSuggestions([]);setLocationMessage("");
     setPendingImageFiles([]);
     setShowForm(true);
@@ -341,6 +342,7 @@ export default function PartnerServicesPage() {
   const openEditServiceForm = (service: Service) => {
     setEditingServiceId(service.id);
     setEditingOriginalService(service);
+    cancelLocationSearch();locationServiceContext.current=service.id;
     setLocationQuery("");setLocationSuggestions([]);setLocationMessage("");
     setForm({
       nameAr: service.nameAr,
@@ -392,6 +394,7 @@ export default function PartnerServicesPage() {
   const closeServiceForm = () => {
     setShowForm(false);
     setEditingServiceId(null);
+    cancelLocationSearch();locationServiceContext.current=null;
     resetForm();
     setPendingImageFiles([]);
   };
@@ -569,24 +572,35 @@ export default function PartnerServicesPage() {
   const [locationMessage, setLocationMessage] = useState("");
   const [locationSuggestions, setLocationSuggestions] = useState<Array<{name:string;address:string;city:string;location:{lat:number;lng:number}}>>([]);
   const locationSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const locationRequestId=useRef(0);
+  const locationServiceContext=useRef<string|null>(null);
+  const cancelLocationSearch=()=>{locationRequestId.current+=1;if(locationSearchTimer.current)clearTimeout(locationSearchTimer.current);setLocationBusy(false);};
 
   const searchServiceLocation = async (queryOverride?: string) => {
-    const q = (queryOverride ?? locationQuery).trim();
-    if (q.length < 2) { setLocationSuggestions([]); return; }
-    setLocationBusy(true); setLocationMessage("");
-    try {
-      const r = await fetch(`/api/location/search?query=${encodeURIComponent(q)}`, { cache: "no-store" });
-      const data = await r.json();
-      if (!r.ok || !data?.location) throw new Error();
-      const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [data];
+    const q=(queryOverride??locationQuery).trim();
+    const requestId=++locationRequestId.current;
+    const context=locationServiceContext.current;
+    if(q.length<2){setLocationSuggestions([]);setLocationBusy(false);return;}
+    setLocationBusy(true);setLocationMessage("");
+    try{
+      const response=await fetch(`/api/location/search?query=${encodeURIComponent(q)}`,{cache:"no-store"});
+      const data=await response.json();
+      if(requestId!==locationRequestId.current||context!==locationServiceContext.current)return;
+      if(!response.ok)throw Error(data.error||"SEARCH_UNAVAILABLE");
+      const suggestions=Array.isArray(data.suggestions)?data.suggestions:[];
       setLocationSuggestions(suggestions);
-      setLocationMessage(suggestions.length ? "اختر الموقع الصحيح من النتائج أدناه." : "لم نجد نتائج.");
-    } catch { setLocationMessage("البحث عن الأماكن غير متاح حالياً. استخدم موقعي الحالي أو أدخل الإحداثيات يدوياً."); }
-    finally { setLocationBusy(false); }
+      setLocationMessage(suggestions.length?"اختر الحي أو الموقع الصحيح من النتائج مع العنوان.":"لم تظهر نتائج. جرب كتابة المدينة والمنطقة أو اسم المعلم.");
+    }catch{
+      if(requestId===locationRequestId.current&&context===locationServiceContext.current){
+        setLocationSuggestions([]);setLocationMessage("تعذر البحث عن الموقع حالياً. أعد المحاولة أو استخدم تحديد الموقع الحالي.");
+      }
+    }finally{if(requestId===locationRequestId.current)setLocationBusy(false);}
   };
 
   const handleLocationQueryChange = (value: string) => {
     setLocationQuery(value);
+    locationRequestId.current+=1;
+    setLocationSuggestions([]);
     setLocationMessage("");
     if (locationSearchTimer.current) clearTimeout(locationSearchTimer.current);
     if (value.trim().length < 2) { setLocationSuggestions([]); return; }
@@ -594,16 +608,18 @@ export default function PartnerServicesPage() {
   };
 
   const useCurrentServiceLocation = () => {
+    cancelLocationSearch();
     setLocationMessage("");
     if (!navigator.geolocation) { setLocationMessage("المتصفح لا يدعم تحديد الموقع."); return; }
     setLocationBusy(true);
     navigator.geolocation.getCurrentPosition(async (p)=>{
       const lat=p.coords.latitude,lng=p.coords.longitude;
-      setForm((x)=>({...x,latitude:lat,longitude:lng,locationName:x.locationName||"موقعي الحالي"}));
+      const selectedService=locationServiceContext.current;
+      setForm((x)=>({...x,latitude:lat,longitude:lng,locationName:"موقعي الحالي",formattedAddress:"",placeId:""}));
       try {
         const r=await fetch(`/api/location/reverse-geocode?lat=${lat}&lng=${lng}`,{cache:"no-store"});
         const data=await r.json();
-        if(r.ok) setForm((x)=>({...x,latitude:lat,longitude:lng,formattedAddress:data.address||x.formattedAddress,locationName:x.locationName||data.address||"موقعي الحالي",placeId:data.placeId||x.placeId}));
+        if(r.ok&&selectedService===locationServiceContext.current) setForm((x)=>({...x,city:data.city||x.city,latitude:lat,longitude:lng,formattedAddress:data.address||"",locationName:data.name||data.address||"موقعي الحالي",placeId:data.placeId||""}));
       } catch {}
       setLocationMessage("تم حفظ إحداثيات موقعك الحالي ✓ إذا لم يظهر اسم العنوان، أدخل المدينة يدوياً."); setLocationBusy(false);
     },()=>{setLocationMessage("تعذر تحديد موقعك. اسمح للموقع من إعدادات المتصفح.");setLocationBusy(false);},{enableHighAccuracy:true,timeout:12000});
@@ -1034,7 +1050,7 @@ export default function PartnerServicesPage() {
                     <button type="button" onClick={useCurrentServiceLocation} disabled={locationBusy} className="shrink-0 rounded-2xl border border-[#0D3B34]/15 bg-white px-5 py-3 text-sm font-bold disabled:opacity-50">استخدام موقعي الحالي</button>
                   </div>
                   {locationMessage&&<p className="mt-3 text-xs font-bold">{locationMessage}</p>}
-                  {locationSuggestions.length>0&&<div className="mt-3 overflow-hidden rounded-xl border border-[#0D3B34]/10 bg-white">{locationSuggestions.map((s,i)=><button key={i} type="button" onClick={()=>{setForm((x)=>({...x,city:s.city||x.city,locationName:s.name,formattedAddress:s.address,placeId:"",latitude:s.location.lat,longitude:s.location.lng}));setLocationQuery(s.name||s.address);setLocationSuggestions([]);setLocationMessage("تم اختيار وتثبيت الموقع ✓");}} className="block w-full border-b border-[#0D3B34]/8 px-4 py-3 text-right last:border-0 hover:bg-[#F8F5ED]"><b className="block text-sm">{s.name}</b><span className="mt-1 block text-xs text-[#0D3B34]/55">{s.address}</span></button>)}</div>}
+                  {locationSuggestions.length>0&&<div className="mt-3 overflow-hidden rounded-xl border border-[#0D3B34]/10 bg-white">{locationSuggestions.map((s,i)=><button key={i} type="button" onClick={()=>{cancelLocationSearch();setForm((x)=>({...x,city:s.city||x.city,locationName:s.name,formattedAddress:s.address,placeId:(s as typeof s&{placeId?:string|null}).placeId||"",latitude:s.location.lat,longitude:s.location.lng}));setLocationQuery(s.name||s.address);setLocationSuggestions([]);setLocationMessage("تم اختيار وتثبيت الموقع ✓");}} className="block w-full border-b border-[#0D3B34]/8 px-4 py-3 text-right last:border-0 hover:bg-[#F8F5ED]"><b className="block text-sm">{s.name}</b><span className="mt-1 block text-xs text-[#0D3B34]/55">{s.address}</span></button>)}</div>}
                   {Number.isFinite(form.latitude)&&Number.isFinite(form.longitude)&&<div className="mt-3 rounded-xl bg-[#F8F5ED] p-3 text-xs"><b>الموقع المثبت لهذه الخدمة فقط ✓</b><p className="mt-1 font-bold text-[#0D3B34]">{form.locationName||"موقع محدد من الخريطة"}{form.city?` — ${form.city}`:""}</p>{form.formattedAddress&&<p className="mt-1 text-[#0D3B34]/70">{form.formattedAddress}</p>}<p className="mt-1 text-[#0D3B34]/55" dir="ltr">{form.latitude?.toFixed(6)}, {form.longitude?.toFixed(6)}</p></div>}
                 </div>
                 <div className="mt-4 rounded-[18px] border border-[#0D3B34]/8 bg-white p-4">
