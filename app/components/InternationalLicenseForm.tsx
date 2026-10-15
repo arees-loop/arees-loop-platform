@@ -53,12 +53,16 @@ export default function InternationalLicenseForm(){
    if(!name.trim()||name.trim().length<2||!phone.trim()||!/^\d{6,15}$/.test(phone.trim())||
       !height.trim()||!/^\d{2,3}(\.\d{1,2})?$/.test(height.trim())||eyes.length===0||
       !street.trim()||duration!=="1"||!/^https:\/\//i.test(deliveryLocation.trim())||
-      Object.values(files).some(f=>!f)){
+      (countryCode==="other"&&!/^\d{1,4}$/.test(otherCode))||Object.values(files).some(f=>!f)){
      setError("أكمل جميع الحقول والصور الثلاث وموقع التوصيل الصحيح قبل الإضافة إلى السلة.");return;
    }
    if(quantity!==1){setError("كل طلب رخصة لشخص واحد. أضف طلباً مستقلاً لكل متقدم.");return;}
    setBusy(true);
    try{
+    const own=await fetch("/api/auth/me",{cache:"no-store",credentials:"include"});
+    const ownData=await own.json().catch(()=>null);
+    const ownerId=ownData?.data?.user?.id;
+    if(!own.ok||typeof ownerId!=="string"||!ownerId)throw Error("يرجى تسجيل الدخول مجدداً قبل حفظ مستندات الرخصة.");
     const ids:Partial<Record<Slot,string>>={};
     for(const item of documents){
       const file=files[item.key]!;
@@ -82,7 +86,7 @@ export default function InternationalLicenseForm(){
     }):[];
     // ONLY metadata and opaque private document IDs are stored in the browser.
     localStorage.setItem(key,JSON.stringify([...prior,{
-      serviceId,quantity:1,itemType:"DRIVING_LICENSE",title:"رخصة القيادة الدولية",
+      serviceId,ownerId,quantity:1,itemType:"DRIVING_LICENSE",title:"رخصة القيادة الدولية",
       durationYears:1,unitPriceSar:199,imageUrl:"/Image/social/arees-international-driving-license.webp",application
     }]));
     window.dispatchEvent(new Event("arees-cart-updated"));
