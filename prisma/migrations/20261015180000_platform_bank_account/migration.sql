@@ -1,0 +1,1 @@
+CREATE TABLE "PlatformBankAccount" ("id" TEXT NOT NULL DEFAULT 'primary', "bankName" TEXT NOT NULL, "beneficiaryName" TEXT NOT NULL, "iban" TEXT NOT NULL, "qrImageUrl" TEXT, "enabled" BOOLEAN NOT NULL DEFAULT false, "updatedById" TEXT, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "PlatformBankAccount_pkey" PRIMARY KEY ("id"));
