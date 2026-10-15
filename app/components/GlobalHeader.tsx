@@ -79,10 +79,10 @@ export default function GlobalHeader() {
                 خدمات السفر <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span>
               </button>
               <div className="invisible absolute right-1/2 top-[64px] z-50 w-56 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/95 p-2 text-right opacity-0 shadow-[0_18px_48px_rgba(13,59,52,.18)] backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                {navVisible.flights !== false && <Link href="/flights" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">✈ الطيران</Link>}
-                {navVisible.flights !== false && <Link href="/ferries" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">⚓ البواخر</Link>}
-                {navVisible.hotels !== false && <Link href="/hotels" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">الفنادق</Link>}
-                {navVisible.flights !== false && <Link href="/visas" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">🛂 التأشيرات</Link>}
+                {navVisible.flights !== false && <Link href="/flights" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]"><span aria-hidden="true" className="text-[#0B4537]">✈</span> الطيران</Link>}
+                {navVisible.flights !== false && <Link href="/ferries" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]"><span aria-hidden="true" className="text-[#0B4537]">⚓</span> البواخر</Link>}
+                {navVisible.hotels !== false && <Link href="/hotels" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]"><span aria-hidden="true" className="text-[#0B4537]">▦</span> الفنادق</Link>}
+                {navVisible.flights !== false && <Link href="/visas" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]"><span aria-hidden="true" className="text-[#0B4537]">▣</span> التأشيرات</Link>}
                 {navVisible.flights !== false && <Link href="/international-driving-license" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">🚘 رخصة القيادة الدولية</Link>}
               </div>
             </div>
@@ -170,10 +170,10 @@ export default function GlobalHeader() {
                   <span>خدمات السفر</span><span aria-hidden="true">{mobileTravelServicesOpen ? "−" : "+"}</span>
                 </button>
                 {mobileTravelServicesOpen && <div id="arees-mobile-travel-links" className="grid grid-cols-2 gap-1 pr-3">
-                  {navVisible.flights !== false && <Link href="/flights" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3">✈ الطيران</Link>}
-                  {navVisible.flights !== false && <Link href="/ferries" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3">⚓ البواخر</Link>}
-                  {navVisible.hotels !== false && <Link href="/hotels" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3">الفنادق</Link>}
-                  {navVisible.flights !== false && <Link href="/visas" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3">🛂 التأشيرات</Link>}
+                  {navVisible.flights !== false && <Link href="/flights" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3"><span aria-hidden="true" className="text-[#0B4537]">✈</span> الطيران</Link>}
+                  {navVisible.flights !== false && <Link href="/ferries" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3"><span aria-hidden="true" className="text-[#0B4537]">⚓</span> البواخر</Link>}
+                  {navVisible.hotels !== false && <Link href="/hotels" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3"><span aria-hidden="true" className="text-[#0B4537]">▦</span> الفنادق</Link>}
+                  {navVisible.flights !== false && <Link href="/visas" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3"><span aria-hidden="true" className="text-[#0B4537]">▣</span> التأشيرات</Link>}
                   {navVisible.flights !== false && <Link href="/international-driving-license" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3">🚘 رخصة القيادة الدولية</Link>}
                 </div>}
               </section>
