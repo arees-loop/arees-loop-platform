@@ -22,7 +22,8 @@ export async function GET() {
   const transport = [
     {kind:"FERRY",key:"ferries",enabled:canManageTransport(user,"FERRY")},
     {kind:"FLIGHT",key:"flights",enabled:canManageTransport(user,"FLIGHT")},
-    {kind:"DRIVING_LICENSE",key:"drivingLicenses",enabled:canManageTransport(user,"DRIVING_LICENSE")}
+    {kind:"DRIVING_LICENSE",key:"drivingLicenses",enabled:canManageTransport(user,"DRIVING_LICENSE")},
+    {kind:"VISA",key:"visas",enabled:canManageTransport(user,"VISA")}
   ] as const;
   try {
     const results = await Promise.all([
@@ -40,7 +41,8 @@ export async function GET() {
         ferries:results[0],
         flights:results[1],
         drivingLicenses:results[2],
-        hotels:results[3]
+        hotels:results[4],
+        visas:results[3]
       },
       updatedAt:new Date().toISOString()
     },{headers:{"Cache-Control":"private, no-store"}});
