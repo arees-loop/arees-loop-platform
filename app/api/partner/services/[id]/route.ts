@@ -13,7 +13,35 @@ export async function PATCH(request:NextRequest,context:{params:Promise<{id:stri
   try{
     const session=await getCurrentSession(); if(!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
     const {id}=await context.params; const current=await ownedService(session.user.id,id); if(!current) return NextResponse.json({success:false,message:"الخدمة غير موجودة."},{status:404});
-    const body=await request.json(); const basePrice=Number(body.basePrice||0); const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150))); const latitude=Number(body.latitude); const longitude=Number(body.longitude); const invalidCoordinates=(typeof body.latitude!=="number"||typeof body.longitude!=="number"||!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180);
+    const body=await request.json();
+    if(body?.section==="LOCATION"){
+      const city=typeof body.city==="string"?body.city.trim():"";
+      const locationName=typeof body.locationName==="string"?body.locationName.trim():"";
+      const address=typeof body.formattedAddress==="string"?body.formattedAddress.trim():"";
+      const placeId=typeof body.placeId==="string"?body.placeId.trim():null;
+      const latitude=body.latitude,longitude=body.longitude;
+      if(!city||city.length>120||!locationName||locationName.length>240||address.length>500||
+         (placeId!==null&&placeId.length>255)||
+         typeof latitude!=="number"||typeof longitude!=="number"||
+         !Number.isFinite(latitude)||!Number.isFinite(longitude)||
+         Math.abs(latitude)>90||Math.abs(longitude)>180){
+        return NextResponse.json({success:false,message:"أكمل موقع البرنامج الصحيح باختيار المدينة والحي أو المعلم من البحث."},{status:400});
+      }
+      const updated=await prisma.$transaction(async tx=>{
+        const service=await tx.service.update({where:{id:current.id},data:{
+          city,locationName,formattedAddress:address||locationName,
+          placeId:placeId||null,latitude,longitude
+        },select:{id:true,city:true,locationName:true,formattedAddress:true,placeId:true,latitude:true,longitude:true}});
+        await tx.auditLog.create({data:{
+          userId:session.user.id,action:"PARTNER_SERVICE_LOCATION_UPDATED",entityType:"Service",entityId:current.id,
+          beforeData:{city:current.city,locationName:current.locationName,latitude:current.latitude,longitude:current.longitude},
+          afterData:{city,locationName,latitude,longitude}
+        }});
+        return service;
+      });
+      return NextResponse.json({success:true,message:"تم حفظ موقع هذا البرنامج فقط، دون تغيير الصور أو الأسعار.",service:updated});
+    }
+    const basePrice=Number(body.basePrice||0); const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150))); const latitude=Number(body.latitude); const longitude=Number(body.longitude); const invalidCoordinates=(typeof body.latitude!=="number"||typeof body.longitude!=="number"||!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180);
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     if(!body.city?.trim()||!body.locationName?.trim()||invalidCoordinates) return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة."},{status:400});
     const images=(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((x:any)=>typeof x?.url==="string"&&(x.url.startsWith("https://")||x.url.startsWith("/api/media?pathname=")));
