@@ -1,4 +1,3 @@
-import {createHash} from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
@@ -19,15 +18,10 @@ export async function POST(request:NextRequest){
   const reference=data.reference;
   if(typeof reference!=="string"||!REF.test(reference))return response("مرجع الطلب غير صحيح.",400);
   const session=await getCurrentSession();
-  const claims=data.claims;
-  const match=Array.isArray(claims)?claims.find(x=>x&&typeof x==="object"&&(x as Record<string,unknown>).reference===reference):null;
-  const token=match&&typeof match==="object"?(match as Record<string,unknown>).token:null;
-  const verifiedToken=typeof token==="string"&&/^[A-Za-z0-9_-]{43}$/.test(token)?createHash("sha256").update(token).digest("hex"):null;
-  const auth=[
-    ...(session?[{userId:session.user.id}]:[]),
-    ...(verifiedToken?[{trackingTokenHash:verifiedToken}]:[])
-  ];
-  if(!auth.length)return response("سجّل الدخول أو افتح الطلب من المتصفح الذي أرسلته منه.",401);
+  if(!session)return response("سجّل الدخول قبل الاطلاع على وسائل السداد.",401);
+  // A legacy guest tracking token is not a payment authorization.
+  // Only the account that owns a request may access its checkout.
+  const auth=[{userId:session.user.id}];
   try{
     const isHotel=reference.startsWith("AR-HOT-");
     const requestItem=isHotel?await prisma.hotelInquiry.findFirst({
