@@ -342,7 +342,7 @@ export default function PartnerServicesPage() {
   const openEditServiceForm = (service: Service) => {
     setEditingServiceId(service.id);
     setEditingOriginalService(service);
-    cancelLocationSearch();locationServiceContext.current=service.id;
+    cancelLocationSearch();locationServiceContext.current=String(service.id);
     setLocationQuery("");setLocationSuggestions([]);setLocationMessage("");
     setForm({
       nameAr: service.nameAr,
