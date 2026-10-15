@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getActivePartnerMembership, userHasPartnerPermission } from "@/lib/partner-permissions";
+import {validatePartnerServiceImages} from "@/lib/partner-service-image-access";
 import { getAdminNotificationEmails, sendEmail } from "@/lib/notifications/email";
 
 async function getPartner(userId:string){
@@ -29,6 +30,8 @@ export async function POST(request:Request){
     if(!body.city?.trim()||!body.locationName?.trim()||invalidCoordinates){
       return NextResponse.json({success:false,message:"حدد مدينة وموقع تنفيذ الخدمة بدقة قبل الإرسال."},{status:400});
     }
+    const validated=await validatePartnerServiceImages(body.images??[],session.user.id,membership.partnerId);
+    if(!validated.valid)return NextResponse.json({success:false,message:validated.message},{status:400});
     const service=await prisma.service.create({
       data:{
         partnerId:membership.partnerId,
@@ -62,7 +65,7 @@ export async function POST(request:Request){
         organizerLicenseNumber:body.organizerLicenseNumber?.trim()||null, organizerLicenseIssuer:body.organizerLicenseIssuer?.trim()||null,
         programApprovalNumber:body.programApprovalNumber?.trim()||null,
         status:"UNDER_REVIEW",
-        images:{ create:(Array.isArray(body.images)?body.images:[]).slice(0,10).filter((image:any)=>typeof image?.url==="string" && (image.url.startsWith("https://") || image.url.startsWith("/api/media?pathname="))).map((image:any,index:number)=>({ url:image.url, sortOrder:Number.isFinite(Number(image.sortOrder))?Number(image.sortOrder):index })) }
+        images:{create:validated.images}
       },
       include:{images:true}
     });
