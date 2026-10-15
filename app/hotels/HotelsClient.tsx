@@ -94,7 +94,7 @@ export default function HotelsPage(){
                     </div>}
                     <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3 text-white">
                       <div className="min-w-0 drop-shadow-md">{offer.hotelName&&<p className="text-[11px] font-black text-[#F1D98E]">{offer.hotelName}</p>}<h3 className="mt-1 line-clamp-2 text-lg font-black sm:text-xl">{offer.title}</h3>{offer.destination&&<p className="mt-1 text-xs font-bold text-white/90">{offer.destination}</p>}</div>
-                      {offer.amountSar!==null&&<div className="shrink-0 rounded-2xl border border-white/20 bg-[#0D3B34]/85 px-3 py-2 text-left shadow-lg backdrop-blur-sm"><span className="block text-[10px] text-white/75">السعر</span><strong className="text-lg font-black text-[#F1D98E]">{offer.amountSar.toLocaleString("ar-SA")} <small className="text-[10px]">ر.س</small></strong><span className="block text-[10px] text-white/75">{offer.priceUnit||"لليلة"}</span></div>}
+                      {offer.amountSar!==null&&<div className="shrink-0 rounded-2xl border border-white/20 bg-[#0D3B34]/85 px-3 py-2 text-left shadow-lg backdrop-blur-sm"><span className="block text-[10px] text-white/75">السعر</span><strong className="text-lg font-black text-[#F1D98E]">{offer.amountSar.toLocaleString("ar-SA")} <small className="text-[10px]">ر.س</small></strong>{offer.priceUnit?.trim()&&<span className="block text-[10px] text-white/75">{offer.priceUnit}</span>}</div>}
                     </div>
                   </div>
                   {offer.description&&<p className="px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.description}</p>}
@@ -116,8 +116,8 @@ export default function HotelsPage(){
             <div className="flex items-center justify-between gap-3 border-b border-[#0D3B34]/10 bg-[#FBF8EF] px-4 py-3"><div><h3 id="hotel-offer-period-heading" className="text-sm font-black">فترات عروض الفنادق</h3><p className="mt-1 text-[10px] text-[#0D3B34]/60">اختر العرض لعرض تفاصيله</p></div><span className="rounded-full bg-[#0D3B34]/5 px-2.5 py-1 text-[10px] font-bold">{offers.length} عروض</span></div>
             <div className="max-h-56 overflow-y-auto">
               {offers.map((offer,i)=><button key={offer.id} type="button" onClick={()=>setIndex(i)} className={"grid w-full grid-cols-[1fr_auto] items-center gap-3 border-b border-[#0D3B34]/5 px-4 py-3 text-right transition last:border-b-0 hover:bg-[#FAF6E9] "+(i===index%offers.length?"bg-[#F8F3E2]":"bg-white")}>
-                <span className="min-w-0"><span className="block truncate text-xs font-black">{offer.hotelName||offer.title} · {offer.destination||"وجهات متعددة"}</span><span className="mt-1 block text-[10px] text-[#0D3B34]/60">{formatOfferPeriod(offer)}</span></span>
-                <span className="text-left"><span className="block text-xs font-black text-[#9C7922]">{formatOfferPrice(offer.amountSar)}</span><span className="mt-1 block text-[10px] font-bold text-emerald-700">متاح للاستفسار</span></span>
+                <span className="min-w-0"><span className="block truncate text-xs font-black">{offer.hotelName||offer.title}{offer.destination?.trim()?` · ${offer.destination}`:""}</span>{(offer.startsAt||offer.endsAt)&&<span className="mt-1 block text-[10px] text-[#0D3B34]/60">{formatOfferPeriod(offer)}</span>}</span>
+                <span className="text-left">{offer.amountSar!==null&&<span className="block text-xs font-black text-[#9C7922]">{formatOfferPrice(offer.amountSar)}</span>}<span className="mt-1 block text-[10px] font-bold text-emerald-700">متاح للاستفسار</span></span>
               </button>)}
             </div>
             <p className="border-t border-[#0D3B34]/10 px-4 py-2 text-[10px] leading-5 text-[#0D3B34]/55">السعر والتوفر النهائيان يخضعان لتأكيد الفندق عند مراجعة طلبك.</p>
