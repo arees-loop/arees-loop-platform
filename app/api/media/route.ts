@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { get } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import {userHasPartnerPermission} from "@/lib/partner-permissions";
 
 export const runtime = "nodejs";
 
@@ -12,11 +13,33 @@ export async function GET(request: NextRequest) {
   const successMatch = new RegExp("^success-partners/([a-zA-Z0-9_-]+)/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   const transportMatch = /^transport-offers\/(FLIGHT|FERRY|VISA|DRIVING_LICENSE)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
   const hotelMatch = /^transport-offers\/HOTEL\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
-  if (!pathname.startsWith("services/") && !logoMatch && !successMatch && !transportMatch && !hotelMatch) {
+  const serviceMatch=/^services\\/([a-zA-Z0-9_-]+)\\/[^/]{1,230}$/.exec(pathname);
+  if (!serviceMatch && !logoMatch && !successMatch && !transportMatch && !hotelMatch) {
     return new Response("Not found", { status: 404 });
   }
 
-  let publicAsset = !logoMatch && !successMatch && !transportMatch && !hotelMatch;
+  let publicAsset = false;
+  if(serviceMatch){
+    const mediaUrl=`/api/media?pathname=${encodeURIComponent(pathname)}`;
+    const image=await prisma.serviceImage.findFirst({
+      where:{url:mediaUrl},
+      select:{service:{select:{partnerId:true,status:true}}}
+    });
+    publicAsset=image?.service.status==="PUBLISHED";
+    if(!publicAsset){
+      const session=await getCurrentSession();
+      if(!session)return new Response("Not found",{status:404});
+      const superAdmin=session.user.role==="SUPER_ADMIN";
+      const ownerOfNewImage=serviceMatch[1]===session.user.id&&
+        await userHasPartnerPermission(session.user.id,"services");
+      const memberOfExistingService=!!image&&await prisma.partnerMember.findFirst({
+        where:{userId:session.user.id,partnerId:image.service.partnerId,isActive:true},
+        select:{id:true}
+      });
+      if(!superAdmin&&!ownerOfNewImage&&!memberOfExistingService)
+        return new Response("Not found",{status:404});
+    }
+  }
   if(hotelMatch){
     const offer=await prisma.hotelOffer.findFirst({
       where:{deletedAt:null,OR:[{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`},{imageUrls:{array_contains:[`/api/media?pathname=${encodeURIComponent(pathname)}`]}}]},
