@@ -42,29 +42,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const url =
-      `https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json` +
-      `?key=${encodeURIComponent(apiKey)}` +
-      `&language=ar` +
-      `&limit=8` +
-      `&typeahead=true`;
-
-    const response = await fetch(url, {
+    const base = `https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json`;
+    const params = new URLSearchParams({ key: apiKey, limit: "8", typeahead: "true", language: "ar" });
+    const search = (url: string) => fetch(url, {
       method: "GET",
       headers: { Accept: "application/json" },
       cache: "no-store",
+      signal: AbortSignal.timeout(9000),
     });
-
+    let response = await search(`${base}?${params.toString()}`);
+    // Some TomTom plans reject regional language tags; retry without language on a 400.
+    if (response.status === 400) {
+      params.delete("language");
+      response = await search(`${base}?${params.toString()}`);
+    }
     if (!response.ok) {
-      console.error(
-        "TomTom destination search error:",
-        response.status,
-        await response.text()
-      );
-
+      console.error("TomTom destination search failed", { status: response.status });
       return NextResponse.json(
-        { error: "Failed to search destination" },
-        { status: 502 }
+        { error: response.status === 429 ? "SEARCH_RATE_LIMITED" : "DESTINATION_SEARCH_UNAVAILABLE" },
+        { status: response.status === 429 ? 429 : 502 }
       );
     }
 
@@ -73,7 +69,7 @@ export async function GET(request: NextRequest) {
       Number.isFinite(item.position?.lat) && Number.isFinite(item.position?.lon)
     );
     if (!results.length) {
-      return NextResponse.json({ error: "Destination not found" }, { status: 404 });
+      return NextResponse.json({ suggestions: [], error: "Destination not found" }, { status: 200 });
     }
     const suggestions = results.map((result) => {
       const name = result.poi?.name || result.address?.municipalitySubdivision || result.address?.municipality || result.address?.freeformAddress || query;
