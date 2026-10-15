@@ -29,11 +29,11 @@ const day=(x:unknown,end=false)=>{
   return d;
 };
 const transitions:Record<string,string[]>={
-  NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],
-  QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED"],
-  QUOTE_SENT:["PAID","PROCESSING","CANCELED"],
+  NEW:["PROCESSING","CANCELED","CLOSED"],PROCESSING:["QUOTE_READY","CANCELED","CLOSED"],
+  QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED","CLOSED"],
+  QUOTE_SENT:["PAID","PROCESSING","CANCELED","CLOSED"],
   PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],
-  DONE:[],CANCELED:[],
+  DONE:[],CANCELED:[],CLOSED:[],
 };
 async function access(superOnly=false){
   const session=await getCurrentSession();
@@ -115,10 +115,12 @@ export async function PATCH(request:NextRequest){
       if(!transitions[current.status]?.includes(status))return fail("الانتقال بين حالات الطلب غير مسموح.",409);
       const reason=clean(body.reason,1500);
       if(status==="CANCELED"&&reason.length<5)return fail("سبب الإلغاء مطلوب (5 حروف على الأقل).");
-      const [updated]=await prisma.$transaction([
-        prisma.hotelInquiry.update({where:{id},data:{status,adminNotes:status==="CANCELED"?reason:current.adminNotes}}),
-        prisma.hotelInquiryEvent.create({data:{requestId:id,actorId:u.id,actorName:name(u),action:status==="CANCELED"?"CANCELED":"STATUS_CHANGED",fromStatus:current.status,toStatus:status,details:status==="CANCELED"?{reason}:undefined}}),
+      if(status==="CLOSED"&&reason.length<5)return fail("اذكر سبب عدم توفر الخدمة.");
+      const [updated,event]=await prisma.$transaction([
+        prisma.hotelInquiry.update({where:{id},data:{status,adminNotes:["CANCELED","CLOSED"].includes(status)?reason:current.adminNotes,...(status==="CLOSED"?{customerReply:"نعتذر لكم، العرض أو الخدمة المطلوبة غير متوفرة حالياً. "+reason,quoteAmountSar:null}:{})}}),
+        prisma.hotelInquiryEvent.create({data:{requestId:id,actorId:u.id,actorName:name(u),action:status==="CANCELED"?"CANCELED":status==="CLOSED"?"CLOSED_UNAVAILABLE":"STATUS_CHANGED",fromStatus:current.status,toStatus:status,details:["CANCELED","CLOSED"].includes(status)?{reason}:undefined}}),
       ]);
+      await notifyCustomerOfRequestUpdate({kind:"HOTEL",requestId:id,reference:current.reference,userId:current.userId,eventId:event.id,title:status==="CLOSED"?"نعتذر، العرض غير متوفر":"تحديث حالة طلب الفندق",body:status==="CLOSED"?"تم إغلاق الطلب لعدم توفر الخدمة. راجع تفاصيل طلبك.":"تغيّرت حالة طلب الفندق."}).catch(error=>console.error("Hotel status notification failed",error));
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
     return fail("الإجراء غير معروف.");
