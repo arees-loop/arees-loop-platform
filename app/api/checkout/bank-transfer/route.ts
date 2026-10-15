@@ -36,11 +36,32 @@ export async function POST(request:NextRequest) {
       if(item.serviceId!=="international-driving-license-1")return NextResponse.json({success:false,message:"مدة الرخصة غير مدعومة."},{status:409});
       if(item.quantity!==1||!item.application||typeof item.application!=="object"||Array.isArray(item.application))return NextResponse.json({success:false,message:"بيانات الرخصة غير مكتملة."},{status:400});
       const raw=item.application as Record<string,unknown>;
-      const keys=["name","phone","countryCode","nationality","residence","destination","serviceType","travelDate","height","eyeColor","licenseValidUntil","deliveryAddress","deliveryLink"];
-      if(keys.some(key=>typeof raw[key]!=="string"||!(raw[key] as string).trim()||(raw[key] as string).length>240))return NextResponse.json({success:false,message:"أكمل بيانات الرخصة الأساسية."},{status:400});
+      const keys=["name","phone","countryCode","height","eyeColor","deliveryAddress","deliveryLink","durationYears",
+        "passportDocumentId","localLicenseDocumentId","portraitDocumentId"];
+      if(keys.some(key=>typeof raw[key]!=="string"||!(raw[key] as string).trim()||(raw[key] as string).length>240))
+        return NextResponse.json({success:false,message:"أكمل بيانات الرخصة ومرفقاتها الثلاثة."},{status:400});
       const application:Record<string,string>={};
-      for(const key of [...keys,"email","notes"]){if(raw[key]!==undefined){if(typeof raw[key]!=="string"||raw[key].length>800)return NextResponse.json({success:false,message:"بيانات الرخصة طويلة أو غير صالحة."},{status:400});application[key]=(raw[key] as string).trim();}}
-      if(!application.deliveryLink.startsWith("https://")||!/^\\d{4}-\\d{2}-\\d{2}$/.test(application.licenseValidUntil))return NextResponse.json({success:false,message:"رابط أو تاريخ بيانات الرخصة غير صالح."},{status:400});
+      for(const key of keys)application[key]=(raw[key] as string).trim();
+      if(application.durationYears!=="1"||!/^\\d{6,15}$/.test(application.phone)||
+         !/^\\d{2,3}(\\.\\d{1,2})?$/.test(application.height)||
+         !/^https:\\/\\//.test(application.deliveryLink)||
+         application.deliveryAddress.length<5)
+         return NextResponse.json({success:false,message:"بيانات الرخصة أو التوصيل غير صالحة."},{status:400});
+      const expected=[
+        {id:application.passportDocumentId,slot:"PASSPORT"},
+        {id:application.localLicenseDocumentId,slot:"LOCAL_LICENSE"},
+        {id:application.portraitDocumentId,slot:"PORTRAIT"}
+      ];
+      if(new Set(expected.map(x=>x.id)).size!==3||expected.some(x=>!/^\\w{15,35}$/.test(x.id)))
+        return NextResponse.json({success:false,message:"المرفقات الخاصة غير صالحة."},{status:400});
+      if(process.env.AREES_LICENSE_PRIVATE_UPLOAD_ENABLED!=="true")
+        return NextResponse.json({success:false,message:"لا يمكن السداد قبل تفعيل التحقق الآمن من صور الرخصة."},{status:503});
+      const existingDocs=await prisma.internationalLicenseDocument.findMany({
+        where:{userId:session.user.id,id:{in:expected.map(x=>x.id)},createdAt:{gte:new Date(Date.now()-30*24*60*60*1000)}},
+        select:{id:true,slot:true}
+      });
+      if(existingDocs.length!==3||expected.some(x=>!existingDocs.some(doc=>doc.id===x.id&&doc.slot===x.slot)))
+        return NextResponse.json({success:false,message:"تحقق من رفع صور الجواز والرخصة والصورة الشخصية من حسابك قبل الدفع."},{status:409});
       totalHalalas+=19900;
       details.push({serviceId:item.serviceId,title:"رخصة القيادة الدولية — سنة واحدة",quantity:1,unitPriceSar:199,itemType:"DRIVING_LICENSE",application});
       continue;
