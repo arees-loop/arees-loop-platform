@@ -281,7 +281,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     <main dir="rtl" className="mx-auto max-w-[1600px] px-5 py-8 text-[#0D3B34]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-black tracking-widest text-[#A78332]">AREES LOOP · AREES TRAVEL</p>
-          <h1 className="mt-2 text-3xl font-black">{initialOfferKind==="FLIGHT"?"إدارة حجوزات الطيران":initialOfferKind==="FERRY"?"إدارة حجوزات البواخر":initialOfferKind==="VISA"?"طلبات وعروض التأشيرات":initialOfferKind==="DRIVING_LICENSE"?"طلبات رخصة القيادة الدولية":"حجوزات الطيران والبواخر"}</h1>
+          <h1 className="mt-2 text-3xl font-black">{initialOfferKind==="FLIGHT"?"إدارة حجوزات الطيران":initialOfferKind==="FERRY"?"إدارة حجوزات البواخر":initialOfferKind==="VISA"?"طلبات وعروض التأشيرات":initialOfferKind==="DRIVING_LICENSE"?"طلبات وعروض رخصة القيادة الدولية":"حجوزات الطيران والبواخر"}</h1>
           <p className="mt-2 text-sm leading-8 text-[#0D3B34]/70">استقبال الطلبات، إعداد عروض الأسعار، متابعة التواصل، وإدارة إعلانات الأسعار وجداول البواخر.</p>
         </div>
         <div className="flex gap-2">
@@ -291,7 +291,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       </div>
       <div className="mt-7 flex flex-wrap gap-2">
         <button onClick={()=>setTab("requests")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="requests"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>طلبات العملاء ({filteredRequests.length})</button>
-        {initialOfferKind!=="DRIVING_LICENSE"&&<button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.filter(x=>initialOfferKind==="ALL"||x.kind===initialOfferKind).length})</button>}
+        {<button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.filter(x=>initialOfferKind==="ALL"||x.kind===initialOfferKind).length})</button>}
         {tab==="offers"&&initialOfferKind==="ALL"&&<div className="flex flex-wrap gap-2">
           <button type="button" onClick={()=>{setFilterKind("FLIGHT");startOffer();setOfferForm(f=>({...f,kind:"FLIGHT",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FLIGHT"?"bg-[#D4AF37]":"bg-white"}`}>✈ عروض الطيران</button>
           <button type="button" onClick={()=>{setFilterKind("FERRY");startOffer();}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FERRY"?"bg-[#D4AF37]":"bg-white"}`}>⚓ عروض البواخر</button>
@@ -416,18 +416,18 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             {!showSuper&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-bold text-amber-800">تعديل العروض والأسعار والصور متاح للسوبر أدمن فقط.</p>}
             <p className="mt-2 text-xs leading-7">الأسعار تظهر في البطاقات الجانبية، وليس داخل نموذج طلب العميل. في البواخر أضف حالة التشغيل والملاحظات عند توقف أي باخرة.</p>
             <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <label className={label}>الخدمة<select className={field} disabled={initialOfferKind!=="ALL"} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option><option value="VISA">تأشيرات</option></select></label>
+              <label className={label}>الخدمة<select className={field} disabled={initialOfferKind!=="ALL"} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option><option value="VISA">تأشيرات</option><option value="DRIVING_LICENSE">رخصة القيادة الدولية</option></select></label>
               <label className={label}>الناقل / الباخرة
-                {offerForm.kind==="FLIGHT" ? <AirlineLookup ariaLabel="شركة الطيران في الإعلان" value={offerForm.carrierName} onChange={v=>setOfferForm(f=>({...f,carrierName:v}))} /> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="جهة أو نوع الخدمة"/> :
+                {offerForm.kind==="FLIGHT" ? <AirlineLookup ariaLabel="شركة الطيران في الإعلان" value={offerForm.carrierName} onChange={v=>setOfferForm(f=>({...f,carrierName:v}))} /> : (offerForm.kind==="VISA"||offerForm.kind==="DRIVING_LICENSE") ? <input className={field} value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder={offerForm.kind==="DRIVING_LICENSE"?"جهة إصدار الرخصة (اختياري)":"جهة أو نوع الخدمة"}/> :
                   <><input className={field} list="offer-operators" value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="اختر الباخرة"/><datalist id="offer-operators">{ferryOperators.map(v=><option key={v} value={v}/>)}</datalist></>}
               </label>
               <label className={label+" sm:col-span-2 xl:col-span-2"}>اسم العرض / الجدول<input required maxLength={160} className={field} value={offerForm.title} onChange={e=>setOfferForm(f=>({...f,title:e.target.value}))}/></label>
-              <label className={label}>{offerForm.kind==="VISA"?"بلد الإقامة أو الجنسية":"من"}
-                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة المغادرة" value={offerForm.origin} onChange={v=>setOfferForm(f=>({...f,origin:v}))}/> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value}))} placeholder="بلد الإقامة أو الجنسية"/> :
+              <label className={label}>{offerForm.kind==="DRIVING_LICENSE"?"بلد الإصدار":offerForm.kind==="VISA"?"بلد الإقامة أو الجنسية":"من"}
+                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة المغادرة" value={offerForm.origin} onChange={v=>setOfferForm(f=>({...f,origin:v}))}/> : (offerForm.kind==="VISA"||offerForm.kind==="DRIVING_LICENSE") ? <input className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value}))} placeholder="بلد الإقامة أو الجنسية"/> :
                   <select className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value,destination:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="سواكن">سواكن</option><option value="جدة">جدة</option></select>}
               </label>
-              <label className={label}>{offerForm.kind==="VISA"?"الدولة":"إلى"}
-                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة الوصول" value={offerForm.destination} onChange={v=>setOfferForm(f=>({...f,destination:v}))}/> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value}))} placeholder="الدولة أو الوجهة"/> :
+              <label className={label}>{offerForm.kind==="DRIVING_LICENSE"?"النطاق":offerForm.kind==="VISA"?"الدولة":"إلى"}
+                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة الوصول" value={offerForm.destination} onChange={v=>setOfferForm(f=>({...f,destination:v}))}/> : (offerForm.kind==="VISA"||offerForm.kind==="DRIVING_LICENSE") ? <input className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value}))} placeholder="الدولة أو الوجهة"/> :
                   <select className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value,origin:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="جدة">جدة</option><option value="سواكن">سواكن</option></select>}
               </label>
               <label className={label}>تاريخ بدء ظهور العرض
@@ -512,7 +512,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <img src={offer.bannerUrl} alt={offer.title} className="h-full w-full object-contain" />
                 </div>}
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div><p className="text-xs font-semibold text-[#947426]">{offer.kind==="FERRY"?"بواخر":offer.kind==="VISA"?"تأشيرات":"طيران"} · {offer.carrierName}</p>
+                  <div><p className="text-xs font-semibold text-[#947426]">{offer.kind==="FERRY"?"بواخر":offer.kind==="VISA"?"تأشيرات":offer.kind==="DRIVING_LICENSE"?"الرخصة الدولية":"طيران"} · {offer.carrierName}</p>
                     <h3 className="mt-1 text-lg font-black">{offer.title}</h3>
                     <p className="mt-2 text-sm">{offer.origin} ← {offer.destination} · {day(offer.travelDate)}</p>
                     {(offer.adultPriceSar!==null||offer.childPriceSar!==null||offer.infantPriceSar!==null)&&<p className="mt-1 text-xs font-black text-[#9A7020]">{offer.adultPriceSar!==null&&`بالغ ${offer.adultPriceSar.toLocaleString("ar-SA")} ر.س `}{offer.childPriceSar!==null&&`طفل ${offer.childPriceSar.toLocaleString("ar-SA")} ر.س `}{offer.infantPriceSar!==null&&`رضيع ${offer.infantPriceSar.toLocaleString("ar-SA")} ر.س`}</p>}
