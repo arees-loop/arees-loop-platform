@@ -65,16 +65,17 @@ function parseSchedule(typeValue:unknown,input:unknown,legacyDate:unknown){
   else throw new Error("نوع جدول الرحلات غير صالح.");
   return {scheduleType:type,scheduleData,travelDate};
 }
-const WORKFLOW=["NEW","PROCESSING","QUOTE_READY","QUOTE_SENT","PAID","EXECUTING","DONE","CANCELED"] as const;
+const WORKFLOW=["NEW","PROCESSING","QUOTE_READY","QUOTE_SENT","PAID","EXECUTING","DONE","CANCELED","CLOSED"] as const;
 const TRANSITIONS:Record<string,string[]> = {
-  NEW:["PROCESSING","CANCELED"],
-  PROCESSING:["QUOTE_READY","CANCELED"],
-  QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED"],
-  QUOTE_SENT:["PAID","PROCESSING","CANCELED"],
+  NEW:["PROCESSING","CANCELED","CLOSED"],
+  PROCESSING:["QUOTE_READY","CANCELED","CLOSED"],
+  QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED","CLOSED"],
+  QUOTE_SENT:["PAID","PROCESSING","CANCELED","CLOSED"],
   PAID:["EXECUTING","CANCELED"],
   EXECUTING:["DONE","CANCELED"],
   DONE:[],
   CANCELED:[],
+  CLOSED:[],
 };
 const fullName=(session:{firstName?:string|null;lastName?:string|null;email?:string|null})=>
   [session.firstName,session.lastName].filter(Boolean).join(" ").trim()||session.email||"موظف أريس";
@@ -198,17 +199,20 @@ export async function PATCH(request:NextRequest) {
       const reason=cleanText(body.cancellationReason,1500);
       const by=cleanText(body.canceledBy,30);
       if(status==="CANCELED" && (reason.length<5||!["PARTNER","STAFF","CUSTOMER"].includes(by)))return fail("حدد جهة الإلغاء والسبب (5 حروف على الأقل).");
+      if(status==="CLOSED"&&reason.length<5)return fail("اذكر سبب عدم التوفر قبل إغلاق الطلب.");
       if(status==="PAID" && current.whatsappStatus!=="MANUALLY_MARKED_SENT")return fail("لا يمكن تسجيل السداد قبل تأكيد إرسال عرض السعر.",409);
-      const [updated]=await prisma.$transaction([
+      const [updated,event]=await prisma.$transaction([
         prisma.transportRequest.update({where:{id},data:{
           status,canceledBy:status==="CANCELED"?by:null,cancellationReason:status==="CANCELED"?reason:null,
+          ...(status==="CLOSED"?{customerReply:"نعتذر لكم، الخدمة أو العرض المطلوب غير متوفر حالياً. "+reason,quoteAmountSar:null,quoteValidUntil:null}:{}),
         }}),
         prisma.transportRequestEvent.create({data:{
-          requestId:id,actorId,actorName,action:status==="CANCELED"?"CANCELED":"STATUS_CHANGED",
+          requestId:id,actorId,actorName,action:status==="CANCELED"?"CANCELED":status==="CLOSED"?"CLOSED_UNAVAILABLE":"STATUS_CHANGED",
           fromStatus:current.status,toStatus:status,
-          details:status==="CANCELED"?{initiatedBy:by,reason}:undefined,
+          details:status==="CANCELED"?{initiatedBy:by,reason}:status==="CLOSED"?{reason}:undefined,
         }}),
       ]);
+      await notifyCustomerOfRequestUpdate({kind:current.kind as "FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE",requestId:id,reference:current.reference,userId:current.userId,eventId:event.id,title:status==="CLOSED"?"نعتذر، الخدمة غير متوفرة":"تحديث حالة طلبك",body:status==="CLOSED"?"تم إغلاق الطلب لعدم توفر الخدمة. افتح طلباتي للاطلاع على التفاصيل.":"تغيّرت حالة طلبك لدى أريس لوب."}).catch(error=>console.error("Status notification failed",error));
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
     return fail("الإجراء غير معروف.");
