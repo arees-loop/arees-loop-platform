@@ -2,14 +2,14 @@
 import Link from "next/link";
 import CustomerActionGate from "@/app/components/CustomerActionGate";
 import {useEffect,useState} from "react";
-type Item={serviceId:string;quantity:number;itemType?:"DRIVING_LICENSE";title?:string;durationYears?:number;unitPriceSar?:number;imageUrl?:string};
+type Item={serviceId:string;quantity:number;itemType?:"DRIVING_LICENSE";ownerId?:string;title?:string;durationYears?:number;unitPriceSar?:number;imageUrl?:string};
 type Service={id:string;nameAr:string;finalPrice:number;images:string[];loyaltyPoints:number};
 const KEY="arees-loop-cart-v1";
 export default function CartPage(){
  const [bankBusy,setBankBusy]=useState(false),[bankMessage,setBankMessage]=useState(""),[bankOrder,setBankOrder]=useState<{reference:string;amountSar:number;account:{bankName:string;beneficiaryName:string;iban:string;qrImageUrl:string|null}}|null>(null);
  const [bankReceiptUploaded,setBankReceiptUploaded]=useState(false),[bankSubmitComplete,setBankSubmitComplete]=useState(false);
  const [items,setItems]=useState<Item[]>([]),[services,setServices]=useState<Service[]>([]),[loading,setLoading]=useState(true); const [couponCode,setCouponCode]=useState(""); const [couponDiscount,setCouponDiscount]=useState(0); const [couponMessage,setCouponMessage]=useState(""); const [couponBusy,setCouponBusy]=useState(false); const [points,setPoints]=useState<number|null>(null); const [usePoints,setUsePoints]=useState(false);
- useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(saved))setItems(saved.filter(x=>typeof x.serviceId==="string"&&Number.isInteger(x.quantity)&&x.quantity>0))}catch{}fetch("/api/services",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success)setServices(d.data||[])}).finally(()=>setLoading(false));fetch("/api/loyalty/wallet",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.success)setPoints(Number(d.wallet?.balance||0))}).catch(()=>{})},[]);
+ useEffect(()=>{void fetch("/api/auth/me",{cache:"no-store",credentials:"include"}).then(async r=>{if(!r.ok)throw Error("SESSION");const data=await r.json();const userId=data?.data?.user?.id;if(typeof userId!=="string")throw Error("SESSION");const saved=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(saved))setItems(saved.filter((x:Item)=>x&&typeof x.serviceId==="string"&&Number.isInteger(x.quantity)&&x.quantity>0&&(x.itemType!=="DRIVING_LICENSE"||x.ownerId===userId)));}).catch(()=>setItems([]));fetch("/api/services",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success)setServices(d.data||[])}).finally(()=>setLoading(false));fetch("/api/loyalty/wallet",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.success)setPoints(Number(d.wallet?.balance||0))}).catch(()=>{})},[]);
  const save=(next:Item[])=>{setCouponDiscount(0);setCouponMessage("");setUsePoints(false);setItems(next);localStorage.setItem(KEY,JSON.stringify(next));window.dispatchEvent(new Event("arees-cart-updated"))};
  const rows=items.map(item=>({item,service:item.itemType==="DRIVING_LICENSE"?undefined:services.find(s=>s.id===item.serviceId)}));
  const total=rows.reduce((sum,row)=>sum+(row.service?Number(row.service.finalPrice)*row.item.quantity:row.item.itemType==="DRIVING_LICENSE"?Number(row.item.unitPriceSar||0)*row.item.quantity:0),0);
