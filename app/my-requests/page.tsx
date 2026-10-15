@@ -1,3 +1,4 @@
+import RequestAttachmentsPanel from "@/app/components/RequestAttachmentsPanel";
 "use client";
 
 import Link from "next/link";
@@ -61,6 +62,7 @@ function RequestCard({item,featured}:{item:CustomerRequest;featured:boolean}){
       {item.quoteValidUntil&&<p>صلاحية العرض حتى: {labelDate(item.quoteValidUntil)}</p>}
       {item.cancellationReason&&<p className="rounded-xl bg-red-50 p-3 text-red-800">سبب الإلغاء: {item.cancellationReason}</p>}
       <p className="font-bold text-[#0D3B34]/75">هذا طلب خدمة، وليس حجزاً مؤكداً أو إثبات دفع.</p>
+       <RequestAttachmentsPanel reference={item.reference} requestStatus={item.status}/>
     </div>}
   </article>;
 }
