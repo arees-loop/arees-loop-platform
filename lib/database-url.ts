@@ -19,7 +19,8 @@ function assertIsolated(candidate: string, production?: string) {
   }
 }
 export function resolveDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
-  // A staging override must never redirect an actual production deployment.\n  const staging = env.VERCEL_ENV === "production" ? undefined : env.AREES_STAGING_DATABASE_DATABASE_URL?.trim();
+  // A staging override must never redirect an actual production deployment.
+  const staging = env.VERCEL_ENV === "production" ? undefined : env.AREES_STAGING_DATABASE_DATABASE_URL?.trim();
   if (staging) {
     assertIsolated(staging, env.DATABASE_URL);
     return staging;
@@ -27,7 +28,11 @@ export function resolveDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string
   if (env.VERCEL_ENV === "preview") {
     const preview = env.AREES_PREVIEW_DATABASE_URL?.trim();
     if (!preview) throw new Error("Isolated Preview database URL is not configured");
-    assertIsolated(preview, env.DATABASE_URL);\n    const host = new URL(preview).hostname.toLowerCase();\n    if (["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(host)) {\n      throw new Error("Preview database cannot target a loopback address");\n    }
+    assertIsolated(preview, env.DATABASE_URL);
+    const host = new URL(preview).hostname.toLowerCase();
+    if (["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(host)) {
+      throw new Error("Preview database cannot target a loopback address");
+    }
     return preview;
   }
   const database = env.DATABASE_URL?.trim();
