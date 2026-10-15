@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const successMatch = new RegExp("^success-partners/([a-zA-Z0-9_-]+)/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   const transportMatch = /^transport-offers\/(FLIGHT|FERRY|VISA|DRIVING_LICENSE)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
   const hotelMatch = /^transport-offers\/HOTEL\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
-  const serviceMatch=/^services\\/([a-zA-Z0-9_-]+)\\/[^/]{1,230}$/.exec(pathname);
+  const serviceMatch=new RegExp("^services/([a-zA-Z0-9_-]+)/[^/]{1,230}$").exec(pathname);
   if (!serviceMatch && !logoMatch && !successMatch && !transportMatch && !hotelMatch) {
     return new Response("Not found", { status: 404 });
   }
