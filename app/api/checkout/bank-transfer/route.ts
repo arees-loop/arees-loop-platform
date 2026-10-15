@@ -42,9 +42,9 @@ export async function POST(request:NextRequest) {
         return NextResponse.json({success:false,message:"أكمل بيانات الرخصة ومرفقاتها الثلاثة."},{status:400});
       const application:Record<string,string>={};
       for(const key of keys)application[key]=(raw[key] as string).trim();
-      if(application.durationYears!=="1"||!/^\\d{6,15}$/.test(application.phone)||
-         !/^\\d{2,3}(\\.\\d{1,2})?$/.test(application.height)||
-         !/^https:\\/\\//.test(application.deliveryLink)||
+      if(application.durationYears!=="1"||!/^\d{6,15}$/.test(application.phone)||
+         !/^\d{2,3}(\.\d{1,2})?$/.test(application.height)||
+         !application.deliveryLink.startsWith("https://")||
          application.deliveryAddress.length<5)
          return NextResponse.json({success:false,message:"بيانات الرخصة أو التوصيل غير صالحة."},{status:400});
       const expected=[
@@ -52,7 +52,7 @@ export async function POST(request:NextRequest) {
         {id:application.localLicenseDocumentId,slot:"LOCAL_LICENSE"},
         {id:application.portraitDocumentId,slot:"PORTRAIT"}
       ];
-      if(new Set(expected.map(x=>x.id)).size!==3||expected.some(x=>!/^\\w{15,35}$/.test(x.id)))
+      if(new Set(expected.map(x=>x.id)).size!==3||expected.some(x=>!/^[a-z0-9]{15,35}$/i.test(x.id)))
         return NextResponse.json({success:false,message:"المرفقات الخاصة غير صالحة."},{status:400});
       if(process.env.AREES_LICENSE_PRIVATE_UPLOAD_ENABLED!=="true")
         return NextResponse.json({success:false,message:"لا يمكن السداد قبل تفعيل التحقق الآمن من صور الرخصة."},{status:503});
