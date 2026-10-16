@@ -512,8 +512,9 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <option value="EXPIRED">انتهت تلقائياً</option>
             </select>
             {filteredOffers.length===0&&!loading&&<p className="rounded-xl bg-white p-5 text-sm">لا توجد عروض بعد.</p>}
+            <div className={offerView==="CARDS"?"grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4":"space-y-3"}>
             {filteredOffers.map(offer=>(
-              <article key={offer.id} className={`rounded-[22px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm ${offerView==="LIST"?"flex flex-wrap items-center gap-4":""}`}>
+              <article key={offer.id} className={`min-w-0 rounded-[18px] border border-[#D4AF37]/30 bg-white p-3 shadow-sm ${offerView==="LIST"?"flex flex-wrap items-center gap-4":""}`}>
                 {offer.bannerUrl&&<div className={offerView==="LIST"?"aspect-[2/1] w-28 shrink-0 overflow-hidden rounded-xl bg-[#F7F4ED]":"mb-3 aspect-[2/1] overflow-hidden rounded-xl bg-[#F7F4ED]"}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={offer.bannerUrl} alt={offer.title} className="h-full w-full object-contain" />
@@ -536,6 +537,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 </div>
               </article>
             ))}
+            </div>
           </section>
         </div>
       )}
