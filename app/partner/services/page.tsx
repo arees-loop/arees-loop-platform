@@ -585,12 +585,13 @@ export default function PartnerServicesPage() {
     try {
       const r = await fetch(`/api/location/search?query=${encodeURIComponent(q)}`, { cache: "no-store" });
       const data = await r.json();
-      if (!r.ok || !data?.location) throw new Error();
-      const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [data];
+      if (searchVersion !== locationSearchVersion.current) return;
+      if (!r.ok) throw new Error(data?.error === "SEARCH_RATE_LIMITED" ? "تجاوزت خدمة البحث الحد المسموح مؤقتاً." : "تعذر الاتصال بخدمة البحث عن الأماكن.");
+      const suggestions = Array.isArray(data.suggestions) ? data.suggestions : data.location ? [data] : [];
       setLocationSuggestions(suggestions);
-      setLocationMessage(suggestions.length ? "اختر الموقع الصحيح من النتائج أدناه." : "لم نجد نتائج.");
-    } catch { setLocationMessage("البحث عن الأماكن غير متاح حالياً. استخدم موقعي الحالي أو أدخل الإحداثيات يدوياً."); }
-    finally { setLocationBusy(false); }
+      setLocationMessage(suggestions.length ? "اختر الموقع الصحيح من النتائج أدناه." : "لم نجد نتائج. جرّب اسم المدينة بالإنجليزية.");
+    } catch (error) { if(searchVersion===locationSearchVersion.current)setLocationMessage(error instanceof Error?error.message:"البحث عن الأماكن غير متاح حالياً."); }
+    finally { if(searchVersion===locationSearchVersion.current)setLocationBusy(false); }
   };
 
   const handleLocationQueryChange = (value: string) => {
