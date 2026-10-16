@@ -3,6 +3,7 @@ import Script from "next/script";
 import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
 import PublicGlobalHeader from "./components/PublicGlobalHeader";
+import CustomerLoginModal from "./components/CustomerLoginModal";
 import "./globals.css";
 
 const SITE_URL = "https://www.areesloop.com";
@@ -123,6 +124,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <InitialSplash />
         <PublicGlobalHeader />
+        <CustomerLoginModal />
 
         {children}
 
