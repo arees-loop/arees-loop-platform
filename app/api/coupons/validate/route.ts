@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveDatabaseUrl } from "@/lib/database-url";
 
 function money(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.DATABASE_URL) {
+  try {
+    resolveDatabaseUrl();
+  } catch {
     return NextResponse.json({ success: false, error: "DATABASE_NOT_CONFIGURED" }, { status: 503 });
   }
 
@@ -15,7 +18,7 @@ export async function POST(request: NextRequest) {
     const serviceId = typeof body.serviceId === "string" ? body.serviceId.trim() : "";
     const quantity = Number(body.quantity);
 
-    if (!code || !serviceId || !Number.isInteger(quantity) || quantity < 1) {
+    if (!code || !serviceId || !Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
       return NextResponse.json({ success: false, error: "INVALID_REQUEST", message: "بيانات الكوبون غير مكتملة." }, { status: 400 });
     }
 
@@ -45,11 +48,15 @@ export async function POST(request: NextRequest) {
     if (coupon.serviceId && coupon.serviceId !== serviceId) {
       return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لهذه الخدمة." }, { status: 400 });
     }
-    if (coupon.category && service && coupon.category !== service.category) {
-      return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لتصنيف هذه الخدمة." }, { status: 400 });
-    }
     if (!service) {
       return NextResponse.json({ success: false, error: "SERVICE_NOT_FOUND", message: "الخدمة غير متاحة." }, { status: 404 });
+    }
+    if (coupon.category && coupon.category !== service.category) {
+      return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لتصنيف هذه الخدمة." }, { status: 400 });
+    }
+    const discountValue = Number(coupon.discountValue);
+    if (!Number.isFinite(discountValue) || discountValue <= 0 || (coupon.discountType === "PERCENTAGE" && discountValue > 100)) {
+      return NextResponse.json({ success: false, error: "INVALID_COUPON_VALUE", message: "قيمة الكوبون غير صالحة." }, { status: 400 });
     }
 
     const subtotal = money(Number(service.finalPrice) * quantity);
@@ -58,11 +65,11 @@ export async function POST(request: NextRequest) {
     }
 
     let discountAmount = coupon.discountType === "PERCENTAGE"
-      ? subtotal * (Number(coupon.discountValue) / 100)
-      : Number(coupon.discountValue);
+      ? subtotal * (discountValue / 100)
+      : discountValue;
 
     if (coupon.maxDiscountAmount !== null) discountAmount = Math.min(discountAmount, Number(coupon.maxDiscountAmount));
-    discountAmount = money(Math.min(discountAmount, subtotal));
+    discountAmount = money(Math.max(0, Math.min(discountAmount, subtotal)));
     const total = money(subtotal - discountAmount);
 
     return NextResponse.json({
