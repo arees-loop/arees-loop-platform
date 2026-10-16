@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import NotificationBell from "@/app/components/NotificationBell";
 import AdminIcon, {type AdminIconName} from "./AdminIcon";
 
 type AdminIdentity = {
@@ -288,7 +287,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               ====================== */}
               <div className="flex items-center gap-4">
 
-                {admin?.id&&<NotificationBell role="admin" userId={admin.id}/>}
+                
                 <div className="hidden text-left md:block">
                   <p className="text-[9px] font-bold tracking-[.18em] text-[#B68A21]">
                     AREES LOOP ADMIN
