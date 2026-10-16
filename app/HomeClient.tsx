@@ -523,9 +523,9 @@ export default function Home() {
         {showLocationNotice && detectedLocationScene && (
           <div
             dir={isArabic ? "rtl" : "ltr"}
-            className="absolute left-1/2 top-[112px] z-[70] w-[calc(100%-32px)] max-w-[520px] -translate-x-1/2 px-2 md:left-4 md:top-[116px] md:w-[min(34vw,420px)] md:max-w-[420px] md:translate-x-0"
+            className="absolute left-1/2 top-[112px] z-[70] w-[calc(100%-32px)] max-w-[520px] -translate-x-1/2 px-2 md:left-1/2 md:top-[116px] md:w-[min(42vw,520px)] md:max-w-[520px] md:-translate-x-1/2"
           >
-            <div className="relative overflow-hidden rounded-[24px] border border-white/35 bg-white/[0.035] px-5 py-4 text-white [text-shadow:0_2px_7px_rgba(0,0,0,.95)] shadow-[0_18px_55px_rgba(0,0,0,0.26),inset_0_1px_0_rgba(255,255,255,0.28)] backdrop-blur-[2px]">
+            <div className="relative overflow-hidden rounded-[24px] border border-white/35 bg-[#092F29]/75 px-5 py-4 text-white [text-shadow:0_2px_7px_rgba(0,0,0,.95)] shadow-[0_18px_55px_rgba(0,0,0,0.26),inset_0_1px_0_rgba(255,255,255,0.28)] backdrop-blur-xl">
               <div className="pointer-events-none absolute inset-0 bg-transparent" />
 
               <button
