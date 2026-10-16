@@ -59,7 +59,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "INVALID_COUPON_VALUE", message: "قيمة الكوبون غير صالحة." }, { status: 400 });
     }
 
-    const subtotal = money(Number(service.finalPrice) * quantity);
+    const unitPrice = Number(service.finalPrice);
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      return NextResponse.json({ success: false, error: "INVALID_SERVICE_PRICE" }, { status: 409 });
+    }
+    const subtotal = money(unitPrice * quantity);
     if (coupon.minOrderAmount !== null && subtotal < Number(coupon.minOrderAmount)) {
       return NextResponse.json({ success: false, error: "MIN_ORDER_NOT_MET", message: `الحد الأدنى لاستخدام الكوبون هو ${Number(coupon.minOrderAmount).toLocaleString("ar-SA")} ر.س.` }, { status: 400 });
     }
@@ -68,15 +72,21 @@ export async function POST(request: NextRequest) {
       ? subtotal * (discountValue / 100)
       : discountValue;
 
-    if (coupon.maxDiscountAmount !== null) discountAmount = Math.min(discountAmount, Number(coupon.maxDiscountAmount));
+    if (coupon.maxDiscountAmount !== null) {
+      const cap = Number(coupon.maxDiscountAmount);
+      if (!Number.isFinite(cap) || cap < 0) {
+        return NextResponse.json({ success: false, error: "INVALID_COUPON_CAP" }, { status: 409 });
+      }
+      discountAmount = Math.min(discountAmount, cap);
+    }
     discountAmount = money(Math.max(0, Math.min(discountAmount, subtotal)));
     const total = money(subtotal - discountAmount);
 
     return NextResponse.json({
       success: true,
       data: { code: coupon.code, subtotal, discountAmount, total, discountType: coupon.discountType, discountValue: Number(coupon.discountValue) },
-      message: "تم تطبيق الكوبون بنجاح.",
-    });
+      message: "تم احتساب الخصم مبدئياً؛ السعر النهائي يُعتمد عند إنشاء الطلب على الخادم.",
+    }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("POST /api/coupons/validate error:", error);
     return NextResponse.json({ success: false, error: "COUPON_VALIDATION_FAILED", message: "تعذر التحقق من الكوبون حالياً." }, { status: 500 });
