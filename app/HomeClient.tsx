@@ -1649,6 +1649,22 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Payment networks planned for integration; do not imply checkout is active. */}
+          <div className="flex flex-wrap items-center justify-center gap-5 border-t border-[#D4AF37]/15 py-5" aria-label="شعارات شبكات الدفع المخطط دعمها">
+            <svg role="img" aria-label="مدى" viewBox="0 0 106 50" className="h-9 w-[76px]" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 11h86v28H10z" fill="white" fillOpacity=".75" rx="5"/>
+              <text x="53" y="32" textAnchor="middle" fontSize="26" fontWeight="900" fill="#067C81" fontFamily="Arial,sans-serif">مدى</text>
+            </svg>
+            <svg role="img" aria-label="Visa" viewBox="0 0 100 50" className="h-9 w-[72px]" xmlns="http://www.w3.org/2000/svg">
+              <text x="50" y="35" textAnchor="middle" fontSize="31" fontStyle="italic" fontWeight="900" fill="#1A1F71" fontFamily="Arial,sans-serif">VISA</text>
+            </svg>
+            <svg role="img" aria-label="Mastercard" viewBox="0 0 90 50" className="h-9 w-[68px]" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="35" cy="25" r="19" fill="#EB001B"/>
+              <circle cx="55" cy="25" r="19" fill="#F79E1B" fillOpacity=".95"/>
+              <path d="M45 9.6a19 19 0 0 1 0 30.8A19 19 0 0 1 45 9.6z" fill="#FF5F00"/>
+            </svg>
+          </div>
+
           {/* Bottom */}
           <div className="grid items-center gap-3 pt-3 md:grid-cols-3">
             <div className="text-center text-[9px] text-[#0D3B34]/35 md:text-right">
