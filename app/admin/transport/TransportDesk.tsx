@@ -40,6 +40,7 @@ const offerDay=(d:string|null)=>d?new Intl.DateTimeFormat("en-CA",{timeZone:"Asi
 export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE"}={}) {
   const [tab,setTab]=useState<"requests"|"offers">(initialOfferKind==="ALL"?"requests":"offers");
   const [requests,setRequests]=useState<RequestRow[]>([]);
+  const [requestStatusFilter,setRequestStatusFilter]=useState("ALL");
   const [offers,setOffers]=useState<Offer[]>([]);
   const [staff,setStaff]=useState<Staff[]>([]);
   const [identity,setIdentity]=useState<{role:string;id:string}|null>(null);
@@ -265,7 +266,9 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     }catch{setError("تعذر حذف العرض.");}
     finally{setBusy(false);}
   }
-  const filteredRequests=requests.filter(q=>initialOfferKind==="ALL"||q.kind===initialOfferKind);
+  const serviceRequests=requests.filter(q=>initialOfferKind==="ALL"||q.kind===initialOfferKind);
+  const requestStatuses=[...new Set(serviceRequests.map(q=>q.status))];
+  const filteredRequests=serviceRequests.filter(q=>requestStatusFilter==="ALL"||q.status===requestStatusFilter).sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
   const nowMs=Date.now();
   const offerState=(o:Offer)=>{
     if(!o.isVisible)return "PAUSED";
@@ -304,11 +307,13 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       {status&&<p role="status" className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">{status}</p>}
       {loading&&<p className="mt-5 text-sm">جاري تحميل البيانات...</p>}
       {tab==="requests"&&(
-        <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(350px,1fr)]">
-          <section className="min-w-0 space-y-3">
+        <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(350px,1fr)]">
+          <section className="min-w-0">
+            <div className="mb-4 flex flex-wrap items-center gap-2"><span className="text-sm font-bold">تصفية الطلبات:</span><button type="button" onClick={()=>setRequestStatusFilter("ALL")} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter==="ALL"?"bg-[#0D3B34] text-white":"bg-white"}`}>الكل ({serviceRequests.length})</button>{requestStatuses.map(st=><button type="button" key={st} onClick={()=>setRequestStatusFilter(st)} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter===st?"bg-[#0D3B34] text-white":"bg-white"}`}>{st} ({serviceRequests.filter(q=>q.status===st).length})</button>)}<span className="text-xs text-[#0D3B34]/60">الأحدث أولاً</span></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {filteredRequests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
             {filteredRequests.map(q=>(
-              <button key={q.id} onClick={()=>choose(q)} className={`w-full rounded-[20px] border p-5 text-right transition hover:shadow-lg ${selected?.id===q.id?"border-[#D4AF37] bg-[#FFF9E7]":"border-[#D4AF37]/25 bg-white"}`}>
+              <button key={q.id} onClick={()=>choose(q)} className={`min-w-0 rounded-[18px] border p-3 text-right transition hover:shadow-lg ${selected?.id===q.id?"border-[#D4AF37] bg-[#FFF9E7]":"border-[#D4AF37]/25 bg-white"}`}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="font-black">{q.kind==="FERRY"?"⚓ باخرة":q.kind==="VISA"?"🛂 تأشيرة":q.kind==="DRIVING_LICENSE"?"🚘 رخصة دولية":"✈ طيران"} · {q.customerName}</span>
                   <span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-xs font-bold">{q.status}</span>
@@ -318,6 +323,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 {q.notificationStatus==="FAILED"&&<p className="mt-2 text-xs font-semibold text-amber-700">تنبيه: البريد الإداري لم يؤكد إرساله؛ الطلب محفوظ في القاعدة</p>}
               </button>
             ))}
+            </div>
           </section>
           <section className="min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6">
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
