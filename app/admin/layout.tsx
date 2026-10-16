@@ -18,7 +18,6 @@ type NavItem = { href: string; label: string; icon: string; permission: string |
 
 const nav: NavItem[] = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
-  { href: "/admin/settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
 ];
 const requestsNav: NavItem[] = [
   { href: "/admin/transport/flights", label: "الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
@@ -224,6 +223,12 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                   </div>
                 )}
               </div>
+            )}
+            {hasNavAccess({ href: "/admin/settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" }) && (
+              <Link href="/admin/settings" className={`group mt-3 flex items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all ${pathname === "/admin/settings" ? "bg-[#F3E5BD]/75 text-[#171717]" : "text-[#171717]/72 hover:bg-[#D4AF37]/10"}`}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] text-lg">⚙</span>
+                <span className="flex-1 text-right">إعدادات المنصة</span>
+              </Link>
             )}
           </nav>
 
