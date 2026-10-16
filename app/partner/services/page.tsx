@@ -603,19 +603,21 @@ export default function PartnerServicesPage() {
   };
 
   const useCurrentServiceLocation = () => {
+    const requestVersion = ++locationSearchVersion.current;
     setLocationMessage("");
     if (!navigator.geolocation) { setLocationMessage("المتصفح لا يدعم تحديد الموقع."); return; }
     setLocationBusy(true);
     navigator.geolocation.getCurrentPosition(async (p)=>{
       const lat=p.coords.latitude,lng=p.coords.longitude;
+      if(requestVersion!==locationSearchVersion.current)return;
       setForm((x)=>({...x,latitude:lat,longitude:lng,locationName:x.locationName||"موقعي الحالي"}));
       try {
         const r=await fetch(`/api/location/reverse-geocode?lat=${lat}&lng=${lng}`,{cache:"no-store"});
         const data=await r.json();
-        if(r.ok) setForm((x)=>({...x,latitude:lat,longitude:lng,formattedAddress:data.address||x.formattedAddress,locationName:x.locationName||data.address||"موقعي الحالي",placeId:data.placeId||x.placeId}));
+        if(r.ok&&requestVersion===locationSearchVersion.current) setForm((x)=>({...x,latitude:lat,longitude:lng,formattedAddress:data.address||x.formattedAddress,locationName:x.locationName||data.address||"موقعي الحالي",placeId:data.placeId||x.placeId}));
       } catch {}
-      setLocationMessage("تم حفظ إحداثيات موقعك الحالي ✓ إذا لم يظهر اسم العنوان، أدخل المدينة يدوياً."); setLocationBusy(false);
-    },()=>{setLocationMessage("تعذر تحديد موقعك. اسمح للموقع من إعدادات المتصفح.");setLocationBusy(false);},{enableHighAccuracy:true,timeout:12000});
+      if(requestVersion===locationSearchVersion.current){setLocationMessage("تم حفظ إحداثيات موقعك الحالي ✓ إذا لم يظهر اسم العنوان، أدخل المدينة يدوياً."); setLocationBusy(false);}
+    },()=>{if(requestVersion===locationSearchVersion.current){setLocationMessage("تعذر تحديد موقعك. اسمح للموقع من إعدادات المتصفح.");setLocationBusy(false);}},{enableHighAccuracy:true,timeout:12000});
   };
 
   return (
