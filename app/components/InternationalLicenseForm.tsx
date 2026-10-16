@@ -95,7 +95,7 @@ export default function InternationalLicenseForm(){
  function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();void addToCart(true);}
  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
   <div className="mx-auto max-w-[1450px]">
-   <div className="overflow-hidden rounded-[28px] bg-[#F7F5EF]"><img src="/Image/hero/arees-driving-license-banner.webp" alt="رخصة القيادة الدولية من أريس لوب" className="block h-auto w-full object-contain"/></div>
+   <div className="overflow-hidden rounded-[28px] bg-[#F7F5EF]"><img src="/Image/hero/arees-driving-license-banner.png" alt="رخصة القيادة الدولية من أريس لوب" className="block h-auto w-full object-contain"/></div>
    <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(290px,.78fr)_minmax(0,1.22fr)]">
     <aside className="lg:sticky lg:top-28">
      <div className="rounded-[28px] bg-[#0D3B34] p-6 text-white">
