@@ -56,7 +56,8 @@ function parseSchedule(typeValue:unknown,input:unknown,legacyDate:unknown){
   const list=(value:unknown)=>String(value??"").split(/[\n,،;]+/).map(x=>x.trim()).filter(Boolean);
   const date=(value:unknown)=>{const parsed=parseDay(value);if(!parsed)throw new Error("أدخل تاريخاً صحيحاً للجدول.");return parsed.toISOString().slice(0,10);};
   let scheduleData:Record<string,unknown>={},travelDate:Date|null=null;
-  if(type==="SINGLE"){const value=data.date||legacyDate;if(value){const d=date(value);scheduleData={date:d};travelDate=parseDay(d);}}
+  if(type==="VISA_META"){const cities=Array.isArray(data.appointmentCities)?data.appointmentCities:[];if(cities.length>30||cities.some(c=>typeof c!=="string"||c.length>70))throw new Error("مدن المواعيد غير صحيحة.");scheduleData={visaType:cleanText(data.visaType,100),requirements:cleanText(data.requirements,2500),processingTime:cleanText(data.processingTime,120),needsAppointment:data.needsAppointment===true,appointmentCities:data.needsAppointment===true?[...new Set(cities.map(c=>String(c).trim()).filter(Boolean))]:[]};}
+  else if(type==="SINGLE"){const value=data.date||legacyDate;if(value){const d=date(value);scheduleData={date:d};travelDate=parseDay(d);}}
   else if(type==="MULTIPLE"){const values=Array.isArray(data.dates)?data.dates:list(data.datesText);const dates=[...new Set(values.map(date))].sort();if(!dates.length)throw new Error("أدخل تاريخاً واحداً على الأقل.");scheduleData={dates};travelDate=parseDay(dates[0]);}
   else if(type==="RANGE"){const from=date(data.from),to=date(data.to);if(from>to)throw new Error("نهاية الفترة يجب ألا تسبق بدايتها.");scheduleData={from,to};travelDate=parseDay(from);}
   else if(type==="WEEKLY"){const weekdays=(Array.isArray(data.weekdays)?data.weekdays:list(data.weekdaysText)).map(Number);if(!weekdays.length||weekdays.some(x=>!Number.isInteger(x)||x<0||x>6))throw new Error("اختر يوماً واحداً على الأقل من أيام الأسبوع.");scheduleData={weekdays:[...new Set(weekdays)].sort((a,b)=>a-b),until:data.until?date(data.until):null};}
@@ -219,6 +220,7 @@ export async function POST(request:NextRequest) {
     if(!["FLIGHT","FERRY","VISA"].includes(data.kind))return fail("نوع العرض غير صحيح.");
     const title=cleanText(data.title,160);
     if(!title)return fail("عنوان العرض مطلوب.");
+    if(data.kind==="VISA"&&data.scheduleType!=="VISA_META")return fail("استخدم نموذج التأشيرات المخصص.");
     const schedule=parseSchedule(data.scheduleType,data.scheduleData,data.travelDate);
     const amount=parseAmount(data.amountSar);
     const status=cleanText(data.operationStatus,30)||"AVAILABLE";
@@ -255,6 +257,7 @@ export async function PUT(request:NextRequest) {
     const url=cleanText(data.bannerUrl,500)||null;
     if(url&&!url.startsWith("/Image/")&&!url.startsWith("/api/media?pathname="))return fail("رابط صورة غير معتمد.");
     const period=offerPeriod(data.startsAt,data.endsAt);
+    if(current.kind==="VISA"&&data.scheduleType!=="VISA_META")return fail("استخدم نموذج التأشيرات المخصص.");
     const schedule=parseSchedule(data.scheduleType,data.scheduleData,data.travelDate);
     const imageUrls=parseOfferImages(data.imageUrls,url,current.imageUrls);
     const updated=await prisma.transportOffer.update({where:{id},data:{...period,
@@ -264,7 +267,7 @@ export async function PUT(request:NextRequest) {
       travelDate:schedule.travelDate,scheduleType:schedule.scheduleType,scheduleData:schedule.scheduleData as never,amountSar:parseAmount(data.amountSar),
       adultPriceSar:parseAmount(data.adultPriceSar),childPriceSar:parseAmount(data.childPriceSar),infantPriceSar:parseAmount(data.infantPriceSar),
       priceUnit:cleanText(data.priceUnit,50)||null,
-      bannerUrl:url||null,operationStatus:status,operationNote:cleanText(data.operationNote,1000)||null,
+      bannerUrl:url||null,imageUrls:imageUrls as never,operationStatus:status,operationNote:cleanText(data.operationNote,1000)||null,
       isVisible:Boolean(data.isVisible),
       sortOrder:Number.isInteger(data.sortOrder)?Math.max(0,Math.min(9999,data.sortOrder)):current.sortOrder,
     }});
