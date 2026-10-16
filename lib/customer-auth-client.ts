@@ -9,6 +9,6 @@ export async function requireCustomerSession(returnPath:string):Promise<boolean>
     }
   }catch{}
   const target=returnPath.startsWith("/")&&!returnPath.startsWith("//")?returnPath:"/";
-  window.location.assign("/login?next="+encodeURIComponent(target));
+  window.dispatchEvent(new CustomEvent("arees:login-required",{detail:{nextPath:target}}));
   return false;
 }
