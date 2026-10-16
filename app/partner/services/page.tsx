@@ -330,6 +330,7 @@ export default function PartnerServicesPage() {
 
 
   const openNewServiceForm = () => {
+    resetLocationSearch();
     setEditingServiceId(null);
     setEditingOriginalService(null);
     resetForm();
@@ -338,6 +339,7 @@ export default function PartnerServicesPage() {
   };
 
   const openEditServiceForm = (service: Service) => {
+    resetLocationSearch();
     setEditingServiceId(service.id);
     setEditingOriginalService(service);
     setForm({
@@ -568,7 +570,15 @@ export default function PartnerServicesPage() {
   const [locationSuggestions, setLocationSuggestions] = useState<Array<{name:string;address:string;city:string;location:{lat:number;lng:number}}>>([]);
   const locationSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const locationSearchVersion = useRef(0);
+  const resetLocationSearch = () => {
+    locationSearchVersion.current += 1;
+    if (locationSearchTimer.current) clearTimeout(locationSearchTimer.current);
+    setLocationQuery(""); setLocationSuggestions([]); setLocationMessage(""); setLocationBusy(false);
+  };
+
   const searchServiceLocation = async (queryOverride?: string) => {
+    const searchVersion = ++locationSearchVersion.current;
     const q = (queryOverride ?? locationQuery).trim();
     if (q.length < 2) { setLocationSuggestions([]); return; }
     setLocationBusy(true); setLocationMessage("");
