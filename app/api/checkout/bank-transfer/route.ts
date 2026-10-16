@@ -23,9 +23,12 @@ export async function POST(request:NextRequest) {
     items.push({serviceId:item.serviceId,quantity:Number(item.quantity),itemType:typeof item.itemType==="string"?item.itemType:undefined,application:item.application});
   }
   if(new Set(items.map(x=>x.serviceId)).size!==items.length)return NextResponse.json({success:false,message:"خدمات مكررة في السلة."},{status:400});
+  // The create-order endpoint remains fail-closed until coupon redemption is atomic.
+  // A cart quote is never proof that a coupon was consumed or that a payment was accepted.
   const account=await prisma.platformBankAccount.findUnique({where:{id:"primary"}});
   if(!account?.enabled)return NextResponse.json({success:false,message:"التحويل البنكي غير متاح حالياً."},{status:409});
-  if(body.couponCode||body.usePoints)return NextResponse.json({success:false,message:"استخدام النقاط والكوبونات عند السداد يحتاج تفعيل التحقق النهائي."},{status:409});
+  if(body.usePoints)return NextResponse.json({success:false,message:"استخدام نقاط الولاء يحتاج تفعيل التحقق النهائي."},{status:409});
+  if(body.couponCode)return NextResponse.json({success:false,message:"تطبيق الكوبون عند السداد يحتاج سجل استهلاك آمن واختبار التسوية؛ لن ننشئ طلباً بسعر مختلف عن السعر المعتمد."},{status:409});
   const ids=items.filter(x=>x.itemType!=="DRIVING_LICENSE").map(x=>x.serviceId);
   const services=await prisma.service.findMany({where:{id:{in:ids},status:"PUBLISHED"},select:{id:true,nameAr:true,finalPrice:true}});
   if(services.length!==ids.length)return NextResponse.json({success:false,message:"إحدى الخدمات لم تعد متاحة. حدّث السلة."},{status:409});
