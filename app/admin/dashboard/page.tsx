@@ -23,6 +23,7 @@ export default function AdminDashboardPage(){
  const [partners,setPartners]=useState<Partner[]>([]),[services,setServices]=useState<Service[]>([]),[loading,setLoading]=useState(true);
  const [requestAlerts,setRequestAlerts]=useState<RequestAlerts|null>(null);
  const [alertsLoading,setAlertsLoading]=useState(true),[alertsError,setAlertsError]=useState("");
+ const [refreshSignal,setRefreshSignal]=useState(0);
  useEffect(()=>{
    let active=true;
    async function refreshAlerts(){
@@ -39,7 +40,7 @@ export default function AdminDashboardPage(){
    const onFocus=()=>{void refreshAlerts()};
    window.addEventListener("focus",onFocus);
    return()=>{active=false;window.clearInterval(interval);window.removeEventListener("focus",onFocus)};
- },[]);
+ },[refreshSignal]);
  useEffect(()=>{Promise.all([
   fetch("/api/admin/partners",{cache:"no-store",credentials:"include"}).then(r=>r.json()),
   fetch("/api/admin/services",{cache:"no-store",credentials:"include"}).then(r=>r.json())
@@ -52,6 +53,7 @@ export default function AdminDashboardPage(){
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-xl font-black text-[#0D3B34]">🔔 الطلبات الجديدة</h2><p className="mt-1 text-xs text-[#0D3B34]/60">اضغط على أي قسم للانتقال مباشرة إلى طلبات العملاء. تتجدد العدادات كل دقيقة.</p></div>
       {requestAlerts&&<span className="rounded-full bg-[#F8F1DE] px-4 py-2 text-xs font-bold text-[#87641D]">إجمالي الجديد: {Object.values(requestAlerts).reduce((sum:number,value)=>sum+(value??0),0)}</span>}
+      <button type="button" onClick={()=>{setAlertsLoading(true);setRefreshSignal(value=>value+1)}} className="rounded-xl border border-[#D4AF37]/40 bg-white px-4 py-2 text-xs font-black text-[#0D3B34] hover:bg-[#FFF6DD]">↻ تحديث الإشعارات</button>
     </div>
     {alertsLoading&&!requestAlerts?<p className="mt-5 text-sm">جارٍ تحميل إشعارات الطلبات...</p>:null}
     {alertsError?<p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{alertsError}</p>:null}
