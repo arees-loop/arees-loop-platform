@@ -1,7 +1,6 @@
 "use client";
 
 import {useState,type FormEvent} from "react";
-import CustomerActionGate from "@/app/components/CustomerActionGate";
 import {requireCustomerSession} from "@/lib/customer-auth-client";
 import Link from "next/link";
 
@@ -110,10 +109,8 @@ export default function InternationalLicenseForm(){
        <h2 className="font-black text-[#E5C17B]">المتطلبات الأساسية</h2>
        <p className="mt-2 text-xs leading-7">جواز سفر ساري المفعول، رخصة قيادة محلية سارية، صورة شخصية حديثة بخلفية بيضاء، الطول ولون العين، وعنوان وموقع التوصيل.</p>
       </div>
-      <CustomerActionGate nextPath="/international-driving-license" action="طلب الرخصة">
        <button type="button" onClick={()=>void addToCart(false)} disabled={busy} className="mt-5 w-full rounded-xl bg-[#D5B15D] px-5 py-3 font-black text-[#0D3B34] disabled:opacity-50">أضف للسلة</button>
        <button type="button" onClick={()=>void addToCart(true)} disabled={busy} className="mt-3 w-full rounded-xl border border-white/60 px-5 py-3 font-black disabled:opacity-50">اشترِ الآن</button>
-      </CustomerActionGate>
       <div className="mt-3 text-center text-xs text-white/70">احصل على 150 نقطة Loop بعد إكمال الخدمة وفق شروط البرنامج.</div>
       <Link href="/cart" className="mt-4 block text-center text-xs underline">عرض السلة</Link>
      </div>
@@ -121,10 +118,9 @@ export default function InternationalLicenseForm(){
     <section className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm sm:p-8">
      <p className="text-xs font-black tracking-widest text-[#B08A35]">AREES LOOP · INTERNATIONAL DRIVING PERMIT</p>
      <h2 className="mt-3 text-2xl font-black">نموذج طلب الرخصة الدولية</h2>
-     <p className="mt-2 text-sm leading-7 text-[#0D3B34]/70">يرجى تعبئة بيانات المتقدم بدقة، وإرفاق المستندات المطلوبة قبل الإضافة للسلة.</p>
+     <p className="mt-2 text-sm leading-7 text-[#0D3B34]/70">يمكنك استعراض المتطلبات وتعبئة البيانات بحرية. يُطلب تسجيل الدخول فقط عند الضغط على «أضف للسلة» أو «اشترِ الآن».</p>
      {error&&<p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}
      {notice&&<p role="status" className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{notice}</p>}
-     <CustomerActionGate nextPath="/international-driving-license" action="طلب الرخصة">
       <form onSubmit={submit} className="mt-6 grid gap-5 sm:grid-cols-2">
        <label className={label}>اسم مقدم الطلب *<input className={style} required minLength={2} maxLength={100} value={name} onChange={e=>setName(e.target.value)} autoComplete="name"/></label>
        <div className="grid grid-cols-[minmax(0,1fr)_130px] gap-3"><label className={label}>رقم الجوال *<input className={style} required inputMode="tel" pattern="[0-9]{6,15}" maxLength={15} value={phone} onChange={e=>setPhone(e.target.value.replace(/[^0-9]/g,""))}/></label><label className={label}>مفتاح الدولة<select className={style} value={countryCode} onChange={e=>setCountryCode(e.target.value)}>{phoneCodes.map(([v,txt])=><option key={v} value={v}>{txt}</option>)}</select></label>{countryCode==="other"&&<input className={style} inputMode="numeric" value={otherCode} onChange={e=>setOtherCode(e.target.value.replace(/\D/g,""))} placeholder="المفتاح" maxLength={4}/>}</div>
@@ -147,7 +143,6 @@ export default function InternationalLicenseForm(){
         <button disabled={busy} type="submit" className="rounded-xl border border-[#B99C59] px-5 py-3.5 text-sm font-black disabled:opacity-50">اشترِ الآن</button>
        </div>
       </form>
-     </CustomerActionGate>
     </section>
    </div>
   </div>
