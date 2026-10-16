@@ -18,24 +18,25 @@ type NavItem = { href: string; label: string; icon: string; permission: string |
 
 const nav: NavItem[] = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
+];
+const requestsNav: NavItem[] = [
+  { href: "/admin/transport/flights", label: "الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
+  { href: "/admin/transport/ferries", label: "البواخر", icon: "⚓", permission: "TRANSPORT_FERRIES" },
+  { href: "/admin/hotels", label: "الفنادق", icon: "▤", permission: "HOTEL_REQUESTS" },
+  { href: "/admin/transport/visas", label: "التأشيرات", icon: "🛂", superOnly: true, permission: null },
+  { href: "/admin/transport/driving-licenses", label: "الرخص الدولية", icon: "🚘", superOnly: true, permission: null },
+  { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
+];
+const platformNav: NavItem[] = [
+  { href: "/admin/settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
+  { href: "/admin/success-partners", label: "شركاء النجاح (المتحرك)", icon: "✧", superOnly: true, permission: null },
   { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
   { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
   { href: "/admin/users", label: "المستخدمين", icon: "♙", superOnly: true, permission: null },
   { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
-  { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
   { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
   { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
   { href: "/admin/rewards", label: "النقاط وتقارير الاستبدال", icon: "✦", permission: "REPORTS_ANALYTICS" },
-];
-
-const platformNav: NavItem[] = [
-  { href: "/admin/settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
-  { href: "/admin/success-partners", label: "شركاء النجاح (المتحرك)", icon: "✧", superOnly: true, permission: null },
-  { href: "/admin/transport/flights", label: "إدارة حجوزات الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
-  { href: "/admin/transport/ferries", label: "إدارة حجوزات البواخر", icon: "⚓", permission: "TRANSPORT_FERRIES" },
-  { href: "/admin/transport/visas", label: "طلبات وعروض التأشيرات", icon: "🛂", superOnly: true, permission: null },
-  { href: "/admin/transport/driving-licenses", label: "طلبات رخص القيادة الدولية", icon: "🚘", superOnly: true, permission: null },
-  { href: "/admin/hotels", label: "إدارة طلبات وعروض الفنادق", icon: "▤", permission: "HOTEL_REQUESTS" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -47,6 +48,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [platformMenuOpen, setPlatformMenuOpen] = useState(false);
+  const [requestsMenuOpen, setRequestsMenuOpen] = useState(false);
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
   const [pendingServiceCount, setPendingServiceCount] = useState(0);
 
@@ -60,6 +62,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (platformNav.some((item) => pathname === item.href.split("?")[0])) setPlatformMenuOpen(true);
+    if (requestsNav.some((item) => pathname === item.href.split("?")[0])) setRequestsMenuOpen(true);
   }, [pathname]);
 
   useEffect(() => {
@@ -84,6 +87,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     isSuperAdmin || (!item.superOnly && (!item.permission || grantedPermissions.includes(item.permission)));
   const visibleNav = nav.filter(hasNavAccess);
   const visiblePlatformNav = platformNav.filter(hasNavAccess);
+  const visibleRequestsNav = requestsNav.filter(hasNavAccess);
   const isActive = (item: NavItem) => {
     const base = item.href.split("?")[0];
     return item.href.includes("?")
@@ -91,6 +95,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
       : pathname === base && !(base === "/admin/partners" && searchParams.get("view") === "active");
   };
   const platformMenuActive = visiblePlatformNav.some(isActive);
+  const requestsMenuActive = visibleRequestsNav.some(isActive);
   const fullName = [admin?.firstName, admin?.lastName].filter(Boolean).join(" ") || (isSuperAdmin ? "Arees Admin" : "Admin");
   const initials = fullName.split(" ").filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "A";
 
@@ -183,6 +188,18 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            {visibleRequestsNav.length > 0 && (
+              <div className="pt-1">
+                <button type="button" aria-expanded={requestsMenuOpen} onClick={()=>setRequestsMenuOpen(v=>!v)} className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all ${requestsMenuActive?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-[10px] text-lg">▣</span>
+                  <span className="flex-1 text-right">إدارة الطلبات والعروض</span>
+                  <span className="text-xs">{requestsMenuOpen?"⌃":"⌄"}</span>
+                </button>
+                {requestsMenuOpen&&<div className="mr-5 mt-1 space-y-1 border-r border-[#D4AF37]/30 pr-3">
+                  {visibleRequestsNav.map(item=><Link key={item.href} href={item.href} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold ${isActive(item)?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}><span className="w-5 text-center text-base">{item.icon}</span><span>{item.label}</span></Link>)}
+                </div>}
+              </div>
+            )}
             {visiblePlatformNav.length > 0 && (
               <div className="pt-1">
                 <button
