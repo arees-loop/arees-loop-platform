@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-
-function databaseNotConfigured() {
-  return NextResponse.json({success:false,error:"DATABASE_NOT_CONFIGURED",message:"Database connection is not configured yet."},{status:503});
-}
+import { resolveDatabaseUrl } from "@/lib/database-url";
 
 export async function GET(request: NextRequest) {
-  if (!process.env.DATABASE_URL) return databaseNotConfigured();
+  const { searchParams } = new URL(request.url);
+  if (searchParams.has("partnerId")) {
+    return NextResponse.json({ success: false, error: "USE_PARTNER_SERVICES_ENDPOINT" }, { status: 403 });
+  }
+
+  try {
+    resolveDatabaseUrl();
+  } catch {
+    return NextResponse.json({ success: false, error: "SERVICE_DATABASE_UNAVAILABLE", message: "قاعدة بيانات التجارب غير متاحة في هذه البيئة حالياً." }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  }
 
   try {
     const { prisma } = await import("@/lib/prisma");
-    const { searchParams } = new URL(request.url);
-    // Public listing never exposes unpublished services via caller-controlled partnerId.
-    if (searchParams.has("partnerId")) {
-      return NextResponse.json({ success: false, error: "USE_PARTNER_SERVICES_ENDPOINT" }, { status: 403 });
-    }
-
     const services = await prisma.service.findMany({
       where: { status: "PUBLISHED" },
       orderBy: { updatedAt: "desc" },
