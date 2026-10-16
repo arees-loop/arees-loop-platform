@@ -131,7 +131,7 @@ export default function InternationalLicenseForm(){
        <label className={label}>موقع التوصيل (استلام) *<input required type="url" className={style} value={deliveryLocation} onChange={e=>setDeliveryLocation(e.target.value)} placeholder="رابط الموقع من خرائط Google"/></label>
        <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#F7F3E8] p-4">
         <p className="text-sm font-black">السعر <span className="mr-2 text-[#977121]">199 ر.س</span></p>
-        <p className="text-xs text-[#0D3B34]/70">كل رخصة تُطلب بشكل مستقل لمتقدم واحد.</p>
+        <p role="note" className="text-sm font-black leading-7 text-[#A47A23]">✦ لطلب أكثر من رخصة، يُرجى تقديم طلب مستقل لكل رخصة ولكل متقدم.</p>
        </div>
        <p className="sm:col-span-2 text-xs leading-7 text-[#0D3B34]/65">لا تُحفظ صور الجواز والرخصة في سلة المتصفح. تُرفع إلى تخزين خاص بعد التحقق من تسجيل الدخول، ولا يبدأ السداد إلا بعد استكمال جميع البيانات والمرفقات.</p>
        <div className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
