@@ -21,6 +21,8 @@ const tone=(s?:string|null)=>s==="ACTIVE"?"bg-[#E2F4E9] text-[#287B50]":s==="REJ
 
 export default function AdminDashboardPage(){
  const [partners,setPartners]=useState<Partner[]>([]),[services,setServices]=useState<Service[]>([]),[loading,setLoading]=useState(true);
+ const [customerCount,setCustomerCount]=useState<number|null>(null);
+ useEffect(()=>{let live=true;fetch("/api/admin/customer-count",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(live&&d.success)setCustomerCount(d.count)}).catch(()=>{});return()=>{live=false}},[]);
  const [requestAlerts,setRequestAlerts]=useState<RequestAlerts|null>(null);
  const [alertsLoading,setAlertsLoading]=useState(true),[alertsError,setAlertsError]=useState("");
  const [refreshSignal,setRefreshSignal]=useState(0);
@@ -72,7 +74,7 @@ export default function AdminDashboardPage(){
     </div>
   </section>
   {loading?<div className="mt-8 rounded-3xl bg-white p-8 text-center">جارٍ تحميل البيانات...</div>:<>
-   <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Stat label="الشركاء المعتمدون" value={stats.active}/><Stat label="مطلوب استكمال" value={stats.needs}/><Stat label="طلبات قيد المراجعة" value={stats.review}/><Stat label="إجمالي الشركاء" value={stats.total}/></section>
+   <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Stat label="الشركاء المعتمدون" value={stats.active}/><Stat label="مطلوب استكمال" value={stats.needs}/><Stat label="طلبات قيد المراجعة" value={stats.review}/><Stat label="إجمالي الشركاء" value={stats.total}/><Link href="/admin/users" className="block rounded-[20px] border border-[#D8CDB8]/55 bg-white p-5 shadow-sm hover:border-[#D4AF37]"><span className="text-sm font-semibold">إجمالي العملاء</span><div className="mt-3 text-3xl font-black">{customerCount??"—"}</div><span className="mt-2 block text-xs text-[#947426]">عرض العملاء والتقارير ←</span></Link></section>
    <section className="mt-6 grid gap-5 xl:grid-cols-[1.6fr_1fr]">
     <div className="rounded-[20px] border border-[#D8CDB8]/55 bg-[#FFFDF8] p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-lg font-bold">أحدث طلبات الشركاء</h2><Link href="/admin/partners" className="rounded-full bg-[#FFF4D9] px-4 py-2 text-xs font-bold text-[#B47D08]">عرض جميع الطلبات ←</Link></div>
      {recent.length===0?<p className="py-10 text-center text-sm text-[#171717]/45">لا توجد طلبات شركاء حالياً.</p>:<div className="mt-5 overflow-x-auto"><table className="w-full min-w-[650px] text-right text-xs"><thead><tr className="border-b border-black/10 text-black/45"><th className="pb-3">الشريك</th><th className="pb-3">النشاط</th><th className="pb-3">الحالة</th><th className="pb-3">تاريخ الطلب</th></tr></thead><tbody>{recent.map(p=><tr key={p.id} className="border-b border-black/5"><td className="py-4 font-bold">{p.tradeNameAr||p.legalNameAr||"غير مدخل"}</td><td>{p.partnerType||"غير مدخل"}</td><td><span className={`rounded-full px-3 py-1.5 font-bold ${tone(p.status)}`}>{label(p.status)}</span></td><td>{p.submittedAt?new Date(p.submittedAt).toLocaleDateString("ar-SA"):"غير مدخل"}</td></tr>)}</tbody></table></div>}
