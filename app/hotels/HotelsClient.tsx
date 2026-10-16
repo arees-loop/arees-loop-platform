@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import CustomerActionGate from "@/app/components/CustomerActionGate";
+import { requireCustomerSession } from "@/lib/customer-auth-client";
 import { useEffect, useState, type FormEvent } from "react";
 import { storeCustomerClaim } from "@/lib/customer-request-claims";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
@@ -49,6 +49,7 @@ export default function HotelsPage(){
   },[offers.length,offersPaused]);
   async function submit(event:FormEvent<HTMLFormElement>){
     event.preventDefault();if(busy)return;
+    if(!(await requireCustomerSession("/hotels")))return;
     setBusy(true);setError("");
     try{
       const res=await fetch("/api/hotels/requests",{method:"POST",headers:{"Content-Type":"application/json"},
@@ -144,7 +145,7 @@ export default function HotelsPage(){
             <h2 className="text-2xl font-black">إرسال طلب حجز فندق</h2>
             <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">املأ البيانات المطلوبة لنتواصل معك بعرض السعر والتوفر.</p>
             {error&&<p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{error}</p>}
-            <CustomerActionGate nextPath={"/hotels"} action="إرسال طلب الفندق">
+            <>
  <form id="hotel-request-form-fields" onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2">
               <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true"/>
               <label className={label}>الاسم الكامل *<input className={field} required minLength={2} maxLength={120} value={form.customerName} onChange={e=>edit("customerName",e.target.value)}/></label>
@@ -176,7 +177,7 @@ export default function HotelsPage(){
                 <button type="submit" disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
               </div>
             </form>
- </CustomerActionGate>
+ </>
           </>}
         </section>
       </div>
