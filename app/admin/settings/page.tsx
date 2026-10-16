@@ -17,11 +17,18 @@ export default function PlatformSettingsPage(){
    <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">إضافة الشعارات وتعديل ظهورها وترتيبها بالصفحة الرئيسية. متاح للسوبر أدمن فقط.</p>
    <span className="mt-6 inline-block text-sm font-bold text-[#B38A25]">إدارة الشعارات ←</span>
   </Link>
-  <div className="rounded-3xl border border-dashed border-[#D4AF37]/35 bg-white/60 p-7">
-   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl text-[#B38A25]">＋</span>
-   <h2 className="mt-5 text-lg font-black">إعدادات إضافية</h2>
-   <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">مساحة مخصصة لإضافة أدوات التحكم القادمة حسب متطلبات المنصة.</p>
-   <span className="mt-6 inline-block text-xs text-[#0D3B34]/45">قريباً — لا توجد إعدادات مفعّلة هنا</span>
+  <Link href="/admin/users" className="group rounded-3xl border border-[#D4AF37]/30 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-[#D4AF37] hover:shadow-lg">
+   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl text-[#B38A25]">♙</span>
+   <h2 className="mt-5 text-lg font-black">المستخدمون والصلاحيات</h2>
+   <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">إدارة المستخدمين الإداريين وصلاحيات الوصول حسب الدور.</p>
+   <span className="mt-6 inline-block text-sm font-bold text-[#B38A25]">إدارة المستخدمين ←</span>
+  </Link>
+  <section className="rounded-3xl border border-[#D4AF37]/30 bg-white p-7 shadow-sm">
+   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl text-[#B38A25]">⌘</span>
+   <h2 className="mt-5 text-lg font-black">عناوين API والتكاملات</h2>
+   <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">إعدادات ربط المنصات الخارجية. لا تُعرض مفاتيح الوصول أو الأسرار في الصفحة.</p>
+   <p className="mt-4 text-xs font-semibold text-[#9A7020]">قيد التجهيز — لا يوجد تكامل جديد مفعّل</p>
+  </section>
   </div>
  </div>
  </main>
