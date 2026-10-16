@@ -794,3 +794,16 @@ html,
 body {
   background-color: #F7F4ED;
 }
+
+/* Public page spacing: the global header is sticky but remains in document flow.
+   Avoid reserving a second header-height above banners/content.
+   Scoped to public pages only: admin/partner/auth routes hide this header. */
+body:has(> header.sticky) > main:is(.pt-24, .pt-28, .pt-32, .pt-36, .pt-40) {
+  padding-top: 16px !important;
+}
+
+@media (min-width: 768px) {
+  body:has(> header.sticky) > main:is(.pt-24, .pt-28, .pt-32, .pt-36, .pt-40) {
+    padding-top: 24px !important;
+  }
+}
