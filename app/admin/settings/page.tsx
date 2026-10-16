@@ -29,7 +29,6 @@ export default function PlatformSettingsPage(){
    <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">إعدادات ربط المنصات الخارجية. لا تُعرض مفاتيح الوصول أو الأسرار في الصفحة.</p>
    <p className="mt-4 text-xs font-semibold text-[#9A7020]">قيد التجهيز — لا يوجد تكامل جديد مفعّل</p>
   </section>
-  </div>
  </div>
  </main>
 }
