@@ -15,18 +15,31 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";
-    const serviceId = typeof body.serviceId === "string" ? body.serviceId.trim() : "";
-    const quantity = Number(body.quantity);
-
-    if (!code || !serviceId || !Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
-      return NextResponse.json({ success: false, error: "INVALID_REQUEST", message: "بيانات الكوبون غير مكتملة." }, { status: 400 });
+    const requested = Array.isArray(body.items)
+      ? body.items
+      : [{ serviceId: body.serviceId, quantity: body.quantity }];
+    if (requested.length < 1 || requested.length > 15 ||
+        requested.some((line: unknown) => !line || typeof line !== "object" ||
+          typeof (line as { serviceId?: unknown }).serviceId !== "string" ||
+          !(line as { serviceId: string }).serviceId.trim() ||
+          !Number.isInteger((line as { quantity?: unknown }).quantity) ||
+          Number((line as { quantity: number }).quantity) < 1 ||
+          Number((line as { quantity: number }).quantity) > 30)) {
+      return NextResponse.json({ success: false, error: "INVALID_REQUEST", message: "بيانات السلة غير مكتملة." }, { status: 400 });
     }
-
+    const lines = requested as { serviceId: string; quantity: number }[];
+    const ids = lines.map(line => line.serviceId);
+    if (new Set(ids).size !== ids.length) {
+      return NextResponse.json({ success: false, error: "DUPLICATE_SERVICES", message: "السلة تحتوي خدمات مكررة." }, { status: 400 });
+    }
     const { prisma } = await import("@/lib/prisma");
-    const [coupon, service] = await Promise.all([
+    const [coupon, services] = await Promise.all([
       prisma.coupon.findUnique({ where: { code } }),
-      prisma.service.findFirst({ where: { id: serviceId, status: "PUBLISHED" }, select: { finalPrice: true, category: true } }),
+      prisma.service.findMany({ where: { id: { in: ids }, status: "PUBLISHED" }, select: { id: true, finalPrice: true, category: true } }),
     ]);
+    if (services.length !== ids.length) {
+      return NextResponse.json({ success: false, error: "SERVICE_NOT_FOUND", message: "إحدى الخدمات غير متاحة." }, { status: 404 });
+    }
 
     if (!coupon) {
       return NextResponse.json({ success: false, error: "COUPON_NOT_FOUND", message: "الكوبون غير موجود." }, { status: 404 });
@@ -45,31 +58,32 @@ export async function POST(request: NextRequest) {
     if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
       return NextResponse.json({ success: false, error: "COUPON_LIMIT_REACHED", message: "تم استنفاد عدد استخدامات الكوبون." }, { status: 400 });
     }
-    if (coupon.serviceId && coupon.serviceId !== serviceId) {
-      return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لهذه الخدمة." }, { status: 400 });
+    const pricedLines = lines.map(line => {
+      const service = services.find(service => service.id === line.serviceId)!;
+      return { line, service, unitPrice: Number(service.finalPrice) };
+    });
+    if (pricedLines.some(row => !Number.isFinite(row.unitPrice) || row.unitPrice <= 0)) {
+      return NextResponse.json({ success: false, error: "INVALID_SERVICE_PRICE" }, { status: 409 });
     }
-    if (!service) {
-      return NextResponse.json({ success: false, error: "SERVICE_NOT_FOUND", message: "الخدمة غير متاحة." }, { status: 404 });
-    }
-    if (coupon.category && coupon.category !== service.category) {
-      return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لتصنيف هذه الخدمة." }, { status: 400 });
+    const eligibleLines = pricedLines.filter(row =>
+      (!coupon.serviceId || coupon.serviceId === row.line.serviceId) &&
+      (!coupon.category || coupon.category === row.service.category));
+    if (!eligibleLines.length) {
+      return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح للخدمات في السلة." }, { status: 400 });
     }
     const discountValue = Number(coupon.discountValue);
     if (!Number.isFinite(discountValue) || discountValue <= 0 || (coupon.discountType === "PERCENTAGE" && discountValue > 100)) {
       return NextResponse.json({ success: false, error: "INVALID_COUPON_VALUE", message: "قيمة الكوبون غير صالحة." }, { status: 400 });
     }
 
-    const unitPrice = Number(service.finalPrice);
-    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
-      return NextResponse.json({ success: false, error: "INVALID_SERVICE_PRICE" }, { status: 409 });
-    }
-    const subtotal = money(unitPrice * quantity);
+    const subtotal = money(pricedLines.reduce((sum, row) => sum + row.unitPrice * row.line.quantity, 0));
+    const eligibleSubtotal = money(eligibleLines.reduce((sum, row) => sum + row.unitPrice * row.line.quantity, 0));
     if (coupon.minOrderAmount !== null && subtotal < Number(coupon.minOrderAmount)) {
       return NextResponse.json({ success: false, error: "MIN_ORDER_NOT_MET", message: `الحد الأدنى لاستخدام الكوبون هو ${Number(coupon.minOrderAmount).toLocaleString("ar-SA")} ر.س.` }, { status: 400 });
     }
 
     let discountAmount = coupon.discountType === "PERCENTAGE"
-      ? subtotal * (discountValue / 100)
+      ? eligibleSubtotal * (discountValue / 100)
       : discountValue;
 
     if (coupon.maxDiscountAmount !== null) {
@@ -79,12 +93,12 @@ export async function POST(request: NextRequest) {
       }
       discountAmount = Math.min(discountAmount, cap);
     }
-    discountAmount = money(Math.max(0, Math.min(discountAmount, subtotal)));
+    discountAmount = money(Math.max(0, Math.min(discountAmount, eligibleSubtotal)));
     const total = money(subtotal - discountAmount);
 
     return NextResponse.json({
       success: true,
-      data: { code: coupon.code, subtotal, discountAmount, total, discountType: coupon.discountType, discountValue: Number(coupon.discountValue) },
+      data: { code: coupon.code, subtotal, eligibleSubtotal, eligibleItems: eligibleLines.length, discountAmount, total, discountType: coupon.discountType, discountValue: Number(coupon.discountValue) },
       message: "تم احتساب الخصم مبدئياً؛ السعر النهائي يُعتمد عند إنشاء الطلب على الخادم.",
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
