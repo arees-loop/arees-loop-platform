@@ -35,7 +35,7 @@ export default function VisaCatalogAdmin(){
  <label>الدولة المطلوبة *<input required className={field} value={form.country} onChange={e=>update("country",e.target.value)}/></label>
  <label>نوع التأشيرة *<input required className={field} placeholder="سياحية، أعمال، زيارة..." value={form.visaType} onChange={e=>update("visaType",e.target.value)}/></label>
  <label>عنوان البطاقة *<input required className={field} value={form.title} onChange={e=>update("title",e.target.value)}/></label>
- <label>السعر الإرشادي بالريال<input type="number" min="0" step=".01" className={field} value={form.amountSar} onChange={e=>update("amountSar",e.target.value)}/></label>
+ <label>السعر بالريال<input type="number" min="0" step=".01" className={field} value={form.amountSar} onChange={e=>update("amountSar",e.target.value)}/></label>
  <label className="md:col-span-2">وصف مختصر<textarea className={field} rows={2} value={form.description} onChange={e=>update("description",e.target.value)}/></label>
  <label className="md:col-span-2">المتطلبات والاشتراطات *<textarea required className={field} rows={4} value={form.requirements} onChange={e=>update("requirements",e.target.value)}/></label>
  <label>المدة المتوقعة<input className={field} placeholder="مثلاً: 10 إلى 15 يوم عمل" value={form.processingTime} onChange={e=>update("processingTime",e.target.value)}/></label>
