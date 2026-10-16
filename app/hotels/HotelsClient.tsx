@@ -64,7 +64,7 @@ export default function HotelsPage(){
       <div className="mb-3 overflow-hidden bg-[#F7F4ED]">
         {/* Crop the artwork's white outer margin; preserve its designed banner and current gap below. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Image/hero/arees-hotel-banner.webp" alt="حجز الفنادق — إقامتك المميزة تبدأ هنا" className="block aspect-[4.2/1] w-full scale-[1.04] object-cover object-center" />
+        <img src="/Image/hero/arees-hotels-banner-v2.png" alt="حجز الفنادق — إقامتك المميزة تبدأ هنا" className="block aspect-[4.2/1] w-full scale-[1.04] object-cover object-center" />
       </div>
       
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(290px,.9fr)_minmax(0,1.3fr)]">
