@@ -2,6 +2,7 @@
 import Link from "next/link";
 import ExperiencePhoto from "@/app/components/ExperiencePhoto";
 import SaveExperienceButton from "@/app/components/SaveExperienceButton";
+import OfferShareButton from "@/app/components/OfferShareButton";
 import ExperienceDistance from "@/app/components/ExperienceDistance";
 import {useParams} from "next/navigation";
 import {useEffect,useState} from "react";
@@ -38,6 +39,7 @@ export default function ServiceDetails(){
       <ExperiencePhoto src={images[imageIndex]} alt={service.nameAr} className="object-contain"/>
       {images.length>1&&<><button onClick={prev} aria-label="الصورة السابقة" className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-xl shadow-md">›</button><button onClick={next} aria-label="الصورة التالية" className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-xl shadow-md">‹</button><div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#0D3B34]/85 px-3 py-1 text-[10px] font-bold text-white">{imageIndex+1} / {images.length}</div></>}
      </div>
+     <OfferShareButton title={service.nameAr} className="mx-auto mt-3 w-full max-w-[520px] text-right"/>
      {images.length>1&&<div className="mx-auto mt-2 flex max-w-[520px] justify-center gap-2 overflow-x-auto py-1">{images.map((src,i)=><button key={src+i} onClick={()=>setImageIndex(i)} className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 ${i===imageIndex?"border-[#B99124]":"border-transparent"}`}><img src={src} alt="" className="h-full w-full object-contain"/></button>)}</div>}
      <aside className="mx-auto mt-4 w-full max-w-[520px] rounded-[24px] border border-[#B99124]/20 bg-white p-5 shadow-sm">
       <div className="border-b border-[#0D3B34]/10 pb-4"><div><p className="text-[11px] opacity-50">السعر يبدأ من</p><p className="mt-1 text-2xl font-bold">{Number(service.finalPrice).toLocaleString("ar-SA")} <span className="text-sm">ر.س</span></p></div></div><div className="mt-4 flex items-center justify-between gap-4"><div><p className="mb-1 text-[11px] opacity-50">الكمية</p><div className="flex items-center rounded-xl border border-[#0D3B34]/15"><button onClick={()=>setQty(q=>Math.max(1,q-1))} className="h-9 w-9 text-lg">−</button><b className="min-w-9 text-center">{qty}</b><button onClick={()=>setQty(q=>q+1)} className="h-9 w-9 text-lg">+</button></div></div></div>
