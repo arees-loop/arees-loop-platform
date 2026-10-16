@@ -42,7 +42,6 @@ export default function InternationalLicenseForm(){
  const [deliveryLocation,setDeliveryLocation]=useState("");
  const [files,setFiles]=useState<Record<Slot,File|null>>({PASSPORT:null,LOCAL_LICENSE:null,PORTRAIT:null});
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
- const [quantity,setQuantity]=useState(1);
  const pick=(slot:Slot,file:File|null)=>setFiles(existing=>({...existing,[slot]:file}));
  const setEye=(eye:string)=>setEyes(current=>current.includes(eye)?current.filter(x=>x!==eye):[...current,eye]);
  async function addToCart(goToCart:boolean){
@@ -55,7 +54,6 @@ export default function InternationalLicenseForm(){
       (countryCode==="other"&&!/^\d{1,4}$/.test(otherCode))||Object.values(files).some(f=>!f)){
      setError("أكمل جميع الحقول والصور الثلاث وموقع التوصيل الصحيح قبل الإضافة إلى السلة.");return;
    }
-   if(quantity!==1){setError("كل طلب رخصة لشخص واحد. أضف طلباً مستقلاً لكل متقدم.");return;}
    setBusy(true);
    try{
     const own=await fetch("/api/auth/me",{cache:"no-store",credentials:"include"});
@@ -133,9 +131,7 @@ export default function InternationalLicenseForm(){
        <label className={label}>موقع التوصيل (استلام) *<input required type="url" className={style} value={deliveryLocation} onChange={e=>setDeliveryLocation(e.target.value)} placeholder="رابط الموقع من خرائط Google"/></label>
        <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#F7F3E8] p-4">
         <p className="text-sm font-black">السعر <span className="mr-2 text-[#977121]">199 ر.س</span></p>
-        <label className="flex items-center gap-3 text-sm font-bold">الكمية
-         <input type="number" min={1} max={1} readOnly value={quantity} onChange={e=>setQuantity(Number(e.target.value))} className="w-16 rounded-xl border border-[#D4AF37]/45 bg-white p-2 text-center"/>
-        </label>
+        <p className="text-xs text-[#0D3B34]/70">كل رخصة تُطلب بشكل مستقل لمتقدم واحد.</p>
        </div>
        <p className="sm:col-span-2 text-xs leading-7 text-[#0D3B34]/65">لا تُحفظ صور الجواز والرخصة في سلة المتصفح. تُرفع إلى تخزين خاص بعد التحقق من تسجيل الدخول، ولا يبدأ السداد إلا بعد استكمال جميع البيانات والمرفقات.</p>
        <div className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
