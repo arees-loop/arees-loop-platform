@@ -794,3 +794,9 @@ html,
 body {
   background-color: #F7F4ED;
 }
+
+/* Public sticky header is in normal flow; avoid reserving its height twice. */
+body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding-top:16px !important;}
+@media (min-width:768px) {
+  body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding-top:24px !important;}
+}
