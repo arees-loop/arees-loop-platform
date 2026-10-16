@@ -1,0 +1,29 @@
+"use client";
+import {useEffect,useMemo,useState} from "react";
+type Customer={key:string;name:string;email:string;phone:string;registeredAt:string|null;orders:number;bookingValue:number;source:string};
+type Report={data:Customer[];summary:{registered:number;customers:number;orders:number;bookingValue:number};financialNote:string};
+const money=(v:number)=>v.toLocaleString("ar-SA",{maximumFractionDigits:2});
+const escapeXml=(v:string)=>v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+export default function CustomerReportsPage(){
+ const [report,setReport]=useState<Report|null>(null),[error,setError]=useState(""),[loading,setLoading]=useState(true),[query,setQuery]=useState(""),[source,setSource]=useState("all");
+ useEffect(()=>{let active=true;fetch("/api/admin/customer-reports",{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر تحميل التقرير");if(active)setReport(d)}).catch(e=>{if(active)setError(e.message)}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[]);
+ const filtered=useMemo(()=>report?.data.filter(x=>(source==="all"||x.source===source)&&[x.name,x.email,x.phone].some(v=>v.toLowerCase().includes(query.trim().toLowerCase())))||[],[report,query,source]);
+ function exportExcel(){
+  const columns=["اسم العميل","رقم الجوال","البريد الإلكتروني","تاريخ التسجيل","إجمالي الطلبات","قيمة الحجوزات المؤهلة (ر.س)","نوع العميل"];
+  const values=filtered.map(x=>[x.name,x.phone,x.email,x.registeredAt?new Date(x.registeredAt).toLocaleDateString("en-CA"):"",x.orders,x.bookingValue,x.source]);
+  const row=(cells:(string|number)[])=>"<Row>"+cells.map(v=>'<Cell><Data ss:Type="'+(typeof v==="number"?"Number":"String")+'">'+escapeXml(String(v))+"</Data></Cell>").join("")+"</Row>";
+  const xml='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Customers"><Table>'+row(columns)+values.map(row).join("")+"</Table></Worksheet></Workbook>";
+  const url=URL.createObjectURL(new Blob([xml],{type:"application/vnd.ms-excel;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="Arees-Loop-Customers.xls";a.click();URL.revokeObjectURL(url);
+ }
+ return <main dir="rtl" className="min-h-screen bg-[#FCFAF5] p-5 text-[#123D35] md:p-9">
+ <style media="print">{'@page{size:A4 landscape;margin:12mm}body{background:white!important}.no-print{display:none!important}.print-table{font-size:9px!important}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:6px}'}</style>
+ <div className="mx-auto max-w-7xl"><header className="mb-7"><p className="text-xs font-bold text-[#A78332]">AREES LOOP · SUPER ADMIN</p><h1 className="mt-2 text-3xl font-black">إدارة العملاء والتقارير</h1><p className="mt-2 text-sm text-black/60">تقرير العملاء المسجلين وطلبات الضيوف المرتبطة ببريد أو جوال.</p></header>
+ {loading&&<p>جارٍ تحميل بيانات العملاء...</p>}{error&&<p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{error}</p>}
+ {report&&<><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["الحسابات المسجلة",report.summary.registered],["العملاء مع الضيوف",report.summary.customers],["إجمالي الطلبات",report.summary.orders],["قيمة الحجوزات المؤهلة (ر.س)",money(report.summary.bookingValue)]].map(([label,value])=><div key={label} className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5"><p className="text-sm text-black/60">{label}</p><p className="mt-2 text-2xl font-black">{value}</p></div>)}</div>
+ <p className="my-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{report.financialNote} قد تُعرض طلبات الضيوف منفصلة إذا لم تتطابق بيانات التواصل مع حساباتهم.</p>
+ <div className="no-print my-5 flex flex-wrap gap-3"><input aria-label="بحث العملاء" className="min-w-56 flex-1 rounded-xl border border-[#D4AF37]/40 bg-white p-3" placeholder="بحث بالاسم أو الجوال أو البريد" value={query} onChange={e=>setQuery(e.target.value)}/><select aria-label="نوع العميل" className="rounded-xl border border-[#D4AF37]/40 bg-white p-3" value={source} onChange={e=>setSource(e.target.value)}><option value="all">جميع العملاء</option><option value="حساب مسجل">حساب مسجل</option><option value="طلب ضيف">طلب ضيف</option></select><button onClick={exportExcel} className="rounded-xl bg-[#0D3B34] px-5 py-3 font-bold text-white">تصدير Excel</button><button onClick={()=>window.print()} className="rounded-xl border border-[#0D3B34] px-5 py-3 font-bold">تصدير PDF / طباعة</button></div>
+ <p className="mb-2 text-xs text-black/60">النتائج: {filtered.length} عميل. يتم تصدير النتائج المفلترة فقط.</p>
+ <div className="overflow-x-auto rounded-2xl border border-[#D4AF37]/30 bg-white"><table className="print-table w-full min-w-[900px] text-right text-sm"><thead className="bg-[#F5EBD1]"><tr>{["الاسم","الجوال","البريد الإلكتروني","تاريخ التسجيل","الطلبات","قيمة الحجوزات (ر.س)","النوع"].map(h=><th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{filtered.map(x=><tr key={x.key} className="border-t border-black/10"><td className="p-3 font-semibold">{x.name}</td><td className="p-3" dir="ltr">{x.phone||"—"}</td><td className="p-3" dir="ltr">{x.email||"—"}</td><td className="p-3">{x.registeredAt?new Date(x.registeredAt).toLocaleDateString("ar-SA"):"—"}</td><td className="p-3">{x.orders}</td><td className="p-3">{money(x.bookingValue)}</td><td className="p-3">{x.source}</td></tr>)}</tbody></table>{filtered.length===0&&<p className="p-6 text-center">لا توجد نتائج مطابقة.</p>}</div>
+ <p className="mt-4 text-xs text-black/50">ملف Excel بصيغة XLS المتوافقة مع Microsoft Excel. لتصدير PDF اختر «حفظ كملف PDF» من نافذة الطباعة. البيانات مخصصة للإدارة ولا تعني الموافقة على الإعلانات.</p>
+ </>}</div></main>;
+}
