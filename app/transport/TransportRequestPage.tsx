@@ -103,7 +103,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
         <div className="mb-3 overflow-hidden bg-[#F7F4ED]">
           {/* Crop the artwork's white outer margin; preserve its designed banner and current gap below. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ferry?"/Image/hero/arees-ferry-banner.webp":"/Image/hero/arees-flight-banner.webp"}
+          <img src={ferry?"/Image/hero/arees-ferries-banner-v2.png":"/Image/hero/arees-flights-banner-v2.png"}
             alt={ferry?"حجز البواخر — رحلتك البحرية تبدأ هنا":"حجز الطيران — رحلتك الجوية تبدأ هنا"}
             className="block aspect-[4.2/1] w-full scale-[1.04] object-cover object-center" />
         </div>
