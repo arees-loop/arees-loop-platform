@@ -1,3 +1,4 @@
+import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 "use client";
 import Link from "next/link";
 import {useEffect,useState,type FormEvent} from "react";
@@ -47,7 +48,7 @@ export default function RequestServicePage({kind}:{kind:Kind}){
  <section className="min-w-0 rounded-[30px] border border-[#C5AE73]/30 bg-white p-5 shadow-[0_18px_50px_rgba(13,59,52,.08)] sm:p-8"><div className="mb-5"><p className="text-xs font-black text-[#A78332]">AREES LOOP · {visa?"VISA SERVICES":"INTERNATIONAL DRIVING PERMIT"}</p><h2 className="mt-2 text-2xl font-black sm:text-3xl">{visa?"ابدأ طلبك الآن":"طلب إصدار رخصة القيادة الدولية"}</h2><p className="mt-2 text-sm leading-7 text-[#49655D]">{visa?"املأ البيانات الأساسية، وسيتواصل معك فريق أريس لمراجعة الخيارات والمتطلبات قبل أي إجراء.":"السعر 199 ريال شامل التوصيل · مدة الصلاحية سنة واحدة."}</p></div>
  {notice&&<div role="status" className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold leading-7 text-emerald-900">{notice}{reference&&<div className="mt-1">رقم الطلب: {reference}</div>}{!claimSaved&&<div className="mt-1 text-xs">احتفظ برقم الطلب لمتابعته لاحقاً.</div>}</div>}{error&&<p role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{error}</p>}
  {visa&&<p role="note" className="mb-5 rounded-2xl border border-amber-400 bg-amber-50 p-4 text-sm font-bold leading-8 text-amber-950">تنبيه مهم: تقدم شركة أريس خدمة ترتيب إجراءات طلب التأشيرة ومتابعتها، ولا تضمن إصدار التأشيرة أو الموافقة عليها. قرار الإصدار أو الرفض يعود حصرياً إلى الجهات المختصة.</p>}
- <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+ <AuthenticatedRequestGate><form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
  <label className={label}>الاسم الكامل<input required minLength={2} maxLength={100} className={field} autoComplete="name" value={name} onChange={e=>setName(e.target.value)}/></label>
  <label className={label}>الجنسية<input required maxLength={80} className={field} value={nationality} onChange={e=>setNationality(e.target.value)} placeholder="مثال: سعودي"/></label>
  <label className={label}>بلد الإقامة<input required maxLength={100} className={field} value={residence} onChange={e=>setResidence(e.target.value)} placeholder="مثال: السعودية"/></label>
@@ -66,5 +67,5 @@ export default function RequestServicePage({kind}:{kind:Kind}){
  </a>
  <button disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
  </div>
- </form></section></div></section></main>;
+ </form></AuthenticatedRequestGate></section></div></section></main>;
 }
