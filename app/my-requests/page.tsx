@@ -14,7 +14,7 @@ type CustomerRequest={
 };
 const stages=[
   {id:"NEW",label:"طلبات جديدة",icon:"✉",detail:"وصلت طلباتك لأريس وجاري استلامها"},
-  {id:"PROCESSING",label:"تحت المتابعة",icon:"◷",detail:"طلبات يعمل عليها فريق أريس"},
+  {id:"PROCESSING",label:"تحت الإجراء",icon:"◷",detail:"طلبات يعمل عليها فريق أريس"},
   {id:"COMPLETED",label:"طلبات مكتملة",icon:"✓",detail:"الخدمات التي تم تنفيذها"},
   {id:"CANCELED",label:"طلبات ملغاة",icon:"×",detail:"الطلبات التي أُلغيت"},
 ];
@@ -67,6 +67,7 @@ export default function MyRequestsPage(){
   const [error,setError]=useState("");
   const [focus,setFocus]=useState("");
   const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE">("ALL");
+  const [stageFilter,setStageFilter]=useState("ALL");
   useEffect(()=>{
     const abort=new AbortController();
     const focusRef=new URLSearchParams(window.location.search).get("reference")||"";
@@ -87,15 +88,18 @@ export default function MyRequestsPage(){
       .finally(()=>{if(!abort.signal.aborted)setLoading(false);});
     return()=>abort.abort();
   },[]);
-  const visible=useMemo(()=>filter==="ALL"?requests:requests.filter(x=>x.kind===filter),[requests,filter]);
+  const visible=useMemo(()=>requests.filter(x=>(filter==="ALL"||x.kind===filter)&&(stageFilter==="ALL"|| (stageFilter==="CLOSED"?["CLOSED","CANCELED","CANCELLED"].includes(x.status):stageFilter==="NEW"?x.status==="NEW":stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED"].includes(x.status):false))),[requests,filter,stageFilter]);
+  const summary=[{id:"ALL",label:"جميع الطلبات",count:requests.length},{id:"NEW",label:"الجديدة",count:requests.filter(x=>x.status==="NEW").length},{id:"PROCESSING",label:"تحت الإجراء",count:requests.filter(x=>["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING"].includes(x.status)).length},{id:"COMPLETED",label:"المكتملة",count:requests.filter(x=>["DONE","COMPLETED"].includes(x.status)).length},{id:"CLOSED",label:"الملغية والمغلقة",count:requests.filter(x=>["CLOSED","CANCELED","CANCELLED"].includes(x.status)).length}];
   return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
     <div className="mx-auto max-w-[1500px]">
       <p className="text-xs font-black tracking-[.15em] text-[#A78231]">AREES LOOP · MY REQUESTS</p>
       <h1 className="mt-2 text-4xl font-black">طلباتي</h1>
       <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/70">تابع طلبات التأشيرات والرخص الدولية والطيران والبواخر والفنادق، وشاهد حالة كل طلب ورد أريس عليه من نفس الصفحة.</p>
       <div className="mt-5 rounded-xl border border-[#D4AF37]/30 bg-white px-4 py-3 text-xs leading-7 text-[#0D3B34]/70">
-        الطلبات التي أرسلتها وأنت مسجّل الدخول مرتبطة بحسابك. طلبات الزائر مرتبطة بهذا المتصفح برمز خاص؛ للحفاظ على إمكانية متابعتها من جهاز آخر يُفضّل تسجيل الدخول قبل إرسال الطلب.
+        الطلبات التي أرسلتها وأنت مسجّل الدخول مرتبطة بحسابك. الطلبات القديمة التي أُرسلت كزائر قد تتطلب رمز المتابعة الخاص بها.
       </div>
+      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">{summary.map(x=><button type="button" key={x.id} onClick={()=>setStageFilter(x.id)} className={`rounded-2xl border p-4 text-right shadow-sm transition ${stageFilter===x.id?"border-[#B99124] bg-[#FFF5D9] ring-2 ring-[#D4AF37]/20":"border-[#D4AF37]/20 bg-white"}`}><span className="block text-xs font-bold">{x.label}</span><strong className="mt-2 block text-3xl">{loading?"…":x.count}</strong></button>)}</div>
+      <div className="mt-5 flex items-center justify-between gap-3"><Link href="/notifications" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2 text-xs font-bold">🔔 إشعاراتي وتحديثات الطلبات</Link><Link href="/bookings" className="text-xs font-bold underline">عرض حجوزاتي المؤكدة</Link></div>
       <div className="mt-6 flex flex-wrap gap-2">
         {([["ALL","كل الطلبات"],["VISA","التأشيرات"],["DRIVING_LICENSE","الرخص الدولية"],["FLIGHT","الطيران"],["FERRY","البواخر"],["HOTEL","الفنادق"]] as const).map(([kind,label])=>
           <button key={kind} onClick={()=>setFilter(kind)} className={`rounded-full px-5 py-2.5 text-xs font-bold ${filter===kind?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>{label}</button>)}
