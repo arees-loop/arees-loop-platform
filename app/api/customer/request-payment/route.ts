@@ -51,10 +51,22 @@ export async function POST(req:NextRequest){
  }
  if(action==="REJECT_TRANSFER")details={reason:String(body.reason||"الإيصال غير مطابق").slice(0,500)};
  const names:Record<string,string>={ACCEPT_OFFER:"CUSTOMER_OFFER_ACCEPTED",SUBMIT_TRANSFER:"CUSTOMER_TRANSFER_SUBMITTED",VERIFY_TRANSFER:"ADMIN_PAYMENT_VERIFIED",REJECT_TRANSFER:"ADMIN_PAYMENT_REJECTED"};
+ // Serialize changes per request using a row lock, then recheck all preconditions.
  const updated=await prisma.$transaction(async tx=>{
-  const event=await tx.transportRequestEvent.create({data:{requestId:request.id,actorId:session.user.id,actorName:staff?"الإدارة":"العميل",action:names[action],fromStatus:request.status,toStatus:action==="VERIFY_TRANSFER"?"PAID":request.status,details}});
+  await tx.$queryRaw`SELECT id FROM "TransportRequest" WHERE id = ${request.id} FOR UPDATE`;
+  const fresh=await tx.transportRequest.findUniqueOrThrow({where:{id:request.id},select:{status:true,quoteAmountSar:true}});
+  if(fresh.status!=="PROCESSING"||fresh.quoteAmountSar===null)throw new Error("STALE_REQUEST");
+  const freshEvents=await tx.transportRequestEvent.findMany({where:{requestId:request.id,action:{in:["CUSTOMER_OFFER_ACCEPTED","CUSTOMER_TRANSFER_SUBMITTED","ADMIN_PAYMENT_VERIFIED","ADMIN_PAYMENT_REJECTED"]}},orderBy:{createdAt:"desc"},select:{action:true}});
+  const hasAccepted=freshEvents.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED");
+  const lastPayment=freshEvents.find(e=>e.action!=="CUSTOMER_OFFER_ACCEPTED")?.action;
+  if(action==="ACCEPT_OFFER"&&hasAccepted)throw new Error("DUPLICATE_ACTION");
+  if(action!=="ACCEPT_OFFER"&&!hasAccepted)throw new Error("STALE_REQUEST");
+  if(action==="SUBMIT_TRANSFER"&&["CUSTOMER_TRANSFER_SUBMITTED","ADMIN_PAYMENT_VERIFIED"].includes(lastPayment||""))throw new Error("DUPLICATE_ACTION");
+  if(["VERIFY_TRANSFER","REJECT_TRANSFER"].includes(action)&&lastPayment!=="CUSTOMER_TRANSFER_SUBMITTED")throw new Error("STALE_REQUEST");
+  const event=await tx.transportRequestEvent.create({data:{requestId:request.id,actorId:session.user.id,actorName:staff?"الإدارة":"العميل",action:names[action],fromStatus:fresh.status,toStatus:action==="VERIFY_TRANSFER"?"PAID":fresh.status,details}});
   if(action==="VERIFY_TRANSFER")await tx.transportRequest.update({where:{id:request.id},data:{status:"PAID"}});
   return event;
- });
+ }).catch((error:unknown)=>{if(error instanceof Error&&["STALE_REQUEST","DUPLICATE_ACTION"].includes(error.message))return null;throw error;});
+ if(!updated)return bad("تغيرت حالة الطلب أو تم تنفيذ الإجراء مسبقاً. حدّث الصفحة.",409);
  return NextResponse.json({success:true,event:updated.action});
 }
