@@ -12,6 +12,8 @@ const CODE = /^\d{1,4}$/;
 
 export async function POST(request: NextRequest) {
   try {
+    const requiredSession=await getCurrentSession();
+    if(!requiredSession)return NextResponse.json({success:false,message:"يجب تسجيل الدخول قبل إرسال الطلب.",code:"AUTH_REQUIRED"},{status:401,headers:{"Cache-Control":"no-store"}});
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") return msg("الطلب غير صالح.",400);
     const data = body as Record<string, unknown>;
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
     // A high-entropy capability permits secure follow-up for guests without logging in.
     const trackingToken=randomBytes(32).toString("base64url");
     const trackingTokenHash=createHash("sha256").update(trackingToken).digest("hex");
-    const session=await getCurrentSession();
+    const session=requiredSession;
     // Low-volume per phone safeguard for an anonymous public form.
     const recent = await prisma.transportRequest.count({where:{countryCode,phone,createdAt:{gte:new Date(Date.now()-24*60*60*1000)}}});
     if (recent>=5) return msg("تم استقبال طلبات متعددة لهذا الرقم اليوم؛ تواصل مع خدمة العملاء.",429);
