@@ -1,3 +1,4 @@
+import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 "use client";
 import { AirportLookup } from "@/app/components/AviationLookup";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
@@ -221,9 +222,9 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
             ):(
               <>
                 <h2 className="text-2xl font-black">بيانات طلب {title}</h2>
-                <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">املأ البيانات التالية للتواصل معك بعرض السعر. لا تتطلب العملية حساباً أو دفعاً.</p>
+                <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">املأ البيانات التالية للتواصل معك بعرض السعر. تتطلب العملية تسجيل الدخول أولاً، ولا تتطلب الدفع عند إرسال الطلب.</p>
                 {error&&<p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{error}</p>}
-                <form id="transport-request-form-fields" onSubmit={submit} className="mt-6 grid gap-5 sm:grid-cols-2">
+                <AuthenticatedRequestGate><form id="transport-request-form-fields" onSubmit={submit} className="mt-6 grid gap-5 sm:grid-cols-2">
                   <input type="text" name="website" autoComplete="off" tabIndex={-1} aria-hidden="true" className="hidden"/>
                   <label className={label}>اسم المسافر / مقدم الطلب *<input className={field} required minLength={2} maxLength={100} value={name} onChange={e=>setName(e.target.value)} placeholder="الاسم الكامل"/></label>
                   <label className={label}>البريد الإلكتروني (اختياري)<input className={field} type="email" value={email} maxLength={180} onChange={e=>setEmail(e.target.value)} placeholder="example@email.com"/></label>
@@ -290,7 +291,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                     </a>
                     <button type="submit" disabled={busy} className="inline-flex min-w-[170px] justify-center rounded-full bg-[#0D3B34] px-6 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#176154] disabled:opacity-50">{busy?"جارٍ إرسال الطلب...":"إرسال طلب"}</button>
                   </div>
-                </form>
+                </form></AuthenticatedRequestGate>
               </>
             )}
           </section>
