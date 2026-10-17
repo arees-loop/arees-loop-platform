@@ -18,7 +18,7 @@ export async function GET(req:NextRequest){
  if(!/^AR-(AIR|SEA|VISA|LIC)-[A-F0-9]{10}$/.test(reference))return fail("مرجع غير صالح.");
  const auth=await access(reference);if(!auth)return fail("غير مصرح بعرض المرفقات.",403);
  const events=await prisma.transportRequestEvent.findMany({where:{requestId:auth.request.id,action:"CUSTOMER_ATTACHMENT_UPLOADED"},orderBy:{createdAt:"desc"},take:100,select:{id:true,createdAt:true,details:true}});
- const files=events.map(e=>{const d=e.details as {name?:string;contentType?:string;size?:number;purpose?:string}|null;return {id:e.id,name:d?.name||"مرفق",contentType:d?.contentType,size:d?.size,purpose:d?.purpose,createdAt:e.createdAt}});
+ const files=events.map(e=>{const d=e.details as {name?:string;contentType?:string;size?:number;purpose?:string;label?:string}|null;return {id:e.id,name:d?.name||"مرفق",contentType:d?.contentType,size:d?.size,purpose:d?.purpose,label:d?.label,createdAt:e.createdAt}});
  const fileId=req.nextUrl.searchParams.get("file");
  if(!fileId)return NextResponse.json({success:true,data:files},{headers:{"Cache-Control":"private, no-store"}});
  const event=events.find(e=>e.id===fileId);if(!event)return fail("الملف غير موجود.",404);
@@ -34,6 +34,10 @@ export async function POST(req:NextRequest){
  if(!/^AR-(AIR|SEA|VISA|LIC)-[A-F0-9]{10}$/.test(reference))return fail("مرجع غير صالح.");
  const auth=await access(reference);if(!auth||auth.isStaff)return fail("المرفقات لصاحب الطلب فقط.",403);
  const purpose=String(data.get("purpose")||"DOCUMENT");if(!["DOCUMENT","BANK_RECEIPT"].includes(purpose))return fail("نوع المرفق غير صالح.");
+ const label=String(data.get("label")||"").trim();
+ if(purpose==="DOCUMENT"&&(!label||label.length>100))return fail("اكتب اسم المرفق (حتى 100 حرف).");
+ const count=await prisma.transportRequestEvent.count({where:{requestId:auth.request.id,action:"CUSTOMER_ATTACHMENT_UPLOADED"}});
+ if(count>=12)return fail("وصلت إلى الحد الأقصى: 12 مرفقاً للطلب.",409);
  const file=data.get("file");if(!(file instanceof File))return fail("اختر ملفاً.");
  if(file.size===0||file.size>5*1024*1024)return fail("حجم الملف يجب ألا يتجاوز 5 ميجابايت.");
  const allowed=["application/pdf","image/jpeg","image/png","image/webp"];
@@ -48,7 +52,7 @@ export async function POST(req:NextRequest){
  const pathname="customer-attachments/"+auth.request.id+"/"+randomUUID()+"."+extension;
  const uploaded=await put(pathname,Buffer.from(bytes),{access:"private",contentType:file.type,addRandomSuffix:false});
  try{
- await prisma.transportRequestEvent.create({data:{requestId:auth.request.id,actorId:session.user.id,actorName:"العميل",action:"CUSTOMER_ATTACHMENT_UPLOADED",details:{pathname:uploaded.pathname,name:file.name.slice(0,140),contentType:file.type,size:file.size,purpose}}});
+ await prisma.transportRequestEvent.create({data:{requestId:auth.request.id,actorId:session.user.id,actorName:"العميل",action:"CUSTOMER_ATTACHMENT_UPLOADED",details:{pathname:uploaded.pathname,name:file.name.slice(0,140),contentType:file.type,size:file.size,purpose,label:purpose==="BANK_RECEIPT"?"إثبات التحويل البنكي":label}}});
  }catch(e){console.error("Attachment metadata save failed",e);return fail("لم يكتمل حفظ المرفق. حاول مرة أخرى.",503);}
  return NextResponse.json({success:true,message:"تم استلام المرفق بنجاح."},{headers:{"Cache-Control":"no-store"}});
 }
