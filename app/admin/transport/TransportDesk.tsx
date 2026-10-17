@@ -57,6 +57,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [bannerPreview,setBannerPreview]=useState("");
   const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
   const [selected,setSelected]=useState<RequestRow|null>(null);
+  const [visaAvailability,setVisaAvailability]=useState<"AVAILABLE"|"UNAVAILABLE">("AVAILABLE");
   const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
   const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?blankOffer.origin:"",destination:initialOfferKind==="FERRY"?blankOffer.destination:""});
   const [status,setStatus]=useState("");
@@ -104,7 +105,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   }
 
   function choose(q:RequestRow) {
-    setSelected(q);setError("");setStatus("");setReplyDraft(q.customerReply||"");
+    setSelected(q);setError("");setStatus("");setReplyDraft(q.customerReply||"");setVisaAvailability("AVAILABLE");
     void loadHistory(q.id);
     setForm({carrierName:q.carrierName||"",
       quoteAmountSar:q.quoteAmountSar===null?"":String(q.quoteAmountSar),
@@ -122,7 +123,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       if(!r.ok||!result.success){setError(result.message||"تعذر حفظ العرض.");return;}
       setSelected(result.data);
       void loadHistory(selected.id);
-      setStatus("حُفظ عرض السعر. يمكن فتحه وطباعة PDF، ثم إرساله يدوياً من واتساب الشركة.");
+      setStatus(initialOfferKind==="VISA"?"تم حفظ سعر التأشيرة. انشر الرد للعميل ليظهر في طلباتي.":"حُفظ عرض السعر. يمكن فتحه وطباعة PDF، ثم إرساله يدوياً من واتساب الشركة.");
       await load();
     }catch{setError("تعذر حفظ العرض.");}
     finally{setBusy(false);}
@@ -307,10 +308,10 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       {status&&<p role="status" className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">{status}</p>}
       {loading&&<p className="mt-5 text-sm">جاري تحميل البيانات...</p>}
       {tab==="requests"&&(
-        <div className="mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(350px,1fr)]">
-          <section className="min-w-0">
+        <div className={initialOfferKind==="VISA"?"mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px]":"mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(350px,1fr)]"}>
+          <section className={initialOfferKind==="VISA"&&selected?"hidden xl:block min-w-0":"min-w-0"}>
             <div className="mb-4 flex flex-wrap items-center gap-2"><span className="text-sm font-bold">تصفية الطلبات:</span><button type="button" onClick={()=>setRequestStatusFilter("ALL")} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter==="ALL"?"bg-[#0D3B34] text-white":"bg-white"}`}>الكل ({serviceRequests.length})</button>{requestStatuses.map(st=><button type="button" key={st} onClick={()=>setRequestStatusFilter(st)} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter===st?"bg-[#0D3B34] text-white":"bg-white"}`}>{st} ({serviceRequests.filter(q=>q.status===st).length})</button>)}<span className="text-xs text-[#0D3B34]/60">الأحدث أولاً</span></div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className={initialOfferKind==="VISA"?"grid grid-cols-1 gap-2":"grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"}>
             {filteredRequests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
             {filteredRequests.map(q=>(
               <button key={q.id} onClick={()=>choose(q)} className={`min-w-0 rounded-[18px] border p-3 text-right transition hover:shadow-lg ${selected?.id===q.id?"border-[#D4AF37] bg-[#FFF9E7]":"border-[#D4AF37]/25 bg-white"}`}>
@@ -325,9 +326,10 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             ))}
             </div>
           </section>
-          <section className="min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6">
+          <section className={initialOfferKind==="VISA"?"min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6 xl:col-start-1 xl:row-start-1":"min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6"}>
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
               <>
+                {initialOfferKind==="VISA"&&<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
                 <h2 className="text-xl font-black">طلب {selected.reference}</h2>
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F7F4EB] p-4 text-sm">
                   <p>الاسم: <b>{selected.customerName}</b></p>
@@ -346,7 +348,25 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   })}
                 </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
-                <section className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
+                {initialOfferKind==="VISA"?<div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <section className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
+                    <h3 className="font-bold">توفر خدمة التأشيرة</h3>
+                    <div className="mt-3 flex gap-3"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاحة</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاحة</label></div>
+                    {visaAvailability==="AVAILABLE"?<form onSubmit={saveQuote} className="mt-4 grid gap-3">
+                      <label className={label}>السعر الإجمالي بالريال<input required type="number" min="0" step=".01" className={field} value={form.quoteAmountSar} onChange={e=>setForm(f=>({...f,quoteAmountSar:e.target.value}))}/></label>
+                      <label className={label}>تعليق العرض<textarea rows={3} className={field} value={form.quoteNotes} onChange={e=>setForm(f=>({...f,quoteNotes:e.target.value}))}/></label>
+                      <button disabled={busy||!form.quoteAmountSar} className="rounded-xl bg-[#0D3B34] p-3 font-bold text-white">حفظ السعر والتعليق</button>
+                      <p className="text-xs text-[#0D3B34]/65">العرض نصي داخل «طلباتي»، بدون PDF. بعد الحفظ انشر الرد للعميل.</p>
+                    </form>:<div className="mt-4 grid gap-3"><label className={label}>سبب عدم التوفر<textarea rows={3} className={field} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/></label><button type="button" disabled={busy||cancelReason.trim().length<5} onClick={()=>void performAction("SET_STATUS",{status:"CANCELED",canceledBy:"STAFF",cancellationReason:cancelReason})} className="rounded-xl bg-red-700 p-3 font-bold text-white disabled:opacity-40">إغلاق الطلب لعدم توفر الخدمة</button></div>}
+                  </section>
+                  <section className="rounded-2xl border border-[#D4AF37]/35 bg-white p-4">
+                    <h3 className="font-bold">التواصل وحالة الطلب</h3><p className="mt-2 text-sm">الحالة: {statusNames[selected.status]||selected.status}</p>
+                    {showSuper&&<label className={label+" mt-3"}>إسناد إلى موظف<select className={field} value={selected.assignedToId||""} disabled={busy} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})}><option value="">غير مسند</option>{staff.filter(u=>u.role==="SUPER_ADMIN"||(u.adminPermissions||[]).includes("TRANSPORT_VISAS")).map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email}</option>)}</select></label>}
+                    <label className={label+" mt-3"}>الرد الظاهر للعميل في «طلباتي»<textarea rows={4} className={field} value={replyDraft} onChange={e=>setReplyDraft(e.target.value)}/></label>
+                    <button type="button" disabled={busy||!replyDraft.trim()} onClick={()=>void publishReply()} className="mt-3 rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white disabled:opacity-40">إرسال الرد للعميل</button>
+                    {selected.status==="QUOTE_SENT"&&<p className="mt-3 rounded-lg bg-[#F7F4EB] p-3 text-sm">العرض مرسل؛ متابعة موافقة العميل والسداد حسب حالة الطلب.</p>}
+                  </section>
+                </div>:<>                <section className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                   <h3 className="text-sm font-black">رد يظهر للعميل في «طلباتي»</h3>
                   <p className="mt-1 text-xs leading-6 text-[#0D3B34]/65">هذا الرد عام للعميل، ومختلف عن ملاحظات الموظفين الداخلية.</p>
                   <textarea maxLength={2500} rows={3} className={field+" mt-3"} value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="اكتب رد أريس على العميل..."/>
@@ -402,7 +422,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <p className="mt-3 text-xs leading-7 text-[#0D3B34]/65">احفظ عرض السعر PDF ثم أرفقه يدوياً من حساب واتساب الشركة في المحادثة المفتوحة. فتح المحادثة وحده لا يعني إرسال الملف. لا يتم إرسال المستند تلقائياً قبل ربط WhatsApp Cloud API.</p>
                 <button disabled={busy} type="button" onClick={()=>void markManuallySent()} className="mt-4 w-full rounded-xl border border-[#D4AF37]/35 px-4 py-3 text-sm font-bold">تأكيد الموظف أنه أرسل PDF يدوياً</button>
                 <p className="mt-2 text-xs">حالة واتساب: {selected.whatsappStatus==="MANUALLY_MARKED_SENT"?"أكد الموظف الإرسال يدوياً":"لم يتم إثبات الإرسال"}</p>
-                <section className="mt-6 rounded-2xl border border-[#D4AF37]/30 bg-[#FBF9F4] p-4">
+</>}                <section className="mt-6 rounded-2xl border border-[#D4AF37]/30 bg-[#FBF9F4] p-4">
                   <div className="flex items-center justify-between gap-3"><h3 className="font-black">سجل إجراءات الطلب</h3><button type="button" onClick={()=>void loadHistory(selected.id)} className="text-xs font-bold text-[#A67D28]">تحديث</button></div>
                   {history.length===0?<p className="mt-3 text-xs text-[#0D3B34]/60">لا توجد إجراءات محفوظة لعرضها.</p>:
                     <ol className="mt-4 space-y-3">{history.map(e=><li key={e.id} className="rounded-xl border border-[#D4AF37]/25 bg-white p-3 text-xs leading-6">
