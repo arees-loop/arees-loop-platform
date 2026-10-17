@@ -11,7 +11,9 @@ export async function GET(req:NextRequest){
  if(!request)return bad("الطلب غير موجود",404);
  if(staff&&session.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session.user.id)return bad("غير مصرح",403);
  const events=await prisma.transportRequestEvent.findMany({where:{requestId:request.id,action:{in:["CUSTOMER_OFFER_ACCEPTED","CUSTOMER_TRANSFER_SUBMITTED","ADMIN_PAYMENT_VERIFIED","ADMIN_PAYMENT_REJECTED"]}},orderBy:{createdAt:"desc"},select:{action:true,createdAt:true,details:true}});
- return NextResponse.json({success:true,events,canAccept:!staff&&request.status==="PROCESSING"&&request.quoteAmountSar!==null&&!events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED")},{headers:{"Cache-Control":"private, no-store"}});
+ const accepted=events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED");
+ const bank=(!staff&&accepted)?await prisma.bankTransferAccount.findFirst({where:{active:true},select:{bankName:true,beneficiaryName:true,iban:true}}):null;
+ return NextResponse.json({success:true,events,bank,amountSar:accepted?Number(request.quoteAmountSar):null,canAccept:!staff&&request.status==="PROCESSING"&&request.quoteAmountSar!==null&&!events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED")},{headers:{"Cache-Control":"private, no-store"}});
 }
 export async function POST(req:NextRequest){
  const session=await getCurrentSession();if(!session)return bad("سجل الدخول",401);
@@ -38,6 +40,8 @@ export async function POST(req:NextRequest){
  let details:Record<string,string|number>={};
  if(action==="ACCEPT_OFFER")details={amountSar:Number(request.quoteAmountSar)};
  if(action==="SUBMIT_TRANSFER"){
+  const activeBank=await prisma.bankTransferAccount.findFirst({where:{active:true},select:{id:true}});
+  if(!activeBank)return bad("لا يوجد حساب بنكي مفعّل، لا يمكن إرسال حوالة للمراجعة.",409);
   const fileId=typeof body.fileId==="string"?body.fileId:"";
   const file=await prisma.transportRequestEvent.findFirst({where:{id:fileId,requestId:request.id,action:"CUSTOMER_ATTACHMENT_UPLOADED"}});
   if(!file)return bad("ارفع صورة إيصال التحويل أولاً");
