@@ -133,7 +133,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     if(!selected||busy)return;
     setBusy(true);setError("");setStatus("");
     try{
-      const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action:"PUBLISH_VISA_DECISION",availability:visaAvailability,quoteAmountSar:form.quoteAmountSar,quoteNotes:form.quoteNotes,reason:cancelReason})});
+      const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action:"PUBLISH_SERVICE_DECISION",availability:visaAvailability,quoteAmountSar:form.quoteAmountSar,quoteNotes:form.quoteNotes,reason:cancelReason})});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر إرسال قرار التأشيرة.");return;}
       setSelected(d.data);setReplyDraft(d.data.customerReply||"");setStatus(visaAvailability==="AVAILABLE"?"تم إرسال السعر والتعليق للعميل، والطلب تحت الإجراء.":"تم إرسال الاعتذار للعميل وإغلاق الطلب.");
