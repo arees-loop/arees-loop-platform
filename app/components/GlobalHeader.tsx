@@ -121,14 +121,14 @@ export default function GlobalHeader() {
                 <span className="text-[20px] leading-none">🛒</span>
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-[#D4AF37] px-1 text-[10px] font-black text-[#0D3B34]">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
-              <div className="relative" onMouseEnter={() => setAccountOpen(true)} onMouseLeave={() => setAccountOpen(false)}>
-                <button type="button" onClick={() => setAccountOpen((value) => !value)} aria-expanded={accountOpen} aria-haspopup="menu" className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
+              <div className="relative" >
+                <button type="button" onClick={() => setAccountOpen((value) => !value)} onKeyDown={(event) => { if (event.key === "Escape") setAccountOpen(false); }} aria-expanded={accountOpen} aria-haspopup="menu" className="flex h-11 items-center gap-2 rounded-full bg-[#0D3B34] px-4 text-xs font-black text-white shadow-[0_8px_22px_rgba(13,59,52,0.22)] transition hover:bg-[#145347]">
                   {user.profileImageUrl && <img src={user.profileImageUrl} alt="صورتي" className="h-8 w-8 rounded-full border border-white/25 object-cover" />}
                   <span className="max-w-[76px] truncate sm:max-w-none">مرحباً، {displayName}</span>
                   <span className={`text-[#D4AF37] transition-transform ${accountOpen ? "rotate-180" : ""}`}>⌄</span>
                 </button>
                 {accountOpen && (
-                  <div dir="rtl" className="absolute left-0 top-full mt-1 w-52 overflow-hidden rounded-[18px] border border-[#D4AF37]/35 bg-white/95 p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+                  <div dir="rtl" className="absolute left-0 top-full w-52 overflow-hidden rounded-[18px] border border-[#D4AF37]/35 bg-white/95 p-2 text-right shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
                     <Link href="/notifications" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">الإشعارات</Link>
                     <Link href="/my-requests" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">طلباتي</Link>
                     <Link href="/bookings" onClick={() => setAccountOpen(false)} className="block rounded-xl px-4 py-2.5 text-xs font-bold text-[#0D3B34] hover:bg-[#F4EFE2]">حجوزاتي</Link>
