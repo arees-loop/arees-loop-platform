@@ -156,6 +156,33 @@ export async function PATCH(request:NextRequest) {
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
 
+    if(action==="PUBLISH_VISA_DECISION"){
+      if(current.kind!=="VISA")return fail("هذا الإجراء مخصص لطلبات التأشيرات.",400);
+      if(["CANCELED","DONE","PAID","EXECUTING"].includes(current.status))return fail("لا يمكن تعديل طلب مغلق أو قيد التنفيذ أو مسدد.",409);
+      const availability=cleanText(body.availability,20);
+      if(availability==="AVAILABLE"){
+        const amount=parseAmount(body.quoteAmountSar);
+        if(amount===null||amount<=0)return fail("أدخل سعراً صحيحاً أكبر من صفر.",400);
+        const notes=cleanText(body.quoteNotes,2500);
+        const message=["تمت مراجعة طلب التأشيرة وتتوفر الخدمة حالياً.","السعر الإجمالي: "+amount.toLocaleString("ar-SA")+" ريال سعودي.",notes?"التفاصيل: "+notes:"","الطلب تحت الإجراء، وسيتم التواصل معكم بشأن الخطوات التالية. لا يعني هذا ضمان إصدار التأشيرة."].filter(Boolean).join("\\n");
+        const [updated]=await prisma.$transaction([
+          prisma.transportRequest.update({where:{id},data:{status:"PROCESSING",carrierName:null,quoteAmountSar:amount,quoteNotes:notes||null,customerReply:message,quoteUpdatedAt:new Date(),whatsappStatus:"NOT_SENT"}}),
+          prisma.transportRequestEvent.create({data:{requestId:id,actorId,actorName,action:"VISA_OFFER_PUBLISHED",fromStatus:current.status,toStatus:"PROCESSING",details:{amountSar:amount,messageLength:message.length}}}),
+        ]);
+        return NextResponse.json({success:true,data:{...updated,quoteAmountSar:Number(updated.quoteAmountSar)}});
+      }
+      if(availability==="UNAVAILABLE"){
+        const reason=cleanText(body.reason,1500);
+        const message="نعتذر لكم، خدمة التأشيرة المطلوبة غير متاحة حالياً، ولذلك تم إغلاق الطلب دون إصدار تأشيرة أو تحصيل رسوم."+(reason?"\\nالتوضيح: "+reason:"");
+        const [updated]=await prisma.$transaction([
+          prisma.transportRequest.update({where:{id},data:{status:"CANCELED",customerReply:message,canceledBy:"STAFF",cancellationReason:reason||"خدمة التأشيرة غير متاحة حالياً",quoteAmountSar:null,quoteNotes:null,carrierName:null}}),
+          prisma.transportRequestEvent.create({data:{requestId:id,actorId,actorName,action:"VISA_UNAVAILABLE_CLOSED",fromStatus:current.status,toStatus:"CANCELED",details:{reason:reason||"خدمة التأشيرة غير متاحة",messageLength:message.length}}}),
+        ]);
+        return NextResponse.json({success:true,data:{...updated,quoteAmountSar:null}});
+      }
+      return fail("حدد حالة توفر التأشيرة.",400);
+    }
+
     if(action==="SAVE_QUOTE"){
       if(["DONE","CANCELED","PAID","EXECUTING"].includes(current.status))return fail("لا يمكن تعديل عرض الطلب في هذه المرحلة.",409);
       const carrier=cleanText(body.carrierName,100);
