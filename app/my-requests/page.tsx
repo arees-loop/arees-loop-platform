@@ -3,6 +3,7 @@ import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 
 import Link from "next/link";
 import RequestAttachments from "@/app/components/RequestAttachments";
+import RequestPayment from "@/app/components/RequestPayment";
 import { useEffect, useMemo, useState } from "react";
 import { readCustomerClaims } from "@/lib/customer-request-claims";
 
@@ -59,6 +60,7 @@ function RequestCard({item,featured}:{item:CustomerRequest;featured:boolean}){
       {item.quoteValidUntil&&<p>صلاحية العرض حتى: {labelDate(item.quoteValidUntil)}</p>}
       {item.cancellationReason&&<p className="rounded-xl bg-red-50 p-3 text-red-800">سبب الإلغاء: {item.cancellationReason}</p>}
       <RequestAttachments reference={item.reference}/>
+      {item.quoteAmountSar!==null&&item.status==="PROCESSING"&&<RequestPayment reference={item.reference}/>}
       <p className="font-bold text-[#0D3B34]/75">هذا طلب خدمة، وليس حجزاً مؤكداً أو إثبات دفع.</p>
     </div>}
   </article>;
