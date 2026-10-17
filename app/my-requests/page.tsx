@@ -68,7 +68,7 @@ export default function MyRequestsPage(){
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
   const [focus,setFocus]=useState("");
-  const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE">("ALL");
+  const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE"|"PARTNER">("ALL");
   const [stageFilter,setStageFilter]=useState("ALL");
   useEffect(()=>{
     const abort=new AbortController();
@@ -90,40 +90,43 @@ export default function MyRequestsPage(){
       .finally(()=>{if(!abort.signal.aborted)setLoading(false);});
     return()=>abort.abort();
   },[]);
-  const visible=useMemo(()=>requests.filter(x=>(filter==="ALL"||x.kind===filter)&&(stageFilter==="ALL"|| (stageFilter==="CLOSED"?["CLOSED","CANCELED","CANCELLED"].includes(x.status):stageFilter==="NEW"?x.status==="NEW":stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED"].includes(x.status):false))),[requests,filter,stageFilter]);
-  const summary=[{id:"ALL",label:"جميع الطلبات",count:requests.length},{id:"NEW",label:"الجديدة",count:requests.filter(x=>x.status==="NEW").length},{id:"PROCESSING",label:"تحت الإجراء",count:requests.filter(x=>["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING"].includes(x.status)).length},{id:"COMPLETED",label:"المكتملة",count:requests.filter(x=>["DONE","COMPLETED"].includes(x.status)).length},{id:"CLOSED",label:"الملغية والمغلقة",count:requests.filter(x=>["CLOSED","CANCELED","CANCELLED"].includes(x.status)).length}];
+  const [period,setPeriod]=useState("3");
+  const [query,setQuery]=useState("");
+  const [showHistory,setShowHistory]=useState(false);
+  const [partnerBookings,setPartnerBookings]=useState<{id:string;reference:string;status:string;bookingDate:string;service:{nameAr:string;city:string|null}}[]>([]);
+  useEffect(()=>{fetch("/api/customer/bookings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(Array.isArray(d?.bookings))setPartnerBookings(d.bookings)}).catch(()=>{});},[]);
+  const allItems=useMemo(()=>[
+    ...requests,
+    ...partnerBookings.map(b=>({reference:b.reference||b.id,kind:"PARTNER" as const,title:b.service?.nameAr||"طلب خدمة شريك",route:b.service?.city||"خدمة من شركاء أريس",travelDate:b.bookingDate,returnDate:null,guests:0,status:b.status,group:["COMPLETED","CONFIRMED"].includes(b.status)?"COMPLETED":b.status==="CANCELLED"?"CANCELED":"PROCESSING",customerReply:null,quoteAmountSar:null,quoteNotes:null,carrierName:null,quoteValidUntil:null,cancellationReason:null,createdAt:b.bookingDate,updatedAt:b.bookingDate}))
+  ].sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime()),[requests,partnerBookings]);
+  const visible=useMemo(()=>allItems.filter(x=>{
+    const age=period==="ALL"||new Date(x.createdAt).getTime()>=Date.now()-Number(period)*31*86400000;
+    const matchKind=filter==="ALL"||x.kind===filter;
+    const matchStage=stageFilter==="ALL"||(stageFilter==="CLOSED"?["CANCELED","CANCELLED","CLOSED"].includes(x.status):stageFilter==="NEW"?["NEW","PENDING"].includes(x.status):stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING","IN_PROGRESS"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED","CONFIRMED"].includes(x.status):false);
+    return age&&matchKind&&matchStage&&[x.reference,x.title,x.route].join(" ").toLowerCase().includes(query.toLowerCase());
+  }),[allItems,period,filter,stageFilter,query]);
+  const active=visible.filter(x=>!["DONE","COMPLETED","CANCELED","CANCELLED","CLOSED","CONFIRMED"].includes(x.status));
+  const history=visible.filter(x=>!active.includes(x));
   return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
-    <div className="mx-auto max-w-[1500px]">
-      <p className="text-xs font-black tracking-[.15em] text-[#A78231]">AREES LOOP · MY REQUESTS</p>
-      <h1 className="mt-2 text-4xl font-black">طلباتي</h1>
-      <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/70">تابع طلبات التأشيرات والرخص الدولية والطيران والبواخر والفنادق، وشاهد حالة كل طلب ورد أريس عليه من نفس الصفحة.</p>
-      <div className="mt-5 rounded-xl border border-[#D4AF37]/30 bg-white px-4 py-3 text-xs leading-7 text-[#0D3B34]/70">
-        الطلبات التي أرسلتها وأنت مسجّل الدخول مرتبطة بحسابك. الطلبات القديمة التي أُرسلت كزائر قد تتطلب رمز المتابعة الخاص بها.
-      </div>
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">{summary.map(x=><button type="button" key={x.id} onClick={()=>setStageFilter(x.id)} className={`rounded-2xl border p-4 text-right shadow-sm transition ${stageFilter===x.id?"border-[#B99124] bg-[#FFF5D9] ring-2 ring-[#D4AF37]/20":"border-[#D4AF37]/20 bg-white"}`}><span className="block text-xs font-bold">{x.label}</span><strong className="mt-2 block text-3xl">{loading?"…":x.count}</strong></button>)}</div>
-      <div className="mt-5 flex items-center justify-between gap-3"><Link href="/notifications" className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2 text-xs font-bold">🔔 إشعاراتي وتحديثات الطلبات</Link><Link href="/bookings" className="text-xs font-bold underline">عرض حجوزاتي المؤكدة</Link></div>
-      <div className="mt-6 flex flex-wrap gap-2">
-        {([["ALL","كل الطلبات"],["VISA","التأشيرات"],["DRIVING_LICENSE","الرخص الدولية"],["FLIGHT","الطيران"],["FERRY","البواخر"],["HOTEL","الفنادق"]] as const).map(([kind,label])=>
-          <button key={kind} onClick={()=>setFilter(kind)} className={`rounded-full px-5 py-2.5 text-xs font-bold ${filter===kind?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>{label}</button>)}
-        <Link href="/cart" className="rounded-full border border-[#D4AF37]/40 bg-white px-5 py-2.5 text-xs font-bold">سلة الحجوزات</Link>
-      </div>
-      {loading&&<p className="mt-10 rounded-2xl bg-white p-7 text-sm">جاري تحميل طلباتك...</p>}
-      {error&&<p role="alert" className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-7">{error}</p>}
-      {!loading&&requests.length===0&&!error&&<div className="mt-8 rounded-2xl border bg-white p-8 text-sm leading-8">لا توجد طلبات في حسابك أو في هذا المتصفح حتى الآن. <Link className="font-black underline" href="/flights">إرسال طلب طيران</Link></div>}
-      {!loading&&<div className="mt-7 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {stages.map(stage=>{
-          const list=visible.filter(x=>x.group===stage.id);
-          return <section key={stage.id} className="rounded-[24px] border border-[#D4AF37]/25 bg-[#F4F0E7] p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <div><h2 className="text-base font-black">{stage.icon} {stage.label}</h2><p className="mt-1 text-[11px] text-[#0D3B34]/60">{stage.detail}</p></div>
-              <span className="rounded-full bg-white px-3 py-1.5 text-sm font-black">{list.length}</span>
-            </div>
-            <div className="space-y-3">
-              {list.length?list.map(item=><RequestCard key={item.reference} item={item} featured={focus===item.reference}/>):<p className="rounded-xl bg-white/70 p-5 text-center text-xs text-[#0D3B34]/50">لا توجد طلبات</p>}
-            </div>
-          </section>;
-        })}
-      </div>}
+   <div className="mx-auto max-w-[1000px]">
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-black tracking-wider text-[#A78231]">AREES LOOP · MY REQUESTS</p><h1 className="mt-2 text-3xl font-black">طلباتي</h1></div><Link href="/bookings" className="rounded-full border border-[#D4AF37]/50 bg-white px-4 py-2 text-xs font-bold">حجوزاتي المؤكدة</Link></div>
+    <p className="mt-3 text-sm text-[#0D3B34]/65">كل طلبات الخدمات والحجوزات في قائمة واحدة، من الأحدث للأقدم.</p>
+    <div className="mt-6 grid gap-3 rounded-2xl border border-[#D4AF37]/25 bg-white p-4 sm:grid-cols-3">
+      <label className="text-xs font-bold">الفترة<select aria-label="الفترة الزمنية" value={period} onChange={e=>setPeriod(e.target.value)} className="mt-2 w-full rounded-lg border p-3"><option value="3">آخر 3 أشهر</option><option value="6">آخر 6 أشهر</option><option value="12">آخر سنة</option><option value="ALL">كل الفترات</option></select></label>
+      <label className="text-xs font-bold">الحالة<select aria-label="حالة الطلب" value={stageFilter} onChange={e=>setStageFilter(e.target.value)} className="mt-2 w-full rounded-lg border p-3"><option value="ALL">كل الحالات</option><option value="NEW">جديد</option><option value="PROCESSING">تحت الإجراء</option><option value="COMPLETED">مكتمل</option><option value="CLOSED">مغلق / ملغي</option></select></label>
+      <label className="text-xs font-bold">نوع الخدمة<select aria-label="نوع الخدمة" value={filter} onChange={e=>setFilter(e.target.value as typeof filter)} className="mt-2 w-full rounded-lg border p-3"><option value="ALL">كل الخدمات</option><option value="FLIGHT">الطيران</option><option value="FERRY">البواخر</option><option value="VISA">التأشيرات</option><option value="DRIVING_LICENSE">الرخص الدولية</option><option value="HOTEL">الفنادق</option><option value="PARTNER">خدمات الشركاء والسلة</option></select></label>
+      <input aria-label="البحث عن طلب" value={query} onChange={e=>setQuery(e.target.value)} placeholder="ابحث برقم الطلب أو اسم الخدمة أو الوجهة..." className="rounded-lg border p-3 text-sm sm:col-span-3"/>
     </div>
+    {loading&&<p className="mt-6 rounded-xl bg-white p-5">جاري تحميل الطلبات...</p>}
+    {error&&<p role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">{error}</p>}
+    {!loading&&<><div className="mt-6 flex items-center justify-between"><h2 className="text-lg font-black">الطلبات الحالية ({active.length})</h2><Link href="/cart" className="text-xs font-bold underline">سلة الحجوزات</Link></div>
+    <div className="mt-3 space-y-3">{active.length?active.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={focus===item.reference}/>):<p className="rounded-xl bg-white p-5 text-sm text-[#0D3B34]/60">لا توجد طلبات حالية مطابقة للفلاتر.</p>}</div>
+    <button type="button" onClick={()=>setShowHistory(x=>!x)} className="mt-7 flex w-full items-center justify-between rounded-xl border border-[#D4AF37]/35 bg-white px-5 py-4 font-bold"><span>سجل الطلبات السابقة ({history.length})</span><span>{showHistory?"إخفاء السجل ▲":"عرض السجل ▼"}</span></button>
+    {showHistory&&<div className="mt-3 space-y-3">{history.length?history.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={focus===item.reference}/>):<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات سابقة مطابقة.</p>}</div>}
+    </>}
+   </div>
   </main>;
+}
+function PartnerRequestRow({item}:{item:{reference:string;title:string;route:string;status:string;createdAt:string}}){
+ return <article className="rounded-xl border border-[#D4AF37]/25 bg-white p-4"><div className="flex items-center justify-between gap-3"><b>🤝 {item.title}</b><span className="rounded-full bg-[#F4F0E7] px-3 py-1 text-xs">{statuses[item.status]||item.status}</span></div><p className="mt-2 text-xs">{item.route} · {labelDate(item.createdAt)}</p><p className="mt-2 text-xs text-[#0D3B34]/60">رقم الطلب: {item.reference}</p><Link href="/bookings" className="mt-3 inline-block text-xs font-bold underline">عرض تفاصيل الحجز</Link></article>;
 }
