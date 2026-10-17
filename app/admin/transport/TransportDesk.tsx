@@ -129,6 +129,19 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     finally{setBusy(false);}
   }
 
+  async function publishVisaDecision(){
+    if(!selected||busy)return;
+    setBusy(true);setError("");setStatus("");
+    try{
+      const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action:"PUBLISH_VISA_DECISION",availability:visaAvailability,quoteAmountSar:form.quoteAmountSar,quoteNotes:form.quoteNotes,reason:cancelReason})});
+      const d=await r.json();
+      if(!r.ok||!d.success){setError(d.message||"تعذر إرسال قرار التأشيرة.");return;}
+      setSelected(d.data);setReplyDraft(d.data.customerReply||"");setStatus(visaAvailability==="AVAILABLE"?"تم إرسال السعر والتعليق للعميل، والطلب تحت الإجراء.":"تم إرسال الاعتذار للعميل وإغلاق الطلب.");
+      void loadHistory(selected.id);await load();
+    }catch{setError("تعذر الاتصال بالخادم.");}
+    finally{setBusy(false);}
+  }
+
   async function performAction(action:"SET_STATUS"|"ASSIGN",payload:Record<string,unknown>){
     if(!selected||busy)return;
     setBusy(true);setError("");setStatus("");
@@ -352,19 +365,16 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <section className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                     <h3 className="font-bold">توفر خدمة التأشيرة</h3>
                     <div className="mt-3 flex gap-3"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاحة</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاحة</label></div>
-                    {visaAvailability==="AVAILABLE"?<form onSubmit={saveQuote} className="mt-4 grid gap-3">
-                      <label className={label}>السعر الإجمالي بالريال<input required type="number" min="0" step=".01" className={field} value={form.quoteAmountSar} onChange={e=>setForm(f=>({...f,quoteAmountSar:e.target.value}))}/></label>
-                      <label className={label}>تعليق العرض<textarea rows={3} className={field} value={form.quoteNotes} onChange={e=>setForm(f=>({...f,quoteNotes:e.target.value}))}/></label>
-                      <button disabled={busy||!form.quoteAmountSar} className="rounded-xl bg-[#0D3B34] p-3 font-bold text-white">حفظ السعر والتعليق</button>
-                      <p className="text-xs text-[#0D3B34]/65">العرض نصي داخل «طلباتي»، بدون PDF. بعد الحفظ انشر الرد للعميل.</p>
-                    </form>:<div className="mt-4 grid gap-3"><label className={label}>سبب عدم التوفر<textarea rows={3} className={field} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/></label><button type="button" disabled={busy||cancelReason.trim().length<5} onClick={()=>void performAction("SET_STATUS",{status:"CANCELED",canceledBy:"STAFF",cancellationReason:cancelReason})} className="rounded-xl bg-red-700 p-3 font-bold text-white disabled:opacity-40">إغلاق الطلب لعدم توفر الخدمة</button></div>}
+                    {visaAvailability==="AVAILABLE"?<div className="mt-4 grid gap-3">
+                      <label className={label}>السعر الإجمالي بالريال<input required type="number" min="0.01" step=".01" className={field} value={form.quoteAmountSar} onChange={e=>setForm(f=>({...f,quoteAmountSar:e.target.value}))}/></label>
+                      <label className={label}>تعليق للعميل<textarea rows={4} className={field} value={form.quoteNotes} onChange={e=>setForm(f=>({...f,quoteNotes:e.target.value}))}/></label>
+                      <button type="button" disabled={busy||!(Number(form.quoteAmountSar)>0)||["CANCELED","DONE","PAID","EXECUTING"].includes(selected.status)} onClick={()=>void publishVisaDecision()} className="rounded-xl bg-[#0D3B34] p-3 font-bold text-white disabled:opacity-40">إرسال العرض للعميل وتحويل الطلب إلى تحت الإجراء</button>
+                    </div>:<div className="mt-4 grid gap-3"><label className={label}>توضيح سبب عدم التوفر (اختياري)<textarea rows={3} className={field} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/></label><button type="button" disabled={busy||["CANCELED","DONE","PAID","EXECUTING"].includes(selected.status)} onClick={()=>void publishVisaDecision()} className="rounded-xl bg-red-700 p-3 font-bold text-white disabled:opacity-40">إغلاق الطلب وإرسال الاعتذار تلقائياً</button></div>}
                   </section>
                   <section className="rounded-2xl border border-[#D4AF37]/35 bg-white p-4">
                     <h3 className="font-bold">التواصل وحالة الطلب</h3><p className="mt-2 text-sm">الحالة: {statusNames[selected.status]||selected.status}</p>
                     {showSuper&&<label className={label+" mt-3"}>إسناد إلى موظف<select className={field} value={selected.assignedToId||""} disabled={busy} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})}><option value="">غير مسند</option>{staff.filter(u=>u.role==="SUPER_ADMIN"||(Array.isArray(u.adminPermissions)&&u.adminPermissions.includes("TRANSPORT_VISAS"))).map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email}</option>)}</select></label>}
-                    <label className={label+" mt-3"}>الرد الظاهر للعميل في «طلباتي»<textarea rows={4} className={field} value={replyDraft} onChange={e=>setReplyDraft(e.target.value)}/></label>
-                    <button type="button" disabled={busy||!replyDraft.trim()} onClick={()=>void publishReply()} className="mt-3 rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white disabled:opacity-40">إرسال الرد للعميل</button>
-                    {selected.status==="QUOTE_SENT"&&<p className="mt-3 rounded-lg bg-[#F7F4EB] p-3 text-sm">العرض مرسل؛ متابعة موافقة العميل والسداد حسب حالة الطلب.</p>}
+                    <p className="mt-3 text-xs text-[#49655D]">يظهر السعر والتعليق أو الاعتذار للعميل في «طلباتي» عند الضغط على الزر الموحّد أعلاه.</p>
                   </section>
                 </div>:<>                <section className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                   <h3 className="text-sm font-black">رد يظهر للعميل في «طلباتي»</h3>
