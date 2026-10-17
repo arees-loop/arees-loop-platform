@@ -364,7 +364,16 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
                 <AdminRequestAttachments reference={selected.reference}/>
                 <AdminPaymentReview reference={selected.reference}/>
-                {initialOfferKind==="VISA"?<div className="mt-5 grid gap-4 md:grid-cols-2">
+                {initialOfferKind!=="VISA"&&<section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
+ <h3 className="font-black">قرار توفر الخدمة وإرسال العرض للعميل</h3>
+ <div className="mt-3 flex flex-wrap gap-4"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاح</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاح</label></div>
+ {visaAvailability==="AVAILABLE"?<div className="mt-4 grid gap-3">
+ <label className={label}>السعر الإجمالي بالريال<input type="number" min="0.01" step="0.01" className={field} value={form.quoteAmountSar} onChange={e=>setForm(v=>({...v,quoteAmountSar:e.target.value}))}/></label>
+ <label className={label}>تفاصيل العرض للعميل<textarea rows={3} className={field} value={form.quoteNotes} onChange={e=>setForm(v=>({...v,quoteNotes:e.target.value}))}/></label>
+ <button type="button" disabled={busy||!(Number(form.quoteAmountSar)>0)||["CANCELED","DONE","PAID","EXECUTING"].includes(selected.status)} onClick={()=>void publishVisaDecision()} className="rounded-xl bg-[#0D3B34] px-4 py-3 font-bold text-white disabled:opacity-40">إرسال عرض السعر للعميل</button>
+ </div>:<div className="mt-4 grid gap-3"><label className={label}>سبب عدم التوفر<textarea rows={3} className={field} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/></label><button type="button" disabled={busy||["CANCELED","DONE","PAID","EXECUTING"].includes(selected.status)} onClick={()=>void publishVisaDecision()} className="rounded-xl bg-red-700 px-4 py-3 font-bold text-white disabled:opacity-40">إرسال الاعتذار وإغلاق الطلب</button></div>}
+ </section>}
+ {initialOfferKind==="VISA"?<div className="mt-5 grid gap-4 md:grid-cols-2">
                   <section className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                     <h3 className="font-bold">توفر الخدمة المطلوبة</h3>
                     <div className="mt-3 flex gap-3"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاحة</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاحة</label></div>
