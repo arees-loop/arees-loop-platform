@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import RequestAttachments from "@/app/components/RequestAttachments";
 import { useEffect, useMemo, useState } from "react";
 import { readCustomerClaims } from "@/lib/customer-request-claims";
 
@@ -56,6 +57,7 @@ function RequestCard({item,featured}:{item:CustomerRequest;featured:boolean}){
       {item.quoteNotes&&<div className="rounded-xl bg-[#F7F4ED] p-3"><b>تفاصيل العرض:</b><p className="mt-1 whitespace-pre-wrap">{item.quoteNotes}</p></div>}
       {item.quoteValidUntil&&<p>صلاحية العرض حتى: {labelDate(item.quoteValidUntil)}</p>}
       {item.cancellationReason&&<p className="rounded-xl bg-red-50 p-3 text-red-800">سبب الإلغاء: {item.cancellationReason}</p>}
+      <RequestAttachments reference={item.reference}/>
       <p className="font-bold text-[#0D3B34]/75">هذا طلب خدمة، وليس حجزاً مؤكداً أو إثبات دفع.</p>
     </div>}
   </article>;
