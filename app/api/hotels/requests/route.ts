@@ -10,6 +10,8 @@ const day=(s:string)=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(new Date(s+"T
 
 export async function POST(request:NextRequest){
   try{
+    const requiredSession=await getCurrentSession();
+    if(!requiredSession)return NextResponse.json({success:false,message:"يجب تسجيل الدخول قبل إرسال الطلب.",code:"AUTH_REQUIRED"},{status:401,headers:{"Cache-Control":"no-store"}});
     const raw:unknown=await request.json();
     if(!raw||typeof raw!=="object"||Array.isArray(raw))return fail("بيانات الطلب غير صحيحة.");
     const input=raw as Record<string,unknown>;
@@ -35,7 +37,7 @@ export async function POST(request:NextRequest){
     if(notes&&notes.length>1500)return fail("الملاحظات طويلة جداً.");
     const latest=await prisma.hotelInquiry.count({where:{countryCode,phone,createdAt:{gte:new Date(Date.now()-86400000)}}});
     if(latest>=5)return fail("تم استلام عدة طلبات من هذا الرقم اليوم، تواصل مع أريس مباشرة.",429);
-    const session=await getCurrentSession();
+    const session=requiredSession;
     const token=randomBytes(32).toString("base64url");
     const trackingTokenHash=createHash("sha256").update(token).digest("hex");
     const reference="AR-HOT-"+randomBytes(5).toString("hex").toUpperCase();
