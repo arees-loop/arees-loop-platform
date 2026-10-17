@@ -1,3 +1,4 @@
+import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 "use client";
 
 import Link from "next/link";
@@ -19,7 +20,7 @@ export default function BookingsPage(){
  const shown=useMemo(()=>filter==="ALL"?bookings:bookings.filter(b=>filter==="AWAITING_PAYMENT"?b.status==="PENDING":b.status===filter),[bookings,filter]);
  const completed=bookings.filter(b=>b.status==="COMPLETED").length;
  const upcoming=bookings.filter(b=>["PENDING","PAID","CONFIRMED","IN_PROGRESS"].includes(b.status)).length;
- return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-5 pb-24 pt-32 text-[#0D3B34] md:px-8">
+ return <CustomerDashboardShell><main dir="rtl" className="min-w-0">
   <div className="mx-auto max-w-[1380px]">
    <p className="text-[9px] font-bold tracking-[.2em] text-[#B99124]">MY BOOKINGS</p><h1 className="mt-2 text-4xl font-black">حجوزاتي</h1><Link href="/my-requests" className="mt-3 inline-flex rounded-full border border-[#D4AF37]/40 bg-white px-5 py-3 text-xs font-bold">عرض طلباتي المنفصلة</Link>
    <p className="mt-2 text-xs text-[#0D3B34]/60">هنا تظهر الحجوزات الفعلية للبرامج والتجارب وخدمات الشركاء بعد إنشائها في حسابك. طلبات التأشيرات والطيران والبواخر والفنادق والرخص الدولية تجدها في «طلباتي».</p>
@@ -35,5 +36,5 @@ export default function BookingsPage(){
     </div></article>)}
    </section>
   </div>
- </main>
+ </main></CustomerDashboardShell>
 }
