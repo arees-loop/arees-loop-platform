@@ -1,5 +1,5 @@
-import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 "use client";
+import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 import Link from "next/link";
 import {useEffect,useState,type FormEvent} from "react";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
