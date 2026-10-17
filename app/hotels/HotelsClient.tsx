@@ -53,6 +53,7 @@ export default function HotelsPage(){
       const res=await fetch("/api/hotels/requests",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({...form,countryCode:form.countryCode==="other"?form.customCountryCode:form.countryCode})});
       const data=await res.json().catch(()=>null);
+      if(res.status===401||data?.code==="AUTH_REQUIRED"){window.location.href="/login?next="+encodeURIComponent(window.location.pathname+window.location.search);return;}
       if(!res.ok||!data?.success){setError(data?.message||"تعذر إرسال الطلب.");return;}
       setSavedClaim(storeCustomerClaim({reference:data.data.reference,token:data.data.trackingToken}));
       setSuccess(data.data);
