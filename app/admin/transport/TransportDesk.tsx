@@ -321,10 +321,10 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       {status&&<p role="status" className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">{status}</p>}
       {loading&&<p className="mt-5 text-sm">جاري تحميل البيانات...</p>}
       {tab==="requests"&&(
-        <div className={initialOfferKind==="VISA"?"mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px]":"mt-7 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(350px,1fr)]"}>
-          <section className={initialOfferKind==="VISA"&&selected?"hidden xl:block min-w-0":"min-w-0"}>
+        <div className={"mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px]"}>
+          <section className={selected?"hidden xl:block min-w-0":"min-w-0"}>
             <div className="mb-4 flex flex-wrap items-center gap-2"><span className="text-sm font-bold">تصفية الطلبات:</span><button type="button" onClick={()=>setRequestStatusFilter("ALL")} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter==="ALL"?"bg-[#0D3B34] text-white":"bg-white"}`}>الكل ({serviceRequests.length})</button>{requestStatuses.map(st=><button type="button" key={st} onClick={()=>setRequestStatusFilter(st)} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter===st?"bg-[#0D3B34] text-white":"bg-white"}`}>{st} ({serviceRequests.filter(q=>q.status===st).length})</button>)}<span className="text-xs text-[#0D3B34]/60">الأحدث أولاً</span></div>
-            <div className={initialOfferKind==="VISA"?"grid grid-cols-1 gap-2":"grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"}>
+            <div className={"grid grid-cols-1 gap-2"}>
             {filteredRequests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
             {filteredRequests.map(q=>(
               <button key={q.id} onClick={()=>choose(q)} className={`min-w-0 rounded-[18px] border p-3 text-right transition hover:shadow-lg ${selected?.id===q.id?"border-[#D4AF37] bg-[#FFF9E7]":"border-[#D4AF37]/25 bg-white"}`}>
@@ -339,10 +339,10 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             ))}
             </div>
           </section>
-          <section className={initialOfferKind==="VISA"?"min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6 xl:col-start-1 xl:row-start-1":"min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6"}>
+          <section className={"min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6 xl:col-start-1 xl:row-start-1"}>
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
               <>
-                {initialOfferKind==="VISA"&&<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
+                {<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
                 <h2 className="text-xl font-black">طلب {selected.reference}</h2>
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F7F4EB] p-4 text-sm">
                   <p>الاسم: <b>{selected.customerName}</b></p>
@@ -362,9 +362,9 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
                 <AdminRequestAttachments reference={selected.reference}/>
-                {initialOfferKind==="VISA"?<div className="mt-5 grid gap-4 md:grid-cols-2">
+                {<div className="mt-5 grid gap-4 md:grid-cols-2">
                   <section className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
-                    <h3 className="font-bold">توفر خدمة التأشيرة</h3>
+                    <h3 className="font-bold">توفر الخدمة وإرسال العرض</h3>
                     <div className="mt-3 flex gap-3"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاحة</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاحة</label></div>
                     {visaAvailability==="AVAILABLE"?<div className="mt-4 grid gap-3">
                       <label className={label}>السعر الإجمالي بالريال<input required type="number" min="0.01" step=".01" className={field} value={form.quoteAmountSar} onChange={e=>setForm(f=>({...f,quoteAmountSar:e.target.value}))}/></label>
@@ -377,7 +377,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                     {showSuper&&<label className={label+" mt-3"}>إسناد إلى موظف<select className={field} value={selected.assignedToId||""} disabled={busy} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})}><option value="">غير مسند</option>{staff.filter(u=>u.role==="SUPER_ADMIN"||(Array.isArray(u.adminPermissions)&&u.adminPermissions.includes("TRANSPORT_VISAS"))).map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email}</option>)}</select></label>}
                     <p className="mt-3 text-xs text-[#49655D]">يظهر السعر والتعليق أو الاعتذار للعميل في «طلباتي» عند الضغط على الزر الموحّد أعلاه.</p>
                   </section>
-                </div>:<>                <section className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
+                </div>{false&&<>                <section className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                   <h3 className="text-sm font-black">رد يظهر للعميل في «طلباتي»</h3>
                   <p className="mt-1 text-xs leading-6 text-[#0D3B34]/65">هذا الرد عام للعميل، ومختلف عن ملاحظات الموظفين الداخلية.</p>
                   <textarea maxLength={2500} rows={3} className={field+" mt-3"} value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="اكتب رد أريس على العميل..."/>
