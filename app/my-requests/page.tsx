@@ -30,8 +30,7 @@ const statuses:Record<string,string>={
 const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value)):"";
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
 
-function RequestCard({item,featured}:{item:CustomerRequest;featured:boolean}){
-  const [expanded,setExpanded]=useState(featured);
+function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;featured:boolean;expanded:boolean;onToggle:()=>void}){
   return <article id={`request-${item.reference}`} className={`scroll-mt-36 rounded-[22px] border bg-white p-5 shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
     <div className="flex flex-wrap items-start justify-between gap-2">
       <span className="text-xs font-black text-[#B18A33]">{item.kind==="FLIGHT"?"✈ طيران":item.kind==="FERRY"?"⚓ بواخر":item.kind==="VISA"?"🛂 تأشيرات":item.kind==="DRIVING_LICENSE"?"🚘 رخص دولية":"🏨 فنادق"}</span>
@@ -46,7 +45,7 @@ function RequestCard({item,featured}:{item:CustomerRequest;featured:boolean}){
       <p className="mt-1 whitespace-pre-wrap text-xs leading-7">{item.customerReply}</p>
     </div>}
     {item.quoteAmountSar!==null&&<p className="mt-4 text-lg font-black text-[#99731E]">عرض السعر: {money(item.quoteAmountSar)}</p>}
-    <button type="button" onClick={()=>setExpanded(x=>!x)} className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-[#F8F5EC] px-3 py-3 text-sm font-bold">
+    <button type="button" onClick={onToggle} aria-expanded={expanded} className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-[#F8F5EC] px-3 py-3 text-sm font-bold">
       {expanded?"إخفاء التفاصيل":"عرض تفاصيل الطلب"}
     </button>
     {expanded&&<div className="mt-4 space-y-2 border-t border-[#D4AF37]/25 pt-4 text-xs leading-7">
@@ -73,12 +72,14 @@ export default function MyRequestsPage(){
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
   const [focus,setFocus]=useState("");
+  const [openReference,setOpenReference]=useState("");
   const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE"|"PARTNER">("ALL");
   const [stageFilter,setStageFilter]=useState("ALL");
   useEffect(()=>{
     const abort=new AbortController();
     const focusRef=new URLSearchParams(window.location.search).get("reference")||"";
     setFocus(focusRef);
+    setOpenReference(focusRef);
     fetch("/api/customer/requests",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
@@ -110,6 +111,8 @@ export default function MyRequestsPage(){
     const matchStage=stageFilter==="ALL"||(stageFilter==="CLOSED"?["CANCELED","CANCELLED","CLOSED"].includes(x.status):stageFilter==="NEW"?["NEW","PENDING"].includes(x.status):stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING","IN_PROGRESS"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED","CONFIRMED"].includes(x.status):false);
     return age&&matchKind&&matchStage&&[x.reference,x.title,x.route].join(" ").toLowerCase().includes(query.toLowerCase());
   }),[allItems,period,filter,stageFilter,query]);
+  const focusedItem=allItems.find(x=>x.reference===openReference);
+  const toggleRequest=(reference:string)=>{setOpenReference(current=>current===reference?"":reference);};
   const active=visible.filter(x=>!["DONE","COMPLETED","CANCELED","CANCELLED","CLOSED","CONFIRMED"].includes(x.status));
   const history=visible.filter(x=>!active.includes(x));
   return <CustomerDashboardShell><main dir="rtl" className="min-w-0">
@@ -124,10 +127,16 @@ export default function MyRequestsPage(){
     </div>
     {loading&&<p className="mt-6 rounded-xl bg-white p-5">جاري تحميل الطلبات...</p>}
     {error&&<p role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">{error}</p>}
-    {!loading&&<><div className="mt-6 flex items-center justify-between"><h2 className="text-lg font-black">الطلبات الحالية ({active.length})</h2><Link href="/cart" className="text-xs font-bold underline">سلة الحجوزات</Link></div>
-    <div className="mt-3 space-y-3">{active.length?active.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={focus===item.reference}/>):<p className="rounded-xl bg-white p-5 text-sm text-[#0D3B34]/60">لا توجد طلبات حالية مطابقة للفلاتر.</p>}</div>
+    {!loading&&<>{openReference&&focusedItem?<div className="mt-6">
+      <button type="button" onClick={()=>setOpenReference("")} className="mb-4 rounded-xl border border-[#D4AF37]/50 bg-white px-5 py-3 text-sm font-bold">← العودة إلى جميع الطلبات</button>
+      {focusedItem.kind==="PARTNER"?<PartnerRequestRow item={focusedItem}/>:<RequestCard item={focusedItem} featured={true} expanded={true} onToggle={()=>setOpenReference("")}/>}
+      <p className="mt-3 text-center text-xs text-[#0D3B34]/60">أُخفيت الطلبات الأخرى مؤقتاً للتركيز على هذا الطلب.</p>
+    </div>:<>
+    <div className="mt-6 flex items-center justify-between"><h2 className="text-lg font-black">الطلبات الحالية ({active.length})</h2><Link href="/cart" className="text-xs font-bold underline">سلة الحجوزات</Link></div>
+    <div className="mt-3 space-y-3">{active.length?active.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={false} expanded={false} onToggle={()=>toggleRequest(item.reference)}/>):<p className="rounded-xl bg-white p-5 text-sm text-[#0D3B34]/60">لا توجد طلبات حالية مطابقة للفلاتر.</p>}</div>
     <button type="button" onClick={()=>setShowHistory(x=>!x)} className="mt-7 flex w-full items-center justify-between rounded-xl border border-[#D4AF37]/35 bg-white px-5 py-4 font-bold"><span>سجل الطلبات السابقة ({history.length})</span><span>{showHistory?"إخفاء السجل ▲":"عرض السجل ▼"}</span></button>
-    {showHistory&&<div className="mt-3 space-y-3">{history.length?history.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={focus===item.reference}/>):<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات سابقة مطابقة.</p>}</div>}
+    {showHistory&&<div className="mt-3 space-y-3">{history.length?history.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={false} expanded={false} onToggle={()=>toggleRequest(item.reference)}/>):<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات سابقة مطابقة.</p>}</div>}
+    </>}
     </>}
    </div>
   </main></CustomerDashboardShell>;
