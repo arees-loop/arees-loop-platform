@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* On the home hero the glass header overlays imagery, instead of an empty solid strip. */
+body:has(> main.arees-home-page) > header { margin-bottom: -76px; }
+@media (min-width: 768px) { body:has(> main.arees-home-page) > header { margin-bottom: -82px; } }
+
+
 :root {
   --arees-green: #0d3b34;
   --arees-green-deep: #07362f;
