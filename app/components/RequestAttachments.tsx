@@ -1,0 +1,10 @@
+"use client";
+import {useEffect,useState} from "react";
+type Item={id:string;name:string;size?:number;createdAt:string};
+export default function RequestAttachments({reference}:{reference:string}){
+ const [files,setFiles]=useState<Item[]>([]),[selected,setSelected]=useState<File|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+ async function load(){const r=await fetch("/api/customer/request-attachments?reference="+encodeURIComponent(reference),{cache:"no-store"});if(r.ok){const d=await r.json();setFiles(d.data||[])}}
+ useEffect(()=>{void load()},[reference]);
+ async function send(){if(!selected||busy)return;setBusy(true);setMessage("");try{const fd=new FormData();fd.set("reference",reference);fd.set("file",selected);const r=await fetch("/api/customer/request-attachments",{method:"POST",body:fd});const d=await r.json();setMessage(d.message||"تعذر إرسال المرفق.");if(r.ok){setSelected(null);await load()}}catch{setMessage("تعذر إرسال المرفق حالياً.")}finally{setBusy(false)}}
+ return <section className="mt-4 rounded-xl border border-[#D4AF37]/40 bg-[#FFFAEF] p-4"><h4 className="font-black">📎 مرفقات الطلب</h4><p className="mt-2 text-xs leading-6">أرسل المستندات المطلوبة لمراجعة طلبك. الملفات خاصة ولا تظهر للزوار. PDF أو صور، بحد أقصى 5 ميجابايت لكل ملف.</p><input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" className="mt-3 block w-full text-xs" onChange={e=>setSelected(e.target.files?.[0]||null)}/><button type="button" disabled={!selected||busy} onClick={()=>void send()} className="mt-3 rounded-lg bg-[#0D3B34] px-5 py-2 text-white disabled:opacity-40">{busy?"جارٍ الرفع...":"إرسال المرفق"}</button>{message&&<p role="status" className="mt-2 text-xs">{message}</p>}{files.length>0&&<div className="mt-4 space-y-2">{files.map(f=><a key={f.id} className="block rounded-lg border bg-white p-2 text-xs underline" href={"/api/customer/request-attachments?reference="+encodeURIComponent(reference)+"&file="+encodeURIComponent(f.id)}>{f.name} — عرض/تنزيل</a>)}</div>}</section>
+}
