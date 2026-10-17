@@ -1,5 +1,5 @@
-import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 "use client";
+import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 import { AirportLookup } from "@/app/components/AviationLookup";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
 import Link from "next/link";
