@@ -59,7 +59,9 @@ function RequestCard({item,featured}:{item:CustomerRequest;featured:boolean}){
       {item.quoteNotes&&<div className="rounded-xl bg-[#F7F4ED] p-3"><b>تفاصيل العرض:</b><p className="mt-1 whitespace-pre-wrap">{item.quoteNotes}</p></div>}
       {item.quoteValidUntil&&<p>صلاحية العرض حتى: {labelDate(item.quoteValidUntil)}</p>}
       {item.cancellationReason&&<p className="rounded-xl bg-red-50 p-3 text-red-800">سبب الإلغاء: {item.cancellationReason}</p>}
-      <RequestAttachments reference={item.reference}/>
+      {item.kind!=="HOTEL"&&<RequestAttachments reference={item.reference}/>}
+      {item.kind!=="HOTEL"&&["NEW","QUOTE_READY"].includes(item.status)&&<button type="button" onClick={async()=>{if(!window.confirm("هل تريد إلغاء الطلب؟ سيبقى في سجل الطلبات ولن يُحذف."))return;const r=await fetch("/api/customer/request-cancel",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reference:item.reference})});const d=await r.json();window.alert(d.message||"تعذر إلغاء الطلب");if(r.ok)window.location.reload()}} className="mt-3 rounded-lg border border-red-300 bg-white px-4 py-2 text-red-700">إلغاء الطلب قبل بدء التنفيذ</button>}
+      {item.kind==="HOTEL"&&<p className="rounded-lg bg-amber-50 p-3 text-xs">مرفقات الفنادق تحتاج ربطاً منفصلاً؛ لا يمكن رفعها من نموذج طلبات النقل.</p>}
       {item.quoteAmountSar!==null&&item.status==="PROCESSING"&&<RequestPayment reference={item.reference}/>}
       <p className="font-bold text-[#0D3B34]/75">هذا طلب خدمة، وليس حجزاً مؤكداً أو إثبات دفع.</p>
     </div>}
