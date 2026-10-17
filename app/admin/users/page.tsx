@@ -40,6 +40,16 @@ export default function AdminUsersPage(){
   const d=await r.json(); setActionNotice(d.message||"تعذر تنفيذ الإجراء.");
   if(r.ok&&d.success){await loadUsers();setActionUserId(null);}
  }
+ async function removeAdminAccess(user:AdminUser){
+  const name=[user.firstName,user.lastName].filter(Boolean).join(" ")||user.email;
+  if(!window.confirm(`إزالة ${name} من فريق الإدارة؟ سيتم سحب كل الصلاحيات وتعطيل الحساب، مع الاحتفاظ بسجل البيانات. لا يمكن التراجع تلقائياً عن هذا الإجراء.`))return;
+  setActionNotice("");
+  try{
+   const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:user.id,action:"REMOVE_ADMIN_ACCESS"})});
+   const d=await r.json();setActionNotice(d.message||"تعذر إزالة الصلاحيات.");
+   if(r.ok&&d.success){setActionUserId(null);await loadUsers();}
+  }catch{setActionNotice("تعذر الاتصال بالخادم. لم نتأكد من تنفيذ الإجراء.");}
+ }
  async function uploadProfileImage(userId:string,file:File){
   try{const d=await readImageDimensions(file);if(d.width!==IMAGE_REQUIREMENTS.avatar.width||d.height!==IMAGE_REQUIREMENTS.avatar.height){setActionNotice(`${imageDimensionMessage(IMAGE_REQUIREMENTS.avatar)} أبعاد الصورة الحالية ${d.width} × ${d.height}. لم تُرفع.`);return;}}catch{setActionNotice("تعذر قراءة أبعاد الصورة.");return;}
   setActionNotice(""); const form=new FormData(); form.append("userId",userId); form.append("file",file);
@@ -69,7 +79,7 @@ export default function AdminUsersPage(){
     <div><p className="text-xs font-bold tracking-[.18em] text-[#B68A21]">ADMIN ACCESS</p><h1 className="mt-2 text-3xl font-bold">المستخدمين والصلاحيات</h1><p className="mt-2 text-sm text-black/50">إدارة حسابات فريق الإدارة والتحكم في صلاحيات الوصول.</p></div>
     <button onClick={()=>setOpen(true)} className="arees-primary-action rounded-xl border border-[#B68A21] !bg-[#C99A1B] px-6 py-3 text-sm font-extrabold !text-[#073F35] shadow-[0_6px_18px_rgba(182,138,33,.25)] transition hover:!bg-[#B68A21] hover:shadow-[0_8px_22px_rgba(182,138,33,.35)]">+ إضافة مستخدم</button>
    </div>
-   <section className="mt-8 w-full overflow-hidden rounded-[26px] border border-[#D8C79D]/45 bg-white/70 shadow-[0_18px_55px_rgba(61,50,25,.07)] backdrop-blur-xl">
+   <section className="mt-8 w-full overflow-visible rounded-[26px] border border-[#D8C79D]/45 bg-white/70 shadow-[0_18px_55px_rgba(61,50,25,.07)] backdrop-blur-xl">
     <div className="flex items-center justify-between border-b border-[#D8C79D]/30 bg-gradient-to-l from-[#FBF6EA]/90 to-white/70 px-7 py-5">
      <div><h2 className="text-base font-extrabold text-[#103F38]">فريق الإدارة</h2><p className="mt-1 text-xs text-black/40">{users.length} مستخدم إداري</p></div>
      <div className="rounded-full border border-[#D5B65B]/30 bg-white/70 px-3 py-1.5 text-[11px] font-bold text-[#8D6B16]">AREES LOOP</div>
@@ -90,7 +100,7 @@ export default function AdminUsersPage(){
        <span><i className={`inline-flex items-center gap-1.5 not-italic rounded-full px-3 py-1.5 text-[11px] font-bold ${active?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}><i className={`h-1.5 w-1.5 rounded-full ${active?"bg-emerald-500":"bg-amber-500"}`}></i>{active?"نشط":"تم إرسال الدعوة"}</i></span>
        <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة").replace("TRANSPORT_FLIGHTS","الطيران").replace("TRANSPORT_FERRIES","البواخر").replace("HOTEL_REQUESTS","الفنادق")).join(" • "):perms+" صلاحيات"}</span>
        <div className="relative">
-        <button onClick={()=>setActionUserId(v=>v===user.id?null:user.id)} aria-label="اتخاذ إجراء" title="اتخاذ إجراء" className="flex h-9 items-center justify-center gap-1 rounded-full border border-transparent px-3 text-xs font-extrabold text-[#0D4A40] transition-all hover:border-[#D5B65B]/45 hover:bg-white hover:shadow-[0_5px_18px_rgba(182,138,33,.22)]">•••<span className="hidden xl:inline">اتخاذ إجراء</span></button>
+        <button onClick={()=>setActionUserId(v=>v===user.id?null:user.id)} aria-expanded={actionUserId===user.id} aria-label="اتخاذ إجراء" title="اتخاذ إجراء" className="flex h-9 items-center justify-center gap-1 rounded-full border border-transparent px-3 text-xs font-extrabold text-[#0D4A40] transition-all hover:border-[#D5B65B]/45 hover:bg-white hover:shadow-[0_5px_18px_rgba(182,138,33,.22)]">•••<span className="hidden xl:inline">اتخاذ إجراء</span></button>
         {actionUserId===user.id&&<div className="absolute left-0 top-11 z-50 w-52 overflow-hidden rounded-2xl border border-[#D8C79D]/50 bg-white/95 p-1.5 text-right shadow-[0_18px_45px_rgba(50,40,20,.16)] backdrop-blur-xl">
          {user.role==="SUPER_ADMIN"?<>
           <div className="px-3 py-2 text-[11px] font-bold text-[#8D6B16]">Super Admin</div>
@@ -100,6 +110,7 @@ export default function AdminUsersPage(){
           <button onClick={()=>{setEditUserId(user.id);setEditPermissions(Array.isArray(user.adminPermissions)?user.adminPermissions.map(String):[]);setActionUserId(null);}} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">تعديل الصلاحيات</button>
           {!active&&<button className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-[#103F38] hover:bg-[#FBF5E6]">إعادة إرسال الدعوة</button>}
           <div className="my-1 border-t border-black/[.06]"/>
+          <button onClick={()=>void removeAdminAccess(user)} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-red-700 hover:bg-red-50">إزالة من فريق الإدارة</button>
           {active?<button onClick={()=>void setUserStatus(user.id,"DISABLE")} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-red-600 hover:bg-red-50">تعطيل المستخدم</button>:<button onClick={()=>void setUserStatus(user.id,"ACTIVATE")} className="w-full rounded-xl px-3 py-2.5 text-right text-xs font-bold text-emerald-700 hover:bg-emerald-50">تنشيط المستخدم</button>}
          </>}
         </div>}
