@@ -364,7 +364,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
                 <AdminRequestAttachments reference={selected.reference}/>
                 <AdminPaymentReview reference={selected.reference}/>
-                {true?<div className="mt-5 grid gap-4 md:grid-cols-2">
+                {initialOfferKind==="VISA"?<div className="mt-5 grid gap-4 md:grid-cols-2">
                   <section className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                     <h3 className="font-bold">توفر الخدمة المطلوبة</h3>
                     <div className="mt-3 flex gap-3"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاحة</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاحة</label></div>
