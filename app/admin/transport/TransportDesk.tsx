@@ -1,3 +1,4 @@
+import AdminPaymentReview from "@/app/components/AdminPaymentReview";
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
@@ -362,6 +363,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
                 <AdminRequestAttachments reference={selected.reference}/>
+                <AdminPaymentReview reference={selected.reference}/>
                 {initialOfferKind==="VISA"?<div className="mt-5 grid gap-4 md:grid-cols-2">
                   <section className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                     <h3 className="font-bold">توفر خدمة التأشيرة</h3>
