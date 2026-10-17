@@ -1,4 +1,5 @@
 "use client";
+import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -39,7 +40,7 @@ export default function NotificationsPage() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, []);
-  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-5 pb-24 pt-32 text-[#0D3B34]">
+  return <CustomerDashboardShell><main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-5 pb-24 pt-32 text-[#0D3B34]">
     <div className="mx-auto max-w-4xl">
       <p className="text-xs font-bold tracking-widest text-[#A87917]">AREES LOOP · UPDATES</p>
       <h1 className="mt-2 text-4xl font-black">الإشعارات</h1>
@@ -52,5 +53,5 @@ export default function NotificationsPage() {
         <Link href="/bookings" className="mt-3 inline-flex text-sm font-bold text-[#996E13] underline">عرض حجوزاتي</Link>
       </article>)}</section>}
     </div>
-  </main>;
+  </main></CustomerDashboardShell>;
 }
