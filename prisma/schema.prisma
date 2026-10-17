@@ -1074,3 +1074,14 @@ model HotelInquiryEvent {
 
   @@index([requestId, createdAt])
 }
+
+// Super-admin-controlled bank transfer destination. Never expose until explicitly active.
+model BankTransferAccount {
+  id String @id @default(cuid())
+  bankName String
+  beneficiaryName String
+  iban String
+  active Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
