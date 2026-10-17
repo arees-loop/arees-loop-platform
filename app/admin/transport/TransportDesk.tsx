@@ -361,6 +361,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   })}
                 </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
+                <AdminRequestAttachments reference={selected.reference}/>
                 {initialOfferKind==="VISA"?<div className="mt-5 grid gap-4 md:grid-cols-2">
                   <section className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                     <h3 className="font-bold">توفر خدمة التأشيرة</h3>
@@ -574,3 +575,4 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     </main>
   );
 }
+\nfunction AdminRequestAttachments({reference}:{reference:string}){\n const [files,setFiles]=useState<{id:string;name:string}[]>([]);\n useEffect(()=>{let active=true;fetch("/api/customer/request-attachments?reference="+encodeURIComponent(reference),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(active)setFiles(d?.data||[])}).catch(()=>{});return()=>{active=false}},[reference]);\n return <section className="mt-3 rounded-xl border border-[#D4AF37]/30 bg-white p-4"><h3 className="font-bold">📎 مرفقات العميل ({files.length})</h3>{files.length?files.map(f=><a key={f.id} className="mt-2 block text-xs underline" href={"/api/customer/request-attachments?reference="+encodeURIComponent(reference)+"&file="+encodeURIComponent(f.id)}>{f.name} — تنزيل آمن</a>):<p className="mt-2 text-xs">لا توجد مرفقات لهذا الطلب.</p>}</section>;\n}\n
