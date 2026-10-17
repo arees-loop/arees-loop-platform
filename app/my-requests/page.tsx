@@ -1,3 +1,4 @@
+import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 "use client";
 
 import Link from "next/link";
@@ -107,7 +108,7 @@ export default function MyRequestsPage(){
   }),[allItems,period,filter,stageFilter,query]);
   const active=visible.filter(x=>!["DONE","COMPLETED","CANCELED","CANCELLED","CLOSED","CONFIRMED"].includes(x.status));
   const history=visible.filter(x=>!active.includes(x));
-  return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
+  return <CustomerDashboardShell><main dir="rtl" className="min-w-0">
    <div className="mx-auto max-w-[1000px]">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-black tracking-wider text-[#A78231]">AREES LOOP · MY REQUESTS</p><h1 className="mt-2 text-3xl font-black">طلباتي</h1></div><Link href="/bookings" className="rounded-full border border-[#D4AF37]/50 bg-white px-4 py-2 text-xs font-bold">حجوزاتي المؤكدة</Link></div>
     <p className="mt-3 text-sm text-[#0D3B34]/65">كل طلبات الخدمات والحجوزات في قائمة واحدة، من الأحدث للأقدم.</p>
@@ -125,7 +126,7 @@ export default function MyRequestsPage(){
     {showHistory&&<div className="mt-3 space-y-3">{history.length?history.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={focus===item.reference}/>):<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات سابقة مطابقة.</p>}</div>}
     </>}
    </div>
-  </main>;
+  </main></CustomerDashboardShell>;
 }
 function PartnerRequestRow({item}:{item:{reference:string;title:string;route:string;status:string;createdAt:string}}){
  return <article className="rounded-xl border border-[#D4AF37]/25 bg-white p-4"><div className="flex items-center justify-between gap-3"><b>🤝 {item.title}</b><span className="rounded-full bg-[#F4F0E7] px-3 py-1 text-xs">{statuses[item.status]||item.status}</span></div><p className="mt-2 text-xs">{item.route} · {labelDate(item.createdAt)}</p><p className="mt-2 text-xs text-[#0D3B34]/60">رقم الطلب: {item.reference}</p><Link href="/bookings" className="mt-3 inline-block text-xs font-bold underline">عرض تفاصيل الحجز</Link></article>;
