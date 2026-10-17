@@ -54,7 +54,7 @@ export default function GlobalHeader() {
   }
 
   return (
-    <header className="relative sticky top-0 z-[100] w-full border-b border-white/45 bg-[#FFFDF7]/70 px-4 shadow-[0_8px_32px_rgba(13,59,52,0.08)] backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/55 md:px-8">
+    <header className="relative sticky top-0 z-[100] w-full border-b border-[#EAD18B]/70 bg-[linear-gradient(115deg,rgba(255,252,237,0.48),rgba(233,201,130,0.24)_48%,rgba(255,255,255,0.36))] px-4 shadow-[inset_0_2px_1px_rgba(255,255,255,0.85),inset_0_-2px_1px_rgba(170,125,40,0.22),0_8px_26px_rgba(55,37,10,0.15)] backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-inset ring-white/60 md:px-8">
       <nav className="mx-auto flex h-[76px] max-w-[1450px] items-center justify-between gap-3 px-0 md:h-[82px] md:px-6">
         <Link href="/" aria-label="Arees Loop">
           <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[92px] sm:w-[120px] md:w-[154px]" />
