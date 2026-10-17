@@ -16,7 +16,8 @@ const permissions=[
  ["إعدادات المنصة","تعديل إعدادات المنصة العامة؛ تمنح فقط للمخولين."],
  ["الطيران","معالجة طلبات الطيران المسندة للموظف ومتابعة عروض الأسعار."],
  ["البواخر","معالجة طلبات البواخر المسندة للموظف ومتابعة عروض الأسعار."],
- ["الفنادق","استلام ومعالجة طلبات الفنادق المسندة للموظف."]
+ ["الفنادق","استلام ومعالجة طلبات الفنادق المسندة للموظف."],
+ ["التأشيرات","معالجة طلبات التأشيرات المسندة للموظف ومتابعة عروض الأسعار."]
 ];
 
 export default function AdminUsersPage(){
@@ -33,7 +34,7 @@ export default function AdminUsersPage(){
  const [actionNotice,setActionNotice]=useState("");
  async function loadUsers(){try{const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json();if(r.ok&&d.success)setUsers(d.data||[]);}catch{}}
  useEffect(()=>{void loadUsers();},[]);
- const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS"];
+ const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS","TRANSPORT_VISAS"];
  async function setUserStatus(userId:string,action:"ACTIVATE"|"DISABLE"){
   setActionNotice("");
   const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,action})});
