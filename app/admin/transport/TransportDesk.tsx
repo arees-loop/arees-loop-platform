@@ -1,5 +1,5 @@
-import AdminPaymentReview from "@/app/components/AdminPaymentReview";
 "use client";
+import AdminPaymentReview from "@/app/components/AdminPaymentReview";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
