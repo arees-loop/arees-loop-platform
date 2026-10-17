@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { readCustomerClaims } from "@/lib/customer-request-claims";
 
 type CustomerRequest={
-  reference:string;kind:"FLIGHT"|"FERRY"|"HOTEL";title:string;route:string;
+  reference:string;kind:"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE";title:string;route:string;
   travelDate:string;returnDate:string|null;tripType?:string;itinerary?:unknown;
   guests:number;rooms?:number;status:string;group:string;
   customerReply:string|null;quoteAmountSar:number|null;quoteNotes:string|null;
@@ -31,7 +31,7 @@ function RequestCard({item,featured}:{item:CustomerRequest;featured:boolean}){
   const [expanded,setExpanded]=useState(featured);
   return <article id={`request-${item.reference}`} className={`scroll-mt-36 rounded-[22px] border bg-white p-5 shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
     <div className="flex flex-wrap items-start justify-between gap-2">
-      <span className="text-xs font-black text-[#B18A33]">{item.kind==="FLIGHT"?"✈ طيران":item.kind==="FERRY"?"⚓ بواخر":"🏨 فنادق"}</span>
+      <span className="text-xs font-black text-[#B18A33]">{item.kind==="FLIGHT"?"✈ طيران":item.kind==="FERRY"?"⚓ بواخر":item.kind==="VISA"?"🛂 تأشيرات":item.kind==="DRIVING_LICENSE"?"🚘 رخص دولية":"🏨 فنادق"}</span>
       <span className="rounded-full bg-[#EAEFE9] px-3 py-1 text-[11px] font-bold">{statuses[item.status]||item.status}</span>
     </div>
     <h3 className="mt-3 text-base font-black">{item.title}</h3>
@@ -66,7 +66,7 @@ export default function MyRequestsPage(){
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
   const [focus,setFocus]=useState("");
-  const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL">("ALL");
+  const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE">("ALL");
   useEffect(()=>{
     const abort=new AbortController();
     const focusRef=new URLSearchParams(window.location.search).get("reference")||"";
@@ -92,12 +92,12 @@ export default function MyRequestsPage(){
     <div className="mx-auto max-w-[1500px]">
       <p className="text-xs font-black tracking-[.15em] text-[#A78231]">AREES LOOP · MY REQUESTS</p>
       <h1 className="mt-2 text-4xl font-black">طلباتي</h1>
-      <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/70">تابع طلبات الطيران والبواخر والفنادق، وشاهد حالة كل طلب ورد أريس عليه من نفس الصفحة.</p>
+      <p className="mt-3 max-w-3xl text-sm leading-8 text-[#0D3B34]/70">تابع طلبات التأشيرات والرخص الدولية والطيران والبواخر والفنادق، وشاهد حالة كل طلب ورد أريس عليه من نفس الصفحة.</p>
       <div className="mt-5 rounded-xl border border-[#D4AF37]/30 bg-white px-4 py-3 text-xs leading-7 text-[#0D3B34]/70">
         الطلبات التي أرسلتها وأنت مسجّل الدخول مرتبطة بحسابك. طلبات الزائر مرتبطة بهذا المتصفح برمز خاص؛ للحفاظ على إمكانية متابعتها من جهاز آخر يُفضّل تسجيل الدخول قبل إرسال الطلب.
       </div>
       <div className="mt-6 flex flex-wrap gap-2">
-        {([["ALL","كل الطلبات"],["FLIGHT","الطيران"],["FERRY","البواخر"],["HOTEL","الفنادق"]] as const).map(([kind,label])=>
+        {([["ALL","كل الطلبات"],["VISA","التأشيرات"],["DRIVING_LICENSE","الرخص الدولية"],["FLIGHT","الطيران"],["FERRY","البواخر"],["HOTEL","الفنادق"]] as const).map(([kind,label])=>
           <button key={kind} onClick={()=>setFilter(kind)} className={`rounded-full px-5 py-2.5 text-xs font-bold ${filter===kind?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>{label}</button>)}
         <Link href="/cart" className="rounded-full border border-[#D4AF37]/40 bg-white px-5 py-2.5 text-xs font-bold">سلة الحجوزات</Link>
       </div>
