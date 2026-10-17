@@ -1,5 +1,5 @@
-import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 "use client";
+import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
