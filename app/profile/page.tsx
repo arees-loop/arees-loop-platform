@@ -1,4 +1,5 @@
 "use client";
+import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -285,7 +286,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <main
+    <CustomerDashboardShell><main
       dir="rtl"
       className="relative min-h-screen overflow-hidden bg-[#F7F5EF] text-[#0D3B34]"
       style={{ fontFamily: "var(--font-ibm-plex-arabic), sans-serif" }}
@@ -824,7 +825,7 @@ export default function ProfilePage() {
           active
         />
       </nav>
-    </main>
+    </main></CustomerDashboardShell>
   );
 }
 
