@@ -467,7 +467,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f7f7f2] text-[#082d24]">
+    <main className="arees-home-page min-h-screen overflow-hidden bg-[#f7f7f2] text-[#082d24]">
       <section
         ref={heroRef}
         className="relative min-h-screen overflow-hidden bg-[#071713]"
