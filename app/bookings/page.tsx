@@ -21,8 +21,8 @@ export default function BookingsPage(){
  const upcoming=bookings.filter(b=>["PENDING","PAID","CONFIRMED","IN_PROGRESS"].includes(b.status)).length;
  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-5 pb-24 pt-32 text-[#0D3B34] md:px-8">
   <div className="mx-auto max-w-[1380px]">
-   <p className="text-[9px] font-bold tracking-[.2em] text-[#B99124]">MY BOOKINGS</p><h1 className="mt-2 text-4xl font-black">حجوزاتي</h1><Link href="/my-requests" className="mt-3 inline-flex rounded-full border border-[#D4AF37]/40 bg-white px-5 py-3 text-xs font-bold">انتقل إلى طلباتي (الطيران والبواخر والفنادق) ←</Link>
-   <p className="mt-2 text-xs text-[#0D3B34]/60">الحجوزات الفعلية المرتبطة بحسابك في Arees Loop.</p>
+   <p className="text-[9px] font-bold tracking-[.2em] text-[#B99124]">MY BOOKINGS</p><h1 className="mt-2 text-4xl font-black">حجوزاتي</h1><Link href="/my-requests" className="mt-3 inline-flex rounded-full border border-[#D4AF37]/40 bg-white px-5 py-3 text-xs font-bold">عرض طلباتي المنفصلة</Link>
+   <p className="mt-2 text-xs text-[#0D3B34]/60">هنا تظهر الحجوزات الفعلية للبرامج والتجارب وخدمات الشركاء بعد إنشائها في حسابك. طلبات التأشيرات والطيران والبواخر والفنادق والرخص الدولية تجدها في «طلباتي».</p>
    <section className="mt-7 grid gap-4 sm:grid-cols-3">
     {[["إجمالي الحجوزات",bookings.length],["القادمة",upcoming],["المكتملة",completed]].map(([x,n])=><div key={String(x)} className="rounded-[22px] border border-white bg-white/70 p-5"><p className="text-xs text-[#0D3B34]/55">{x}</p><p className="mt-2 text-3xl font-black">{n}</p></div>)}
    </section>
