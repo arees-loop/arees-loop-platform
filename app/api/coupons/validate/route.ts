@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { prisma } = await import("@/lib/prisma");
     const [coupon, service] = await Promise.all([
       prisma.coupon.findUnique({ where: { code } }),
-      prisma.service.findFirst({ where: { id: serviceId, status: "PUBLISHED" }, select: { finalPrice: true, category: true } }),
+      prisma.service.findFirst({ where: { id: serviceId, status: "PUBLISHED" }, select: { finalPrice: true, category: true, partnerId: true } }),
     ]);
 
     if (!coupon) {
@@ -42,7 +42,14 @@ export async function POST(request: NextRequest) {
     if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
       return NextResponse.json({ success: false, error: "COUPON_LIMIT_REACHED", message: "تم استنفاد عدد استخدامات الكوبون." }, { status: 400 });
     }
-    if (coupon.serviceId && coupon.serviceId !== serviceId) {
+    // Partner-wide and category-wide coupons are anchored to one owned service in the legacy schema.
+    // Verify partner ownership before allowing another service; never treat an anchor as global.
+    const anchor = coupon.serviceId ? await prisma.service.findUnique({where:{id:coupon.serviceId},select:{partnerId:true,category:true}}) : null;
+    const scopedToPartner = !!(anchor && service && anchor.partnerId === service.partnerId);
+    const appliesToAnchor = coupon.serviceId === serviceId;
+    const appliesToPartnerCategory = scopedToPartner && !!coupon.category && coupon.category === service?.category;
+    const appliesToPartnerAll = scopedToPartner && !coupon.category;
+    if (coupon.serviceId && !appliesToAnchor && !appliesToPartnerCategory && !appliesToPartnerAll) {
       return NextResponse.json({ success: false, error: "COUPON_NOT_APPLICABLE", message: "هذا الكوبون غير صالح لهذه الخدمة." }, { status: 400 });
     }
     if (coupon.category && service && coupon.category !== service.category) {
