@@ -50,7 +50,7 @@ export async function PATCH(request: Request) {
     }
     if (action === "SET_PERMISSIONS") {
       if (target.role !== "ADMIN") return NextResponse.json({ success:false,message:"لا يمكن تعديل صلاحيات السوبر أدمن." },{status:403});
-      const permitted = ["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS","TRANSPORT_VISAS"];
+      const permitted = ["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS","TRANSPORT_VISAS","TRANSPORT_DRIVING_LICENSE"];
       if (!Array.isArray(body.permissions) || body.permissions.length > permitted.length ||
         body.permissions.some((x:unknown)=>typeof x!=="string" || !permitted.includes(x)) ||
         new Set(body.permissions).size!==body.permissions.length) return NextResponse.json({success:false,message:"الصلاحيات غير صحيحة."},{status:400});
