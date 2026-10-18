@@ -24,7 +24,7 @@ const field="w-full rounded-xl border border-[#D4AF37]/40 bg-[#FFFCF5] px-4 py-3
 const day=(v:string|null)=>v?new Date(v).toISOString().slice(0,10):"";
 
 export default function HotelAdminPage(){
- const [tab,setTab]=useState<"requests"|"offers">("offers");
+ const [tab,setTab]=useState<"requests"|"offers">("requests");
  const [rows,setRows]=useState<HotelCase[]>([]);
  const [offers,setOffers]=useState<Offer[]>([]);
  const [staff,setStaff]=useState<Staff[]>([]);
@@ -165,8 +165,8 @@ export default function HotelAdminPage(){
    {error&&<p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
    {notice&&<p role="status" className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{notice}</p>}
    {loading&&<p className="mt-6 text-sm">جاري تحميل البيانات...</p>}
-   {tab==="requests"&&<div className="mt-7 grid items-start gap-6 xl:grid-cols-2">
-     <section className="space-y-3">
+   {tab==="requests"&&<div className="mt-7 space-y-5">
+     <section className={`space-y-3 ${selected?"hidden":""}`}>
        {rows.length===0&&!loading&&<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات فنادق بعد.</p>}
        {rows.map(item=><button key={item.id} onClick={()=>choose(item)} className={`w-full rounded-2xl border p-5 text-right ${selected?.id===item.id?"border-[#B88A30] bg-[#FFF8E8]":"border-[#D4AF37]/30 bg-white"}`}>
          <div className="flex items-start justify-between"><b>{item.customerName}</b><span className="rounded-full bg-[#EEF3ED] px-3 py-1 text-xs">{stages[item.status]||item.status}</span></div>
@@ -175,7 +175,8 @@ export default function HotelAdminPage(){
          {item.notificationStatus==="FAILED"&&<p className="mt-2 text-xs text-amber-800">الطلب محفوظ لكن تعذر إرسال بريد التنبيه.</p>}
        </button>)}
      </section>
-     <section className="rounded-[24px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm">
+     <section className={`rounded-[24px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm ${!selected?"hidden":""}`}>
+       {selected&&<button type="button" onClick={()=>setSelected(null)} className="mb-5 rounded-full border border-[#D4AF37]/60 px-5 py-2 text-sm font-bold">→ العودة إلى جميع طلبات الفنادق</button>}
        {!selected?<p className="text-sm">اختر طلباً لمراجعة التفاصيل والرد عليه.</p>:<>
          <h2 className="text-xl font-black">{selected.reference}</h2>
          <p className="mt-3 text-sm leading-7">{selected.customerName} · {selected.destination} · {selected.hotelName||"فندق حسب الطلب"}</p>
