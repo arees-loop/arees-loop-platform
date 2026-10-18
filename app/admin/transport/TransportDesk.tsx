@@ -360,7 +360,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   })}
                 </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
-                <details className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4" open><summary className="cursor-pointer text-sm font-black">⚙️ حالة الطلب والإسناد · {statusNames[selected.status]||selected.status} · {staffName(selected.assignedToId)}</summary><div className="mt-3">
+                <div className="mt-4 grid items-start gap-3 lg:grid-cols-3">
+                <details className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4" open><summary className="cursor-pointer text-sm font-black">⚙️ حالة الطلب والإسناد · {statusNames[selected.status]||selected.status} · {staffName(selected.assignedToId)}</summary><div className="mt-3">
                   
                   <p className="mt-2 text-sm">الموظف المسؤول: <b>{staffName(selected.assignedToId)}</b></p>
                   {showSuper&&<div className="mt-3 flex flex-wrap gap-2">
@@ -390,8 +391,12 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   </div></details>}
                   {selected.cancellationReason&&<p className="mt-3 whitespace-pre-wrap text-sm text-red-700">سبب الإلغاء: {selected.cancellationReason}</p>}
                 </div></details>
-                <details className="mt-4 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">📎 المرفقات وطلب مستندات إضافية</summary><AdminRequestAttachments reference={selected.reference}/></details>
-                <details className="mt-4 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference}/></details>
+                <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F3F8F6] p-4"><h3 className="text-sm font-black text-[#0D3B34]">التواصل مع العميل</h3><p className="mt-2 text-xs text-[#0D3B34]/65">يمكنك مراجعة الرد والملاحظات وإرسال الرسائل من أقسام الطلب.</p><a className="mt-3 inline-flex rounded-lg bg-[#147D55] px-3 py-2 text-xs font-bold text-white" href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">واتساب العميل ↗</a></div>
+                <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F9F6EC] p-4"><h3 className="text-sm font-black">المرفقات والسداد</h3>
+                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">📎 المرفقات وطلب مستندات إضافية</summary><AdminRequestAttachments reference={selected.reference}/></details>
+                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference}/></details>
+                </div>
+                </div>
                 {initialOfferKind!=="VISA"&&<section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
  <h3 className="font-black">قرار توفر الخدمة وإرسال العرض للعميل</h3>
  <div className="mt-3 flex flex-wrap gap-4"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاح</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاح</label></div>
