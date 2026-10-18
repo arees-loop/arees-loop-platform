@@ -17,9 +17,21 @@ const permissions=[
  ["الطيران","معالجة طلبات الطيران المسندة للموظف ومتابعة عروض الأسعار."],
  ["البواخر","معالجة طلبات البواخر المسندة للموظف ومتابعة عروض الأسعار."],
  ["الفنادق","استلام ومعالجة طلبات الفنادق المسندة للموظف."],
- ["التأشيرات","معالجة طلبات التأشيرات المسندة للموظف ومتابعة عروض الأسعار."]
+ ["التأشيرات","معالجة طلبات التأشيرات المسندة للموظف ومتابعة عروض الأسعار."],
+ ["الرخص الدولية","متابعة طلبات الرخص الدولية المسندة للموظف."]
 ];
 
+const permissionGroups=[
+ {name:"إدارة الحجوزات والطلبات",codes:["TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS","TRANSPORT_VISAS","TRANSPORT_DRIVING_LICENSE","BOOKINGS"]},
+ {name:"إدارة المنصة",codes:["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS"]},
+ {name:"إعدادات المنصة",codes:["PLATFORM_SETTINGS"]},
+];
+const permissionCodesList=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS","TRANSPORT_VISAS","TRANSPORT_DRIVING_LICENSE"];
+function GroupedPermissions({value,onChange}:{value:string[];onChange:(v:string[])=>void}){
+ return <div className="space-y-3">{permissionGroups.map(group=><details key={group.name} className="rounded-2xl border border-[#D4AF37]/40 bg-[#FCFAF5]" open={group.name==="إدارة الحجوزات والطلبات"}>
+ <summary className="cursor-pointer px-4 py-4 text-sm font-black text-[#0D3B34]">{group.name} <span className="mr-2 text-xs font-normal">({group.codes.filter(c=>value.includes(c)).length}/{group.codes.length})</span></summary>
+ <div className="grid gap-2 border-t p-3 sm:grid-cols-2">{group.codes.map(code=>{const i=permissionCodesList.indexOf(code);const entry=permissions[i];return <label key={code} className="flex cursor-pointer gap-3 rounded-xl border bg-white p-3 text-xs"><input type="checkbox" checked={value.includes(code)} onChange={()=>onChange(value.includes(code)?value.filter(x=>x!==code):[...value,code])}/><span><b className="block">{entry?.[0]||code}</b><small className="mt-1 block text-black/55">{entry?.[1]}</small></span></label>})}</div></details>)}</div>
+}
 export default function AdminUsersPage(){
  const [open,setOpen]=useState(false);
  const [name,setName]=useState("");
@@ -34,7 +46,7 @@ export default function AdminUsersPage(){
  const [actionNotice,setActionNotice]=useState("");
  async function loadUsers(){try{const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json();if(r.ok&&d.success)setUsers(d.data||[]);}catch{}}
  useEffect(()=>{void loadUsers();},[]);
- const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS","TRANSPORT_VISAS"];
+ const permissionCodes=["PARTNER_REQUESTS","ACTIVE_PARTNERS","CONTENT_EXPERIENCES","BOOKINGS","PAYMENTS_SETTLEMENTS","REPORTS_ANALYTICS","PLATFORM_SETTINGS","TRANSPORT_FLIGHTS","TRANSPORT_FERRIES","HOTEL_REQUESTS","TRANSPORT_VISAS","TRANSPORT_DRIVING_LICENSE"];
  async function setUserStatus(userId:string,action:"ACTIVATE"|"DISABLE"){
   setActionNotice("");
   const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,action})});
@@ -99,7 +111,7 @@ export default function AdminUsersPage(){
        <span className="text-sm text-black/60">{user.email}</span>
        <span><i className="not-italic rounded-full border border-[#D5B65B]/30 bg-[#FBF5E6] px-3 py-1.5 text-[11px] font-extrabold text-[#8D6B16]">{user.role==="SUPER_ADMIN"?"Super Admin":"Admin"}</i></span>
        <span><i className={`inline-flex items-center gap-1.5 not-italic rounded-full px-3 py-1.5 text-[11px] font-bold ${active?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}`}><i className={`h-1.5 w-1.5 rounded-full ${active?"bg-emerald-500":"bg-amber-500"}`}></i>{active?"نشط":"تم إرسال الدعوة"}</i></span>
-       <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة").replace("TRANSPORT_FLIGHTS","الطيران").replace("TRANSPORT_FERRIES","البواخر").replace("HOTEL_REQUESTS","الفنادق")).join(" • "):perms+" صلاحيات"}</span>
+       <span className="text-xs font-medium text-black/45">{user.role==="SUPER_ADMIN"?"كامل الصلاحيات":Array.isArray(user.adminPermissions)?user.adminPermissions.map(String).map(x=>x.replace("PARTNER_REQUESTS","طلبات الشركاء").replace("ACTIVE_PARTNERS","الشركاء المعتمدين").replace("CONTENT_EXPERIENCES","المحتوى والتجارب").replace("BOOKINGS","الحجوزات").replace("PAYMENTS_SETTLEMENTS","المدفوعات والتسويات").replace("REPORTS_ANALYTICS","التقارير").replace("PLATFORM_SETTINGS","إعدادات المنصة").replace("TRANSPORT_FLIGHTS","الطيران").replace("TRANSPORT_FERRIES","البواخر").replace("HOTEL_REQUESTS","الفنادق").replace("TRANSPORT_VISAS","التأشيرات").replace("TRANSPORT_DRIVING_LICENSE","الرخص الدولية")).join(" • "):perms+" صلاحيات"}</span>
        <div className="relative">
         <button onClick={()=>setActionUserId(v=>v===user.id?null:user.id)} aria-expanded={actionUserId===user.id} aria-label="اتخاذ إجراء" title="اتخاذ إجراء" className="flex h-9 items-center justify-center gap-1 rounded-full border border-transparent px-3 text-xs font-extrabold text-[#0D4A40] transition-all hover:border-[#D5B65B]/45 hover:bg-white hover:shadow-[0_5px_18px_rgba(182,138,33,.22)]">•••<span className="hidden xl:inline">اتخاذ إجراء</span></button>
         {actionUserId===user.id&&<div className="absolute left-0 top-11 z-50 w-52 overflow-hidden rounded-2xl border border-[#D8C79D]/50 bg-white/95 p-1.5 text-right shadow-[0_18px_45px_rgba(50,40,20,.16)] backdrop-blur-xl">
@@ -129,13 +141,7 @@ export default function AdminUsersPage(){
       <h2 className="text-xl font-black">تعديل صلاحيات الموظف</h2>
       <p className="mt-2 text-sm text-black/55">حدد الأقسام المسموح للموظف الوصول إليها؛ طلبات الطيران والبواخر لها صلاحيتان منفصلتان.</p>
       <div className="mt-5 grid max-h-[55vh] gap-2 overflow-y-auto sm:grid-cols-2">
-        {permissions.map(([title,desc],i)=>{
-          const code=permissionCodes[i];
-          return <label key={code} className="flex cursor-pointer gap-3 rounded-xl border p-3 text-xs">
-            <input type="checkbox" checked={editPermissions.includes(code)} onChange={()=>setEditPermissions(prev=>prev.includes(code)?prev.filter(x=>x!==code):[...prev,code])} />
-            <span><b>{title}</b><small className="mt-1 block text-black/55">{desc}</small></span>
-          </label>;
-        })}
+        <GroupedPermissions value={editPermissions} onChange={setEditPermissions}/>
       </div>
       <div className="mt-6 flex gap-3">
         <button onClick={()=>void saveUserPermissions()} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white">حفظ الصلاحيات</button>
@@ -147,7 +153,7 @@ export default function AdminUsersPage(){
    <div onClick={e=>e.stopPropagation()} className="w-full max-w-2xl rounded-[24px] bg-white p-7 shadow-2xl">
     <div className="flex items-start justify-between"><div><h2 className="text-2xl font-bold">إضافة مستخدم إداري</h2><p className="mt-1 text-sm text-black/45">سيتم إرسال دعوة إلى البريد الإلكتروني لإنشاء كلمة المرور وتفعيل الحساب.</p></div><button onClick={()=>setOpen(false)} className="text-2xl text-black/40">×</button></div>
     <div className="mt-6 grid gap-4 sm:grid-cols-2"><label className="text-sm font-bold">الاسم<input className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 font-normal outline-none focus:border-[#B68A21]" placeholder="اسم الموظف" value={name} onChange={e=>setName(e.target.value)}/></label><label className="text-sm font-bold">البريد الإلكتروني<input type="email" className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 font-normal outline-none focus:border-[#B68A21]" placeholder="name@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></label></div>
-    <div className="mt-6"><p className="text-sm font-bold">الصلاحيات</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{permissions.map(([name,desc])=><label key={name} className="group flex cursor-pointer items-start gap-3 rounded-xl border border-black/10 bg-[#FCFAF5] px-4 py-3 transition-all duration-200 hover:border-[#B68A21] hover:bg-[#D7A928] hover:shadow-sm"><input type="checkbox" checked={selected.includes(permissionCodes[permissions.findIndex(p=>p[0]===name)])} onChange={()=>{const code=permissionCodes[permissions.findIndex(p=>p[0]===name)];setSelected(v=>v.includes(code)?v.filter(x=>x!==code):[...v,code])}} className="mt-1 accent-[#B68A21]"/><span><b className="block text-sm text-[#073F35]">{name}</b><small className="mt-1 block leading-5 text-black/50 group-hover:text-[#073F35]">{desc}</small></span></label>)}</div></div>
+    <div className="mt-6"><p className="text-sm font-bold">الصلاحيات</p><div className="mt-3 max-h-[45vh] overflow-y-auto"><GroupedPermissions value={selected} onChange={setSelected}/></div>
     {notice&&<p className={`mt-4 text-sm font-bold ${notice.includes("بنجاح")?"text-emerald-700":"text-red-600"}`}>{notice}</p>}<div className="mt-7 flex gap-3"><button onClick={sendInvite} disabled={sending} className="arees-primary-action rounded-xl border border-[#B68A21] !bg-[#C99A1B] px-7 py-3 text-sm font-extrabold !text-[#073F35] shadow-[0_6px_18px_rgba(182,138,33,.25)] transition hover:!bg-[#B68A21] disabled:opacity-50">{sending?"جاري الإرسال...":"إرسال الدعوة"}</button><button onClick={()=>setOpen(false)} className="rounded-xl border border-black/10 px-6 py-3 text-sm font-bold">إلغاء</button></div>
    </div>
   </div>}
