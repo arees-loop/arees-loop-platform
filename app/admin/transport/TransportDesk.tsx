@@ -325,20 +325,24 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
         <div className={"mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px]"}>
           <section className={selected?"hidden xl:block min-w-0":"min-w-0"}>
             <div className="mb-4 flex flex-wrap items-center gap-2"><span className="text-sm font-bold">تصفية الطلبات:</span><button type="button" onClick={()=>setRequestStatusFilter("ALL")} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter==="ALL"?"bg-[#0D3B34] text-white":"bg-white"}`}>الكل ({serviceRequests.length})</button>{requestStatuses.map(st=><button type="button" key={st} onClick={()=>setRequestStatusFilter(st)} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter===st?"bg-[#0D3B34] text-white":"bg-white"}`}>{st} ({serviceRequests.filter(q=>q.status===st).length})</button>)}<span className="text-xs text-[#0D3B34]/60">الأحدث أولاً</span></div>
-            <div className={"grid grid-cols-1 gap-2"}>
+            <div className="overflow-hidden rounded-xl border border-[#D4AF37]/25 bg-white">
             {filteredRequests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
             {filteredRequests.map(q=>(
-              <button key={q.id} onClick={()=>choose(q)} className={`min-w-0 rounded-[18px] border p-3 text-right transition hover:shadow-lg ${selected?.id===q.id?"border-[#D4AF37] bg-[#FFF9E7]":"border-[#D4AF37]/25 bg-white"}`}>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="font-black">{q.kind==="FERRY"?"⚓ باخرة":q.kind==="VISA"?"🛂 تأشيرة":q.kind==="DRIVING_LICENSE"?"🚘 رخصة دولية":"✈ طيران"} · {q.customerName}</span>
-                  <span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-xs font-bold">{q.status}</span>
+              <button key={q.id} type="button" onClick={()=>choose(q)} className={`w-full min-w-0 border-b border-[#0D3B34]/10 px-3 py-2.5 text-right transition-colors hover:bg-[#F7F4EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B99124] ${selected?.id===q.id?"bg-[#FFF9E7]":"bg-white"}`}>
+                <div className="flex min-h-[38px] items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F7F4EB] text-base" aria-hidden="true">{q.kind==="FERRY"?"⚓":q.kind==="VISA"?"🛂":q.kind==="DRIVING_LICENSE"?"🚘":"✈️"}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-[#0D3B34]">{q.customerName}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-[#0D3B34]/65"><span dir="ltr">{q.reference}</span> · {q.kind==="FERRY"?"بواخر":q.kind==="VISA"?"تأشيرات":q.kind==="DRIVING_LICENSE"?"رخصة دولية":"طيران"} · {statusNames[q.status]??q.status}</p>
+                  </div>
+                  <div className="shrink-0 text-left">
+                    <p className="text-sm font-bold text-[#0D3B34]">{q.quoteAmountSar===null?"—":`${Number(q.quoteAmountSar).toLocaleString("en-US")} ر.س`}</p>
+                    <p className="mt-0.5 text-[11px] text-[#0D3B34]/55">{day(q.createdAt)}</p>
+                  </div>
+                  {q.notificationStatus==="FAILED"&&<span title="تعذر تأكيد إشعار البريد الإداري" aria-label="إشعار البريد لم يؤكد" className="shrink-0 text-amber-700">⚠</span>}
                 </div>
-                <p className="mt-2 text-sm">{q.origin} ← {q.destination} · {day(q.travelDate)}</p>
-                <p className="mt-2 text-xs text-[#0D3B34]/70">{q.reference} · +{q.countryCode}{q.phone}</p>
-                {q.notificationStatus==="FAILED"&&<p className="mt-2 text-xs font-semibold text-amber-700">تنبيه: البريد الإداري لم يؤكد إرساله؛ الطلب محفوظ في القاعدة</p>}
               </button>
-            ))}
-            </div>
+            ))}            </div>
           </section>
           <section className={"min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6 xl:col-start-1 xl:row-start-1"}>
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
