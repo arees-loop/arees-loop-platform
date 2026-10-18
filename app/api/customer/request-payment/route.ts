@@ -1,3 +1,4 @@
+import {createHash} from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
 import {prisma} from "@/lib/prisma";
  import {getCurrentSession} from "@/lib/session";
@@ -5,28 +6,30 @@ export const runtime="nodejs";
 const PAYMENT_STATUSES=["PROCESSING","QUOTE_READY","QUOTE_SENT"] as const;
 const canPay=(status:string)=>PAYMENT_STATUSES.some(value=>value===status);
 const bad=(message:string,status=400)=>NextResponse.json({success:false,message},{status});
+const claimHash=(token:unknown)=>typeof token==="string"&&/^[A-Za-z0-9_-]{43}$/.test(token)?createHash("sha256").update(token).digest("hex"):null;
+const requestWhere=(reference:string,userId:string|undefined,hash:string|null)=>({reference,OR:[...(userId?[{userId}]:[]),...(hash?[{trackingTokenHash:hash}]:[])]});
 export async function GET(req:NextRequest){
- const session=await getCurrentSession();if(!session)return bad("سجل الدخول",401);
+ const session=await getCurrentSession();
  const reference=req.nextUrl.searchParams.get("reference")||"";
- const staff=["ADMIN","SUPER_ADMIN"].includes(session.user.role);
- const request=await prisma.transportRequest.findFirst({where:{reference,...(staff?{}:{userId:session.user.id})},select:{id:true,status:true,quoteAmountSar:true,assignedToId:true}});
+ const staff=!!session&&["ADMIN","SUPER_ADMIN"].includes(session.user.role);
+ const request=await prisma.transportRequest.findFirst({where:staff?{reference}:requestWhere(reference,session?.user.id,claimHash(req.headers.get("x-request-claim-token"))),select:{id:true,status:true,quoteAmountSar:true,assignedToId:true}});
  if(!request)return bad("الطلب غير موجود",404);
- if(staff&&session.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session.user.id)return bad("غير مصرح",403);
+ if(staff&&session!.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session!.user.id)return bad("غير مصرح",403);
  const events=await prisma.transportRequestEvent.findMany({where:{requestId:request.id,action:{in:["CUSTOMER_OFFER_ACCEPTED","CUSTOMER_TRANSFER_SUBMITTED","ADMIN_PAYMENT_VERIFIED","ADMIN_PAYMENT_REJECTED"]}},orderBy:{createdAt:"desc"},select:{action:true,createdAt:true,details:true}});
  const accepted=events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED");
  const banks=(!staff&&accepted)?await prisma.bankTransferAccount.findMany({where:{active:true},orderBy:{createdAt:"desc"},select:{id:true,bankName:true,beneficiaryName:true,iban:true,note:true}}).catch(()=>[]):[];
  return NextResponse.json({success:true,events,banks,bank:banks[0]||null,amountSar:accepted?Number(request.quoteAmountSar):null,canAccept:!staff&&canPay(request.status)&&request.quoteAmountSar!==null&&!events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED")},{headers:{"Cache-Control":"private, no-store"}});
 }
 export async function POST(req:NextRequest){
- const session=await getCurrentSession();if(!session)return bad("سجل الدخول",401);
+ const session=await getCurrentSession();
  const body=await req.json().catch(()=>null);
  const reference=typeof body?.reference==="string"?body.reference:"";
  const action=typeof body?.action==="string"?body.action:"";
  if(!["ACCEPT_OFFER","SUBMIT_TRANSFER","VERIFY_TRANSFER","REJECT_TRANSFER"].includes(action))return bad("إجراء غير معروف");
- const staff=["ADMIN","SUPER_ADMIN"].includes(session.user.role);
- const request=await prisma.transportRequest.findFirst({where:{reference,...(staff?{}:{userId:session.user.id})},select:{id:true,status:true,quoteAmountSar:true,assignedToId:true}});
+ const staff=!!session&&["ADMIN","SUPER_ADMIN"].includes(session.user.role);
+ const request=await prisma.transportRequest.findFirst({where:staff?{reference}:requestWhere(reference,session?.user.id,claimHash(body?.claimToken)),select:{id:true,status:true,quoteAmountSar:true,assignedToId:true}});
  if(!request)return bad("الطلب غير موجود",404);
- if(staff&&session.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session.user.id)return bad("غير مصرح",403);
+ if(staff&&session!.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session!.user.id)return bad("غير مصرح",403);
  if((action==="ACCEPT_OFFER"||action==="SUBMIT_TRANSFER")&&staff)return bad("هذا الإجراء للعميل",403);
  if((action==="VERIFY_TRANSFER"||action==="REJECT_TRANSFER")&&!staff)return bad("هذا الإجراء للإدارة",403);
  if(!canPay(request.status)||request.quoteAmountSar===null)return bad("الطلب ليس في مرحلة السداد",409);
@@ -70,7 +73,7 @@ export async function POST(req:NextRequest){
   if(action!=="ACCEPT_OFFER"&&!hasAccepted)throw new Error("STALE_REQUEST");
   if(action==="SUBMIT_TRANSFER"&&["CUSTOMER_TRANSFER_SUBMITTED","ADMIN_PAYMENT_VERIFIED"].includes(lastPayment||""))throw new Error("DUPLICATE_ACTION");
   if(["VERIFY_TRANSFER","REJECT_TRANSFER"].includes(action)&&lastPayment!=="CUSTOMER_TRANSFER_SUBMITTED")throw new Error("STALE_REQUEST");
-  const event=await tx.transportRequestEvent.create({data:{requestId:request.id,actorId:session.user.id,actorName:staff?"الإدارة":"العميل",action:names[action],fromStatus:fresh.status,toStatus:action==="VERIFY_TRANSFER"?"PAID":fresh.status,details}});
+  const event=await tx.transportRequestEvent.create({data:{requestId:request.id,actorId:session?.user.id??null,actorName:staff?"الإدارة":"العميل",action:names[action],fromStatus:fresh.status,toStatus:action==="VERIFY_TRANSFER"?"PAID":fresh.status,details}});
   if(action==="VERIFY_TRANSFER")await tx.transportRequest.update({where:{id:request.id},data:{status:"PAID"}});
   return event;
  }).catch((error:unknown)=>{if(error instanceof Error&&["STALE_REQUEST","DUPLICATE_ACTION"].includes(error.message))return null;throw error;});
