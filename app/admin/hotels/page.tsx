@@ -196,7 +196,7 @@ export default function HotelAdminPage(){
            <textarea rows={3} maxLength={2500} className={field+" mt-2"} value={reply} onChange={e=>setReply(e.target.value)}/>
          </label>
          <button type="button" disabled={busy||!reply.trim()} onClick={()=>void action("REPLY",{customerReply:reply})} className="mt-2 rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-bold text-white disabled:opacity-40">نشر رد العميل</button>
-         <div className="mt-5 grid gap-3 sm:grid-cols-2">
+         <details className="mt-5 rounded-xl border border-[#D4AF37]/35 bg-[#FFFAED]"><summary className="cursor-pointer px-4 py-3 text-sm font-black">▤ عرض سعر الفندق — اضغط لفتح التفاصيل</summary><div className="px-4 pb-4">         <div className="mt-5 grid gap-3 sm:grid-cols-2">
            <label className="text-xs font-bold">إجمالي العرض بالريال
              <input className={field+" mt-2"} type="number" min="0" step=".01" value={amount} onChange={e=>setAmount(e.target.value)}/>
            </label>
@@ -205,6 +205,7 @@ export default function HotelAdminPage(){
            </label>
            <button type="button" disabled={busy||!amount} onClick={()=>void action("QUOTE",{quoteAmountSar:amount,quoteNotes})} className="rounded-xl border border-[#D4AF37] bg-[#FFF8DE] px-5 py-3 text-sm font-bold disabled:opacity-40">حفظ عرض الفندق</button>
          </div>
+</div></details>
          <div className="mt-6 flex flex-wrap gap-2">
            {(next[selected.status]||[]).filter(v=>v!=="CANCELED").map(v=><button key={v} disabled={busy} onClick={()=>void action("STATUS",{status:v})} className="rounded-xl border border-[#D4AF37] px-4 py-2.5 text-xs font-bold disabled:opacity-40">{stages[v]}</button>)}
          </div>
