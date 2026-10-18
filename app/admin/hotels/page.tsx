@@ -178,7 +178,8 @@ export default function HotelAdminPage(){
      <section className={`rounded-[24px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm ${!selected?"hidden":""}`}>
        {selected&&<button type="button" onClick={()=>setSelected(null)} className="mb-5 rounded-full border border-[#D4AF37]/60 px-5 py-2 text-sm font-bold">→ العودة إلى جميع طلبات الفنادق</button>}
        {!selected?<p className="text-sm">اختر طلباً لمراجعة التفاصيل والرد عليه.</p>:<>
-         <h2 className="text-xl font-black">{selected.reference}</h2>
+         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">{selected.customerName} · {selected.reference}</h2><span className="rounded-full bg-[#E8F2EC] px-4 py-2 text-xs font-black">{stages[selected.status]||selected.status}</span><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يسعّر بعد":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
+         <a target="_blank" rel="noopener noreferrer" href={`https://wa.me/${(selected.countryCode+selected.phone).replace(/\\D/g,"")}?text=${encodeURIComponent(`السلام عليكم ${selected.customerName}، بخصوص طلبك رقم ${selected.reference} لخدمة الفنادق لدى أريس لوب. نتابع معك تفاصيل طلبك.`)}`} className="mt-4 inline-flex rounded-xl bg-[#147D55] px-5 py-3 text-sm font-black text-white">واتساب العميل مباشرة ↗</a>
          <p className="mt-3 text-sm leading-7">{selected.customerName} · {selected.destination} · {selected.hotelName||"فندق حسب الطلب"}</p>
          <p className="mt-1 text-sm leading-7">دخول {day(selected.checkInDate)} · خروج {day(selected.checkOutDate)}</p>
          <p className="mt-1 text-sm">الغرف: {selected.rooms} · البالغون: {selected.adults} · الأطفال: {selected.children}</p>
