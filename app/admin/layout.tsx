@@ -23,8 +23,8 @@ const requestsNav: NavItem[] = [
   { href: "/admin/transport/flights", label: "الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
   { href: "/admin/transport/ferries", label: "البواخر", icon: "⚓", permission: "TRANSPORT_FERRIES" },
   { href: "/admin/hotels", label: "الفنادق", icon: "▤", permission: "HOTEL_REQUESTS" },
-  { href: "/admin/transport/visas", label: "التأشيرات", icon: "🛂", superOnly: true, permission: null },
-  { href: "/admin/transport/driving-licenses", label: "الرخص الدولية", icon: "🚘", superOnly: true, permission: null },
+  { href: "/admin/transport/visas", label: "التأشيرات", icon: "🛂", permission: "TRANSPORT_VISAS" },
+  { href: "/admin/transport/driving-licenses", label: "الرخص الدولية", icon: "🚘", permission: "TRANSPORT_DRIVING_LICENSE" },
   { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
 ];
 const platformNav: NavItem[] = [
