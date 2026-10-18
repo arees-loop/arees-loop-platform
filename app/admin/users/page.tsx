@@ -140,7 +140,7 @@ export default function AdminUsersPage(){
     <section dir="rtl" onClick={e=>e.stopPropagation()} className="w-full max-w-xl rounded-3xl bg-white p-7 shadow-2xl">
       <h2 className="text-xl font-black">تعديل صلاحيات الموظف</h2>
       <p className="mt-2 text-sm text-black/55">حدد الأقسام المسموح للموظف الوصول إليها؛ طلبات الطيران والبواخر لها صلاحيتان منفصلتان.</p>
-      <div className="mt-5 grid max-h-[55vh] gap-2 overflow-y-auto sm:grid-cols-2">
+      <div className="mt-5 max-h-[55vh] overflow-y-auto">
         <GroupedPermissions value={editPermissions} onChange={setEditPermissions}/>
       </div>
       <div className="mt-6 flex gap-3">
@@ -153,7 +153,7 @@ export default function AdminUsersPage(){
    <div onClick={e=>e.stopPropagation()} className="w-full max-w-2xl rounded-[24px] bg-white p-7 shadow-2xl">
     <div className="flex items-start justify-between"><div><h2 className="text-2xl font-bold">إضافة مستخدم إداري</h2><p className="mt-1 text-sm text-black/45">سيتم إرسال دعوة إلى البريد الإلكتروني لإنشاء كلمة المرور وتفعيل الحساب.</p></div><button onClick={()=>setOpen(false)} className="text-2xl text-black/40">×</button></div>
     <div className="mt-6 grid gap-4 sm:grid-cols-2"><label className="text-sm font-bold">الاسم<input className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 font-normal outline-none focus:border-[#B68A21]" placeholder="اسم الموظف" value={name} onChange={e=>setName(e.target.value)}/></label><label className="text-sm font-bold">البريد الإلكتروني<input type="email" className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 font-normal outline-none focus:border-[#B68A21]" placeholder="name@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></label></div>
-    <div className="mt-6"><p className="text-sm font-bold">الصلاحيات</p><div className="mt-3 max-h-[45vh] overflow-y-auto"><GroupedPermissions value={selected} onChange={setSelected}/></div>
+    <div className="mt-6"><p className="text-sm font-bold">الصلاحيات</p><div className="mt-3 max-h-[45vh] overflow-y-auto"><GroupedPermissions value={selected} onChange={setSelected}/></div></div>
     {notice&&<p className={`mt-4 text-sm font-bold ${notice.includes("بنجاح")?"text-emerald-700":"text-red-600"}`}>{notice}</p>}<div className="mt-7 flex gap-3"><button onClick={sendInvite} disabled={sending} className="arees-primary-action rounded-xl border border-[#B68A21] !bg-[#C99A1B] px-7 py-3 text-sm font-extrabold !text-[#073F35] shadow-[0_6px_18px_rgba(182,138,33,.25)] transition hover:!bg-[#B68A21] disabled:opacity-50">{sending?"جاري الإرسال...":"إرسال الدعوة"}</button><button onClick={()=>setOpen(false)} className="rounded-xl border border-black/10 px-6 py-3 text-sm font-bold">إلغاء</button></div>
    </div>
   </div>}
