@@ -186,12 +186,12 @@ export default function HotelAdminPage(){
          <p className="mt-1 text-sm">الغرف: {selected.rooms} · البالغون: {selected.adults} · الأطفال: {selected.children}</p>
          <p className="mt-1 text-sm" dir="ltr">+{selected.countryCode}{selected.phone}</p>
          {selected.notes&&<p className="mt-3 rounded-xl bg-[#F7F4EC] p-4 text-sm leading-7">ملاحظات العميل: {selected.notes}</p>}
-         {admin&&<label className="mt-5 block text-sm font-bold">إسناد الطلب
+         {admin&&<details className="mt-4 rounded-xl border border-[#D4AF37]/35 p-3"><summary className="cursor-pointer text-sm font-bold">إسناد الطلب للموظف</summary><label className="mt-3 block text-sm font-bold">إسناد الطلب
            <select className={field+" mt-2"} value={selected.assignedToId||""} onChange={e=>void action("ASSIGN",{assignedToId:e.target.value})} disabled={busy}>
              <option value="">غير مسند</option>
              {staff.map(s=><option key={s.id} value={s.id}>{[s.firstName,s.lastName].filter(Boolean).join(" ")||s.email}</option>)}
            </select>
-         </label>}
+         </label></details>}
          <label className="mt-5 block text-sm font-bold">رد أريس الذي سيظهر للعميل في «طلباتي»
            <textarea rows={3} maxLength={2500} className={field+" mt-2"} value={reply} onChange={e=>setReply(e.target.value)}/>
          </label>
@@ -209,10 +209,10 @@ export default function HotelAdminPage(){
          <div className="mt-6 flex flex-wrap gap-2">
            {(next[selected.status]||[]).filter(v=>v!=="CANCELED").map(v=><button key={v} disabled={busy} onClick={()=>void action("STATUS",{status:v})} className="rounded-xl border border-[#D4AF37] px-4 py-2.5 text-xs font-bold disabled:opacity-40">{stages[v]}</button>)}
          </div>
-         {(next[selected.status]||[]).includes("CANCELED")&&<div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
+         {(next[selected.status]||[]).includes("CANCELED")&&<details className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4"><summary className="cursor-pointer text-sm font-bold text-red-800">إلغاء الطلب</summary><div className="mt-3">
            <label className="text-xs font-bold">سبب الإلغاء<input className={field+" mt-2"} maxLength={1500} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/></label>
            <button disabled={busy||cancelReason.trim().length<5} onClick={()=>void action("STATUS",{status:"CANCELED",reason:cancelReason})} className="mt-3 rounded-xl bg-red-700 px-5 py-3 text-xs font-bold text-white disabled:opacity-40">إلغاء الطلب</button>
-         </div>}
+         </div></details>}
          <section className="mt-6 border-t border-[#D4AF37]/35 pt-4">
            <h3 className="font-black">سجل إجراءات الموظفين</h3>
            {events.length===0?<p className="mt-3 text-xs text-[#0D3B34]/60">لا توجد أحداث محفوظة بعد.</p>:
