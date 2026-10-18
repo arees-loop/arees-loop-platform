@@ -392,8 +392,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <textarea maxLength={2500} rows={3} className={field+" mt-3"} value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="اكتب رد أريس على العميل..."/>
                   <button type="button" onClick={()=>void publishReply()} disabled={busy||replyDraft.trim().length<1} className="mt-3 rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-black text-white disabled:opacity-40">نشر الرد للعميل</button>
                 </section>
-                <section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4">
-                  <h3 className="text-base font-black">الإسناد وسير العمل</h3>
+                <details className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4"><summary className="cursor-pointer text-sm font-black">⚙️ حالة الطلب والإسناد · {statusNames[selected.status]||selected.status} · {staffName(selected.assignedToId)}</summary><div className="mt-3">
+                  
                   <p className="mt-2 text-sm">الموظف المسؤول: <b>{staffName(selected.assignedToId)}</b></p>
                   {showSuper&&<div className="mt-3 flex flex-wrap gap-2">
                     <select aria-label="إسناد الطلب لموظف" className={field+" min-w-0 flex-1"} value={selected.assignedToId||""} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})} disabled={busy}>
@@ -409,7 +409,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                         {statusNames[next]}
                       </button>)}
                   </div>
-                  {(transitions[selected.status]||[]).includes("CANCELED")&&<div className="mt-4 grid gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
+                  {(transitions[selected.status]||[]).includes("CANCELED")&&<details className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3"><summary className="cursor-pointer font-bold text-red-800">إلغاء الطلب</summary><div className="mt-3 grid gap-3">
                     <label className={label}>جهة الإلغاء
                       <select className={field} value={cancelBy} onChange={e=>setCancelBy(e.target.value)}>
                         <option value="STAFF">الموظف</option><option value="PARTNER">الشريك / مقدم الخدمة</option><option value="CUSTOMER">العميل</option>
@@ -419,9 +419,9 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                       <textarea className={field} minLength={5} maxLength={1500} rows={2} value={cancelReason} onChange={e=>setCancelReason(e.target.value)} placeholder="وضح سبب الإلغاء مع التفاصيل..."/>
                     </label>
                     <button type="button" disabled={busy||cancelReason.trim().length<5} onClick={()=>void performAction("SET_STATUS",{status:"CANCELED",canceledBy:cancelBy,cancellationReason:cancelReason})} className="rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40">تأكيد إلغاء الطلب</button>
-                  </div>}
+                  </div></details>}
                   {selected.cancellationReason&&<p className="mt-3 whitespace-pre-wrap text-sm text-red-700">سبب الإلغاء: {selected.cancellationReason}</p>}
-                </section>
+                </div></details>
                 <details className="mt-5 overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-white" open={false}><summary className="cursor-pointer select-none bg-[#F9F6EC] px-4 py-4 text-sm font-black text-[#0D3B34]">▤ إعداد عرض السعر وملف PDF والتواصل مع العميل <span className="mr-2 text-xs font-normal text-[#0D3B34]/60">اضغط لعرض التفاصيل</span></summary><div className="p-4">
                 <form onSubmit={saveQuote} className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2 rounded-xl border border-[#D4AF37]/35 bg-[#F9F6EC] px-4 py-3 text-sm font-bold">حالة الطلب الحالية: {statusNames[selected.status]||selected.status}</div>
