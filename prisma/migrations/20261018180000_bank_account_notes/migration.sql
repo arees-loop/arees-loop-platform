@@ -1,0 +1,1 @@
+ALTER TABLE "BankTransferAccount" ADD COLUMN "note" TEXT NOT NULL DEFAULT '';
