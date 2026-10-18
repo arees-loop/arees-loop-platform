@@ -168,11 +168,12 @@ export default function HotelAdminPage(){
    {tab==="requests"&&<div className="mt-7 space-y-5">
      <section className={`space-y-3 ${selected?"hidden":""}`}>
        {rows.length===0&&!loading&&<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات فنادق بعد.</p>}
-       {rows.map(item=><button key={item.id} onClick={()=>choose(item)} className={`w-full rounded-2xl border p-5 text-right ${selected?.id===item.id?"border-[#B88A30] bg-[#FFF8E8]":"border-[#D4AF37]/30 bg-white"}`}>
-         <div className="flex items-start justify-between"><b>{item.customerName}</b><span className="rounded-full bg-[#EEF3ED] px-3 py-1 text-xs">{stages[item.status]||item.status}</span></div>
-         <p className="mt-2 text-sm">{item.destination} · {item.hotelName||"لم يحدد الفندق"}</p>
-         <p className="mt-2 text-xs text-[#0D3B34]/65">{item.reference} · {day(item.checkInDate)} → {day(item.checkOutDate)}</p>
-         {item.notificationStatus==="FAILED"&&<p className="mt-2 text-xs text-amber-800">الطلب محفوظ لكن تعذر إرسال بريد التنبيه.</p>}
+       {rows.map(item=><button key={item.id} onClick={()=>choose(item)} className="grid w-full min-w-0 grid-cols-1 items-center gap-2 rounded-xl border border-[#D4AF37]/25 bg-white px-4 py-3 text-right transition hover:border-[#D4AF37] hover:shadow-md sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,.8fr)_minmax(0,.7fr)]">
+         <div className="min-w-0"><p className="truncate text-sm font-black">{item.customerName}</p><p className="mt-1 truncate text-[11px] text-[#0D3B34]/60">{item.reference} · فندق</p></div>
+         <div className="min-w-0 text-xs"><p className="truncate">{item.destination} · {item.hotelName||"لم يحدد الفندق"}</p><p className="mt-1 text-[#0D3B34]/60">دخول {day(item.checkInDate)} · خروج {day(item.checkOutDate)}</p></div>
+         <div className="text-xs font-bold">{item.quoteAmountSar==null?"لم يسعّر بعد":Number(item.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</div>
+         <div className="flex items-center justify-between gap-2 sm:justify-end"><span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-[11px] font-bold">{stages[item.status]||item.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
+         {item.notificationStatus==="FAILED"&&<p className="text-xs text-amber-800 sm:col-span-4">الطلب محفوظ لكن تعذر إرسال بريد التنبيه.</p>}
        </button>)}
      </section>
      <section className={`rounded-[24px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm ${!selected?"hidden":""}`}>
