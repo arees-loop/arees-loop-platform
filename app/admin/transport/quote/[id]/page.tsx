@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -22,9 +21,9 @@ export default async function QuotePage({params}:Props) {
   });
   if(!item)notFound();
   if(session.user.role!=="SUPER_ADMIN" &&
-    (item.assignedToId!==session.user.id || !canManageTransport(session.user,item.kind==="FERRY"?"FERRY":"FLIGHT")))notFound();
-  const kind=item.kind==="FERRY"?"باخرة":"طيران";
-  const hasQuote=item.carrierName&&item.quoteAmountSar!==null;
+    (item.assignedToId!==session.user.id || !canManageTransport(session.user,item.kind)))notFound();
+  const kind=item.kind==="FERRY"?"باخرة":item.kind==="VISA"?"تأشيرة":item.kind==="DRIVING_LICENSE"?"رخصة قيادة دولية":"طيران";
+  const hasQuote=item.quoteAmountSar!==null;
   return (
     <main dir="rtl" className="mx-auto max-w-[920px] bg-[#F7F4EC] px-4 pb-20 pt-8 text-[#0D3B34] print:m-0 print:max-w-none print:bg-white print:p-0">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
@@ -32,15 +31,25 @@ export default async function QuotePage({params}:Props) {
         <QuotePrintButton disabled={!hasQuote}/>
       </div>
       <article className="overflow-hidden rounded-[26px] border border-[#D4AF37]/45 bg-white shadow-xl print:rounded-none print:border-0 print:shadow-none">
-        <div className="flex flex-wrap items-center justify-between gap-5 bg-[#0D3B34] px-8 py-7 text-white print:bg-white print:text-[#0D3B34]">
-          <div>
-            <p className="text-xs font-black tracking-[.14em] text-[#E4C577]">AREES · TRAVEL SERVICES</p>
-            <h1 className="mt-2 text-3xl font-black">عرض سعر {kind}</h1>
-            <p className="mt-2 text-xs text-white/80 print:text-[#0D3B34]">شركة أريس الحلول المتكاملة المحدودة للسفر والسياحة</p>
-            <p className="mt-1 text-xs text-white/75 print:text-[#0D3B34]">السجل التجاري: 7037003618</p>
+        <header className="border-b-4 border-[#B38A25] bg-white px-8 py-7 text-[#0D3B34]">
+          <div className="flex flex-wrap items-start justify-between gap-5">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl font-black">شركة أريس الحلول المتكاملة المحدودة</h1>
+              <p dir="ltr" className="mt-1 text-left text-sm font-bold">AREES AL-HELLOUL AL-MUTAKAMLA CO.LTD</p>
+              <p className="mt-3 text-sm font-black text-[#947022]">ترخيص وزارة السياحة: 73104550 · وكيل سفر وسياحة</p>
+              <p dir="ltr" className="mt-1 text-left text-xs font-bold">Ministry of Tourism License: 73104550 · Travel and tourism agent</p>
+            </div>
+            <div className="rounded-xl border border-[#D4AF37]/40 bg-[#FFFAED] px-5 py-4 text-center"><p className="text-xl font-black">أريس</p><p className="text-xs">AREES</p><p className="mt-2 text-[10px] text-[#947022]">الهوية القانونية للشركة</p></div>
           </div>
-          <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={170} height={90} unoptimized className="h-auto w-[128px] rounded-xl bg-white p-2"/>
-        </div>
+          <div className="mt-5 grid gap-2 border-t border-[#D4AF37]/30 pt-4 text-xs sm:grid-cols-2 print:grid-cols-2">
+            <p>الرقم الوطني الموحد / Unified National Number: <b dir="ltr">7037003618</b></p>
+            <p>السجل التجاري / C.R. No.: <b dir="ltr">4650264140</b></p>
+            <p>الرقم الضريبي / VAT No.: <b dir="ltr">311897578200003</b></p>
+            <p>الهاتف / Phone: <b dir="ltr">+9660148390473</b></p>
+            <p className="sm:col-span-2">المدينة المنورة - حي قربان · المملكة العربية السعودية / Medina - Qurban District, Saudi Arabia</p>
+          </div>
+          <div className="mt-5 rounded-xl bg-[#0D3B34] px-5 py-4 text-white"><h2 className="text-xl font-black">عرض سعر ${kind} / Quotation</h2><p className="mt-1 text-xs text-white/80">هذا المستند عرض سعر وليس فاتورة ضريبية / This is a quotation, not a tax invoice</p></div>
+        </header>
         <div className="px-8 py-7">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D4AF37]/30 pb-5 text-sm">
             <div><span className="font-bold">رقم المرجع:</span> <span dir="ltr">{item.reference}</span></div>
@@ -71,6 +80,7 @@ export default async function QuotePage({params}:Props) {
             <div><p className="text-sm font-bold">إجمالي عرض السعر</p><p className="mt-2 text-xs text-[#0D3B34]/65">بالريال السعودي — {item.adults + item.children + item.infants} مسافرين</p></div>
             <p className="text-3xl font-black text-[#947022]">{hasQuote?Number(item.quoteAmountSar).toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2}):"—"} ر.س</p>
           </div>
+          <section className="mt-4 rounded-xl border border-[#D4AF37]/35 p-4 text-xs leading-7"><p className="font-bold">تفاصيل الرسوم والضريبة / Service fees & VAT</p><p>الإجمالي أعلاه هو المبلغ المعروض للعميل. لا توجد حالياً في سجل هذا الطلب بيانات منفصلة وموثقة لرسوم الخدمة والضريبة؛ لذلك لا يتم اختلاق تقسيم مالي أو افتراض أن الضريبة صفر.</p><p className="font-bold text-amber-800">يجب استكمال رسوم الخدمة والضريبة المنطبقة قبل اعتماد هذا العرض كمستند مالي تفصيلي أو إصدار فاتورة ضريبية.</p></section>
           {item.quoteNotes && <section className="mt-7"><h2 className="font-black">ملاحظات العرض والتشغيل</h2><p className="mt-2 whitespace-pre-wrap rounded-xl bg-[#F5F6F2] p-5 text-sm leading-8">{item.quoteNotes}</p></section>}
           <section className="mt-7 border-t border-[#D4AF37]/30 pt-6">
             <h2 className="font-black">الشروط والضوابط</h2>
