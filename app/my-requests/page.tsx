@@ -46,10 +46,7 @@ function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;fea
       <p className="mt-1 whitespace-pre-wrap text-xs leading-7">{item.customerReply}</p>
     </div>}
     {item.quoteAmountSar!==null&&<div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#FFF9E8] px-3 py-3"><span className="text-sm font-bold">عرض السعر</span><strong className="text-lg text-[#99731E]">{money(item.quoteAmountSar)}</strong></div>}
-    {item.quoteAmountSar!==null&&item.kind!=="HOTEL"&&["PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(item.status)&&<RequestPayment reference={item.reference}/>}
-    <button type="button" onClick={onToggle} aria-expanded={expanded} className="mt-3 rounded-lg border border-[#D4AF37]/40 bg-[#F8F5EC] px-4 py-2 text-xs font-bold">
-      {expanded?"إخفاء التفاصيل":"عرض تفاصيل الطلب"}
-    </button>
+    {expanded&&item.quoteAmountSar!==null&&item.kind!=="HOTEL"&&["PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(item.status)&&<RequestPayment reference={item.reference}/>}
     {expanded&&<div className="mt-4 space-y-2 border-t border-[#D4AF37]/25 pt-4 text-xs leading-7">
       <p>تاريخ إرسال الطلب: {labelDate(item.createdAt)}</p>
       <p>آخر تحديث: {labelDate(item.updatedAt)}</p>
