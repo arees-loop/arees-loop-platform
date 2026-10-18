@@ -48,7 +48,7 @@ export default async function QuotePage({params}:Props) {
             <p>الهاتف / Phone: <b dir="ltr">+9660148390473</b></p>
             <p className="sm:col-span-2">المدينة المنورة - حي قربان · المملكة العربية السعودية / Medina - Qurban District, Saudi Arabia</p>
           </div>
-          <div className="mt-5 rounded-xl bg-[#0D3B34] px-5 py-4 text-white"><h2 className="text-xl font-black">عرض سعر ${kind} / Quotation</h2><p className="mt-1 text-xs text-white/80">هذا المستند عرض سعر وليس فاتورة ضريبية / This is a quotation, not a tax invoice</p></div>
+          <div className="mt-5 rounded-xl bg-[#0D3B34] px-5 py-4 text-white"><h2 className="text-xl font-black">عرض سعر {kind} / Quotation</h2><p className="mt-1 text-xs text-white/80">هذا المستند عرض سعر وليس فاتورة ضريبية / This is a quotation, not a tax invoice</p></div>
         </header>
         <div className="px-8 py-7">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D4AF37]/30 pb-5 text-sm">
