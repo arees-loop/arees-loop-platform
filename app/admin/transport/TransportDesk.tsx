@@ -342,6 +342,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <>
                 {<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
                 <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">طلب {selected.reference}</h2><span className="rounded-full bg-[#E8F2EC] px-4 py-2 text-xs font-black text-[#0D3B34]">{statusNames[selected.status]||selected.status}</span><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يتم التسعير":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
+                <a href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(`السلام عليكم ${selected.customerName}، بخصوص طلبك رقم ${selected.reference} لخدمة ${selected.kind==="FLIGHT"?"الطيران":selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":"الرخصة الدولية"} لدى أريس لوب. نتابع معك تفاصيل طلبك.`)}`} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-[#147D55] px-5 py-3 text-sm font-black text-white">واتساب العميل مباشرة ↗</a>
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F7F4EB] p-4 text-sm">
                   <p>الاسم: <b>{selected.customerName}</b></p>
                   <p>التواصل: <b dir="ltr">+{selected.countryCode}{selected.phone}</b></p>
@@ -359,8 +360,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   })}
                 </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
-                <AdminRequestAttachments reference={selected.reference}/>
-                <AdminPaymentReview reference={selected.reference}/>
+                <details className="mt-4 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">📎 المرفقات وطلب مستندات إضافية</summary><AdminRequestAttachments reference={selected.reference}/></details>
+                <details className="mt-4 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference}/></details>
                 {initialOfferKind!=="VISA"&&<section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
  <h3 className="font-black">قرار توفر الخدمة وإرسال العرض للعميل</h3>
  <div className="mt-3 flex flex-wrap gap-4"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاح</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاح</label></div>
