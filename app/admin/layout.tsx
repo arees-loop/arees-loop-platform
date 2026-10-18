@@ -28,7 +28,7 @@ const requestsNav: NavItem[] = [
   { href: "/admin/transport/driving-licenses", label: "الرخص الدولية", icon: "🚘", permission: "TRANSPORT_DRIVING_LICENSE" },
 ];
 const bookingsNav: NavItem[] = [
-  { href: "/admin/dashboard?section=bookings", label: "حجوزات تجارب الشركاء", icon: "▦", permission: "BOOKINGS" },
+  { href: "/admin/bookings", label: "حجوزات تجارب الشركاء", icon: "▦", permission: "BOOKINGS" },
 ];
 const partnersNav: NavItem[] = [
   { href: "/admin/partners", label: "طلبات انضمام الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
@@ -72,7 +72,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     if (requestsNav.some((item) => pathname === item.href.split("?")[0])) setRequestsMenuOpen(true);
     if(pathname==="/admin/partners")setPartnersMenuOpen(true);
     if(pathname.startsWith("/admin/settings"))setPlatformMenuOpen(true);
-    if(pathname==="/admin/dashboard"&&searchParams.get("section")==="bookings")setBookingsMenuOpen(true);
+    if(pathname==="/admin/bookings")setBookingsMenuOpen(true);
     if(pathname==="/admin/dashboard"&&["settlements","reports"].includes(searchParams.get("section")||""))setFinanceMenuOpen(true);
   }, [pathname]);
 
