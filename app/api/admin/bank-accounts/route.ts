@@ -25,7 +25,6 @@ export async function PATCH(req:NextRequest){
  const existing=await prisma.bankTransferAccount.findUnique({where:{id}});
  if(!existing)return fail("الحساب غير موجود",404);
  await prisma.$transaction(async tx=>{
-  if(data?.active===true)await tx.bankTransferAccount.updateMany({where:{active:true},data:{active:false}});
   await tx.bankTransferAccount.update({where:{id},data:{active:data?.active===true}});
  });
  return NextResponse.json({success:true});
