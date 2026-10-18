@@ -341,7 +341,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
               <>
                 {<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
-                <h2 className="text-xl font-black">طلب {selected.reference}</h2>
+                <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">طلب {selected.reference}</h2><span className="rounded-full bg-[#E8F2EC] px-4 py-2 text-xs font-black text-[#0D3B34]">{statusNames[selected.status]||selected.status}</span><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يتم التسعير":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F7F4EB] p-4 text-sm">
                   <p>الاسم: <b>{selected.customerName}</b></p>
                   <p>التواصل: <b dir="ltr">+{selected.countryCode}{selected.phone}</b></p>
@@ -421,6 +421,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   </div>}
                   {selected.cancellationReason&&<p className="mt-3 whitespace-pre-wrap text-sm text-red-700">سبب الإلغاء: {selected.cancellationReason}</p>}
                 </section>
+                <details className="mt-5 overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-white" open={false}><summary className="cursor-pointer select-none bg-[#F9F6EC] px-4 py-4 text-sm font-black text-[#0D3B34]">▤ إعداد عرض السعر وملف PDF والتواصل مع العميل <span className="mr-2 text-xs font-normal text-[#0D3B34]/60">اضغط لعرض التفاصيل</span></summary><div className="p-4">
                 <form onSubmit={saveQuote} className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2 rounded-xl border border-[#D4AF37]/35 bg-[#F9F6EC] px-4 py-3 text-sm font-bold">حالة الطلب الحالية: {statusNames[selected.status]||selected.status}</div>
                   <label className={label}>المشغّل / الباخرة / شركة الطيران
@@ -441,6 +442,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <p className="mt-3 text-xs leading-7 text-[#0D3B34]/65">احفظ عرض السعر PDF ثم أرفقه يدوياً من حساب واتساب الشركة في المحادثة المفتوحة. فتح المحادثة وحده لا يعني إرسال الملف. لا يتم إرسال المستند تلقائياً قبل ربط WhatsApp Cloud API.</p>
                 <button disabled={busy} type="button" onClick={()=>void markManuallySent()} className="mt-4 w-full rounded-xl border border-[#D4AF37]/35 px-4 py-3 text-sm font-bold">تأكيد الموظف أنه أرسل PDF يدوياً</button>
                 <p className="mt-2 text-xs">حالة واتساب: {selected.whatsappStatus==="MANUALLY_MARKED_SENT"?"أكد الموظف الإرسال يدوياً":"لم يتم إثبات الإرسال"}</p>
+                </div></details>
 </>}                <section className="mt-6 rounded-2xl border border-[#D4AF37]/30 bg-[#FBF9F4] p-4">
                   <div className="flex items-center justify-between gap-3"><h3 className="font-black">سجل إجراءات الطلب</h3><button type="button" onClick={()=>void loadHistory(selected.id)} className="text-xs font-bold text-[#A67D28]">تحديث</button></div>
                   {history.length===0?<p className="mt-3 text-xs text-[#0D3B34]/60">لا توجد إجراءات محفوظة لعرضها.</p>:
