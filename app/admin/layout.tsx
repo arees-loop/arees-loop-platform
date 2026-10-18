@@ -18,6 +18,7 @@ type NavItem = { href: string; label: string; icon: string; permission: string |
 
 const nav: NavItem[] = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
+  { href: "/admin/customer-reports", label: "العملاء والتقارير", icon: "▥", superOnly: true, permission: null },
 ];
 const requestsNav: NavItem[] = [
   { href: "/admin/transport/flights", label: "الطيران", icon: "✈", permission: "TRANSPORT_FLIGHTS" },
@@ -34,12 +35,11 @@ const partnersNav: NavItem[] = [
   { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
 ];
 const financeNav: NavItem[] = [
+  { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
+  { href: "/admin/dashboard?section=reports", label: "التقارير المالية والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
 ];
 const platformNav: NavItem[] = [
-  { href: "/admin/customer-reports", label: "إدارة العملاء والتقارير", icon: "▥", superOnly: true, permission: null },
   { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
-  { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
-  { href: "/admin/dashboard?section=reports", label: "التقارير والإحصائيات", icon: "▥", permission: "REPORTS_ANALYTICS" },
   { href: "/admin/rewards", label: "النقاط وتقارير الاستبدال", icon: "✦", permission: "REPORTS_ANALYTICS" },
 ];
 
@@ -71,6 +71,9 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     if (platformNav.some((item) => pathname === item.href.split("?")[0])) setPlatformMenuOpen(true);
     if (requestsNav.some((item) => pathname === item.href.split("?")[0])) setRequestsMenuOpen(true);
     if(pathname==="/admin/partners")setPartnersMenuOpen(true);
+    if(pathname.startsWith("/admin/settings"))setPlatformMenuOpen(true);
+    if(pathname==="/admin/dashboard"&&searchParams.get("section")==="bookings")setBookingsMenuOpen(true);
+    if(pathname==="/admin/dashboard"&&["settlements","reports"].includes(searchParams.get("section")||""))setFinanceMenuOpen(true);
   }, [pathname]);
 
   useEffect(() => {
@@ -100,12 +103,12 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const visiblePartnersNav=partnersNav.filter(hasNavAccess);
   const visibleFinanceNav=financeNav.filter(hasNavAccess);
   const isActive = (item: NavItem) => {
-    const base = item.href.split("?")[0];
-    return item.href.includes("?")
-      ? pathname === base && searchParams.get("view") === "active"
-      : pathname === base && !(base === "/admin/partners" && searchParams.get("view") === "active");
+    const [base,query] = item.href.split("?");
+    if(pathname!==base)return false;
+    if(query){const expected=new URLSearchParams(query);return [...expected.entries()].every(([key,value])=>searchParams.get(key)===value);}
+    return !(base==="/admin/partners"&&searchParams.get("view")==="active") && !(base==="/admin/dashboard"&&searchParams.has("section"));
   };
-  const platformMenuActive = visiblePlatformNav.some(isActive);
+  const platformMenuActive = visiblePlatformNav.some(isActive) || pathname.startsWith("/admin/settings");
   const requestsMenuActive = visibleRequestsNav.some(isActive);
   const fullName = [admin?.firstName, admin?.lastName].filter(Boolean).join(" ") || (isSuperAdmin ? "Arees Admin" : "Admin");
   const initials = fullName.split(" ").filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "A";
@@ -240,7 +243,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               </div>
             )}
             {hasNavAccess({ href: "/admin/settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" }) && (
-              <Link href="/admin/settings" className={`group mt-3 flex items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all ${pathname === "/admin/settings" ? "bg-[#F3E5BD]/75 text-[#171717]" : "text-[#171717]/72 hover:bg-[#D4AF37]/10"}`}>
+              <Link href="/admin/settings" className={`group mt-3 flex items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all ${pathname.startsWith("/admin/settings") ? "bg-[#F3E5BD]/75 text-[#171717]" : "text-[#171717]/72 hover:bg-[#D4AF37]/10"}`}>
                 <span className="flex h-8 w-8 items-center justify-center rounded-[10px] text-lg">⚙</span>
                 <span className="flex-1 text-right">إعدادات المنصة</span>
               </Link>
