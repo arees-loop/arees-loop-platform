@@ -31,22 +31,26 @@ const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
 
 function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;featured:boolean;expanded:boolean;onToggle:()=>void}){
-  return <article id={`request-${item.reference}`} className={`scroll-mt-36 rounded-[18px] border bg-white px-3 py-1 shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
-    <div className="flex min-h-12 items-center gap-3 text-xs">
-      <span className="w-20 shrink-0 font-bold">{item.kind==="FLIGHT"?"✈ طيران":item.kind==="FERRY"?"⚓ بواخر":item.kind==="VISA"?"🛂 تأشيرات":item.kind==="DRIVING_LICENSE"?"🚘 رخص":"🏨 فنادق"}</span>
-      <span className="min-w-0 flex-1 truncate font-bold" title={item.title}>{item.title}</span>
-      <span className="hidden max-w-36 truncate text-[#0D3B34]/60 md:block">{item.route}</span>
-      <span className="hidden shrink-0 lg:block">{labelDate(item.travelDate)}</span>
-      <span className="shrink-0 rounded-full bg-[#EAEFE9] px-2 py-1 text-[10px]">{statuses[item.status]||item.status}</span>
-      {item.quoteAmountSar!==null&&<strong className="shrink-0 text-[#99731E]">{money(item.quoteAmountSar)}</strong>}
-      <button type="button" onClick={onToggle} aria-expanded={expanded} className="shrink-0 rounded-lg border px-3 py-2 font-bold">{expanded?"إغلاق":"التفاصيل"}</button>
-    </div>
+  return <article id={`request-${item.reference}`} className={`scroll-mt-36 overflow-hidden rounded-xl border bg-white shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
+    <button type="button" onClick={onToggle} aria-expanded={expanded} aria-label={`${expanded?"إغلاق":"فتح"} تفاصيل الطلب ${item.reference}`} className="flex min-h-[58px] w-full items-center gap-3 px-3 py-2 text-right transition-colors hover:bg-[#F7F4EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B99124]">
+      <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F7F4EB] text-base">{item.kind==="FLIGHT"?"✈️":item.kind==="FERRY"?"⚓":item.kind==="VISA"?"🛂":item.kind==="DRIVING_LICENSE"?"🚘":"🏨"}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-bold" title={item.title}>{item.title}</span>
+        <span className="mt-0.5 block truncate text-[11px] text-[#0D3B34]/65">{item.reference} · {item.route} · {statuses[item.status]||item.status}</span>
+      </span>
+      <span className="shrink-0 text-left">
+        <span className="block text-sm font-bold text-[#99731E]">{item.quoteAmountSar===null?"—":money(item.quoteAmountSar)}</span>
+        <span className="mt-0.5 block text-[11px] text-[#0D3B34]/55">{labelDate(item.createdAt)}</span>
+      </span>
+      <span aria-hidden="true" className="shrink-0 text-[#0D3B34]/55">{expanded?"⌃":"⌄"}</span>
+    </button>
+    {expanded&&<div className="border-t border-[#D4AF37]/20 px-3 pb-3">
     {expanded&&item.customerReply&&<div className="mt-4 rounded-xl border border-[#B69034]/25 bg-[#FFF9E8] p-3">
       <p className="text-xs font-black text-[#946F18]">رد أريس على طلبك</p>
       <p className="mt-1 whitespace-pre-wrap text-xs leading-7">{item.customerReply}</p>
     </div>}
-    {item.quoteAmountSar!==null&&<div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#FFF9E8] px-3 py-3"><span className="text-sm font-bold">عرض السعر</span><strong className="text-lg text-[#99731E]">{money(item.quoteAmountSar)}</strong></div>}
-    {item.quoteAmountSar!==null&&item.kind!=="HOTEL"&&["PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(item.status)&&<RequestPayment reference={item.reference}/>}
+    {expanded&&item.quoteAmountSar!==null&&<div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#FFF9E8] px-3 py-3"><span className="text-sm font-bold">عرض السعر</span><strong className="text-lg text-[#99731E]">{money(item.quoteAmountSar)}</strong></div>}
+    {expanded&&item.quoteAmountSar!==null&&item.kind!=="HOTEL"&&["PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(item.status)&&<RequestPayment reference={item.reference}/>}
     {expanded&&<div className="mt-4 space-y-2 border-t border-[#D4AF37]/25 pt-4 text-xs leading-7">
       <p>تاريخ إرسال الطلب: {labelDate(item.createdAt)}</p>
       <p>آخر تحديث: {labelDate(item.updatedAt)}</p>
@@ -62,6 +66,7 @@ function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;fea
       {item.kind==="HOTEL"&&<p className="rounded-lg bg-amber-50 p-3 text-xs">مرفقات الفنادق تحتاج ربطاً منفصلاً؛ لا يمكن رفعها من نموذج طلبات النقل.</p>}
       
       <p className="font-bold text-[#0D3B34]/75">هذا طلب خدمة، وليس حجزاً مؤكداً أو إثبات دفع.</p>
+    </div>}
     </div>}
   </article>;
 }
