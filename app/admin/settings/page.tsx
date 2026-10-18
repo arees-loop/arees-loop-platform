@@ -5,6 +5,12 @@ export default function PlatformSettingsPage(){
  <h1 className="mt-2 text-3xl font-black">إعدادات المنصة</h1>
  <p className="mt-3 text-sm leading-7 text-[#0D3B34]/70">مركز إدارة إعدادات أريس لوب. تُضاف أدوات التحكم الجديدة هنا حسب حاجة التشغيل.</p>
  <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+  <Link href="/admin/settings/bank-accounts" className="group rounded-3xl border border-[#D4AF37]/30 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-[#D4AF37] hover:shadow-lg">
+   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl text-[#B38A25]">▣</span>
+   <h2 className="mt-5 text-lg font-black">الحسابات البنكية وطرق السداد</h2>
+   <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">إضافة حسابات التحويل البنكي، وتعديل ملاحظاتها، وتفعيل الحسابات أو إيقافها لعرضها للعملاء.</p>
+   <span className="mt-6 inline-block text-sm font-bold text-[#B38A25]">إدارة الحسابات البنكية ←</span>
+  </Link>
   <Link href="/admin/navigation" className="group rounded-3xl border border-[#D4AF37]/30 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-[#D4AF37] hover:shadow-lg">
    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F8F0E2] text-2xl text-[#B38A25]">◉</span>
    <h2 className="mt-5 text-lg font-black">إظهار وإخفاء روابط الهيدر</h2>
