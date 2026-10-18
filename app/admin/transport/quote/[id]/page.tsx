@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { canManageTransport } from "@/lib/transport-permissions";
+import { canManageTransport, type TransportKind } from "@/lib/transport-permissions";
 import QuotePrintButton from "./print-button";
 
 type Props={params:Promise<{id:string}>};
@@ -21,7 +21,7 @@ export default async function QuotePage({params}:Props) {
   });
   if(!item)notFound();
   if(session.user.role!=="SUPER_ADMIN" &&
-    (item.assignedToId!==session.user.id || !canManageTransport(session.user,item.kind)))notFound();
+    (item.assignedToId!==session.user.id || !canManageTransport(session.user,item.kind as TransportKind)))notFound();
   const kind=item.kind==="FERRY"?"باخرة":item.kind==="VISA"?"تأشيرة":item.kind==="DRIVING_LICENSE"?"رخصة قيادة دولية":"طيران";
   const hasQuote=item.quoteAmountSar!==null;
   return (
