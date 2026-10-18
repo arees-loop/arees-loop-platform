@@ -25,11 +25,17 @@ const requestsNav: NavItem[] = [
   { href: "/admin/hotels", label: "الفنادق", icon: "▤", permission: "HOTEL_REQUESTS" },
   { href: "/admin/transport/visas", label: "التأشيرات", icon: "🛂", permission: "TRANSPORT_VISAS" },
   { href: "/admin/transport/driving-licenses", label: "الرخص الدولية", icon: "🚘", permission: "TRANSPORT_DRIVING_LICENSE" },
-  { href: "/admin/dashboard?section=bookings", label: "الحجوزات", icon: "▦", permission: "BOOKINGS" },
+];
+const bookingsNav: NavItem[] = [
+  { href: "/admin/dashboard?section=bookings", label: "حجوزات تجارب الشركاء", icon: "▦", permission: "BOOKINGS" },
+];
+const partnersNav: NavItem[] = [
+  { href: "/admin/partners", label: "طلبات انضمام الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
+  { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
+];
+const financeNav: NavItem[] = [
 ];
 const platformNav: NavItem[] = [
-  { href: "/admin/partners", label: "طلبات الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
-  { href: "/admin/partners?view=active", label: "الشركاء المعتمدون", icon: "🤝", permission: "ACTIVE_PARTNERS" },
   { href: "/admin/customer-reports", label: "إدارة العملاء والتقارير", icon: "▥", superOnly: true, permission: null },
   { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
   { href: "/admin/dashboard?section=settlements", label: "المدفوعات والتسويات", icon: "▣", permission: "PAYMENTS_SETTLEMENTS" },
@@ -47,6 +53,9 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [platformMenuOpen, setPlatformMenuOpen] = useState(false);
   const [requestsMenuOpen, setRequestsMenuOpen] = useState(false);
+  const [bookingsMenuOpen,setBookingsMenuOpen]=useState(false);
+  const [partnersMenuOpen,setPartnersMenuOpen]=useState(false);
+  const [financeMenuOpen,setFinanceMenuOpen]=useState(false);
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
   const [pendingServiceCount, setPendingServiceCount] = useState(0);
 
@@ -61,6 +70,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (platformNav.some((item) => pathname === item.href.split("?")[0])) setPlatformMenuOpen(true);
     if (requestsNav.some((item) => pathname === item.href.split("?")[0])) setRequestsMenuOpen(true);
+    if(pathname==="/admin/partners")setPartnersMenuOpen(true);
   }, [pathname]);
 
   useEffect(() => {
@@ -86,6 +96,9 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const visibleNav = nav.filter(hasNavAccess);
   const visiblePlatformNav = platformNav.filter(hasNavAccess);
   const visibleRequestsNav = requestsNav.filter(hasNavAccess);
+  const visibleBookingsNav=bookingsNav.filter(hasNavAccess);
+  const visiblePartnersNav=partnersNav.filter(hasNavAccess);
+  const visibleFinanceNav=financeNav.filter(hasNavAccess);
   const isActive = (item: NavItem) => {
     const base = item.href.split("?")[0];
     return item.href.includes("?")
@@ -190,7 +203,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               <div className="pt-1">
                 <button type="button" aria-expanded={requestsMenuOpen} onClick={()=>setRequestsMenuOpen(v=>!v)} className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all ${requestsMenuActive?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}>
                   <span className="flex h-8 w-8 items-center justify-center rounded-[10px] text-lg">▣</span>
-                  <span className="flex-1 text-right">إدارة الحجوزات والطلبات</span>
+                  <span className="flex-1 text-right">طلبات خدمات أريس</span>
                   <span className="text-xs">{requestsMenuOpen?"⌃":"⌄"}</span>
                 </button>
                 {requestsMenuOpen&&<div className="mr-5 mt-1 space-y-1 border-r border-[#D4AF37]/30 pr-3">
@@ -198,6 +211,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 </div>}
               </div>
             )}
+            {([{title:"الحجوزات",items:visibleBookingsNav,open:bookingsMenuOpen,toggle:()=>setBookingsMenuOpen(v=>!v),icon:"▦"},{title:"إدارة شركاء النجاح",items:visiblePartnersNav,open:partnersMenuOpen,toggle:()=>setPartnersMenuOpen(v=>!v),icon:"🤝"},{title:"المالية والتسويات",items:visibleFinanceNav,open:financeMenuOpen,toggle:()=>setFinanceMenuOpen(v=>!v),icon:"▣"}]).filter(group=>group.items.length>0).map(group=><div key={group.title} className="pt-1"><button type="button" aria-expanded={group.open} onClick={group.toggle} className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold hover:bg-[#D4AF37]/10"><span className="flex h-8 w-8 items-center justify-center text-lg">{group.icon}</span><span className="flex-1 text-right">{group.title}</span><span className="text-xs">{group.open?"⌃":"⌄"}</span></button>{group.open&&<div className="mr-5 mt-1 space-y-1 border-r border-[#D4AF37]/30 pr-3">{group.items.map(item=><Link key={item.href} href={item.href} className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold hover:bg-[#D4AF37]/10"><span className="w-5 text-center">{item.icon}</span>{item.label}</Link>)}</div>}</div>)}
             {visiblePlatformNav.length > 0 && (
               <div className="pt-1">
                 <button
