@@ -31,15 +31,16 @@ const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
 
 function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;featured:boolean;expanded:boolean;onToggle:()=>void}){
-  return <article id={`request-${item.reference}`} className={`scroll-mt-36 rounded-[18px] border bg-white p-4 shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
-    <div className="flex flex-wrap items-start justify-between gap-2">
-      <span className="text-xs font-black text-[#B18A33]">{item.kind==="FLIGHT"?"✈ طيران":item.kind==="FERRY"?"⚓ بواخر":item.kind==="VISA"?"🛂 تأشيرات":item.kind==="DRIVING_LICENSE"?"🚘 رخص دولية":"🏨 فنادق"}</span>
-      <span className="rounded-full bg-[#EAEFE9] px-3 py-1 text-[11px] font-bold">{statuses[item.status]||item.status}</span>
+  return <article id={`request-${item.reference}`} className={`scroll-mt-36 rounded-[18px] border bg-white px-3 py-1 shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
+    <div className="flex min-h-12 items-center gap-3 text-xs">
+      <span className="w-20 shrink-0 font-bold">{item.kind==="FLIGHT"?"✈ طيران":item.kind==="FERRY"?"⚓ بواخر":item.kind==="VISA"?"🛂 تأشيرات":item.kind==="DRIVING_LICENSE"?"🚘 رخص":"🏨 فنادق"}</span>
+      <span className="min-w-0 flex-1 truncate font-bold" title={item.title}>{item.title}</span>
+      <span className="hidden max-w-36 truncate text-[#0D3B34]/60 md:block">{item.route}</span>
+      <span className="hidden shrink-0 lg:block">{labelDate(item.travelDate)}</span>
+      <span className="shrink-0 rounded-full bg-[#EAEFE9] px-2 py-1 text-[10px]">{statuses[item.status]||item.status}</span>
+      {item.quoteAmountSar!==null&&<strong className="shrink-0 text-[#99731E]">{money(item.quoteAmountSar)}</strong>}
+      <button type="button" onClick={onToggle} aria-expanded={expanded} className="shrink-0 rounded-lg border px-3 py-2 font-bold">{expanded?"إغلاق":"التفاصيل"}</button>
     </div>
-    <h3 className="mt-3 text-base font-black">{item.title}</h3>
-    <p className="mt-2 text-xs leading-6">{item.route}</p>
-    <p className="mt-2 text-xs text-[#0D3B34]/65">السفر/الدخول: {labelDate(item.travelDate)}</p>
-    <p className="mt-1 text-xs text-[#0D3B34]/60">المرجع: <span dir="ltr">{item.reference}</span></p>
     {expanded&&item.customerReply&&<div className="mt-4 rounded-xl border border-[#B69034]/25 bg-[#FFF9E8] p-3">
       <p className="text-xs font-black text-[#946F18]">رد أريس على طلبك</p>
       <p className="mt-1 whitespace-pre-wrap text-xs leading-7">{item.customerReply}</p>
