@@ -16,7 +16,7 @@ export async function POST(req:NextRequest){
  const reference="AR-MAN-"+randomBytes(6).toString("hex").toUpperCase();
  const result=await prisma.$transaction(async tx=>{
  const record=await tx.transportRequest.create({data:{reference,kind,customerName:name,phone,countryCode,origin,destination,travelDate,status:"NEW",notes:String(d.notes||"").slice(0,2000)||null,assignedToId:session.user.role==="ADMIN"?session.user.id:null,notificationStatus:"PENDING"}});
- await tx.transportRequestEvent.create({data:{requestId:record.id,actorId:session.user.id,action:"MANUAL_REQUEST_CREATED",toStatus:"NEW",details:{source:"ADMIN_MANUAL"}}});
+ await tx.transportRequestEvent.create({data:{requestId:record.id,actorId:session.user.id,actorName:session.user.email||"موظف الإدارة",action:"MANUAL_REQUEST_CREATED",toStatus:"NEW",details:{source:"ADMIN_MANUAL"}}});
  return record;
  });
  return NextResponse.json({success:true,data:result},{status:201});
