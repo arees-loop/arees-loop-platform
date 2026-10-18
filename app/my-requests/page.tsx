@@ -31,7 +31,7 @@ const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
 
 function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;featured:boolean;expanded:boolean;onToggle:()=>void}){
-  return <article id={`request-${item.reference}`} className={`scroll-mt-36 rounded-[22px] border bg-white p-5 shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
+  return <article id={`request-${item.reference}`} className={`scroll-mt-36 rounded-[18px] border bg-white p-4 shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
     <div className="flex flex-wrap items-start justify-between gap-2">
       <span className="text-xs font-black text-[#B18A33]">{item.kind==="FLIGHT"?"✈ طيران":item.kind==="FERRY"?"⚓ بواخر":item.kind==="VISA"?"🛂 تأشيرات":item.kind==="DRIVING_LICENSE"?"🚘 رخص دولية":"🏨 فنادق"}</span>
       <span className="rounded-full bg-[#EAEFE9] px-3 py-1 text-[11px] font-bold">{statuses[item.status]||item.status}</span>
@@ -40,12 +40,13 @@ function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;fea
     <p className="mt-2 text-xs leading-6">{item.route}</p>
     <p className="mt-2 text-xs text-[#0D3B34]/65">السفر/الدخول: {labelDate(item.travelDate)}</p>
     <p className="mt-1 text-xs text-[#0D3B34]/60">المرجع: <span dir="ltr">{item.reference}</span></p>
-    {item.customerReply&&<div className="mt-4 rounded-xl border border-[#B69034]/25 bg-[#FFF9E8] p-3">
+    {expanded&&item.customerReply&&<div className="mt-4 rounded-xl border border-[#B69034]/25 bg-[#FFF9E8] p-3">
       <p className="text-xs font-black text-[#946F18]">رد أريس على طلبك</p>
       <p className="mt-1 whitespace-pre-wrap text-xs leading-7">{item.customerReply}</p>
     </div>}
-    {item.quoteAmountSar!==null&&<p className="mt-4 text-lg font-black text-[#99731E]">عرض السعر: {money(item.quoteAmountSar)}</p>}
-    <button type="button" onClick={onToggle} aria-expanded={expanded} className="mt-4 w-full rounded-xl border border-[#D4AF37]/40 bg-[#F8F5EC] px-3 py-3 text-sm font-bold">
+    {item.quoteAmountSar!==null&&<div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#FFF9E8] px-3 py-3"><span className="text-sm font-bold">عرض السعر</span><strong className="text-lg text-[#99731E]">{money(item.quoteAmountSar)}</strong></div>}
+    {item.quoteAmountSar!==null&&item.kind!=="HOTEL"&&["PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(item.status)&&<RequestPayment reference={item.reference}/>}
+    <button type="button" onClick={onToggle} aria-expanded={expanded} className="mt-3 rounded-lg border border-[#D4AF37]/40 bg-[#F8F5EC] px-4 py-2 text-xs font-bold">
       {expanded?"إخفاء التفاصيل":"عرض تفاصيل الطلب"}
     </button>
     {expanded&&<div className="mt-4 space-y-2 border-t border-[#D4AF37]/25 pt-4 text-xs leading-7">
@@ -58,10 +59,10 @@ function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;fea
       {item.quoteNotes&&<div className="rounded-xl bg-[#F7F4ED] p-3"><b>تفاصيل العرض:</b><p className="mt-1 whitespace-pre-wrap">{item.quoteNotes}</p></div>}
       {item.quoteValidUntil&&<p>صلاحية العرض حتى: {labelDate(item.quoteValidUntil)}</p>}
       {item.cancellationReason&&<p className="rounded-xl bg-red-50 p-3 text-red-800">سبب الإلغاء: {item.cancellationReason}</p>}
-      {item.kind!=="HOTEL"&&<RequestAttachments reference={item.reference}/>}
+      {item.kind!=="HOTEL"&&item.customerReply&&/مستندات مطلوبة|يرجى إرفاق|أرفق (?:الجواز|المستند|الوثائق)/i.test(item.customerReply)&&<RequestAttachments reference={item.reference}/>}
       {item.kind!=="HOTEL"&&["NEW","QUOTE_READY"].includes(item.status)&&<button type="button" onClick={async()=>{if(!window.confirm("هل تريد إلغاء الطلب؟ سيبقى في سجل الطلبات ولن يُحذف."))return;const r=await fetch("/api/customer/request-cancel",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reference:item.reference})});const d=await r.json();window.alert(d.message||"تعذر إلغاء الطلب");if(r.ok)window.location.reload()}} className="mt-3 rounded-lg border border-red-300 bg-white px-4 py-2 text-red-700">إلغاء الطلب قبل بدء التنفيذ</button>}
       {item.kind==="HOTEL"&&<p className="rounded-lg bg-amber-50 p-3 text-xs">مرفقات الفنادق تحتاج ربطاً منفصلاً؛ لا يمكن رفعها من نموذج طلبات النقل.</p>}
-      {item.quoteAmountSar!==null&&item.status==="PROCESSING"&&<RequestPayment reference={item.reference}/>}
+      
       <p className="font-bold text-[#0D3B34]/75">هذا طلب خدمة، وليس حجزاً مؤكداً أو إثبات دفع.</p>
     </div>}
   </article>;
