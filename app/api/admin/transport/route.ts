@@ -1,3 +1,4 @@
+import {sendEmail} from "@/lib/notifications/email";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -140,6 +141,7 @@ export async function PATCH(request:NextRequest) {
       if(!superAdmin)return fail("إسناد الطلبات للسوبر أدمن فقط.",403);
       const assignedToId=cleanText(body.assignedToId,100)||null;
       let assigneeName:string|null=null;
+      let assigneeEmail:string|null=null;
       if(assignedToId){
         const assignee=await prisma.user.findFirst({
           where:{id:assignedToId,role:{in:["ADMIN","SUPER_ADMIN"]},status:"ACTIVE"},
@@ -148,12 +150,28 @@ export async function PATCH(request:NextRequest) {
         if(!assignee)return fail("اختر موظفاً إدارياً نشطاً.",400);
         if(!canManageTransport(assignee,current.kind==="FERRY"?"FERRY":current.kind==="VISA"?"VISA":current.kind==="DRIVING_LICENSE"?"DRIVING_LICENSE":"FLIGHT"))return fail("هذا الموظف ليست لديه صلاحية إدارة القسم المطلوب.",403);
         assigneeName=fullName(assignee);
+        assigneeEmail=assignee.email;
       }
       const [updated]=await prisma.$transaction([
         prisma.transportRequest.update({where:{id},data:{assignedToId}}),
         prisma.transportRequestEvent.create({data:{requestId:id,actorId,actorName,action:"ASSIGNED",fromStatus:current.status,toStatus:current.status,details:{from:current.assignedToId,to:assignedToId,employee:assigneeName}}}),
       ]);
-      return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
+      let emailStatus:"SENT"|"FAILED"|"NOT_REQUIRED"="NOT_REQUIRED";
+      if(assignedToId&&assignedToId!==current.assignedToId){
+        const recipient=assigneeEmail?.trim();
+        if(recipient){
+          const safeRef=current.reference.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+          const result=await sendEmail({
+            to:recipient,
+            subject:"إسناد طلب جديد إليك | Arees Loop · "+current.reference,
+            html:'<main dir="rtl" style="font-family:Arial,sans-serif;color:#0D3B34"><h2>تم إسناد طلب إليك</h2><p>رقم الطلب: <strong>'+safeRef+'</strong></p><p>نوع الخدمة: '+(current.kind==="FLIGHT"?"طيران":current.kind==="FERRY"?"بواخر":current.kind==="VISA"?"تأشيرات":"رخصة قيادة دولية")+'</p><p>يرجى تسجيل الدخول إلى لوحة الإدارة لمراجعة بيانات الطلب والتواصل مع العميل.</p><p><a href="https://www.areesloop.com/admin/transport">فتح الطلبات</a></p></main>',
+          });
+          emailStatus=result.sent?"SENT":"FAILED";
+          if(!result.sent)console.error("Assignment email delivery failed",result.reason);
+        }else emailStatus="FAILED";
+        await prisma.transportRequestEvent.create({data:{requestId:id,actorId,actorName,action:emailStatus==="SENT"?"ASSIGNMENT_EMAIL_SENT":"ASSIGNMENT_EMAIL_FAILED",fromStatus:current.status,toStatus:current.status,details:{assignedToId,emailStatus}}}).catch(e=>console.error("Assignment notification audit failed",e));
+      }
+      return NextResponse.json({success:true,emailStatus,message:emailStatus==="FAILED"?"تم الإسناد، لكن تعذر إرسال البريد للموظف. راجع إعدادات البريد.":"تم تحديث الإسناد.",data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
 
     if(action==="PUBLISH_SERVICE_DECISION"){
