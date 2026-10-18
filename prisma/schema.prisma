@@ -1077,6 +1077,7 @@ model HotelInquiryEvent {
 
 // Super-admin-controlled bank transfer destination. Never expose until explicitly active.
 model BankTransferAccount {
+  note String @default("")
   id String @id @default(cuid())
   bankName String
   beneficiaryName String
