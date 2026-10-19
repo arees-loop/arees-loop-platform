@@ -7,6 +7,17 @@ import AdminIcon, {type AdminIconName} from "../AdminIcon";
 type Partner={id:string;legalNameAr?:string|null;tradeNameAr?:string|null;partnerType?:string|null;submittedAt?:string|null;status?:string|null};
 type Service={id:string;nameAr?:string|null;status?:string|null};
 type RequestAlerts={ferries:number|null;flights:number|null;hotels:number|null;drivingLicenses:number|null;visas:number|null};
+type AdminAlerts={
+ inProgress:RequestAlerts; needsAttention:RequestAlerts; failedEmails:RequestAlerts;
+ totals:{new:number;inProgress:number;attention:number;failedEmails:number};
+ recent:{reference:string;kind:string;action:string;createdAt:string;href:string}[];
+ truncated?:boolean;updatedAt:string;
+};
+const actionLabels:Record<string,string>={
+ CUSTOMER_MESSAGE_SENT:"رد جديد من العميل",CUSTOMER_OFFER_ACCEPTED:"قبول العميل عرض السعر",
+ CUSTOMER_TRANSFER_SUBMITTED:"إشعار سداد يحتاج مراجعة",
+ CUSTOMER_ATTACHMENT_UPLOADED:"مرفق جديد من العميل",
+};
 type DashboardMetrics={bookings:number;settlements:number;directRequests:number;bookingStatuses:{status:string;count:number}[];settlementTotals:{grossSales:number;platformCommission:number;netAmount:number}};
 type QuickLink={key:keyof RequestAlerts;label:string;icon:AdminIconName;href:string;bg:string;iconColor:string};
 const shortcuts:QuickLink[]=[
@@ -29,6 +40,7 @@ export default function AdminDashboardPage(){
  const [toDate,setToDate]=useState("");
  useEffect(()=>{let live=true;fetch("/api/admin/customer-count",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(live&&d.success)setCustomerCount(d.count)}).catch(()=>{});return()=>{live=false}},[]);
  const [requestAlerts,setRequestAlerts]=useState<RequestAlerts|null>(null);
+ const [adminAlerts,setAdminAlerts]=useState<AdminAlerts|null>(null);
  const [alertsLoading,setAlertsLoading]=useState(true),[alertsError,setAlertsError]=useState("");
  const [refreshSignal,setRefreshSignal]=useState(0);
  useEffect(()=>{
@@ -38,7 +50,7 @@ export default function AdminDashboardPage(){
        const response=await fetch("/api/admin/request-alerts",{cache:"no-store",credentials:"include"});
        const data=await response.json();
        if(!response.ok||!data.success)throw Error(data.message||"تعذر قراءة الإشعارات.");
-       if(active){setRequestAlerts(data.counts);setAlertsError("");}
+       if(active){setRequestAlerts(data.counts);setAdminAlerts({inProgress:data.inProgress,needsAttention:data.needsAttention,failedEmails:data.failedEmails,totals:data.totals,recent:data.recent||[],truncated:data.truncated,updatedAt:data.updatedAt});setAlertsError("");}
      }catch(err){if(active)setAlertsError(err instanceof Error?err.message:"تعذر تحديث الإشعارات.");}
      finally{if(active)setAlertsLoading(false);}
    }
@@ -82,6 +94,33 @@ export default function AdminDashboardPage(){
       })}
     </div>
   </section>
+  {adminAlerts&&<section className="mt-5 rounded-[24px] border border-[#D4AF37]/35 bg-white p-5 shadow-sm" aria-label="متابعة ردود العملاء والسداد والطلبات تحت الإجراء">
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div><h2 className="text-xl font-black text-[#0D3B34]">📣 متابعة العملاء والطلبات تحت الإجراء</h2><p className="mt-2 text-xs leading-6 text-[#0D3B34]/65">تنبيهات فعلية من سجل الطلبات، تُحدّث كل دقيقة. العدد يمثل إجراءات تنتظر معالجة وليس رسائل غير مقروءة.</p></div>
+      <span className="rounded-full border border-[#D4AF37]/40 bg-[#FFFBEE] px-4 py-2 text-xs font-black text-[#805F1D]">متابعة مطلوبة: {adminAlerts.totals.attention.toLocaleString("ar-SA")}</span>
+    </div>
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="rounded-2xl border border-[#D8E6DC] bg-[#F2F9F4] p-4"><p className="text-xs font-bold text-[#206345]">تفاعلات العملاء بانتظار المعالجة</p><p className="mt-2 text-3xl font-black text-[#155C39]">{adminAlerts.totals.attention.toLocaleString("ar-SA")}</p><p className="mt-2 text-[11px] text-[#206345]/80">قبول العروض، ردود العملاء، المرفقات وإشعارات السداد</p></div>
+      <div className="rounded-2xl border border-[#D5E5F0] bg-[#F0F7FD] p-4"><p className="text-xs font-bold text-[#26618E]">الطلبات تحت الإجراء</p><p className="mt-2 text-3xl font-black text-[#205A89]">{adminAlerts.totals.inProgress.toLocaleString("ar-SA")}</p><p className="mt-2 text-[11px] text-[#26618E]/80">طلبات لم تُغلق بعد وتحتاج متابعة التشغيل</p></div>
+      <div className="rounded-2xl border border-[#EADCB9] bg-[#FFFBEE] p-4"><p className="text-xs font-bold text-[#98681B]">طلبات جديدة</p><p className="mt-2 text-3xl font-black text-[#8E661B]">{adminAlerts.totals.new.toLocaleString("ar-SA")}</p><p className="mt-2 text-[11px] text-[#98681B]/80">لم تبدأ معالجتها بعد</p></div>
+      <div className="rounded-2xl border border-[#F3CEC3] bg-[#FFF7F3] p-4"><p className="text-xs font-bold text-[#9C4A34]">إخطارات البريد التي فشل إرسالها</p><p className="mt-2 text-3xl font-black text-[#B04C30]">{adminAlerts.totals.failedEmails.toLocaleString("ar-SA")}</p><p className="mt-2 text-[11px] text-[#9C4A34]/80">حسب حالة البريد المحفوظة عند إنشاء الطلب، وليست فحصاً لصندوق البريد</p></div>
+    </div>
+    <h3 className="mt-6 text-sm font-black text-[#0D3B34]">التنبيهات حسب الخدمة</h3>
+    <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+      {shortcuts.filter(item=>adminAlerts.needsAttention[item.key]!==null).map(item=><Link key={item.key} href={item.href} className="rounded-xl border border-[#E8DDC9] bg-[#FFFEFB] p-3 transition hover:border-[#B9953E] hover:bg-[#FFF9E9]">
+        <p className="text-xs font-bold">{item.label}</p>
+        <p className="mt-2 text-xs">🔴 للمتابعة: <b>{adminAlerts.needsAttention[item.key]??0}</b></p>
+        <p className="mt-1 text-xs text-[#547065]">تحت الإجراء: <b>{adminAlerts.inProgress[item.key]??0}</b></p>
+      </Link>)}
+    </div>
+    {adminAlerts.recent.length>0&&<div className="mt-6">
+      <h3 className="mb-3 text-sm font-black text-[#0D3B34]">أحدث تفاعلات العملاء التي تحتاج معالجة</h3>
+      <div className="space-y-2">{adminAlerts.recent.slice(0,6).map(event=><Link key={event.reference+event.action+event.createdAt} href={event.href} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E3D8C4] p-3 text-xs hover:bg-[#FFF8E7]">
+        <span className="font-black text-[#0D3B34]">{actionLabels[event.action]||"تحديث من العميل"}</span><span dir="ltr" className="font-mono">{event.reference}</span><span className="text-[#0D3B34]/60">{new Date(event.createdAt).toLocaleString("ar-SA")}</span><span className="font-bold text-[#997426]">فتح القسم ←</span>
+      </Link>)}</div>
+    </div>}
+    {adminAlerts.truncated&&<p role="status" className="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">عدد الطلبات المفتوحة تجاوز الحد المعروض في هذا الملخص؛ راجع صفحة الإدارة للحصول على القائمة الكاملة.</p>}
+  </section>}
   {metricsError&&<p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{metricsError}</p>}
   <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Link href="/admin/bookings" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">حجوزات تجارب الشركاء</p><p className="mt-2 text-3xl font-black">{metrics?.bookings??"—"}</p><p className="mt-2 text-xs text-black/45">حجوزات منشأة خلال الفترة المحددة</p></Link><Link href="/admin/dashboard?section=settlements" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">المالية والتسويات</p><p className="mt-2 text-3xl font-black">{metrics?.settlements??"—"}</p><p className="mt-2 text-xs text-black/45">سجلات تسوية منشأة خلال الفترة، لا تعني المدفوعات المحصلة</p></Link><Link href="/admin/partners" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">طلبات انضمام الشركاء</p><p className="mt-2 text-3xl font-black">{loading?"—":periodPartners.length}</p><p className="mt-2 text-xs text-black/45">حسب الفترة المختارة</p></Link><Link href="/admin/customer-reports" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">العملاء المسجلون</p><p className="mt-2 text-3xl font-black">{customerCount??"—"}</p><p className="mt-2 text-xs text-black/45">الإجمالي الحالي • جميع الفترات</p></Link></section>
   {loading?<div className="mt-8 rounded-3xl bg-white p-8 text-center">جارٍ تحميل البيانات...</div>:<>
