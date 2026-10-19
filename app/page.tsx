@@ -13,6 +13,16 @@ export const metadata: Metadata = buildPageMetadata({
   imageAlt: "Arees Loop — اكتشف تجارب ووجهات السعودية",
 });
 
+const homeSchema={
+ "@context":"https://schema.org",
+ "@graph":[
+  {"@type":"WebSite","@id":"https://www.areesloop.com/#website","name":"AREES LOOP","alternateName":"أريس لوب","url":"https://www.areesloop.com/","inLanguage":"ar-SA"},
+  {"@type":"Organization","@id":"https://www.areesloop.com/#organization","name":"شركة أريس الحلول المتكاملة المحدودة","alternateName":"أريس للسفر والسياحة","url":"https://www.areesloop.com/","logo":"https://www.areesloop.com/Logo/arees-loop-logo.png"}
+ ]
+};
 export default function HomePage() {
-  return <HomeClient />;
+ return <>
+  <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(homeSchema).replace(/</g,"\\u003c")}}/>
+  <HomeClient/>
+ </>;
 }
