@@ -130,6 +130,21 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     finally{setBusy(false);}
   }
 
+  async function publishQuoteToCustomer(){
+    if(!selected||busy||selected.status!=="QUOTE_READY"||selected.quoteAmountSar===null)return;
+    if(!window.confirm("هل راجعت سعر العرض وشروطه وتريد نشره للعميل داخل صفحة «طلباتي»؟ لن يُرسل ملف PDF إلى واتساب تلقائياً."))return;
+    setBusy(true);setError("");setStatus("");
+    try{
+      const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action:"PUBLISH_QUOTE_TO_CUSTOMER"})});
+      const result=await r.json();
+      if(!r.ok||!result.success){setError(result.message||"تعذر نشر العرض للعميل.");return;}
+      setSelected(result.data);
+      setStatus("تم نشر عرض السعر داخل «طلباتي». يستطيع العميل الآن قبوله ثم اختيار حساب التحويل البنكي المفعّل. الإرسال إلى واتساب إجراء منفصل.");
+      void loadHistory(selected.id);await load();
+    }catch{setError("تعذر نشر العرض للعميل.");}
+    finally{setBusy(false);}
+  }
+
   async function publishVisaDecision(){
     if(!selected||busy)return;
     setBusy(true);setError("");setStatus("");
@@ -443,11 +458,12 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 </form>
                 <div className="mt-5 grid gap-2 sm:grid-cols-2">
                   <Link href={`/admin/transport/quote/${selected.id}`} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-[#D4AF37]/50 bg-[#FFF8E4] px-4 py-3 text-center text-sm font-bold">فتح عرض السعر · طباعة PDF</Link>
+                  {selected.status==="QUOTE_READY"&&selected.quoteAmountSar!==null&&<button type="button" disabled={busy} onClick={()=>void publishQuoteToCustomer()} className="rounded-xl bg-[#0D3B34] px-4 py-3 text-center text-sm font-black text-white transition hover:bg-[#17604E] disabled:opacity-45">✓ نشر عرض السعر للعميل في طلباتي</button>}
                   <a href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-[#D4AF37]/50 bg-white px-4 py-3 text-center text-sm font-bold">فتح محادثة العميل في واتساب</a>
                 </div>
                 <p className="mt-3 text-xs leading-7 text-[#0D3B34]/65">احفظ عرض السعر PDF ثم أرفقه يدوياً من حساب واتساب الشركة في المحادثة المفتوحة. فتح المحادثة وحده لا يعني إرسال الملف. لا يتم إرسال المستند تلقائياً قبل ربط WhatsApp Cloud API.</p>
-                <button disabled={busy} type="button" onClick={()=>void markManuallySent()} className="mt-4 w-full rounded-xl border border-[#D4AF37]/35 px-4 py-3 text-sm font-bold">تأكيد الموظف أنه أرسل PDF يدوياً</button>
-                <p className="mt-2 text-xs">حالة واتساب: {selected.whatsappStatus==="MANUALLY_MARKED_SENT"?"أكد الموظف الإرسال يدوياً":"لم يتم إثبات الإرسال"}</p>
+                <button disabled={busy||selected.whatsappStatus==="MANUALLY_MARKED_SENT"||!["QUOTE_READY","QUOTE_SENT"].includes(selected.status)} type="button" onClick={()=>void markManuallySent()} className="mt-4 w-full rounded-xl border border-[#D4AF37]/35 px-4 py-3 text-sm font-bold">تأكيد الموظف أنه أرسل PDF يدوياً</button>
+                <p className="mt-2 text-xs">حالة العرض في المنصة: {selected.status==="QUOTE_SENT"?"منشور":selected.status==="QUOTE_READY"?"محفوظ ولم يُنشر":statusNames[selected.status]||selected.status} · حالة واتساب: {selected.whatsappStatus==="MANUALLY_MARKED_SENT"?"أكد الموظف الإرسال يدوياً":"لم يتم إثبات الإرسال"}</p>
                 </div></details>
 </>}                <section className="mt-6 rounded-2xl border border-[#D4AF37]/30 bg-[#FBF9F4] p-4">
                   <div className="flex items-center justify-between gap-3"><h3 className="font-black">سجل إجراءات الطلب</h3><button type="button" onClick={()=>void loadHistory(selected.id)} className="text-xs font-bold text-[#A67D28]">تحديث</button></div>
