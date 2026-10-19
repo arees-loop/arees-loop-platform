@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import AdminNotificationCenter, {type AlertPayload,type RequestCounters} from "@/app/components/AdminNotificationCenter";
 
 type AdminIdentity = {
   email: string;
@@ -59,6 +60,10 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const [financeMenuOpen,setFinanceMenuOpen]=useState(false);
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
   const [pendingServiceCount, setPendingServiceCount] = useState(0);
+  const [requestAlerts,setRequestAlerts]=useState<AlertPayload|null>(null);
+  const handleAlertUpdate=useCallback((payload:AlertPayload)=>setRequestAlerts(payload),[]);
+  const requestCounts:RequestCounters=requestAlerts?.counts??{flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0};
+  const attentionCounts:RequestCounters=requestAlerts?.needsAttention??{flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0};
 
   useEffect(() => {
     if (pathname === "/admin/login" || pathname === "/admin/invite") return;
@@ -100,6 +105,18 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const visibleNav = nav.filter(hasNavAccess);
   const visiblePlatformNav = platformNav.filter(hasNavAccess);
   const visibleRequestsNav = requestsNav.filter(hasNavAccess);
+  const serviceKeyByHref:Record<string,keyof RequestCounters>={
+    "/admin/transport/flights":"flights",
+    "/admin/transport/ferries":"ferries",
+    "/admin/hotels":"hotels",
+    "/admin/transport/visas":"visas",
+    "/admin/transport/driving-licenses":"drivingLicenses"
+  };
+  const serviceBadge=(item:NavItem)=>{
+    const key=serviceKeyByHref[item.href.split("?")[0]];
+    return key?(requestCounts[key]??0)+(attentionCounts[key]??0):0;
+  };
+  const totalRequestBadges=visibleRequestsNav.reduce((sum,item)=>sum+serviceBadge(item),0);
   const visibleBookingsNav=bookingsNav.filter(hasNavAccess);
   const visiblePartnersNav=partnersNav.filter(hasNavAccess);
   const visibleFinanceNav=financeNav.filter(hasNavAccess);
@@ -208,10 +225,11 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 <button type="button" aria-expanded={requestsMenuOpen} onClick={()=>setRequestsMenuOpen(v=>!v)} className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all ${requestsMenuActive?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}>
                   <span className="flex h-8 w-8 items-center justify-center rounded-[10px] text-lg">▣</span>
                   <span className="flex-1 text-right">طلبات خدمات أريس</span>
+                  {totalRequestBadges>0&&<span aria-label={totalRequestBadges+" طلب أو تفاعل تحت المتابعة"} className="rounded-full bg-[#AA3737] px-2 py-0.5 text-xs font-black text-white">{totalRequestBadges>99?"99+":totalRequestBadges}</span>}
                   <span className="text-xs">{requestsMenuOpen?"⌃":"⌄"}</span>
                 </button>
                 {requestsMenuOpen&&<div className="mr-5 mt-1 space-y-1 border-r border-[#D4AF37]/30 pr-3">
-                  {visibleRequestsNav.map(item=><Link key={item.href} href={item.href} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold ${isActive(item)?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}><span className="w-5 text-center text-base">{item.icon}</span><span>{item.label}</span></Link>)}
+                  {visibleRequestsNav.map(item=><Link key={item.href} href={item.href} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold ${isActive(item)?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}><span className="w-5 text-center text-base">{item.icon}</span><span className="flex-1">{item.label}</span>{serviceBadge(item)>0&&<span aria-label={serviceBadge(item)+" طلب أو تفاعل"} className="rounded-full bg-[#AA3737] px-2 py-0.5 text-[11px] font-black text-white">{serviceBadge(item)>99?"99+":serviceBadge(item)}</span>}</Link>)}
                 </div>}
               </div>
             )}
@@ -389,23 +407,8 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-4">
 
                 {/* Notification */}
-                <button
-                  className="
-                    relative flex h-10 w-10
-                    items-center justify-center
-                    rounded-[13px]
-                    bg-white/40
-                    text-lg
-                    transition-all duration-200
-                    hover:bg-[#D4AF37]/10
-                    hover:text-[#B68A21]
-                    hover:shadow-[0_6px_20px_rgba(181,138,37,.13)]
-                  "
-                >
-                  ♧
+                {admin&&<AdminNotificationCenter identityKey={admin.email} onUpdate={handleAlertUpdate}/>}
 
-                  <span className="absolute right-[8px] top-[8px] h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-                </button>
 
                 <div className="hidden text-left md:block">
                   <p className="text-[9px] font-bold tracking-[.18em] text-[#B68A21]">
