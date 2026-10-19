@@ -1,4 +1,5 @@
 import { NextRequest,NextResponse } from "next/server";
+import {TRAVEL_REFERENCE_PATTERN} from "@/lib/request-reference";
 import { randomUUID } from "node:crypto";
 import { put,get } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
@@ -15,7 +16,7 @@ async function access(reference:string){
 }
 export async function GET(req:NextRequest){
  const reference=req.nextUrl.searchParams.get("reference")||"";
- if(!/^AR-(AIR|SEA|VISA|LIC)-[A-F0-9]{10}$/.test(reference))return fail("مرجع غير صالح.");
+ if(!TRAVEL_REFERENCE_PATTERN.test(reference))return fail("مرجع غير صالح.");
  const auth=await access(reference);if(!auth)return fail("غير مصرح بعرض المرفقات.",403);
  const events=await prisma.transportRequestEvent.findMany({where:{requestId:auth.request.id,action:"CUSTOMER_ATTACHMENT_UPLOADED"},orderBy:{createdAt:"desc"},take:100,select:{id:true,createdAt:true,details:true}});
  const files=events.map(e=>{const d=e.details as {name?:string;contentType?:string;size?:number;purpose?:string;label?:string}|null;return {id:e.id,name:d?.name||"مرفق",contentType:d?.contentType,size:d?.size,purpose:d?.purpose,label:d?.label,createdAt:e.createdAt}});
@@ -31,7 +32,7 @@ export async function GET(req:NextRequest){
 export async function POST(req:NextRequest){
  const session=await getCurrentSession();if(!session)return fail("سجّل الدخول لإرسال المرفقات.",401);
  const data=await req.formData();const reference=String(data.get("reference")||"");
- if(!/^AR-(AIR|SEA|VISA|LIC)-[A-F0-9]{10}$/.test(reference))return fail("مرجع غير صالح.");
+ if(!TRAVEL_REFERENCE_PATTERN.test(reference))return fail("مرجع غير صالح.");
  const auth=await access(reference);if(!auth||auth.isStaff)return fail("المرفقات لصاحب الطلب فقط.",403);
  const purpose=String(data.get("purpose")||"DOCUMENT");if(!["DOCUMENT","BANK_RECEIPT"].includes(purpose))return fail("نوع المرفق غير صالح.");
  const label=String(data.get("label")||"").trim();
