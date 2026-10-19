@@ -2,6 +2,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
+import {buildPageMetadata} from "@/lib/seo-metadata";
+import type {Metadata} from "next";
+export async function generateMetadata({params}:{params:Promise<{id:string}>}):Promise<Metadata>{
+ const {id}=await params;
+ try{
+  const guide=await prisma.partner.findFirst({
+   where:{id,partnerType:"INDIVIDUAL",status:"ACTIVE",licenses:{some:{status:"VERIFIED",expiryDate:{gt:new Date()},OR:[{type:{contains:"إرشاد"}},{type:{contains:"GUIDE",mode:"insensitive"}}]}}},
+   select:{publicName:true,legalNameAr:true,descriptionAr:true,city:true,logoUrl:true}
+  });
+  if(!guide)return {title:"المرشد غير متاح",robots:{index:false,follow:false}};
+  const name=guide.publicName||guide.legalNameAr;
+  const image=guide.logoUrl&&/^https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\//.test(guide.logoUrl)
+    ?guide.logoUrl:"/Image/social/arees-guide-share.webp";
+  return buildPageMetadata({title:name+" — مرشد سياحي",description:(guide.descriptionAr||"مرشد سياحي مرخص").slice(0,160),path:"/guides/"+encodeURIComponent(id),image,imageWidth:1254,imageHeight:1254,imageType:"image/webp",imageAlt:"ملف المرشد "+name+" في "+(guide.city||"السعودية")});
+ }catch{return {title:"مرشد سياحي",robots:{index:false,follow:false}};}
+}
+
 export default async function GuideProfile({params}:{params:Promise<{id:string}>}){
  const {id}=await params;
  const guide=await prisma.partner.findFirst({where:{id,partnerType:"INDIVIDUAL",status:"ACTIVE",licenses:{some:{status:"VERIFIED",expiryDate:{gt:new Date()},OR:[{type:{contains:"إرشاد"}},{type:{contains:"GUIDE",mode:"insensitive"}}]}}},select:{publicName:true,legalNameAr:true,descriptionAr:true,city:true,locationName:true,logoUrl:true,licenses:{where:{status:"VERIFIED",expiryDate:{gt:new Date()}},select:{type:true,issuer:true,licenseNumber:true,expiryDate:true}}}});
