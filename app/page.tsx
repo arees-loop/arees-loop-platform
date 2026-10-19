@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import HomeClient from "./HomeClient";
 import { buildPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = buildPageMetadata({
+export const metadata: Metadata = {...buildPageMetadata({
   title: "الرئيسية",
   description: "اكتشف واحجز التجارب والوجهات السياحية في السعودية، واكسب المكافآت في تجربة واحدة ذكية.",
   path: "/",
@@ -11,7 +11,7 @@ export const metadata: Metadata = buildPageMetadata({
   imageHeight: 907,
   imageType: "image/png",
   imageAlt: "Arees Loop — اكتشف تجارب ووجهات السعودية",
-});
+}), title:{absolute:"الرئيسية | AREES LOOP"}};
 
 const homeSchema={
  "@context":"https://schema.org",
