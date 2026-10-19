@@ -25,7 +25,7 @@ async function access(req:NextRequest,reference:string,write=false){
   });
   if(!request||!["FLIGHT","FERRY"].includes(request.kind))return null;
   if(staff&&session!.user.role!=="SUPER_ADMIN"){
-    if(request.assignedToId!==session!.user.id||!canManageTransport(session!.user,request.kind))return null;
+    if(request.assignedToId!==session!.user.id||!canManageTransport(session!.user,request.kind==="FERRY"?"FERRY":"FLIGHT"))return null;
   }
   return {request,session,staff};
 }
