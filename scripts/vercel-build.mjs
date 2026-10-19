@@ -15,7 +15,7 @@ if (shouldMigrate) {
     }
     databaseUrl = process.env.AREES_STAGING_DATABASE_PRISMA_DATABASE_URL;
   } else {
-    databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_PRISMA_DATABASE_URL;
+    databaseUrl = process.env.DATABASE_PRISMA_DATABASE_URL || process.env.DATABASE_URL;
   }
 
   if (!databaseUrl) throw new Error("Database migration URL is unavailable.");
