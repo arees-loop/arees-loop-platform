@@ -1,4 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
+import {TICKET_REFERENCE_PATTERN} from "@/lib/request-reference";
 import {randomUUID} from "node:crypto";
 import {put, get} from "@vercel/blob";
 import {prisma} from "@/lib/prisma";
@@ -10,7 +11,7 @@ export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store"};
 const fail=(message:string,status=400)=>NextResponse.json({success:false,message},{status,headers});
-const validReference=(value:string)=>/^AR-(AIR|SEA)-[A-F0-9]{10}$/.test(value);
+const validReference=(value:string)=>TICKET_REFERENCE_PATTERN.test(value);
 type Meta={pathname?:string;name?:string;size?:number;contentType?:string};
 
 async function access(req:NextRequest,reference:string,write=false){
