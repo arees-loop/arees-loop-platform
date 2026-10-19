@@ -4,19 +4,22 @@ import Link from "next/link";
 import {useSearchParams} from "next/navigation";
 import {useEffect,useState} from "react";
 import {readCustomerClaims} from "@/lib/customer-request-claims";
+import {bilingualDate,vatBreakdown,sar,type QuoteVatTreatment} from "@/lib/quotation-format";
 
 type Trip={
  reference:string;kind:string;status:string;customerName:string;contactNumber:string;
  origin:string;destination:string;travelDate:string;returnDate:string|null;tripType:string;
  adults:number;children:number;infants:number;carrierName:string|null;createdAt:string;
- quoteAmountSar:number|null;quoteNotes:string|null;quoteValidUntil:string|null;
+ quoteAmountSar:number|null;quoteNotes:string|null;quoteValidUntil:string|null;quoteUpdatedAt:string|null;quoteVatTreatment:QuoteVatTreatment;
 };
 type Docs={success:boolean;request:Trip;available:{quote:boolean;confirmedBooking:boolean};confirmation:Record<string,string>|null;confirmedAt:string|null;message?:string};
-const shortDate=(value:string|null|undefined)=>value?new Intl.DateTimeFormat("ar-SA",{dateStyle:"long",timeZone:"UTC"}).format(new Date(value)):"غير محدد";
-const price=(n:number)=>new Intl.NumberFormat("ar-SA",{style:"currency",currency:"SAR"}).format(n);
-function Cell({name,value}:{name:string;value:string|number|undefined|null}){
+const shortDate=(value:string|null|undefined)=>{const d=bilingualDate(value);return "ميلادي / Gregorian: "+d.gregorian+"\nهجري / Hijri: "+d.hijri;};
+function Cell({name,en,value}:{name:string;en?:string;value:string|number|undefined|null}){
  if(value===undefined||value===null||value==="")return null;
- return <div className="rounded-lg border border-[#E9DDC3] bg-[#FFFEFA] p-3"><p className="text-[10px] font-bold text-[#98782E]">{name}</p><p className="mt-1 break-words text-xs font-black leading-6 text-[#123E32]">{value}</p></div>;
+ return <div className="rounded-lg border border-[#E9DDC3] bg-[#FFFEFA] p-3"><p className="text-[10px] font-bold text-[#98782E]">{name}</p>{en&&<p dir="ltr" className="text-right text-[9px] leading-5 text-[#796E55]">{en}</p>}<p className="mt-1 whitespace-pre-line break-words text-xs font-black leading-6 text-[#123E32]">{value}</p></div>;
+}
+function DualLabel({ar,en}:{ar:string;en:string}){
+ return <span className="block text-right" dir="rtl"><span className="block text-xs font-black">{ar}</span><span dir="ltr" className="mt-1 block text-right text-[10px] font-medium opacity-80">{en}</span></span>;
 }
 export default function PrintableTravelDocument({type}:{type:"quote"|"confirmed"}){
  const params=useSearchParams();
@@ -42,6 +45,7 @@ export default function PrintableTravelDocument({type}:{type:"quote"|"confirmed"
  const r=data?.request;
  const c=data?.confirmation;
  const ferry=r?.kind==="FERRY";
+ const vat=r?.quoteAmountSar!==null&&r?.quoteAmountSar!==undefined?vatBreakdown(r.quoteAmountSar,r.quoteVatTreatment||"UNDETERMINED"):null;
  return <main dir="rtl" className="min-h-screen bg-[#F5F3ED] px-4 py-6 text-[#103D34] print:bg-white print:p-0">
   <style>{'@page{size:A4;margin:12mm} @media print{body{background:white!important} .print-document{box-shadow:none!important;border:none!important;border-radius:0!important} .print-hide{display:none!important}}'}</style>
   <div className="print-hide mx-auto mb-4 flex max-w-[820px] flex-wrap items-center justify-between gap-3">
@@ -54,27 +58,27 @@ export default function PrintableTravelDocument({type}:{type:"quote"|"confirmed"
   {ready&&r&&<article id="arees-print-sheet" className="print-document mx-auto max-w-[820px] overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white shadow-lg">
    <header className="border-b-4 border-[#B99644] p-6 print:p-3 sm:p-8">
     <div className="flex flex-wrap items-center justify-between gap-4">
-     <div className="min-w-0 flex-1">
-      <p className="text-[10px] font-extrabold tracking-wider text-[#B08A31]">AREES · OFFICIAL SERVICE DOCUMENT</p>
-      <h1 className="mt-1 text-lg font-black">شركة أريس الحلول المتكاملة المحدودة</h1>
-      <p dir="ltr" className="mt-1 text-left text-xs font-black">AREES AL-HELLOUL AL-MUTAKAMLA CO.LTD</p>
-      <p className="mt-3 text-[11px] font-bold leading-6">ترخيص وزارة السياحة: 73104550 · وكيل سفر وسياحة</p>
-      <p className="text-[11px] leading-6">السجل التجاري: 7037003618 · الرقم الضريبي: 311897578200003</p>
-      <p className="text-[11px] leading-6">المملكة العربية السعودية · المدينة المنورة - حي قربان</p>
-      <p dir="ltr" className="text-left text-[11px]">Saudi Arabia · Medina - Qurban District · Phone: +9660148390473</p>
+     <div className="min-w-0 flex-1 space-y-1">
+      <DualLabel ar="شركة أريس الحلول المتكاملة المحدودة" en="AREES AL-HELLOUL AL-MUTAKAMLA CO.LTD"/>
+      <DualLabel ar="الرقم الضريبي: 311897578200003" en="Tax No.: 311897578200003"/>
+      <DualLabel ar="ترخيص وزارة السياحة: 73104550" en="Ministry of Tourism License No.: 73104550"/>
+      <DualLabel ar="وكيل سفر وسياحة" en="Travel and Tourism Agent"/>
+      <DualLabel ar="السجل التجاري: 7037003618" en="Commercial Registration No.: 7037003618"/>
+      <DualLabel ar="السعودية — المدينة المنورة، حي قربان" en="Saudi Arabia — Medina, Qurban District"/>
+      <DualLabel ar="الهاتف: +9660148390473" en="Phone: +9660148390473"/>
      </div>
      <Image src="/Logo/arees-integrated-solutions-logo.png" width={112} height={112} unoptimized alt="شعار شركة أريس" className="h-[100px] w-[100px] shrink-0 object-contain"/>
     </div>
     <div className="mt-4 rounded-xl bg-[#0D3B34] px-5 py-4 text-white">
      <h2 className="text-xl font-black">{type==="quote"?("عرض سعر "+(ferry?"باخرة":"طيران")):("تفاصيل حجز "+(ferry?"باخرة":"طيران")+" مؤكد")}</h2>
-     <p dir="ltr" className="mt-1 text-left text-xs font-bold">{type==="quote"?"Quotation / Estimate":"Confirmed Booking Details"}</p>
+     <p dir="ltr" className="mt-1 text-right text-xs font-bold">{type==="quote"?"Quotation / Estimate":"Confirmed Booking Details"}</p>
     </div>
    </header>
    <div className="space-y-5 px-6 py-6 print:space-y-3 print:px-4 print:py-3 sm:px-8">
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 print:grid-cols-3">
      <Cell name="رقم طلب أريس" value={r.reference}/>
      <Cell name="اسم العميل" value={r.customerName}/>
-     <Cell name="تاريخ المستند" value={shortDate(type==="quote"?r.createdAt:data?.confirmedAt)}/>
+     <Cell name="تاريخ المستند" en="Document Date" value={shortDate(type==="quote"?r.quoteUpdatedAt||r.createdAt:data?.confirmedAt)}/>
      <Cell name="من" value={r.origin}/>
      <Cell name="إلى" value={r.destination}/>
      <Cell name={ferry?"شركة البواخر / الناقل":"شركة الطيران / الناقل"} value={r.carrierName||undefined}/>
