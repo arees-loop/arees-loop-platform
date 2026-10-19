@@ -1450,8 +1450,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Small centered payment badges beneath the app download cards. Informational only. */}
-                <div aria-label="وسائل الدفع" dir="rtl" className="mx-auto mt-3 flex w-full max-w-[360px] flex-wrap items-center justify-center gap-1.5">
+                {/* Compact payment marks centered directly beneath the two app cards. */}
+                <div aria-label="وسائل الدفع" dir="rtl" className="mx-auto mt-3 flex w-full max-w-[292px] flex-nowrap items-center justify-center gap-1">
                   {[
                     { name: "تحويل بنكي", x: 0 },
                     { name: "Visa", x: 72 },
@@ -1460,8 +1460,15 @@ export default function Home() {
                     { name: "stc pay", x: 288 },
                     { name: "Apple Pay", x: 360 },
                   ].map((method) => (
-                    <div key={method.name} role="img" aria-label={method.name} title={method.name} className="flex h-[38px] w-[54px] shrink-0 cursor-default items-center justify-center overflow-hidden rounded-lg border border-[#E6D4A3] bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:rotate-1 hover:border-[#C99B32] hover:shadow-[0_8px_20px_rgba(185,148,50,0.22)] motion-reduce:transform-none motion-reduce:transition-none">
-                      <span aria-hidden="true" className="block h-[42px] w-[72px] shrink-0 scale-[0.72] bg-no-repeat" style={{ backgroundImage: "url('/Image/payment/payment-methods-sprite.webp')", backgroundSize: "432px 42px", backgroundPosition: `-${method.x}px 0px` }} />
+                    <div key={method.name} role="img" aria-label={method.name} title={method.name} className="flex h-[33px] w-[44px] min-w-0 shrink-0 cursor-default items-center justify-center overflow-hidden rounded-lg border border-[#E6D4A3] bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:rotate-1 hover:border-[#C99B32] hover:shadow-[0_8px_20px_rgba(185,148,50,0.22)] motion-reduce:transform-none motion-reduce:transition-none">
+                      {method.name === "مدى" ? (
+                        <span aria-hidden="true" className="flex h-[23px] w-[39px] items-center justify-center bg-white">
+                          <span className="mr-0.5 flex flex-col gap-[2px]"><span className="h-[6px] w-[13px] bg-[#279BD0]" /><span className="h-[6px] w-[13px] bg-[#82BA41]" /></span>
+                          <span className="text-[13px] font-black leading-none text-[#29292D]">مدى</span>
+                        </span>
+                      ) : (
+                        <span aria-hidden="true" className="block h-[42px] w-[72px] shrink-0 scale-[0.60] bg-no-repeat" style={{ backgroundImage: "url('/Image/payment/payment-methods-sprite.webp')", backgroundSize: "432px 42px", backgroundPosition: `-${method.x}px 0px` }} />
+                      )}
                     </div>
                   ))}
                 </div>
