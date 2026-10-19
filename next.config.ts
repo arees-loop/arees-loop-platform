@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.8.108"],
   async headers(){
     const privateRoutes=[
-      "/admin/:path*","/api/:path*","/auth/:path*","/login",
+      "/admin/:path*","/auth/:path*","/login",
       "/partner/login","/partner/dashboard/:path*","/partner/bookings/:path*",
       "/partner/services/:path*","/partner/invoices/:path*","/partner/settlements/:path*",
       "/partner/reports/:path*","/partner/contracts/:path*","/partner/coupons/:path*",
