@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - hotfix/customer-quote-claim-payment-20261019
+  pull_request:
+    branches:
+      - release/payment-confirmation-alerts-20261019
   workflow_dispatch:
 
 permissions:
