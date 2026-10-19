@@ -34,8 +34,18 @@ export default async function sitemap():Promise<MetadataRoute.Sitemap>{
    where:{kind:"VISA",isVisible:true,deletedAt:null,AND:active},
    orderBy:{updatedAt:"desc"},take:700,select:{id:true,updatedAt:true}
   }),
+  prisma.publicEvent.findMany({
+   where:{status:"PUBLISHED",partner:{partnerType:"GOVERNMENT_NONPROFIT",status:"ACTIVE"}},
+   orderBy:{updatedAt:"desc"},take:500,select:{id:true,updatedAt:true}
+  }),
+  prisma.partner.findMany({
+   where:{partnerType:"INDIVIDUAL",status:"ACTIVE",licenses:{some:{
+     status:"VERIFIED",expiryDate:{gt:now},
+     OR:[{type:{contains:"إرشاد"}},{type:{contains:"GUIDE",mode:"insensitive"}}]
+   }}},orderBy:{updatedAt:"desc"},take:600,select:{id:true,updatedAt:true}
+  }),
  ]);
- const [services,hotels,visas]=queryResults;
+ const [services,hotels,visas,events,guides]=queryResults;
  if(services.status==="fulfilled"){
   for(const item of services.value)
    listed.push({url:url("/services/"+encodeURIComponent(item.id)),lastModified:item.updatedAt,changeFrequency:"weekly",priority:0.6});
@@ -46,5 +56,9 @@ export default async function sitemap():Promise<MetadataRoute.Sitemap>{
   listed.push({url:url("/hotels/"+encodeURIComponent(item.id)),lastModified:item.updatedAt,changeFrequency:"weekly",priority:0.6});
  if(visas.status==="fulfilled")for(const item of visas.value)
   listed.push({url:url("/visas/"+encodeURIComponent(item.id)),lastModified:item.updatedAt,changeFrequency:"weekly",priority:0.6});
+ if(events.status==="fulfilled")for(const item of events.value)
+  listed.push({url:url("/events/"+encodeURIComponent(item.id)),lastModified:item.updatedAt,changeFrequency:"weekly",priority:0.6});
+ if(guides.status==="fulfilled")for(const item of guides.value)
+  listed.push({url:url("/guides/"+encodeURIComponent(item.id)),lastModified:item.updatedAt,changeFrequency:"weekly",priority:0.6});
  return listed;
 }
