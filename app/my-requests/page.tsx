@@ -4,6 +4,7 @@ import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 import Link from "next/link";
 import RequestAttachments from "@/app/components/RequestAttachments";
 import RequestPayment from "@/app/components/RequestPayment";
+import CustomerTicket from "@/app/components/CustomerTicket";
 import { useEffect, useMemo, useState } from "react";
 import { readCustomerClaims } from "@/lib/customer-request-claims";
 
@@ -45,6 +46,7 @@ function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;fea
     </div>}
     {item.quoteAmountSar!==null&&<div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#FFF9E8] px-3 py-3"><span className="text-sm font-bold">عرض السعر</span><strong className="text-lg text-[#99731E]">{money(item.quoteAmountSar)}</strong></div>}
     {expanded&&item.quoteAmountSar!==null&&item.kind!=="HOTEL"&&["PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(item.status)&&<RequestPayment reference={item.reference}/>}
+    {expanded&&["FLIGHT","FERRY"].includes(item.kind)&&["PAID","EXECUTING","DONE"].includes(item.status)&&<CustomerTicket reference={item.reference}/>}
     {expanded&&<div className="mt-4 space-y-2 border-t border-[#D4AF37]/25 pt-4 text-xs leading-7">
       <p>تاريخ إرسال الطلب: {labelDate(item.createdAt)}</p>
       <p>آخر تحديث: {labelDate(item.updatedAt)}</p>
