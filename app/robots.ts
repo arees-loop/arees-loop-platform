@@ -3,7 +3,7 @@ export default function robots():MetadataRoute.Robots{
  return {
   rules:{
    userAgent:"*",
-   allow:"/",
+   allow:["/","/api/media"],
    disallow:[
     "/admin/","/api/","/auth/","/login","/profile",
     "/partner/dashboard","/partner/bookings","/partner/services",
