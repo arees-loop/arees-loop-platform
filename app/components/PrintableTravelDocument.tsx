@@ -61,8 +61,8 @@ export default function PrintableTravelDocument({type}:{type:"quote"|"confirmed"
      <div className="min-w-0 flex-1 space-y-1">
       <DualLabel ar="شركة أريس الحلول المتكاملة المحدودة" en="AREES AL-HELLOUL AL-MUTAKAMLA CO.LTD"/>
       <DualLabel ar="الرقم الضريبي: 311897578200003" en="Tax No.: 311897578200003"/>
-      <DualLabel ar="ترخيص وزارة السياحة: 73104550" en="Ministry of Tourism License No.: 73104550"/>
-      <DualLabel ar="وكيل سفر وسياحة" en="Travel and Tourism Agent"/>
+      <DualLabel ar="ترخيص وزارة السياحة رقم 73104550" en="Ministry of Tourism License No.: 73104550"/>
+      <DualLabel ar="فئة الترخيص: وكالة سفر وسياحة" en="License Category: Travel and Tourism Agency"/>
       <DualLabel ar="السجل التجاري: 7037003618" en="Commercial Registration No.: 7037003618"/>
       <DualLabel ar="السعودية — المدينة المنورة، حي قربان" en="Saudi Arabia — Medina, Qurban District"/>
       <DualLabel ar="الهاتف: +9660148390473" en="Phone: +9660148390473"/>
