@@ -52,7 +52,8 @@ export async function POST(req:NextRequest){
  const pathname="customer-attachments/"+auth.request.id+"/"+randomUUID()+"."+extension;
  const uploaded=await put(pathname,Buffer.from(bytes),{access:"private",contentType:file.type,addRandomSuffix:false});
  try{
- await prisma.transportRequestEvent.create({data:{requestId:auth.request.id,actorId:session.user.id,actorName:"العميل",action:"CUSTOMER_ATTACHMENT_UPLOADED",details:{pathname:uploaded.pathname,name:file.name.slice(0,140),contentType:file.type,size:file.size,purpose,label:purpose==="BANK_RECEIPT"?"إثبات التحويل البنكي":label}}});
+ const savedEvent=await prisma.transportRequestEvent.create({data:{requestId:auth.request.id,actorId:session.user.id,actorName:"العميل",action:"CUSTOMER_ATTACHMENT_UPLOADED",details:{pathname:uploaded.pathname,name:file.name.slice(0,140),contentType:file.type,size:file.size,purpose,label:purpose==="BANK_RECEIPT"?"إثبات التحويل البنكي":label}},select:{id:true}});
+ return NextResponse.json({success:true,eventId:savedEvent.id,message:"تم استلام المرفق بنجاح."},{headers:{"Cache-Control":"no-store"}});
  }catch(e){console.error("Attachment metadata save failed",e);return fail("لم يكتمل حفظ المرفق. حاول مرة أخرى.",503);}
- return NextResponse.json({success:true,message:"تم استلام المرفق بنجاح."},{headers:{"Cache-Control":"no-store"}});
+
 }
