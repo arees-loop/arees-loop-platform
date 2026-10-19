@@ -1,6 +1,7 @@
 "use client";
 import AdminPaymentReview from "@/app/components/AdminPaymentReview";
 import AdminTicketFulfillment from "@/app/components/AdminTicketFulfillment";
+import AdminConfirmedBooking from "@/app/components/AdminConfirmedBooking";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -59,6 +60,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [bannerPreview,setBannerPreview]=useState("");
   const [bannerDimensions,setBannerDimensions]=useState<{width:number;height:number}|null>(null);
   const [selected,setSelected]=useState<RequestRow|null>(null);
+  const [itineraryReady,setItineraryReady]=useState(false);
   const [visaAvailability,setVisaAvailability]=useState<"AVAILABLE"|"UNAVAILABLE">("AVAILABLE");
   const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
   const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?blankOffer.origin:"",destination:initialOfferKind==="FERRY"?blankOffer.destination:""});
@@ -107,7 +109,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   }
 
   function choose(q:RequestRow) {
-    setSelected(q);setError("");setStatus("");setReplyDraft(q.customerReply||"");setVisaAvailability("AVAILABLE");
+    setSelected(q);setItineraryReady(false);setError("");setStatus("");setReplyDraft(q.customerReply||"");setVisaAvailability("AVAILABLE");
     void loadHistory(q.id);
     setForm({carrierName:q.carrierName||"",
       quoteAmountSar:q.quoteAmountSar===null?"":String(q.quoteAmountSar),
@@ -411,11 +413,12 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F9F6EC] p-4"><h3 className="text-sm font-black">المرفقات والسداد</h3>
                 <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">📎 المرفقات وطلب مستندات إضافية</summary><AdminRequestAttachments reference={selected.reference}/></details>
                 <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference} onReviewed={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}/></details>
-                {selected.kind==="FERRY"&&<AdminTicketFulfillment
+                {["FLIGHT","FERRY"].includes(selected.kind)&&<AdminTicketFulfillment
                    reference={selected.reference} id={selected.id} status={selected.status}
-                   kind="FERRY" itineraryReady={true} whatsappPhone={customerWhatsApp}
+                   kind={selected.kind==="FERRY"?"FERRY":"FLIGHT"} itineraryReady={itineraryReady} whatsappPhone={customerWhatsApp}
                    onStatusChange={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}
                 />}
+                {["FLIGHT","FERRY"].includes(selected.kind)&&<AdminConfirmedBooking id={selected.id} onReadyChange={setItineraryReady}/>}
                 </div>
                 </div>
                 {initialOfferKind!=="VISA"&&<div className="mt-4 grid items-start gap-4 lg:grid-cols-2"><section className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
