@@ -281,7 +281,7 @@ export async function POST(request:NextRequest) {
   const access=await adminAccess(true);if(access.error)return access.error;
   try{
     const data=await request.json();
-    if(!["FLIGHT","FERRY","VISA"].includes(data.kind))return fail("نوع العرض غير صحيح.");
+    if(!["FLIGHT","FERRY","VISA","DRIVING_LICENSE"].includes(data.kind))return fail("نوع العرض غير صحيح.");
     const title=cleanText(data.title,160);
     if(!title)return fail("عنوان العرض مطلوب.");
     if(data.kind==="VISA"&&data.scheduleType!=="VISA_META")return fail("استخدم نموذج التأشيرات المخصص.");
