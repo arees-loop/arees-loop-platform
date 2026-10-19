@@ -831,6 +831,13 @@ body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding
     overflow: visible !important;
   }
 
+  /* Visibility alone leaves hidden navigation and long dashboards in the
+     print flow, producing blank pages. Remove every non-document sibling
+     while retaining only the ancestor chain and the document descendants. */
+  body:has(#arees-print-sheet) *:not(:has(#arees-print-sheet)):not(#arees-print-sheet):not(#arees-print-sheet *) {
+    display: none !important;
+  }
+
   body:has(#arees-print-sheet) * {
     visibility: hidden !important;
   }
