@@ -13,6 +13,11 @@ if (!connectionString) {
 
 const adapter = new PrismaPg({
   connectionString,
+  // Vercel may start several serverless workers; bound each worker pool.
+  // PrismaPg uses pg defaults (max: 10) unless explicitly configured.
+  max: 2,
+  connectionTimeoutMillis: 10_000,
+  idleTimeoutMillis: 10_000,
 });
 
 export const prisma =
