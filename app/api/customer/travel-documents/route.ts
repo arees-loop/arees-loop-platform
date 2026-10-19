@@ -3,6 +3,7 @@ import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
 import {customerTransportOwnership} from "@/lib/customer-transport-claim";
 import {TRAVEL_REFERENCE_PATTERN} from "@/lib/request-reference";
+import {isQuoteVatTreatment} from "@/lib/quotation-format";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -27,11 +28,11 @@ export async function GET(req:NextRequest){
     id:true,reference:true,kind:true,status:true,customerName:true,countryCode:true,phone:true,
     origin:true,destination:true,travelDate:true,returnDate:true,tripType:true,
     adults:true,children:true,infants:true,carrierName:true,quoteAmountSar:true,quoteNotes:true,
-    quoteValidUntil:true,createdAt:true,
+    quoteValidUntil:true,quoteUpdatedAt:true,createdAt:true,
    },
   });
   if(!item)return fail("لا تملك صلاحية عرض مستندات هذا الطلب.",403);
-  const [publishedEvent,paymentVerified,bookingEvent,ticketEvent]=await Promise.all([
+  const [publishedEvent,paymentVerified,bookingEvent,ticketEvent,vatEvent]=await Promise.all([
    prisma.transportRequestEvent.findFirst({
     where:{requestId:item.id,action:"SERVICE_OFFER_PUBLISHED"},select:{id:true},
    }),
@@ -45,12 +46,19 @@ export async function GET(req:NextRequest){
    prisma.transportRequestEvent.findFirst({
     where:{requestId:item.id,action:"TICKET_PDF_DELIVERED"},
     orderBy:[{createdAt:"desc"},{id:"desc"}],select:{id:true},
+   }),
+   prisma.transportRequestEvent.findFirst({
+    where:{requestId:item.id,action:"QUOTE_VAT_CLASSIFIED"},
+    orderBy:[{createdAt:"desc"},{id:"desc"}],select:{details:true},
    })
   ]);
   const quoteReady=item.quoteAmountSar!==null&&(
    ["QUOTE_SENT","PAID","EXECUTING","DONE"].includes(item.status)||
    item.status==="PROCESSING"&&!!publishedEvent
   );
+  const vatDetails=vatEvent?.details&&typeof vatEvent.details==="object"&&!Array.isArray(vatEvent.details)?vatEvent.details as Record<string,unknown>:null;
+  const quoteVersion=item.quoteUpdatedAt?.toISOString()||null;
+  const vatTreatment=quoteReady&&vatDetails?.quoteUpdatedAt===quoteVersion&&isQuoteVatTreatment(vatDetails?.treatment)?vatDetails.treatment:"UNDETERMINED";
   const paid=!!paymentVerified&&["PAID","EXECUTING","DONE"].includes(item.status);
   const input=bookingEvent?.details&&typeof bookingEvent.details==="object"&&!Array.isArray(bookingEvent.details)
    ?bookingEvent.details as Record<string,unknown>:null;
@@ -64,6 +72,8 @@ export async function GET(req:NextRequest){
     origin:item.origin,destination:item.destination,travelDate:item.travelDate,returnDate:item.returnDate,
     tripType:item.tripType,adults:item.adults,children:item.children,infants:item.infants,
     carrierName:item.carrierName,createdAt:item.createdAt,
+    quoteUpdatedAt:quoteReady?item.quoteUpdatedAt:null,
+    quoteVatTreatment:vatTreatment,
     quoteAmountSar:quoteReady&&item.quoteAmountSar!==null?Number(item.quoteAmountSar):null,
     quoteNotes:quoteReady?item.quoteNotes:null,
     quoteValidUntil:quoteReady?item.quoteValidUntil:null,
