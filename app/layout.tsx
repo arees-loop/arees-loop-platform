@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "Arees Loop | منصة تجربة الزائر الذكية",
-    template: "%s | Arees Loop",
+    default: "الرئيسية | AREES LOOP",
+    template: "%s | AREES LOOP",
   },
 
   description:
@@ -52,12 +52,12 @@ export const metadata: Metadata = {
   },
 
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
 
     googleBot: {
-      index: false,
-      follow: false,
+      index: true,
+      follow: true,
       noimageindex: false,
     },
   },
