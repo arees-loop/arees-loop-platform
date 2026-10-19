@@ -285,6 +285,21 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       startsAt:offerDay(offer.startsAt),endsAt:offerDay(offer.endsAt),
     };
   }
+
+  function removeOfferImage(index:number){
+    if(bannerFile||extraBannerFiles.length){
+      const files=[bannerFile,...extraBannerFiles].filter((file):file is File=>Boolean(file));
+      files.splice(index,1);
+      setBannerFile(files[0]||null);
+      setExtraBannerFiles(files.slice(1));
+      setBannerDimensions(null);
+      return;
+    }
+    setOfferForm(current=>{
+      const imageUrls=current.imageUrls.filter((_,imageIndex)=>imageIndex!==index);
+      return {...current,imageUrls,bannerUrl:imageUrls[0]||""};
+    });
+  }
   async function setOfferVisibility(offer:Offer,visible:boolean) {
     if(!showSuper||busy)return;
     setBusy(true);setError("");setStatus("");
@@ -339,11 +354,12 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       </div>
       <div className="mt-7 flex flex-wrap gap-2">
         <button onClick={()=>setTab("requests")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="requests"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>طلبات العملاء ({filteredRequests.length})</button>
-        {initialOfferKind!=="DRIVING_LICENSE"&&<button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.filter(x=>initialOfferKind==="ALL"||x.kind===initialOfferKind).length})</button>}
+        <button onClick={()=>setTab("offers")} className={`rounded-full px-6 py-3 text-sm font-bold ${tab==="offers"?"bg-[#0D3B34] text-white":"border border-[#D4AF37]/40 bg-white"}`}>الأسعار والعروض والجداول ({offers.filter(x=>initialOfferKind==="ALL"||x.kind===initialOfferKind).length})</button>
         {tab==="offers"&&initialOfferKind==="ALL"&&<div className="flex flex-wrap gap-2">
           <button type="button" onClick={()=>{setFilterKind("FLIGHT");startOffer();setOfferForm(f=>({...f,kind:"FLIGHT",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FLIGHT"?"bg-[#D4AF37]":"bg-white"}`}>✈ عروض الطيران</button>
           <button type="button" onClick={()=>{setFilterKind("FERRY");startOffer();}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="FERRY"?"bg-[#D4AF37]":"bg-white"}`}>⚓ عروض البواخر</button>
           <button type="button" onClick={()=>{setFilterKind("VISA");startOffer();setOfferForm(f=>({...f,kind:"VISA",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="VISA"?"bg-[#D4AF37]":"bg-white"}`}>🛂 عروض التأشيرات</button><button type="button" onClick={()=>setFilterKind("ALL")} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="ALL"?"bg-[#D4AF37]":"bg-white"}`}>جميع العروض</button>
+          <button type="button" onClick={()=>{setFilterKind("DRIVING_LICENSE");startOffer();setOfferForm(f=>({...f,kind:"DRIVING_LICENSE",origin:"",destination:""}));}} className={`rounded-full border px-5 py-3 text-sm font-bold ${filterKind==="DRIVING_LICENSE"?"bg-[#D4AF37]":"bg-white"}`}>🪪 عروض الرخصة الدولية</button>
         </div>}
         <button onClick={()=>void load()} disabled={busy||loading} className="rounded-full border border-[#D4AF37]/40 px-5 py-3 text-sm font-bold disabled:opacity-40">تحديث</button>
       </div>
@@ -515,18 +531,18 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             {!showSuper&&<p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-bold text-amber-800">تعديل العروض والأسعار والصور متاح للسوبر أدمن فقط.</p>}
             <p className="mt-2 text-xs leading-7">الأسعار تظهر في البطاقات الجانبية، وليس داخل نموذج طلب العميل. في البواخر أضف حالة التشغيل والملاحظات عند توقف أي باخرة.</p>
             <form onSubmit={saveOffer} className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <label className={label}>الخدمة<select className={field} disabled={initialOfferKind!=="ALL"} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option><option value="VISA">تأشيرات</option></select></label>
+              <label className={label}>الخدمة<select className={field} disabled={initialOfferKind!=="ALL"} value={offerForm.kind} onChange={e=>setOfferForm(f=>({...f,kind:e.target.value}))}><option value="FERRY">بواخر</option><option value="FLIGHT">طيران</option><option value="VISA">تأشيرات</option><option value="DRIVING_LICENSE">رخصة دولية</option></select></label>
               <label className={label}>الناقل / الباخرة
                 {offerForm.kind==="FLIGHT" ? <AirlineLookup ariaLabel="شركة الطيران في الإعلان" value={offerForm.carrierName} onChange={v=>setOfferForm(f=>({...f,carrierName:v}))} /> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="جهة أو نوع الخدمة"/> :
-                  <><input className={field} list="offer-operators" value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder="اختر الباخرة"/><datalist id="offer-operators">{ferryOperators.map(v=><option key={v} value={v}/>)}</datalist></>}
+                  <><input className={field} list={offerForm.kind==="FERRY"?"offer-operators":undefined} value={offerForm.carrierName} onChange={e=>setOfferForm(f=>({...f,carrierName:e.target.value}))} placeholder={offerForm.kind==="FERRY"?"اختر الباخرة":offerForm.kind==="DRIVING_LICENSE"?"رخصة قيادة دولية":"جهة الخدمة"}/>{offerForm.kind==="FERRY"&&<datalist id="offer-operators">{ferryOperators.map(v=><option key={v} value={v}/>)}</datalist>}</>}
               </label>
               <label className={label+" sm:col-span-2 xl:col-span-2"}>اسم العرض / الجدول<input required maxLength={160} className={field} value={offerForm.title} onChange={e=>setOfferForm(f=>({...f,title:e.target.value}))}/></label>
-              <label className={label}>{offerForm.kind==="VISA"?"بلد الإقامة أو الجنسية":"من"}
-                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة المغادرة" value={offerForm.origin} onChange={v=>setOfferForm(f=>({...f,origin:v}))}/> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value}))} placeholder="بلد الإقامة أو الجنسية"/> :
+              <label className={label}>{offerForm.kind==="VISA"?"بلد الإقامة أو الجنسية":offerForm.kind==="DRIVING_LICENSE"?"بلد الخدمة":"من"}
+                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة المغادرة" value={offerForm.origin} onChange={v=>setOfferForm(f=>({...f,origin:v}))}/> : offerForm.kind==="VISA"||offerForm.kind==="DRIVING_LICENSE" ? <input className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value}))} placeholder={offerForm.kind==="VISA"?"بلد الإقامة أو الجنسية":"البلد"}/> :
                   <select className={field} value={offerForm.origin} onChange={e=>setOfferForm(f=>({...f,origin:e.target.value,destination:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="سواكن">سواكن</option><option value="جدة">جدة</option></select>}
               </label>
-              <label className={label}>{offerForm.kind==="VISA"?"الدولة":"إلى"}
-                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة الوصول" value={offerForm.destination} onChange={v=>setOfferForm(f=>({...f,destination:v}))}/> : offerForm.kind==="VISA" ? <input className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value}))} placeholder="الدولة أو الوجهة"/> :
+              <label className={label}>{offerForm.kind==="VISA"?"الدولة":offerForm.kind==="DRIVING_LICENSE"?"نوع / جهة الإصدار":"إلى"}
+                {offerForm.kind==="FLIGHT" ? <AirportLookup ariaLabel="مطار أو مدينة الوصول" value={offerForm.destination} onChange={v=>setOfferForm(f=>({...f,destination:v}))}/> : offerForm.kind==="VISA"||offerForm.kind==="DRIVING_LICENSE" ? <input className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value}))} placeholder={offerForm.kind==="VISA"?"الدولة أو الوجهة":"جهة الإصدار أو الوجهة"}/> :
                   <select className={field} value={offerForm.destination} onChange={e=>setOfferForm(f=>({...f,destination:e.target.value,origin:e.target.value==="جدة"?"سواكن":"جدة"}))}><option value="جدة">جدة</option><option value="سواكن">سواكن</option></select>}
               </label>
               <label className={label}>تاريخ بدء ظهور العرض
@@ -553,22 +569,23 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
               <label className={label+" sm:col-span-2 xl:col-span-2 xl:col-start-3"}>ملاحظات التشغيل التي تظهر للعميل<textarea className={field} rows={2} value={offerForm.operationNote} onChange={e=>setOfferForm(f=>({...f,operationNote:e.target.value}))} placeholder="مثلاً: الباخرة متوقفة حالياً حتى إشعار آخر"/></label>
               <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3 rounded-[20px] border border-[#D4AF37]/35 bg-[#F8F5EC] p-4">
                 <label className={label}>صور الإعلان أو تصميم العرض (PNG / JPG / WEBP — حتى 10 صور)
-                  <input type="file" multiple accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>{const files=Array.from(e.target.files||[]);setBannerFile(files[0]||null);setExtraBannerFiles(files.slice(1));setBannerDimensions(null);}} />
+                  <input type="file" multiple accept="image/png,image/jpeg,image/webp" className={field} onChange={e=>{const files=Array.from(e.target.files||[]);setBannerFile(files[0]||null);setExtraBannerFiles(files.slice(1));setBannerDimensions(null);e.currentTarget.value="";}} />
                 </label>
                 <ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={bannerFile ? bannerDimensions : null} />
                 <p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت للصورة و10 صور للعرض. يجب أن تطابق كل صورة المقاس المحدد وإلا يرفضها النظام.</p>
-                {!bannerFile&&offerForm.imageUrls.length>0&&<p className="mt-3 text-xs font-bold text-[#0D3B34]/65">الصور الحالية محفوظة ({offerForm.imageUrls.length}). اختيار صور جديدة يستبدل الصور الحالية.</p>}
-                {bannerFile&&<p className="mt-2 text-xs font-bold text-[#0D3B34]/65">سيتم رفع {1+extraBannerFiles.length} صور للعرض.</p>}
+                {!bannerFile&&offerForm.imageUrls.map((url,index)=><div key={`${url}-${index}`} className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[#D4AF37]/25 bg-white p-3"><span className="truncate text-xs font-bold">الصورة {index+1}</span><button type="button" onClick={()=>removeOfferImage(index)} className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700">حذف الصورة</button></div>)}
+                {bannerFile&&[bannerFile,...extraBannerFiles].map((file,index)=><div key={`${file.name}-${index}`} className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[#D4AF37]/25 bg-white p-3"><span className="truncate text-xs font-bold">{file.name} · الصورة {index+1}</span><button type="button" onClick={()=>removeOfferImage(index)} className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700">حذف الصورة</button></div>)}
+                {bannerFile&&<p className="mt-2 text-xs font-bold text-[#0D3B34]/65">سيتم رفع {1+extraBannerFiles.length} صور للعرض. المقاس المطلوب 1200 × 1200 بكسل لكل صورة.</p>}
                 {(bannerPreview||offerForm.bannerUrl)&&<div className="mt-4 overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} onLoad={e=>{if(bannerFile)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="h-44 w-full object-contain"/>
+                  <img alt="معاينة صورة العرض قبل النشر" src={bannerPreview||offerForm.bannerUrl} onLoad={e=>{if(bannerFile)setBannerDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight});}} className="mx-auto aspect-square max-h-72 w-full object-contain"/>
                 </div>}
               </div>
               <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3 overflow-hidden rounded-[24px] border border-[#D4AF37]/40 bg-white shadow-lg">
                 <div className="bg-[#0D3B34] px-5 py-3 text-sm font-black text-white">معاينة بطاقة العرض — نص مع صورة</div>
                 {(bannerPreview||offerForm.bannerUrl)&&
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img alt={offerForm.title||"صورة العرض"} src={bannerPreview||offerForm.bannerUrl} className="h-40 w-full bg-[#F8F5EC] object-contain"/>}
+                  <img alt={offerForm.title||"صورة العرض"} src={bannerPreview||offerForm.bannerUrl} className="aspect-square max-h-64 w-full bg-[#F8F5EC] object-contain"/>}
                 <div className="p-5">
                   <p className="text-xs font-bold text-[#A77B23]">{offerForm.carrierName||"الناقل / الباخرة"}</p>
                   <h3 className="mt-2 text-xl font-black">{offerForm.title||"عنوان العرض"}</h3>
@@ -607,7 +624,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             <div className={offerView==="CARDS"?"grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4":"space-y-3"}>
             {filteredOffers.map(offer=>(
               <article key={offer.id} className={`min-w-0 rounded-[18px] border border-[#D4AF37]/30 bg-white p-3 shadow-sm ${offerView==="LIST"?"flex flex-wrap items-center gap-4":""}`}>
-                {offer.bannerUrl&&<div className={offerView==="LIST"?"aspect-[2/1] w-28 shrink-0 overflow-hidden rounded-xl bg-[#F7F4ED]":"mb-3 aspect-[2/1] overflow-hidden rounded-xl bg-[#F7F4ED]"}>
+                {offer.bannerUrl&&<div className={offerView==="LIST"?"aspect-square w-28 shrink-0 overflow-hidden rounded-xl bg-[#F7F4ED]":"mb-3 aspect-square overflow-hidden rounded-xl bg-[#F7F4ED]"}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={offer.bannerUrl} alt={offer.title} className="h-full w-full object-contain" />
                 </div>}
