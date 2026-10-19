@@ -251,12 +251,13 @@ export async function PATCH(request:NextRequest) {
         await tx.$queryRaw`SELECT id FROM "TransportRequest" WHERE id = ${id} FOR UPDATE`;
         const fresh=await tx.transportRequest.findUniqueOrThrow({where:{id},select:{status:true,kind:true}});
         if(fresh.status!==current.status||!TRANSITIONS[fresh.status]?.includes(status))return null;
-        if(status==="DONE"&&fresh.kind==="FERRY"){
-          const [bankVerified,ticket]=await Promise.all([
+        if(status==="DONE"&&["FLIGHT","FERRY"].includes(fresh.kind)){
+          const [bankVerified,ticket,confirmedDetails]=await Promise.all([
             tx.transportRequestEvent.findFirst({where:{requestId:id,action:"ADMIN_PAYMENT_VERIFIED"},select:{id:true}}),
-            tx.transportRequestEvent.findFirst({where:{requestId:id,action:"TICKET_PDF_DELIVERED"},select:{id:true}})
+            tx.transportRequestEvent.findFirst({where:{requestId:id,action:"TICKET_PDF_DELIVERED"},select:{id:true}}),
+            tx.transportRequestEvent.findFirst({where:{requestId:id,action:"BOOKING_CONFIRMATION_DETAILS_SAVED"},select:{id:true}})
           ]);
-          if(!bankVerified||!ticket)return "MISSING_REQUIREMENTS" as const;
+          if(!bankVerified||!ticket||!confirmedDetails)return "MISSING_REQUIREMENTS" as const;
         }
         const updated=await tx.transportRequest.update({where:{id},data:{
           status,canceledBy:status==="CANCELED"?by:null,cancellationReason:status==="CANCELED"?reason:null,
@@ -268,7 +269,7 @@ export async function PATCH(request:NextRequest) {
         }});
         return updated;
       });
-      if(changed==="MISSING_REQUIREMENTS")return fail("يجب تأكيد استلام الحوالة وإرفاق التذكرة PDF للعميل قبل «تم التنفيذ».",409);
+      if(changed==="MISSING_REQUIREMENTS")return fail("يلزم اعتماد التحويل البنكي وحفظ تفاصيل الحجز المؤكد وإرفاق التذكرة الأصلية للعميل قبل «تم التنفيذ».",409);
       if(!changed)return fail("تغيرت حالة الطلب. حدّث الصفحة وأعد المحاولة.",409);
       const updated=changed;
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
