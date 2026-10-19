@@ -1,7 +1,6 @@
 "use client";
 
 import {useState,type FormEvent} from "react";
-import {requireCustomerSession} from "@/lib/customer-auth-client";
 import Link from "next/link";
 
 const style="w-full rounded-xl border border-[#D7C18F]/55 bg-[#FCFBF6] px-4 py-3 text-sm text-[#0D3B34] outline-[#A8842A]";
@@ -9,6 +8,14 @@ const label="block space-y-2 text-sm font-bold text-[#0D3B34]";
 const phoneCodes=[["966","السعودية +966"],["249","السودان +249"],["20","مصر +20"],["971","الإمارات +971"],["1","أمريكا / كندا +1"],["44","بريطانيا +44"],["other","دولة أخرى"]];
 const COLORS=["أسود","بني","أزرق","أخضر","رمادي","عسلي"] as const;
 type Slot="PASSPORT"|"LOCAL_LICENSE"|"PORTRAIT";
+async function requireCustomerSession(next:string):Promise<boolean>{
+ try{
+  const response=await fetch("/api/auth/me",{cache:"no-store",credentials:"include"});
+  if(response.ok)return true;
+ }catch{}
+ window.location.assign("/login?next="+encodeURIComponent(next));
+ return false;
+}
 const documents:ReadonlyArray<{key:Slot;name:string;hint:string}>=[
  {key:"PASSPORT",name:"صورة جواز السفر",hint:"صورة واضحة لكامل صفحة البيانات؛ جواز ساري المفعول"},
  {key:"LOCAL_LICENSE",name:"صورة رخصة القيادة المحلية",hint:"رخصة بلد الأم سارية المفعول، والبيانات واضحة"},
