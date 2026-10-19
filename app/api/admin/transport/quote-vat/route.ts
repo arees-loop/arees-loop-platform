@@ -27,6 +27,7 @@ export async function POST(req:NextRequest){
  if(auth.request.quoteAmountSar===null)return fail("يجب حفظ عرض السعر أولاً.",409);
  const treatment=body?.treatment;
  if(!isQuoteVatTreatment(treatment))return fail("اختيار المعالجة الضريبية غير صحيح.");
+ if(treatment==="ZERO_RATED_INTERNATIONAL"&&!["FLIGHT","FERRY"].includes(auth.request.kind))return fail("التصنيف الخاص بالنقل الدولي مخصص لتذاكر الطيران أو البواخر المؤهلة فقط.",400);
  if(treatment!=="UNDETERMINED"&&body.confirmed!==true)
    return fail("يرجى تأكيد أن التصنيف الضريبي راجعه المسؤول المختص.");
  const event=await prisma.transportRequestEvent.create({data:{
