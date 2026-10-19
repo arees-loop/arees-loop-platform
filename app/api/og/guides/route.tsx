@@ -12,7 +12,13 @@ const cards: Record<string, { title: string; subtitle: string; symbol: string }>
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const card = cards[url.searchParams.get("type") || "directory"] || cards.directory;
+  const type=url.searchParams.get("type")||"directory";
+  const name=(url.searchParams.get("name")||"").replace(/[<>\\r\\n]/g,"").trim().slice(0,65);
+  const card=type==="profile"&&name?{
+    title:"المرشد السياحي "+name,
+    subtitle:"ملف المرشد المرخص · التفاصيل والتخصصات",
+    symbol:"⌖",
+  }:cards[type]||cards.directory;
 
   return new ImageResponse(
     <div style={{ width: "100%", height: "100%", display: "flex", direction: "rtl", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#062E29 0%,#0D3B34 60%,#185449 100%)", color: "#FFFDF7", fontFamily: "sans-serif", position: "relative", overflow: "hidden" }}>
