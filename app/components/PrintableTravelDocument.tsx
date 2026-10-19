@@ -51,7 +51,7 @@ export default function PrintableTravelDocument({type}:{type:"quote"|"confirmed"
   {loading&&<p role="status" className="mx-auto max-w-3xl rounded-xl bg-white p-6">جارٍ تحميل المستند...</p>}
   {error&&<p role="alert" className="mx-auto max-w-3xl rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">{error}</p>}
   {!loading&&!error&&!ready&&<p className="mx-auto max-w-3xl rounded-xl border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900">هذا المستند لم يُعتمد بعد، ولا يمكن إصداره قبل استكمال مرحلته. عرض السعر يتطلب نشر الإدارة، وتأكيد الحجز يتطلب اعتماد السداد وتسجيل بيانات الحجز الفعلية.</p>}
-  {ready&&r&&<article className="print-document mx-auto max-w-[820px] overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white shadow-lg">
+  {ready&&r&&<article id="arees-print-sheet" className="print-document mx-auto max-w-[820px] overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white shadow-lg">
    <header className="border-b-4 border-[#B99644] p-6 print:p-3 sm:p-8">
     <div className="flex flex-wrap items-center justify-between gap-4">
      <div className="min-w-0 flex-1">
