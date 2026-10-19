@@ -203,6 +203,7 @@ model User {
   loyaltyTransactions LoyaltyTransaction[]
   sessions           Session[]
   verificationTokens VerificationToken[]
+  internationalLicenseDocuments InternationalLicenseDocument[]
   partnerContactVerification PartnerContactVerification?
   interests          UserInterest[]
   savedExperiences   SavedExperience[]
@@ -1084,4 +1085,20 @@ model BankTransferAccount {
   active Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+/** Private passport, local-license and portrait files for an IDP application. */
+model InternationalLicenseDocument {
+  id        String   @id @default(cuid())
+  userId    String
+  slot      String
+  blobPath  String   @unique
+  mimeType  String
+  byteSize  Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, slot, createdAt])
 }
