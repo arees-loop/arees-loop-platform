@@ -1,3 +1,11 @@
+import type {Metadata} from "next";
+import {buildPageMetadata} from "@/lib/seo-metadata";
+export const metadata:Metadata=buildPageMetadata({
+ title:"الشروط والأحكام وسياسة الإلغاء والاسترداد",
+ description:"راجع شروط وأحكام استخدام أريس لوب، وسياسات الإلغاء والاسترداد والضمان المسترد وعدم تنفيذ الخدمات لدى شركة أريس الحلول المتكاملة المحدودة.",
+ path:"/terms",image:"/Image/social/arees-loop-whatsapp-preview.png",imageWidth:1734,imageHeight:907,imageType:"image/png",
+ imageAlt:"الشروط والأحكام وسياسة الإلغاء والاسترداد — أريس لوب"
+});
 import Link from "next/link";
 
 export default function TermsPage() {
