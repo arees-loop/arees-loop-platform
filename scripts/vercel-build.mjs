@@ -19,6 +19,9 @@ if (shouldMigrate) {
   }
 
   if (!databaseUrl) throw new Error("Database migration URL is unavailable.");
+  // Next.js evaluates some server routes while collecting page data during build.
+  // Bind the isolated staging URL there as well; production keeps its normal DATABASE_URL.
+  process.env.DATABASE_URL = databaseUrl;
   const run = (command, args, env) => {
     const result = spawnSync(command, args, { stdio: "inherit", env });
     if (result.error) throw result.error;
