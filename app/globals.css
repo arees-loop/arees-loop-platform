@@ -804,3 +804,65 @@ body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding
 @media (min-width:768px) {
   body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding-top:24px !important;}
 }
+
+
+/*
+ * AREES print isolation. The administration layout and the public header may
+ * surround a quotation/confirmation page, but MUST NOT enter its A4 PDF.
+ * Only the single, explicitly marked document is visible on printed pages.
+ */
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+
+  html:has(#arees-print-sheet),
+  body:has(#arees-print-sheet) {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  body:has(#arees-print-sheet) * {
+    visibility: hidden !important;
+  }
+
+  body:has(#arees-print-sheet) #arees-print-sheet,
+  body:has(#arees-print-sheet) #arees-print-sheet * {
+    visibility: visible !important;
+  }
+
+  body:has(#arees-print-sheet) #arees-print-sheet {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    background: white !important;
+    transform: none !important;
+    z-index: 2147483647 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body:has(#arees-print-sheet) #arees-print-sheet header,
+  body:has(#arees-print-sheet) #arees-print-sheet section,
+  body:has(#arees-print-sheet) #arees-print-sheet table,
+  body:has(#arees-print-sheet) #arees-print-sheet tr,
+  body:has(#arees-print-sheet) #arees-print-sheet img {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  body:has(#arees-print-sheet) .print-hide {
+    display: none !important;
+  }
+}
