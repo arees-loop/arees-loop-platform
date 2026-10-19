@@ -1,5 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {prisma} from "@/lib/prisma";
+import {findBankTransferNotes} from "@/lib/bank-transfer-notes";
  import {getCurrentSession} from "@/lib/session";
 export const runtime="nodejs";
 const bad=(message:string,status=400)=>NextResponse.json({success:false,message},{status});
@@ -12,8 +13,12 @@ export async function GET(req:NextRequest){
  if(staff&&session.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session.user.id)return bad("غير مصرح",403);
  const events=await prisma.transportRequestEvent.findMany({where:{requestId:request.id,action:{in:["CUSTOMER_OFFER_ACCEPTED","CUSTOMER_TRANSFER_SUBMITTED","ADMIN_PAYMENT_VERIFIED","ADMIN_PAYMENT_REJECTED"]}},orderBy:{createdAt:"desc"},select:{action:true,createdAt:true,details:true}});
  const accepted=events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED");
- const banks=(!staff&&accepted)?await prisma.bankTransferAccount.findMany({where:{active:true},orderBy:{createdAt:"desc"},select:{id:true,bankName:true,beneficiaryName:true,iban:true}}).catch(()=>[]):[];
- return NextResponse.json({success:true,events,banks,bank:banks[0]||null,amountSar:accepted?Number(request.quoteAmountSar):null,canAccept:!staff&&request.status==="PROCESSING"&&request.quoteAmountSar!==null&&!events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED")},{headers:{"Cache-Control":"private, no-store"}});
+ const banks=(!staff&&accepted)?await prisma.bankTransferAccount.findMany({where:{active:true},orderBy:{createdAt:"desc"},select:{id:true,bankName:true,beneficiaryName:true,iban:true}}).catch((error:unknown)=>{console.error("Bank accounts lookup failed",error);return null;}):[];
+ if(banks===null)return bad("تعذر تحميل الحسابات البنكية مؤقتاً. حاول مرة أخرى.",503);
+ let noteMap:Record<string,string>={};
+ if(banks.length){try{noteMap=await findBankTransferNotes(banks.map(bank=>bank.id));}catch(error){console.error("Bank transfer notes lookup failed",error);return bad("تعذر تحميل تعليمات التحويل البنكي مؤقتاً.",503);}}
+ const customerBanks=banks.map(bank=>({...bank,note:noteMap[bank.id]||""}));
+ return NextResponse.json({success:true,events,banks:customerBanks,bank:customerBanks[0]||null,amountSar:accepted?Number(request.quoteAmountSar):null,canAccept:!staff&&request.status==="PROCESSING"&&request.quoteAmountSar!==null&&!events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED")},{headers:{"Cache-Control":"private, no-store"}});
 }
 export async function POST(req:NextRequest){
  const session=await getCurrentSession();if(!session)return bad("سجل الدخول",401);
