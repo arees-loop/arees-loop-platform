@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import {REQUEST_REFERENCE_PATTERN} from "@/lib/request-reference";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -13,7 +14,7 @@ function claimsFrom(body: unknown): {reference:string;trackingTokenHash:string}[
   if(!Array.isArray(raw))return [];
   const normalized:Claim[]=raw.filter((x):x is Claim=>
     !!x && typeof x==="object" && typeof x.reference==="string" && typeof x.token==="string" &&
-    /^AR-(AIR|SEA|HOT|VISA|LIC)-[A-F0-9]{10}$/.test(x.reference) &&
+    REQUEST_REFERENCE_PATTERN.test(x.reference) &&
     /^[A-Za-z0-9_-]{43}$/.test(x.token)).slice(0,40);
   return normalized.map(x=>({
     reference:x.reference,
