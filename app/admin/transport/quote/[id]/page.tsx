@@ -67,7 +67,7 @@ export default async function QuotePage({params}:Props){
     <QuotePrintButton disabled={!quoteExists}/>
   </div>
   {quoteExists&&<AdminQuoteVatEditor id={item.id} initial={treatment}/>}
-  <article className="overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white shadow-lg print:border-0 print:rounded-none print:shadow-none">
+  <article id="arees-print-sheet" className="overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white shadow-lg print:border-0 print:rounded-none print:shadow-none">
    <header className="border-b-4 border-[#B69235] p-7 print:p-4">
     <div className="flex flex-wrap items-center justify-between gap-6">
      <div className="min-w-0 flex-1 space-y-1">
