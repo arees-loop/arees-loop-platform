@@ -1,3 +1,11 @@
+import type {Metadata} from "next";
+import {buildPageMetadata} from "@/lib/seo-metadata";
+export const metadata:Metadata=buildPageMetadata({
+ title:"سياسة الخصوصية وحماية البيانات",
+ description:"اطّلع على سياسة الخصوصية في منصة أريس لوب وحقوق المستخدمين وكيفية جمع بيانات العملاء واستخدامها وحمايتها لدى شركة أريس الحلول المتكاملة المحدودة.",
+ path:"/privacy-policy",image:"/Image/social/arees-loop-whatsapp-preview.png",imageWidth:1734,imageHeight:907,imageType:"image/png",
+ imageAlt:"سياسة الخصوصية وحماية البيانات — أريس لوب"
+});
 import Link from "next/link";
 
 export default function PrivacyPolicyPage() {
