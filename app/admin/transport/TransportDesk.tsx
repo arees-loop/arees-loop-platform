@@ -191,7 +191,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const customerWhatsApp = selected
     ? (selected.whatsappPhone ? (selected.whatsappCountryCode||"")+selected.whatsappPhone : selected.countryCode+selected.phone).replace(/\D/g,"")
     : "";
-  const message = selected ? `السلام عليكم، بناءً على طلبكم لدى شركة أريس لخدمة ${selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":selected.kind==="DRIVING_LICENSE"?"رخصة القيادة الدولية":"الطيران"} رقم ${selected.reference} (${selected.origin} - ${selected.destination})، أعددنا عرض السعر لدى ${selected.carrierName||"الناقل المختار"}. المبلغ ${selected.quoteAmountSar===null?"قيد التحديد":selected.quoteAmountSar+" ريال سعودي"}. سنرفق عرض السعر PDF بهذه المحادثة. نؤكد أن العرض ليس حجزاً نهائياً، وشروط الاسترداد والتعديل وفق الناقل. ${selected.quoteNotes||""}` : "";
+  const message = selected ? `السلام عليكم، بناءً على طلبكم لدى شركة أريس لخدمة ${selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":selected.kind==="DRIVING_LICENSE"?"رخصة القيادة الدولية":"الطيران"} رقم ${selected.reference} (${selected.origin} - ${selected.destination})، أعددنا عرض السعر لدى ${selected.carrierName||"الناقل المختار"}. المبلغ ${selected.quoteAmountSar===null?"قيد التحديد":selected.quoteAmountSar+" ريال سعودي"}. يمكننا إرسال ملف عرض السعر PDF في هذه المحادثة بعد حفظه، ويرجى التأكد من استلام المرفق. نؤكد أن العرض ليس حجزاً نهائياً، وشروط الاسترداد والتعديل وفق الناقل. ${selected.quoteNotes||""}` : "";
 
   function startOffer(offer?:Offer) {
     setBannerFile(null);
@@ -322,29 +322,27 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       {status&&<p role="status" className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">{status}</p>}
       {loading&&<p className="mt-5 text-sm">جاري تحميل البيانات...</p>}
       {tab==="requests"&&(
-        <div className={"mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px]"}>
-          <section className={selected?"hidden xl:block min-w-0":"min-w-0"}>
+        <div className={"mt-5 grid items-start gap-5 xl:grid-cols-1"}>
+          <section className={selected?"hidden":"min-w-0"}>
             <div className="mb-4 flex flex-wrap items-center gap-2"><span className="text-sm font-bold">تصفية الطلبات:</span><button type="button" onClick={()=>setRequestStatusFilter("ALL")} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter==="ALL"?"bg-[#0D3B34] text-white":"bg-white"}`}>الكل ({serviceRequests.length})</button>{requestStatuses.map(st=><button type="button" key={st} onClick={()=>setRequestStatusFilter(st)} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter===st?"bg-[#0D3B34] text-white":"bg-white"}`}>{st} ({serviceRequests.filter(q=>q.status===st).length})</button>)}<span className="text-xs text-[#0D3B34]/60">الأحدث أولاً</span></div>
             <div className={"grid grid-cols-1 gap-2"}>
             {filteredRequests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
             {filteredRequests.map(q=>(
-              <button key={q.id} onClick={()=>choose(q)} className={`min-w-0 rounded-[18px] border p-3 text-right transition hover:shadow-lg ${selected?.id===q.id?"border-[#D4AF37] bg-[#FFF9E7]":"border-[#D4AF37]/25 bg-white"}`}>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="font-black">{q.kind==="FERRY"?"⚓ باخرة":q.kind==="VISA"?"🛂 تأشيرة":q.kind==="DRIVING_LICENSE"?"🚘 رخصة دولية":"✈ طيران"} · {q.customerName}</span>
-                  <span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-xs font-bold">{q.status}</span>
-                </div>
-                <p className="mt-2 text-sm">{q.origin} ← {q.destination} · {day(q.travelDate)}</p>
-                <p className="mt-2 text-xs text-[#0D3B34]/70">{q.reference} · +{q.countryCode}{q.phone}</p>
-                {q.notificationStatus==="FAILED"&&<p className="mt-2 text-xs font-semibold text-amber-700">تنبيه: البريد الإداري لم يؤكد إرساله؛ الطلب محفوظ في القاعدة</p>}
+              <button key={q.id} onClick={()=>choose(q)} className={`grid w-full min-w-0 grid-cols-1 items-center gap-2 rounded-xl border border-[#D4AF37]/25 bg-white px-4 py-3 text-right transition hover:border-[#D4AF37] hover:shadow-md sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,.8fr)_minmax(0,.7fr)]`}>
+                <div className="min-w-0"><p className="truncate text-sm font-black">{q.customerName}</p><p className="mt-1 truncate text-[11px] text-[#0D3B34]/60">{q.reference} · {q.kind==="FERRY"?"باخرة":q.kind==="VISA"?"تأشيرة":q.kind==="DRIVING_LICENSE"?"رخصة دولية":"طيران"}</p></div>
+                <div className="min-w-0 text-xs"><p className="truncate">{q.origin} ← {q.destination}</p><p className="mt-1 text-[#0D3B34]/60">{day(q.travelDate)}</p></div>
+                <div className="text-xs font-bold">{q.quoteAmountSar==null?"لم يسعّر بعد":Number(q.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</div>
+                <div className="flex items-center justify-between gap-2 sm:justify-end"><span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-[11px] font-bold">{statusNames[q.status]||q.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
               </button>
             ))}
             </div>
           </section>
-          <section className={"min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6 xl:col-start-1 xl:row-start-1"}>
+          <section className={`${selected?"":"hidden"} min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6`}>
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
               <>
                 {<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
-                <h2 className="text-xl font-black">طلب {selected.reference}</h2>
+                <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">طلب {selected.reference}</h2><span className="rounded-full bg-[#E8F2EC] px-4 py-2 text-xs font-black text-[#0D3B34]">{statusNames[selected.status]||selected.status}</span><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يتم التسعير":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
+                <a href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(`السلام عليكم ${selected.customerName}، بخصوص طلبك رقم ${selected.reference} لخدمة ${selected.kind==="FLIGHT"?"الطيران":selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":"الرخصة الدولية"} لدى أريس لوب. نتابع معك تفاصيل طلبك.`)}`} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-[#147D55] px-5 py-3 text-sm font-black text-white">واتساب العميل مباشرة ↗</a>
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F7F4EB] p-4 text-sm">
                   <p>الاسم: <b>{selected.customerName}</b></p>
                   <p>التواصل: <b dir="ltr">+{selected.countryCode}{selected.phone}</b></p>
@@ -362,9 +360,44 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   })}
                 </div>}
                 {selected.notes&&<p className="mt-3 whitespace-pre-wrap rounded-xl border p-3 text-xs leading-7">ملاحظات العميل: {selected.notes}</p>}
-                <AdminRequestAttachments reference={selected.reference}/>
-                <AdminPaymentReview reference={selected.reference}/>
-                {initialOfferKind!=="VISA"&&<section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
+                <div className="mt-4 grid items-start gap-3 lg:grid-cols-3">
+                <details className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4" open><summary className="cursor-pointer text-sm font-black">⚙️ حالة الطلب والإسناد · {statusNames[selected.status]||selected.status} · {staffName(selected.assignedToId)}</summary><div className="mt-3">
+                  
+                  <p className="mt-2 text-sm">الموظف المسؤول: <b>{staffName(selected.assignedToId)}</b></p>
+                  {showSuper&&<div className="mt-3 flex flex-wrap gap-2">
+                    <select aria-label="إسناد الطلب لموظف" className={field+" min-w-0 flex-1"} value={selected.assignedToId||""} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})} disabled={busy}>
+                      <option value="">غير مسند</option>
+                      {staff.filter(u=>u.role==="SUPER_ADMIN"||(Array.isArray(u.adminPermissions)&&u.adminPermissions.includes(selected.kind==="FERRY"?"TRANSPORT_FERRIES":selected.kind==="VISA"?"TRANSPORT_VISAS":selected.kind==="DRIVING_LICENSE"?"TRANSPORT_DRIVING_LICENSE":"TRANSPORT_FLIGHTS"))).map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email} · {u.role}</option>)}
+                    </select>
+                  </div>}
+                  <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-bold">الحالة: {statusNames[selected.status]||selected.status}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(transitions[selected.status]||[]).filter(x=>x!=="CANCELED"&&x!=="QUOTE_READY").map(next=>
+                      <button key={next} type="button" disabled={busy} onClick={()=>void performAction("SET_STATUS",{status:next})}
+                        className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2 text-xs font-bold disabled:opacity-40">
+                        {statusNames[next]}
+                      </button>)}
+                  </div>
+                  {(transitions[selected.status]||[]).includes("CANCELED")&&<details className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3"><summary className="cursor-pointer font-bold text-red-800">إلغاء الطلب</summary><div className="mt-3 grid gap-3">
+                    <label className={label}>جهة الإلغاء
+                      <select className={field} value={cancelBy} onChange={e=>setCancelBy(e.target.value)}>
+                        <option value="STAFF">الموظف</option><option value="PARTNER">الشريك / مقدم الخدمة</option><option value="CUSTOMER">العميل</option>
+                      </select>
+                    </label>
+                    <label className={label}>سبب الإلغاء (إلزامي)
+                      <textarea className={field} minLength={5} maxLength={1500} rows={2} value={cancelReason} onChange={e=>setCancelReason(e.target.value)} placeholder="وضح سبب الإلغاء مع التفاصيل..."/>
+                    </label>
+                    <button type="button" disabled={busy||cancelReason.trim().length<5} onClick={()=>void performAction("SET_STATUS",{status:"CANCELED",canceledBy:cancelBy,cancellationReason:cancelReason})} className="rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40">تأكيد إلغاء الطلب</button>
+                  </div></details>}
+                  {selected.cancellationReason&&<p className="mt-3 whitespace-pre-wrap text-sm text-red-700">سبب الإلغاء: {selected.cancellationReason}</p>}
+                </div></details>
+                <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F3F8F6] p-4"><h3 className="text-sm font-black text-[#0D3B34]">التواصل مع العميل</h3><p className="mt-2 text-xs text-[#0D3B34]/65">يمكنك مراجعة الرد والملاحظات وإرسال الرسائل من أقسام الطلب.</p><a className="mt-3 inline-flex rounded-lg bg-[#147D55] px-3 py-2 text-xs font-bold text-white" href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">واتساب العميل ↗</a></div>
+                <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F9F6EC] p-4"><h3 className="text-sm font-black">المرفقات والسداد</h3>
+                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">📎 المرفقات وطلب مستندات إضافية</summary><AdminRequestAttachments reference={selected.reference}/></details>
+                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference}/></details>
+                </div>
+                </div>
+                {initialOfferKind!=="VISA"&&<div className="mt-4 grid items-start gap-4 lg:grid-cols-2"><section className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
  <h3 className="font-black">قرار توفر الخدمة وإرسال العرض للعميل</h3>
  <div className="mt-3 flex flex-wrap gap-4"><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="AVAILABLE"} onChange={()=>setVisaAvailability("AVAILABLE")}/>متاح</label><label className="flex items-center gap-2"><input type="radio" checked={visaAvailability==="UNAVAILABLE"} onChange={()=>setVisaAvailability("UNAVAILABLE")}/>غير متاح</label></div>
  {visaAvailability==="AVAILABLE"?<div className="mt-4 grid gap-3">
@@ -372,7 +405,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
  <label className={label}>تفاصيل العرض للعميل<textarea rows={3} className={field} value={form.quoteNotes} onChange={e=>setForm(v=>({...v,quoteNotes:e.target.value}))}/></label>
  <button type="button" disabled={busy||!(Number(form.quoteAmountSar)>0)||["CANCELED","DONE","PAID","EXECUTING"].includes(selected.status)} onClick={()=>void publishVisaDecision()} className="rounded-xl bg-[#0D3B34] px-4 py-3 font-bold text-white disabled:opacity-40">إرسال عرض السعر للعميل</button>
  </div>:<div className="mt-4 grid gap-3"><label className={label}>سبب عدم التوفر<textarea rows={3} className={field} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/></label><button type="button" disabled={busy||["CANCELED","DONE","PAID","EXECUTING"].includes(selected.status)} onClick={()=>void publishVisaDecision()} className="rounded-xl bg-red-700 px-4 py-3 font-bold text-white disabled:opacity-40">إرسال الاعتذار وإغلاق الطلب</button></div>}
- </section>}
+ </section><aside className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-white p-4"><h3 className="text-sm font-black">ملخص التسعير والإجراء</h3><div className="mt-3 space-y-3 text-sm"><p>العميل: <b>{selected.customerName}</b></p><p>الحالة: <b>{statusNames[selected.status]||selected.status}</b></p><p>السعر المحفوظ: <b>{selected.quoteAmountSar==null?"لم يتم التسعير":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</b></p></div><p className="mt-4 text-xs leading-6 text-[#0D3B34]/65">ملف PDF وإجراءات العرض التفصيلية متاحة في قسم إعداد عرض السعر أدناه.</p></aside></div>}
  {initialOfferKind==="VISA"?<div className="mt-5 grid gap-4 md:grid-cols-2">
                   <section className="rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
                     <h3 className="font-bold">توفر الخدمة المطلوبة</h3>
@@ -394,36 +427,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   <textarea maxLength={2500} rows={3} className={field+" mt-3"} value={replyDraft} onChange={e=>setReplyDraft(e.target.value)} placeholder="اكتب رد أريس على العميل..."/>
                   <button type="button" onClick={()=>void publishReply()} disabled={busy||replyDraft.trim().length<1} className="mt-3 rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-black text-white disabled:opacity-40">نشر الرد للعميل</button>
                 </section>
-                <section className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFCF4] p-4">
-                  <h3 className="text-base font-black">الإسناد وسير العمل</h3>
-                  <p className="mt-2 text-sm">الموظف المسؤول: <b>{staffName(selected.assignedToId)}</b></p>
-                  {showSuper&&<div className="mt-3 flex flex-wrap gap-2">
-                    <select aria-label="إسناد الطلب لموظف" className={field+" min-w-0 flex-1"} value={selected.assignedToId||""} onChange={e=>void performAction("ASSIGN",{assignedToId:e.target.value})} disabled={busy}>
-                      <option value="">غير مسند</option>
-                      {staff.filter(u=>u.role==="SUPER_ADMIN"||(Array.isArray(u.adminPermissions)&&u.adminPermissions.includes(selected.kind==="FERRY"?"TRANSPORT_FERRIES":selected.kind==="VISA"?"TRANSPORT_VISAS":selected.kind==="DRIVING_LICENSE"?"TRANSPORT_DRIVING_LICENSE":"TRANSPORT_FLIGHTS"))).map(u=><option key={u.id} value={u.id}>{[u.firstName,u.lastName].filter(Boolean).join(" ")||u.email} · {u.role}</option>)}
-                    </select>
-                  </div>}
-                  <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-bold">الحالة: {statusNames[selected.status]||selected.status}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {(transitions[selected.status]||[]).filter(x=>x!=="CANCELED"&&x!=="QUOTE_READY").map(next=>
-                      <button key={next} type="button" disabled={busy} onClick={()=>void performAction("SET_STATUS",{status:next})}
-                        className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2 text-xs font-bold disabled:opacity-40">
-                        {statusNames[next]}
-                      </button>)}
-                  </div>
-                  {(transitions[selected.status]||[]).includes("CANCELED")&&<div className="mt-4 grid gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
-                    <label className={label}>جهة الإلغاء
-                      <select className={field} value={cancelBy} onChange={e=>setCancelBy(e.target.value)}>
-                        <option value="STAFF">الموظف</option><option value="PARTNER">الشريك / مقدم الخدمة</option><option value="CUSTOMER">العميل</option>
-                      </select>
-                    </label>
-                    <label className={label}>سبب الإلغاء (إلزامي)
-                      <textarea className={field} minLength={5} maxLength={1500} rows={2} value={cancelReason} onChange={e=>setCancelReason(e.target.value)} placeholder="وضح سبب الإلغاء مع التفاصيل..."/>
-                    </label>
-                    <button type="button" disabled={busy||cancelReason.trim().length<5} onClick={()=>void performAction("SET_STATUS",{status:"CANCELED",canceledBy:cancelBy,cancellationReason:cancelReason})} className="rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40">تأكيد إلغاء الطلب</button>
-                  </div>}
-                  {selected.cancellationReason&&<p className="mt-3 whitespace-pre-wrap text-sm text-red-700">سبب الإلغاء: {selected.cancellationReason}</p>}
-                </section>
+                <details className="mt-5 overflow-hidden rounded-2xl border border-[#D4AF37]/30 bg-white" open={false}><summary className="cursor-pointer select-none bg-[#F9F6EC] px-4 py-4 text-sm font-black text-[#0D3B34]">▤ إعداد عرض السعر وملف PDF والتواصل مع العميل <span className="mr-2 text-xs font-normal text-[#0D3B34]/60">اضغط لعرض التفاصيل</span></summary><div className="p-4">
                 <form onSubmit={saveQuote} className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2 rounded-xl border border-[#D4AF37]/35 bg-[#F9F6EC] px-4 py-3 text-sm font-bold">حالة الطلب الحالية: {statusNames[selected.status]||selected.status}</div>
                   <label className={label}>المشغّل / الباخرة / شركة الطيران
@@ -444,6 +448,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <p className="mt-3 text-xs leading-7 text-[#0D3B34]/65">احفظ عرض السعر PDF ثم أرفقه يدوياً من حساب واتساب الشركة في المحادثة المفتوحة. فتح المحادثة وحده لا يعني إرسال الملف. لا يتم إرسال المستند تلقائياً قبل ربط WhatsApp Cloud API.</p>
                 <button disabled={busy} type="button" onClick={()=>void markManuallySent()} className="mt-4 w-full rounded-xl border border-[#D4AF37]/35 px-4 py-3 text-sm font-bold">تأكيد الموظف أنه أرسل PDF يدوياً</button>
                 <p className="mt-2 text-xs">حالة واتساب: {selected.whatsappStatus==="MANUALLY_MARKED_SENT"?"أكد الموظف الإرسال يدوياً":"لم يتم إثبات الإرسال"}</p>
+                </div></details>
 </>}                <section className="mt-6 rounded-2xl border border-[#D4AF37]/30 bg-[#FBF9F4] p-4">
                   <div className="flex items-center justify-between gap-3"><h3 className="font-black">سجل إجراءات الطلب</h3><button type="button" onClick={()=>void loadHistory(selected.id)} className="text-xs font-bold text-[#A67D28]">تحديث</button></div>
                   {history.length===0?<p className="mt-3 text-xs text-[#0D3B34]/60">لا توجد إجراءات محفوظة لعرضها.</p>:
