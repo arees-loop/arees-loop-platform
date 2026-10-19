@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = buildPageMetadata({title:"سجّل كجهة حكومية",description:"أبرزوا وجهاتكم وفعالياتكم الرسمية، ووسّعوا وصولها للزوار عبر أريس لوب. مسار مخصص للجهات الحكومية وغير الربحية.",path:"/partner/government",image:"/api/og/partner?type=government",imageWidth:1200,imageHeight:630,imageType:"image/png",imageAlt:"الجهات الحكومية وغير الربحية في أريس لوب"});
+export const metadata: Metadata = buildPageMetadata({title:"سجّل كجهة حكومية",description:"أبرزوا وجهاتكم وفعالياتكم الرسمية، ووسّعوا وصولها للزوار عبر أريس لوب. مسار مخصص للجهات الحكومية وغير الربحية.",path:"/partner/government",image:"/Image/social/arees-partner-share.webp",imageWidth:1254,imageHeight:1254,imageType:"image/webp",imageAlt:"الجهات الحكومية وغير الربحية في أريس لوب"});
 export default function GovernmentPartnerPage() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#F8F5ED] px-5 pb-24 pt-28 text-[#0D3B34]">
