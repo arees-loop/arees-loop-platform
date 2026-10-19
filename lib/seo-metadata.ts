@@ -23,8 +23,16 @@ export function buildPageMetadata({
   imageType,
   imageAlt,
 }: PageMetadataInput): Metadata {
-  const pageTitle = title.replace(/\s*\|\s*Arees Loop$/, "");
-  const imageUrl = new URL(image, SITE_URL).toString();
+  const pageTitle = title.replace(/\s*\|\s*(?:Arees Loop|AREES LOOP)$/i, "");
+  let imageUrl = new URL("/Image/social/arees-loop-whatsapp-preview.png", SITE_URL).toString();
+  try {
+    const candidate = new URL(image, SITE_URL);
+    const hostname = candidate.hostname.toLowerCase();
+    const local = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || hostname === "[::1]";
+    if (candidate.protocol === "https:" && !local && !candidate.username && !candidate.password) {
+      imageUrl = candidate.toString();
+    }
+  } catch { /* Keep verified public fallback instead of a broken URL. */ }
   const pageUrl = new URL(path, SITE_URL).toString();
 
   return {

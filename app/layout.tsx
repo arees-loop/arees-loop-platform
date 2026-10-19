@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "Arees Loop | منصة تجربة الزائر الذكية",
-    template: "%s | Arees Loop",
+    default: "الرئيسية | AREES LOOP",
+    template: "%s | AREES LOOP",
   },
 
   description:
@@ -51,16 +51,7 @@ export const metadata: Metadata = {
     ],
   },
 
-  robots: {
-    index: false,
-    follow: false,
-
-    googleBot: {
-      index: false,
-      follow: false,
-      noimageindex: false,
-    },
-  },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, maxImagePreview: "large", maxSnippet: -1, maxVideoPreview: -1 } },
 
   openGraph: {
     type: "website",
@@ -71,7 +62,7 @@ export const metadata: Metadata = {
 
     siteName: "Arees Loop",
 
-    title: "Arees Loop | منصة تجربة الزائر الذكية",
+    title: "الرئيسية | AREES LOOP",
 
     description:
       "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
@@ -94,7 +85,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
 
-    title: "Arees Loop | منصة تجربة الزائر الذكية",
+    title: "الرئيسية | AREES LOOP",
 
     description:
       "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
