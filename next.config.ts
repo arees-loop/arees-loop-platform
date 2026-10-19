@@ -5,7 +5,12 @@ const nextConfig: NextConfig = {
   async headers(){
     const privateRoutes=[
       "/admin/:path*","/api/:path*","/auth/:path*","/login",
-      "/partner/:path*","/bookings/:path*","/cart","/my-requests/:path*",
+      "/partner/login","/partner/dashboard/:path*","/partner/bookings/:path*",
+      "/partner/services/:path*","/partner/invoices/:path*","/partner/settlements/:path*",
+      "/partner/reports/:path*","/partner/contracts/:path*","/partner/coupons/:path*",
+      "/partner/loyalty/:path*","/partner/team/:path*","/partner/business/:path*",
+      "/partner/onboarding/:path*","/partner/status","/partner/agreement",
+      "/bookings/:path*","/cart","/my-requests/:path*",
       "/favorites","/notifications","/profile","/onboarding/:path*",
       "/missions","/rewards","/map-test","/sd",
       "/experience/:path*","/guide/:path*"
