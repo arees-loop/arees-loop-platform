@@ -65,6 +65,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
   const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?blankOffer.origin:"",destination:initialOfferKind==="FERRY"?blankOffer.destination:""});
   const [status,setStatus]=useState("");
+  const [publishConfirmation,setPublishConfirmation]=useState<{reference:string;type:"QUOTE"|"APOLOGY"}|null>(null);
   const [error,setError]=useState("");
   const [busy,setBusy]=useState(false);
   const [loading,setLoading]=useState(true);
@@ -109,7 +110,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   }
 
   function choose(q:RequestRow) {
-    setSelected(q);setItineraryReady(false);setError("");setStatus("");setReplyDraft(q.customerReply||"");setVisaAvailability("AVAILABLE");
+    setSelected(q);setItineraryReady(false);setError("");setStatus("");setPublishConfirmation(null);setReplyDraft(q.customerReply||"");setVisaAvailability("AVAILABLE");
     void loadHistory(q.id);
     setForm({carrierName:q.carrierName||"",
       quoteAmountSar:q.quoteAmountSar===null?"":String(q.quoteAmountSar),
@@ -133,6 +134,17 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     finally{setBusy(false);}
   }
 
+  function showQuotePublished(reference:string,type:"QUOTE"|"APOLOGY"){
+    // Close the editor only after a confirmed success response from the API.
+    setSelected(null);
+    setRequestStatusFilter("ALL");
+    setPublishConfirmation({reference,type});
+    setStatus("");
+    window.requestAnimationFrame(()=>{
+      document.getElementById("quote-publish-confirmation")?.scrollIntoView({behavior:"smooth",block:"center"});
+    });
+  }
+
   async function publishQuoteToCustomer(){
     if(!selected||busy||selected.status!=="QUOTE_READY"||selected.quoteAmountSar===null)return;
     if(!window.confirm("هل راجعت سعر العرض وشروطه وتريد نشره للعميل داخل صفحة «طلباتي»؟ لن يُرسل ملف PDF إلى واتساب تلقائياً."))return;
@@ -141,9 +153,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action:"PUBLISH_QUOTE_TO_CUSTOMER"})});
       const result=await r.json();
       if(!r.ok||!result.success){setError(result.message||"تعذر نشر العرض للعميل.");return;}
-      setSelected(result.data);
-      setStatus("تم نشر عرض السعر داخل «طلباتي». يستطيع العميل الآن قبوله ثم اختيار حساب التحويل البنكي المفعّل. الإرسال إلى واتساب إجراء منفصل.");
-      void loadHistory(selected.id);await load();
+      showQuotePublished(selected.reference,"QUOTE");
+      await load();
     }catch{setError("تعذر نشر العرض للعميل.");}
     finally{setBusy(false);}
   }
@@ -155,8 +166,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action:"PUBLISH_SERVICE_DECISION",availability:visaAvailability,quoteAmountSar:form.quoteAmountSar,quoteNotes:form.quoteNotes,reason:cancelReason})});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر إرسال قرار الخدمة.");return;}
-      setSelected(d.data);setReplyDraft(d.data.customerReply||"");setStatus(visaAvailability==="AVAILABLE"?"تم إرسال السعر والتعليق للعميل، والطلب تحت الإجراء.":"تم إرسال الاعتذار للعميل وإغلاق الطلب.");
-      void loadHistory(selected.id);await load();
+      showQuotePublished(selected.reference,visaAvailability==="AVAILABLE"?"QUOTE":"APOLOGY");
+      await load();
     }catch{setError("تعذر الاتصال بالخادم.");}
     finally{setBusy(false);}
   }
@@ -338,6 +349,15 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       </div>
       {error&&<p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{error}</p>}
       {status&&<p role="status" className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">{status}</p>}
+      {publishConfirmation&&tab==="requests"&&!selected&&(
+        <section id="quote-publish-confirmation" role="status" aria-live="polite" className="mx-auto mt-5 max-w-2xl rounded-2xl border border-[#8AC6A1] bg-[#EDF9F0] px-5 py-6 text-center shadow-sm">
+          <span aria-hidden="true" className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#137647] text-2xl font-black text-white">✓</span>
+          <h2 className="mt-3 text-lg font-black text-[#145C39]">{publishConfirmation.type==="QUOTE"?"تم نشر عرض السعر للعميل بنجاح":"تم إرسال الاعتذار للعميل بنجاح"}</h2>
+          <p className="mt-2 text-sm font-bold text-[#225D42]">رقم الطلب: <span dir="ltr">{publishConfirmation.reference}</span></p>
+          <p className="mt-2 text-xs leading-6 text-[#3D7454]">{publishConfirmation.type==="QUOTE"?"أصبح العرض متاحاً في صفحة «طلباتي» للعميل، ويمكنه الموافقة عليه. لم يُرسل ملف PDF عبر واتساب تلقائياً.":"تم تحديث الطلب وإظهار الاعتذار داخل «طلباتي». لم تُرسل رسالة واتساب تلقائياً."}</p>
+          <button type="button" onClick={()=>setPublishConfirmation(null)} className="mt-4 rounded-xl border border-[#8AC6A1] bg-white px-4 py-2 text-xs font-bold text-[#145C39]">إخفاء الرسالة ومتابعة الطلبات</button>
+        </section>
+      )}
       {loading&&<p className="mt-5 text-sm">جاري تحميل البيانات...</p>}
       {tab==="requests"&&(
         <div className={"mt-5 grid items-start gap-5 xl:grid-cols-1"}>
