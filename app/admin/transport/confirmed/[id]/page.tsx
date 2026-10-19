@@ -58,8 +58,8 @@ export default async function ConfirmedBookingPdf({params}:Props){
      <div className="min-w-0 flex-1 space-y-1">
       <BiLine ar="شركة أريس الحلول المتكاملة المحدودة" en="AREES AL-HELLOUL AL-MUTAKAMLA CO.LTD"/>
       <BiLine ar="الرقم الضريبي: 311897578200003" en="Tax No.: 311897578200003"/>
-      <BiLine ar="ترخيص وزارة السياحة: 73104550" en="Ministry of Tourism License No.: 73104550"/>
-      <BiLine ar="وكيل سفر وسياحة" en="Travel and Tourism Agent"/>
+      <BiLine ar="ترخيص وزارة السياحة رقم 73104550" en="Ministry of Tourism License No.: 73104550"/>
+      <BiLine ar="فئة الترخيص: وكالة سفر وسياحة" en="License Category: Travel and Tourism Agency"/>
       <BiLine ar="السجل التجاري: 7037003618" en="Commercial Registration No.: 7037003618"/>
       <BiLine ar="السعودية — المدينة المنورة، حي قربان" en="Saudi Arabia — Medina, Qurban District"/>
       <BiLine ar="الهاتف: +9660148390473" en="Phone: +9660148390473"/>
