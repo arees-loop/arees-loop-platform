@@ -71,7 +71,7 @@ const TRANSITIONS:Record<string,string[]> = {
   PROCESSING:["QUOTE_READY","CANCELED"],
   QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED"],
   QUOTE_SENT:["PAID","PROCESSING","CANCELED"],
-  PAID:["EXECUTING","CANCELED"],
+  PAID:["EXECUTING","DONE","CANCELED"],
   EXECUTING:["DONE","CANCELED"],
   DONE:[],
   CANCELED:[],
@@ -245,17 +245,32 @@ export async function PATCH(request:NextRequest) {
       const reason=cleanText(body.cancellationReason,1500);
       const by=cleanText(body.canceledBy,30);
       if(status==="CANCELED" && (reason.length<5||!["PARTNER","STAFF","CUSTOMER"].includes(by)))return fail("حدد جهة الإلغاء والسبب (5 حروف على الأقل).");
-      if(status==="PAID" && current.whatsappStatus!=="MANUALLY_MARKED_SENT")return fail("لا يمكن تسجيل السداد قبل تأكيد إرسال عرض السعر.",409);
-      const [updated]=await prisma.$transaction([
-        prisma.transportRequest.update({where:{id},data:{
+      // A financial status is never set manually: it requires bank reconciliation.
+      if(status==="PAID")return fail("تأكيد وصول السداد يتم من قسم مراجعة الإيصالات بعد المطابقة البنكية فقط.",409);
+      const changed=await prisma.$transaction(async tx=>{
+        await tx.$queryRaw`SELECT id FROM "TransportRequest" WHERE id = ${id} FOR UPDATE`;
+        const fresh=await tx.transportRequest.findUniqueOrThrow({where:{id},select:{status:true,kind:true}});
+        if(fresh.status!==current.status||!TRANSITIONS[fresh.status]?.includes(status))return null;
+        if(status==="DONE"&&fresh.kind==="FERRY"){
+          const [bankVerified,ticket]=await Promise.all([
+            tx.transportRequestEvent.findFirst({where:{requestId:id,action:"ADMIN_PAYMENT_VERIFIED"},select:{id:true}}),
+            tx.transportRequestEvent.findFirst({where:{requestId:id,action:"TICKET_PDF_DELIVERED"},select:{id:true}})
+          ]);
+          if(!bankVerified||!ticket)return "MISSING_REQUIREMENTS" as const;
+        }
+        const updated=await tx.transportRequest.update({where:{id},data:{
           status,canceledBy:status==="CANCELED"?by:null,cancellationReason:status==="CANCELED"?reason:null,
-        }}),
-        prisma.transportRequestEvent.create({data:{
-          requestId:id,actorId,actorName,action:status==="CANCELED"?"CANCELED":"STATUS_CHANGED",
-          fromStatus:current.status,toStatus:status,
-          details:status==="CANCELED"?{initiatedBy:by,reason}:undefined,
-        }}),
-      ]);
+        }});
+        await tx.transportRequestEvent.create({data:{
+          requestId:id,actorId,actorName,action:status==="CANCELED"?"CANCELED":status==="DONE"?"TICKET_FULFILLED":"STATUS_CHANGED",
+          fromStatus:fresh.status,toStatus:status,
+          details:status==="CANCELED"?{initiatedBy:by,reason}:status==="DONE"?{completedBy:actorId}:undefined,
+        }});
+        return updated;
+      });
+      if(changed==="MISSING_REQUIREMENTS")return fail("يجب تأكيد استلام الحوالة وإرفاق التذكرة PDF للعميل قبل «تم التنفيذ».",409);
+      if(!changed)return fail("تغيرت حالة الطلب. حدّث الصفحة وأعد المحاولة.",409);
+      const updated=changed;
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
     return fail("الإجراء غير معروف.");
