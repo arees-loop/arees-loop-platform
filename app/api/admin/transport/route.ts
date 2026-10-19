@@ -207,8 +207,29 @@ export async function PATCH(request:NextRequest) {
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
 
+    if(action==="PUBLISH_QUOTE_TO_CUSTOMER"){
+      if(current.status!=="QUOTE_READY"||!current.carrierName||current.quoteAmountSar===null)
+        return fail("يجب حفظ عرض سعر مكتمل قبل نشره للعميل.",409);
+      const updated=await prisma.$transaction(async tx=>{
+        await tx.$queryRaw`SELECT id FROM "TransportRequest" WHERE id = ${id} FOR UPDATE`;
+        const fresh=await tx.transportRequest.findUniqueOrThrow({where:{id},select:{status:true,carrierName:true,quoteAmountSar:true,whatsappStatus:true}});
+        if(fresh.status!=="QUOTE_READY"||!fresh.carrierName||fresh.quoteAmountSar===null)
+          return null;
+        const result=await tx.transportRequest.update({where:{id},data:{status:"QUOTE_SENT"}});
+        await tx.transportRequestEvent.create({data:{
+          requestId:id,actorId,actorName,action:"QUOTE_PUBLISHED_TO_CUSTOMER",
+          fromStatus:"QUOTE_READY",toStatus:"QUOTE_SENT",
+          details:{channel:"customer_portal",whatsappStatus:fresh.whatsappStatus,amountSar:Number(fresh.quoteAmountSar)},
+        }});
+        return result;
+      });
+      if(!updated)return fail("تغيرت حالة الطلب. حدّث الصفحة وأعد المحاولة.",409);
+      return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
+    }
+
     if(action==="MARK_MANUAL_WHATSAPP"){
-      if(current.status!=="QUOTE_READY"||!current.carrierName||current.quoteAmountSar===null)return fail("احفظ عرض السعر أولاً قبل تسجيل إرساله.",409);
+      if(!["QUOTE_READY","QUOTE_SENT"].includes(current.status)||!current.carrierName||current.quoteAmountSar===null)return fail("احفظ عرض السعر أولاً قبل تسجيل إرساله.",409);
+      if(current.whatsappStatus==="MANUALLY_MARKED_SENT")return fail("تم تسجيل إرسال العرض يدوياً مسبقاً.",409);
       if(body.confirmed!==true)return fail("يجب تأكيد الإرسال الفعلي من حساب واتساب الشركة.",400);
       const [updated]=await prisma.$transaction([
         prisma.transportRequest.update({where:{id},data:{status:"QUOTE_SENT",whatsappStatus:"MANUALLY_MARKED_SENT"}}),
