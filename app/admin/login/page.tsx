@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      window.location.href = "/admin/partners";
+      window.location.replace("/admin/dashboard");
     } catch {
       setError("تعذر الاتصال بالخادم.");
     } finally {
