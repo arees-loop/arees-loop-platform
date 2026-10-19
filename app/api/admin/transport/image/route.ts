@@ -13,7 +13,7 @@ export async function POST(request:NextRequest){
     const form=await request.formData();
     const file=form.get("file");
     const kind=String(form.get("kind")||"");
-    if(kind!=="FLIGHT"&&kind!=="FERRY"&&kind!=="HOTEL"&&kind!=="VISA")return NextResponse.json({success:false,message:"حدد القسم."},{status:400});
+    if(kind!=="FLIGHT"&&kind!=="FERRY"&&kind!=="HOTEL"&&kind!=="VISA"&&kind!=="DRIVING_LICENSE")return NextResponse.json({success:false,message:"حدد القسم."},{status:400});
     if(!(file instanceof File)||file.size<=0||file.size>4*1024*1024)return NextResponse.json({success:false,message:"ملف الصورة مطلوب (بحد أقصى 4 ميجابايت)."}, {status:400});
     const ext=types[file.type];
     if(!ext)return NextResponse.json({success:false,message:"الصيغ المسموحة PNG وJPG وWEBP فقط."},{status:415});
@@ -22,8 +22,9 @@ export async function POST(request:NextRequest){
       file.type==="image/jpeg"?h[0]===255&&h[1]===216&&h[2]===255:
       String.fromCharCode(...h.slice(0,4))==="RIFF"&&String.fromCharCode(...h.slice(8,12))==="WEBP";
     if(!valid)return NextResponse.json({success:false,message:"محتوى الصورة غير متطابق مع امتدادها."},{status:415});
-    const dimensions = await checkServerImageDimensions(file, kind === "VISA" ? IMAGE_REQUIREMENTS.visa : IMAGE_REQUIREMENTS.offer);
-    if (!dimensions.matches) return NextResponse.json({success:false,message:`${imageDimensionMessage(kind === "VISA" ? IMAGE_REQUIREMENTS.visa : IMAGE_REQUIREMENTS.offer)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُرفع.`},{status:400});
+    const requirement = kind === "VISA" ? IMAGE_REQUIREMENTS.visa : kind === "HOTEL" ? IMAGE_REQUIREMENTS.hotelOffer : IMAGE_REQUIREMENTS.offer;
+    const dimensions = await checkServerImageDimensions(file, requirement);
+    if (!dimensions.matches) return NextResponse.json({success:false,message:`${imageDimensionMessage(requirement)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُرفع.`},{status:400});
     const pathname=`transport-offers/${kind}/${crypto.randomUUID()}.${ext}`;
     const blob=await put(pathname,file,{access:"private",addRandomSuffix:false,contentType:file.type});
     return NextResponse.json({success:true,url:`/api/media?pathname=${encodeURIComponent(blob.pathname)}`});
