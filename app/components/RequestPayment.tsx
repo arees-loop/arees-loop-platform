@@ -8,7 +8,7 @@ export default function RequestPayment({reference}:{reference:string}){
  const [events,setEvents]=useState<Event[]>([]),[canAccept,setCanAccept]=useState(false),[file,setFile]=useState<File|null>(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
  const [receiptSubmitted,setReceiptSubmitted]=useState(false);
  const [loadingStatus,setLoadingStatus]=useState(true),[paymentError,setPaymentError]=useState("");
- const requestHeaders=()=>{const claim=readCustomerClaims().find(x=>x.reference===reference);return claim?{"x-arees-request-token":claim.token}:{};};
+ const requestHeaders=():Record<string,string>=>{const claim=readCustomerClaims().find(x=>x.reference===reference);return claim?{"x-arees-request-token":claim.token}:{};};
  const load=async()=>{
    try{
      const r=await fetch("/api/customer/request-payment?reference="+encodeURIComponent(reference),{cache:"no-store",headers:requestHeaders()});
