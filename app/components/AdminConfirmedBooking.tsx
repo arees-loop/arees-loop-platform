@@ -46,7 +46,7 @@ const groups:Array<{title:string;caption:string;fields:Array<{key:keyof BookingD
  ]}
 ];
 type Request={reference:string;status:string;adults:number;children:number;infants:number;origin:string;destination:string};
-export default function AdminConfirmedBooking({id}:{id:string}){
+export default function AdminConfirmedBooking({id,onReadyChange}:{id:string;onReadyChange?:(ready:boolean)=>void}){
  const [details,setDetails]=useState<BookingDetails>(initial);
  const [request,setRequest]=useState<Request|null>(null);
  const [ready,setReady]=useState(false),[eligible,setEligible]=useState(false);
@@ -62,8 +62,8 @@ export default function AdminConfirmedBooking({id}:{id:string}){
    if(data.details){
     const received=data.details as Record<string,unknown>;
     setDetails(Object.fromEntries(Object.keys(initial).map(key=>[key,typeof received[key]==="string"?received[key]:""])) as BookingDetails);
-    setReady(true);
-   }else{setDetails(initial);setReady(false);}
+    setReady(true);onReadyChange?.(true);
+   }else{setDetails(initial);setReady(false);onReadyChange?.(false);}
    setError("");
   }catch(e){setError(e instanceof Error?e.message:"تعذر قراءة تفاصيل الحجز.");}
   finally{setLoading(false);}
@@ -76,7 +76,7 @@ export default function AdminConfirmedBooking({id}:{id:string}){
    const r=await fetch("/api/admin/transport/confirmed-details",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,details,confirmed:true})});
    const data=await r.json();
    if(!r.ok||!data.success)throw Error(data.message||"تعذر حفظ بيانات الحجز.");
-   setMessage(data.message||"حُفظت التفاصيل.");setReady(true);setConfirmed(false);
+   setMessage(data.message||"حُفظت التفاصيل.");setReady(true);onReadyChange?.(true);setConfirmed(false);
   }catch(e){setError(e instanceof Error?e.message:"تعذر حفظ بيانات الحجز.");}
   finally{setSaving(false);}
  }
