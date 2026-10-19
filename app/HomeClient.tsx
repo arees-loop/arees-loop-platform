@@ -1548,6 +1548,12 @@ export default function Home() {
                 <h3 className="text-[11px] font-black text-[#0D3B34]">اكتشف</h3>
                 <div className="mt-1.5 space-y-1 text-[11px] text-[#0D3B34]/50">
                   <Link href="/services" className="block transition hover:text-[#D4AF37]">الخدمات والتجارب</Link>
+                  <Link href="/programs/saudi" className="block transition hover:text-[#D4AF37]">البرامج السياحية السعودية</Link>
+                  <Link href="/programs/international" className="block transition hover:text-[#D4AF37]">البرامج السياحية العالمية</Link>
+                  <Link href="/flights" className="block transition hover:text-[#D4AF37]">تذاكر الطيران</Link>
+                  <Link href="/ferries" className="block transition hover:text-[#D4AF37]">تذاكر البواخر</Link>
+                  <Link href="/visas" className="block transition hover:text-[#D4AF37]">خدمات التأشيرات</Link>
+                  <Link href="/hotels" className="block transition hover:text-[#D4AF37]">حجوزات الفنادق</Link>
                   <Link href="/discover" className="block transition hover:text-[#D4AF37]">المعالم</Link>
                   <Link href="/discover" className="block transition hover:text-[#D4AF37]">الفعاليات</Link>
                 </div>
