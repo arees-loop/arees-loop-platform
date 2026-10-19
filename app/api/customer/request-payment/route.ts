@@ -17,7 +17,8 @@ export async function GET(req:NextRequest){
  if(staff&&session?.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session?.user.id)return bad("غير مصرح",403);
  const events=await prisma.transportRequestEvent.findMany({where:{requestId:request.id,action:{in:["CUSTOMER_OFFER_ACCEPTED","CUSTOMER_TRANSFER_SUBMITTED","ADMIN_PAYMENT_VERIFIED","ADMIN_PAYMENT_REJECTED"]}},orderBy:{createdAt:"desc"},select:{action:true,createdAt:true,details:true}});
  const accepted=events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED");
- const banks=(!staff&&accepted)?await prisma.bankTransferAccount.findMany({where:{active:true},orderBy:{createdAt:"desc"},select:{id:true,bankName:true,beneficiaryName:true,iban:true,note:true}}).catch(()=>[]):[];
+ const banks=(!staff&&accepted)?await prisma.bankTransferAccount.findMany({where:{active:true},orderBy:{createdAt:"desc"},select:{id:true,bankName:true,beneficiaryName:true,iban:true,note:true}}).catch((error:unknown)=>{console.error("Active bank accounts lookup failed",error);return null;}):[];
+ if(banks===null)return bad("تعذر تحميل الحسابات البنكية مؤقتاً. حاول مرة أخرى.",503);
  return NextResponse.json({success:true,events,banks,bank:banks[0]||null,amountSar:accepted?Number(request.quoteAmountSar):null,canAccept:!staff&&payableStatuses.includes(request.status)&&request.quoteAmountSar!==null&&!events.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED")},{headers:{"Cache-Control":"private, no-store"}});
 }
 export async function POST(req:NextRequest){
