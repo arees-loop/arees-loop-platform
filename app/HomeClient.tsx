@@ -1402,8 +1402,7 @@ export default function Home() {
 
                 <div className="mt-2 flex flex-wrap justify-center gap-2 lg:justify-start" dir="ltr">
                   <div
-                    aria-label="متجر آبل قريبًا"
-                    title="قريبًا"
+                    aria-label="متجر آبل"
                     className="flex min-w-[138px] cursor-default items-center gap-2 rounded-xl border border-[#0D3B34]/12 bg-white px-3 py-2 shadow-sm"
                   >
                     <svg
@@ -1422,14 +1421,10 @@ export default function Home() {
                         متجر آبل
                       </span>
                     </span>
-                    <span className="ml-auto rounded-full bg-[#D4AF37]/12 px-2 py-0.5 text-[8px] font-bold text-[#9A741B]">
-                      قريبًا
-                    </span>
                   </div>
 
                   <div
-                    aria-label="متجر جوجل قريبًا"
-                    title="قريبًا"
+                    aria-label="متجر جوجل"
                     className="flex min-w-[138px] cursor-default items-center gap-2 rounded-xl border border-[#0D3B34]/12 bg-white px-3 py-2 shadow-sm"
                   >
                     <svg
@@ -1447,9 +1442,6 @@ export default function Home() {
                       <span className="block text-xs font-black text-[#0D3B34]">
                         متجر جوجل
                       </span>
-                    </span>
-                    <span className="ml-auto rounded-full bg-[#D4AF37]/12 px-2 py-0.5 text-[8px] font-bold text-[#9A741B]">
-                      قريبًا
                     </span>
                   </div>
                 </div>
