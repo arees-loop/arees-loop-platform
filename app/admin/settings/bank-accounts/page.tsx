@@ -2,18 +2,22 @@
 import Link from "next/link";
 import {useCallback,useEffect,useState} from "react";
 
-type BankAccount={id:string;bankName:string;beneficiaryName:string;iban:string;active:boolean};
+type BankAccount={id:string;bankName:string;beneficiaryName:string;iban:string;active:boolean;note:string};
 const field="w-full rounded-xl border border-[#DED5BE] bg-[#FFFEFC] px-4 py-3 text-sm text-[#0D3B34] outline-none transition focus:border-[#B99444] focus:ring-2 focus:ring-[#D4AF37]/20";
 export default function BankSettings(){
  const [accounts,setAccounts]=useState<BankAccount[]>([]);
- const [bankName,setBank]=useState(""),[beneficiaryName,setName]=useState(""),[iban,setIban]=useState("");
+ const [bankName,setBank]=useState(""),[beneficiaryName,setName]=useState(""),[iban,setIban]=useState(""),[newNote,setNewNote]=useState("");
+ const [noteOpenId,setNoteOpenId]=useState<string|null>(null),[noteDrafts,setNoteDrafts]=useState<Record<string,string>>({});
  const [message,setMessage]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
  const refresh=useCallback(async()=>{
    try{
      const r=await fetch("/api/admin/bank-accounts",{cache:"no-store",credentials:"include"});
      const d=await r.json();
      if(!r.ok||!d.success)throw Error(d.message||"تعذر تحميل الحسابات البنكية.");
-     setAccounts(Array.isArray(d.accounts)?d.accounts:[]);setError("");
+     const received:BankAccount[]=Array.isArray(d.accounts)?d.accounts:[];
+     setAccounts(received);
+     setNoteDrafts(Object.fromEntries(received.map(account=>[account.id,account.note||""])));
+     setError("");
    }catch(e){setError(e instanceof Error?e.message:"تعذر تحميل الحسابات البنكية.");}
    finally{setLoading(false);}
  },[]);
@@ -21,9 +25,9 @@ export default function BankSettings(){
  async function save(){
    if(busy)return;setBusy(true);setMessage("");setError("");
    try{
-     const r=await fetch("/api/admin/bank-accounts",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({bankName,beneficiaryName,iban})});
+     const r=await fetch("/api/admin/bank-accounts",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({bankName,beneficiaryName,iban,note:newNote})});
      const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر حفظ الحساب.");
-     setBank("");setName("");setIban("");setMessage(d.message||"تم حفظ الحساب غير مفعل.");await refresh();
+     setBank("");setName("");setIban("");setNewNote("");setMessage(d.message||"تم حفظ الحساب غير مفعل.");await refresh();
    }catch(e){setError(e instanceof Error?e.message:"تعذر حفظ الحساب.");}
    finally{setBusy(false);}
  }
@@ -37,6 +41,20 @@ export default function BankSettings(){
      const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر تحديث حالة الحساب.");
      setMessage(`تم ${intent} حساب ${account.bankName} بنجاح.`);await refresh();
    }catch(e){setError(e instanceof Error?e.message:"تعذر تحديث الحساب.");}
+   finally{setBusy(false);}
+ }
+ async function saveNote(account:BankAccount){
+   if(busy)return;
+   const nextNote=(noteDrafts[account.id]||"").trim();
+   if(nextNote.length>1500){setError("الحد الأقصى للملاحظات 1500 حرف.");return;}
+   setBusy(true);setError("");setMessage("");
+   try{
+     const r=await fetch("/api/admin/bank-accounts",{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:account.id,note:nextNote})});
+     const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر حفظ الملاحظات.");
+     setMessage("تم حفظ ملاحظات "+account.bankName+" بنجاح.");
+     await refresh();
+     setNoteOpenId(null);
+   }catch(e){setError(e instanceof Error?e.message:"تعذر حفظ الملاحظات.");}
    finally{setBusy(false);}
  }
  const enabled=accounts.filter(a=>a.active).length;
@@ -57,6 +75,7 @@ export default function BankSettings(){
          <label className="text-xs font-bold">اسم البنك<input required maxLength={120} value={bankName} onChange={e=>setBank(e.target.value)} placeholder="مثال: مصرف الراجحي" className={field+" mt-2"}/></label>
          <label className="text-xs font-bold">اسم المستفيد<input required maxLength={160} value={beneficiaryName} onChange={e=>setName(e.target.value)} placeholder="اسم صاحب الحساب" className={field+" mt-2"}/></label>
          <label className="text-xs font-bold sm:col-span-2">رقم الآيبان السعودي (IBAN)<input required pattern="SA[0-9]{22}" dir="ltr" maxLength={24} autoComplete="off" value={iban} onChange={e=>setIban(e.target.value.toUpperCase().replace(/\s+/g,""))} placeholder="SA0000000000000000000000" className={field+" mt-2 font-mono tracking-wider"}/></label>
+         <label className="text-xs font-bold sm:col-span-2">ملاحظات التحويل للعميل (اختياري)<textarea rows={3} maxLength={1500} value={newNote} onChange={e=>setNewNote(e.target.value)} placeholder="تعليمات التحويل التي تظهر للعميل مع هذا الحساب" className={field+" mt-2 resize-y"}/><span className="mt-1 block font-normal text-[#637168]">لن تظهر الملاحظات إلا مع الحساب النشط وبعد قبول العميل عرض السعر.</span></label>
          <div className="flex justify-end sm:col-span-2"><button type="submit" disabled={busy} className="w-full rounded-xl bg-[#103D34] px-7 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-[#175749] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">{busy?"جارٍ التنفيذ...":"حفظ الحساب غير نشط"}</button></div>
        </form>
      </section>
@@ -71,8 +90,15 @@ export default function BankSettings(){
          </div>
          <div className="flex flex-col gap-4 border-t border-[#EEE5D4] bg-[#FFFEFB] px-5 py-4 sm:flex-row sm:items-center sm:justify-between md:px-7">
            <div className="min-w-0"><p className="text-[11px] font-bold text-[#8B8D7E]">رقم الحساب الدولي (IBAN)</p><p dir="ltr" className="mt-1 break-all text-left font-mono text-sm font-bold tracking-wide text-[#244C40]">{a.iban}</p></div>
-           <div className="flex shrink-0 items-center gap-2"><button type="button" disabled={busy} onClick={()=>void setActive(a)} className={a.active?"rounded-xl border border-[#EAC6B8] bg-[#FFF4EF] px-5 py-3 text-xs font-black text-[#A84B32] transition hover:bg-[#FFE6DD] disabled:opacity-50":"rounded-xl border border-[#B8DCC7] bg-[#147450] px-5 py-3 text-xs font-black text-white transition hover:bg-[#0F5C3E] disabled:opacity-50"}>{busy?"جارٍ التنفيذ...":a.active?"تعطيل الحساب":"تفعيل الحساب"}</button></div>
+           <div className="flex shrink-0 flex-wrap items-center gap-2"><button type="button" aria-expanded={noteOpenId===a.id} onClick={()=>{setNoteOpenId(current=>current===a.id?null:a.id);setNoteDrafts(current=>({...current,[a.id]:a.note||""}));}} className="rounded-xl border border-[#D8C9A2] bg-white px-5 py-3 text-xs font-black text-[#87631D] transition hover:bg-[#FFF8E8]">📝 ملاحظات {a.note?"• محفوظة":""}</button><button type="button" disabled={busy} onClick={()=>void setActive(a)} className={a.active?"rounded-xl border border-[#EAC6B8] bg-[#FFF4EF] px-5 py-3 text-xs font-black text-[#A84B32] transition hover:bg-[#FFE6DD] disabled:opacity-50":"rounded-xl border border-[#B8DCC7] bg-[#147450] px-5 py-3 text-xs font-black text-white transition hover:bg-[#0F5C3E] disabled:opacity-50"}>{busy?"جارٍ التنفيذ...":a.active?"تعطيل الحساب":"تفعيل الحساب"}</button></div>
          </div>
+         {noteOpenId===a.id&&<div className="border-t border-[#E6DCC8] bg-[#FBF9F3] px-5 py-5 md:px-7" aria-label={"ملاحظات حساب "+a.bankName}>
+           <label className="block text-sm font-bold text-[#103D34]">ملاحظات التحويل للعميل
+             <textarea rows={3} maxLength={1500} className={field+" mt-2 resize-y"} value={noteDrafts[a.id]||""} onChange={e=>setNoteDrafts(drafts=>({...drafts,[a.id]:e.target.value}))} placeholder="اكتب ملاحظات التحويل الخاصة بهذا الحساب..."/>
+           </label>
+           <p className="mt-2 text-xs text-[#637168]">الملاحظات تظهر للعميل مع بيانات الحساب النشط عند قبول العرض. يمكن تعديلها أو إفراغها وحفظها في أي وقت.</p>
+           <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-[#8C816B]">{(noteDrafts[a.id]||"").length} / 1500</span><div className="flex gap-2"><button type="button" onClick={()=>setNoteOpenId(null)} className="rounded-xl border border-[#D8C9A2] bg-white px-4 py-2.5 text-xs font-bold">إغلاق</button><button type="button" disabled={busy||(noteDrafts[a.id]||"")===(a.note||"")} onClick={()=>void saveNote(a)} className="rounded-xl bg-[#103D34] px-5 py-2.5 text-xs font-black text-white disabled:opacity-45">{busy?"جارٍ الحفظ...":"حفظ الملاحظات"}</button></div></div>
+         </div>}
        </article>)}</div>}
      </section>
    </div>
