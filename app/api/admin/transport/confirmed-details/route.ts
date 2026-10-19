@@ -35,7 +35,7 @@ async function requestAccess(id:string){
  const session=await getCurrentSession();
  if(!session||!["SUPER_ADMIN","ADMIN"].includes(session.user.role))return null;
  const request=await prisma.transportRequest.findFirst({
-  where:{id,kind:"FLIGHT",...(session.user.role==="SUPER_ADMIN"?{}:{assignedToId:session.user.id})},
+  where:{id,kind:{in:["FLIGHT","FERRY"]},...(session.user.role==="SUPER_ADMIN"?{}:{assignedToId:session.user.id})},
   select:{
    id:true,reference:true,kind:true,status:true,customerName:true,
    adults:true,children:true,infants:true,
@@ -44,7 +44,7 @@ async function requestAccess(id:string){
    assignedToId:true,
   },
  });
- if(!request||!canManageTransport(session.user,"FLIGHT"))return null;
+ if(!request||!canManageTransport(session.user,request.kind==="FERRY"?"FERRY":"FLIGHT"))return null;
  return {session,request};
 }
 export async function GET(req:NextRequest){
@@ -90,9 +90,9 @@ export async function POST(req:NextRequest){
   details[key]=value.trim();
  }
  if(!details.bookingReference||details.bookingReference.length<3)
-  return fail("أدخل رقم الحجز المؤكد لدى شركة الطيران (PNR/Booking reference).");
- if(!details.flightNumber||!details.departureTime||!details.arrivalTime)
-  return fail("أدخل رقم الرحلة وموعد المغادرة والوصول المؤكدين.");
+  return fail("أدخل رقم الحجز المؤكد لدى الناقل أو شركة البواخر.");
+ if(!details.departureTime||(auth.request.kind==="FLIGHT"&&(!details.flightNumber||!details.arrivalTime)))
+  return fail(auth.request.kind==="FERRY"?"أدخل موعد إبحار الباخرة المؤكد على الأقل.":"أدخل رقم رحلة الطيران وموعد المغادرة والوصول المؤكدين.");
  try{
   const event=await prisma.$transaction(async tx=>{
    await tx.$queryRaw`SELECT id FROM "TransportRequest" WHERE id = ${id} FOR UPDATE`;
@@ -105,7 +105,7 @@ export async function POST(req:NextRequest){
      requestId:id,actorId:auth.session.user.id,
      actorName:"إدارة أريس",action:CONFIRMATION_EVENT,
      fromStatus:fresh.status,toStatus:fresh.status,
-     details:{...details,verifiedBy:auth.session.user.id,confirmedSource:"airline_booking"},
+     details:{...details,verifiedBy:auth.session.user.id,confirmedSource:auth.request.kind==="FERRY"?"ferry_operator_booking":"airline_booking"},
     },select:{id:true,createdAt:true}
    });
   });
