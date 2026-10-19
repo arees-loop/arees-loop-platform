@@ -23,7 +23,7 @@ export function buildPageMetadata({
   imageType,
   imageAlt,
 }: PageMetadataInput): Metadata {
-  const pageTitle = title.replace(/\s*\|\s*Arees Loop$/, "");
+  const pageTitle = title.replace(/\s*\|\s*(?:Arees Loop|AREES LOOP)$/i, "").trim();
   const imageUrl = new URL(image, SITE_URL).toString();
   const pageUrl = new URL(path, SITE_URL).toString();
 
@@ -34,20 +34,20 @@ export function buildPageMetadata({
     robots: {
       index: true,
       follow: true,
-      googleBot: { index: true, follow: true },
+      googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
     },
     openGraph: {
       type: "website",
       locale: "ar_SA",
       url: pageUrl,
       siteName: "Arees Loop",
-      title: pageTitle,
+      title: `${pageTitle} | AREES LOOP`,
       description,
       images: [{ url: imageUrl, width: imageWidth, height: imageHeight, type: imageType, alt: imageAlt }],
     },
     twitter: {
       card: "summary_large_image",
-      title: pageTitle,
+      title: `${pageTitle} | AREES LOOP`,
       description,
       images: [imageUrl],
     },
