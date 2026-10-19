@@ -37,6 +37,18 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
       - name: ESLint check
+        id: lint_check
+        continue-on-error: true
         run: npm run lint
       - name: Production build using disconnected dummy DB
+        id: build_check
+        continue-on-error: true
         run: npm run build
+      - name: Enforce both quality gates
+        if: always()
+        env:
+          LINT_RESULT: ${{ steps.lint_check.outcome }}
+          BUILD_RESULT: ${{ steps.build_check.outcome }}
+        run: |
+          echo "ESLint: ${LINT_RESULT}; Production build: ${BUILD_RESULT}"
+          test "${LINT_RESULT}" = "success" && test "${BUILD_RESULT}" = "success"
