@@ -822,6 +822,15 @@ body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding
     width: 100% !important;
   }
 
+  /* Remove positioned/flex scroll containers in both the admin and public
+     shells, so the print sheet starts at the page origin rather than at the
+     width/offset of the sidebar or site header. */
+  body:has(#arees-print-sheet) *:has(#arees-print-sheet) {
+    position: static !important;
+    transform: none !important;
+    overflow: visible !important;
+  }
+
   body:has(#arees-print-sheet) * {
     visibility: hidden !important;
   }
