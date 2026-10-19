@@ -1214,6 +1214,7 @@ export default function Home() {
                     <span className="pb-1 font-bold text-white/70">
                       نقطة
                     </span>
+                    <span className="ml-auto rounded-full border border-[#D4AF37]/35 bg-[#FFF6D8] px-1.5 py-0.5 text-[8px] font-bold text-[#9A741B] motion-safe:animate-pulse">قريباً</span>
                   </div>
                 </div>
 
@@ -1226,6 +1227,7 @@ export default function Home() {
                     <span className="font-black text-[#e5b83f]">
                       {lastRewardPoints === null ? "لا توجد عمليات استبدال" : `-${lastRewardPoints.toLocaleString("en-US")} نقطة`}
                     </span>
+                    <span className="ml-auto rounded-full border border-[#D4AF37]/35 bg-[#FFF6D8] px-1.5 py-0.5 text-[8px] font-bold text-[#9A741B] motion-safe:animate-pulse">قريباً</span>
                   </div>
 
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
@@ -1397,13 +1399,13 @@ export default function Home() {
             <div className="order-3 flex justify-center lg:order-1 lg:justify-start">
               <div className="text-center">
                 <p className="text-xs font-black text-[#0D3B34]">
-                  حمّل التطبيق
+                  حمّل التطبيق الآن
                 </p>
 
                 <div className="mt-2 flex flex-wrap justify-center gap-2 lg:justify-start" dir="ltr">
                   <div
                     aria-label="متجر آبل"
-                    className="flex min-w-[138px] cursor-default items-center gap-2 rounded-xl border border-[#0D3B34]/12 bg-white px-3 py-2 shadow-sm"
+                    className="group flex min-w-[138px] cursor-default items-center gap-2 rounded-xl border border-[#D4AF37]/55 bg-white/90 px-3 py-2 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.03] hover:rotate-1 hover:border-[#D4AF37] hover:shadow-[0_8px_24px_rgba(185,148,50,0.22)] motion-reduce:transform-none motion-reduce:transition-none"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -1421,11 +1423,12 @@ export default function Home() {
                         متجر آبل
                       </span>
                     </span>
+                    <span className="ml-auto rounded-full border border-[#D4AF37]/35 bg-[#FFF6D8] px-1.5 py-0.5 text-[8px] font-bold text-[#9A741B] motion-safe:animate-pulse">قريباً</span>
                   </div>
 
                   <div
                     aria-label="متجر جوجل"
-                    className="flex min-w-[138px] cursor-default items-center gap-2 rounded-xl border border-[#0D3B34]/12 bg-white px-3 py-2 shadow-sm"
+                    className="group flex min-w-[138px] cursor-default items-center gap-2 rounded-xl border border-[#D4AF37]/55 bg-white/90 px-3 py-2 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.03] hover:rotate-1 hover:border-[#D4AF37] hover:shadow-[0_8px_24px_rgba(185,148,50,0.22)] motion-reduce:transform-none motion-reduce:transition-none"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -1443,8 +1446,27 @@ export default function Home() {
                         متجر جوجل
                       </span>
                     </span>
+                    <span className="ml-auto rounded-full border border-[#D4AF37]/35 bg-[#FFF6D8] px-1.5 py-0.5 text-[8px] font-bold text-[#9A741B] motion-safe:animate-pulse">قريباً</span>
                   </div>
                 </div>
+
+                {/* Informational payment-method badges; actual payment options depend on activation. */}
+                <div aria-label="وسائل الدفع" dir="rtl" className="mt-3 flex max-w-[380px] flex-wrap items-center justify-center gap-1.5">
+                  {[
+                    { name: "تحويل بنكي", mark: "▥", color: "#275F87" },
+                    { name: "VISA", mark: "VISA", color: "#145999" },
+                    { name: "Mastercard", mark: "🔴🟠", color: "#202020" },
+                    { name: "مدى", mark: "مدى", color: "#168F9D" },
+                    { name: "stc pay", mark: "stc pay", color: "#4F008F" },
+                    { name: "Apple Pay", mark: " Pay", color: "#151515" },
+                  ].map((method) => (
+                    <div key={method.name} aria-label={method.name} title={method.name} className="group flex h-9 min-w-[52px] cursor-default select-none items-center justify-center gap-0.5 rounded-lg border border-[#E6D4A3] bg-white px-1.5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:rotate-1 hover:border-[#C99B32] hover:shadow-[0_8px_20px_rgba(185,148,50,0.22)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none">
+                      {method.name === "Apple Pay" && <span className="text-sm text-black" aria-hidden="true">●</span>}
+                      <span dir={method.name === "مدى" || method.name === "تحويل بنكي" ? "rtl" : "ltr"} className="whitespace-nowrap text-[10px] font-black" style={{ color: method.color }}>{method.mark}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1 text-center text-[8px] text-[#789087]">تختلف وسائل السداد المتاحة بحسب الخدمة وتفعيلها</p>
 
                 <div className="mt-2 flex items-center justify-center gap-2">
                   <span className="h-px w-8 bg-[#0D3B34]/20" />
