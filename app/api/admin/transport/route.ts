@@ -251,6 +251,10 @@ export async function PATCH(request:NextRequest) {
         if(!payment)return fail("لا يمكن تنفيذ الطلب قبل تأكيد وصول السداد عبر مراجعة الإيصال البنكي.",409);
         const ticket=await prisma.transportRequestEvent.findFirst({where:{requestId:id,action:"TICKET_PDF_DELIVERED"},select:{id:true}});
         if(!ticket)return fail("ارفع تذكرة PDF للعميل أولاً قبل اختيار «تم التنفيذ».",409);
+        if(current.kind==="FLIGHT"){
+          const itinerary=await prisma.transportRequestEvent.findFirst({where:{requestId:id,action:"BOOKING_CONFIRMATION_DETAILS_SAVED"},select:{id:true}});
+          if(!itinerary)return fail("أكمل تفاصيل حجز الطيران المؤكد أولاً قبل اختيار «تم التنفيذ».",409);
+        }
       }
       const updated=await prisma.$transaction(async tx=>{
         await tx.$queryRaw`SELECT id FROM "TransportRequest" WHERE id = ${id} FOR UPDATE`;
@@ -262,6 +266,10 @@ export async function PATCH(request:NextRequest) {
             tx.transportRequestEvent.findFirst({where:{requestId:id,action:"TICKET_PDF_DELIVERED"},select:{id:true}})
           ]);
           if(!payment||!ticket)throw new Error("DELIVERY_REQUIRED");
+          if(fresh.kind==="FLIGHT"){
+            const itinerary=await tx.transportRequestEvent.findFirst({where:{requestId:id,action:"BOOKING_CONFIRMATION_DETAILS_SAVED"},select:{id:true}});
+            if(!itinerary)throw new Error("DELIVERY_REQUIRED");
+          }
         }
         const updatedRow=await tx.transportRequest.update({where:{id},data:{
           status,canceledBy:status==="CANCELED"?by:null,cancellationReason:status==="CANCELED"?reason:null,
