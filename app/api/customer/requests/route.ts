@@ -66,8 +66,11 @@ export async function POST(request:NextRequest){
         route:x.origin+" ← "+x.destination,
         travelDate:x.travelDate,returnDate:x.returnDate,tripType:x.tripType,itinerary:x.itinerary,
         guests:x.adults+x.children+x.infants,status:x.status,group:customerStatus(x.status),
-        customerReply:x.customerReply,quoteAmountSar:x.quoteAmountSar===null?null:Number(x.quoteAmountSar),
-        quoteNotes:x.quoteNotes,carrierName:x.carrierName,quoteValidUntil:x.quoteValidUntil,
+        customerReply:x.customerReply,
+        quoteAmountSar:["QUOTE_SENT","PROCESSING","PAID","EXECUTING","DONE"].includes(x.status)&&x.quoteAmountSar!==null?Number(x.quoteAmountSar):null,
+        quoteNotes:["QUOTE_SENT","PROCESSING","PAID","EXECUTING","DONE"].includes(x.status)?x.quoteNotes:null,
+        carrierName:["QUOTE_SENT","PROCESSING","PAID","EXECUTING","DONE"].includes(x.status)?x.carrierName:null,
+        quoteValidUntil:["QUOTE_SENT","PROCESSING","PAID","EXECUTING","DONE"].includes(x.status)?x.quoteValidUntil:null,
         cancellationReason:x.cancellationReason,createdAt:x.createdAt,updatedAt:x.updatedAt,
       })),
       ...hotels.map(x=>({
