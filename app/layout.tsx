@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
+import RouteTabTitle from "./components/RouteTabTitle";
 import PublicGlobalHeader from "./components/PublicGlobalHeader";
 import "./globals.css";
 
@@ -120,6 +121,7 @@ export default function RootLayout({
       className={`${elMessiri.variable} ${ibmPlexArabic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <RouteTabTitle />
         <InitialSplash />
         <PublicGlobalHeader />
 
