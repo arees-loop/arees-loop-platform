@@ -2,6 +2,29 @@ import Link from "next/link";
 import {notFound} from "next/navigation";
 import {prisma} from "@/lib/prisma";
 export const dynamic="force-dynamic";
+import {buildPageMetadata} from "@/lib/seo-metadata";
+import type {Metadata} from "next";
+export async function generateMetadata({params}:{params:Promise<{id:string}>}):Promise<Metadata>{
+ const {id}=await params;
+ try{
+  const event=await prisma.publicEvent.findFirst({
+   where:{id,status:"PUBLISHED",partner:{partnerType:"GOVERNMENT_NONPROFIT",status:"ACTIVE"}},
+   select:{nameAr:true,descriptionAr:true,posterUrl:true,city:true}
+  });
+  if(!event)return {title:"الفعالية غير متاحة",robots:{index:false,follow:false}};
+  const image=typeof event.posterUrl==="string"&&/^https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\//.test(event.posterUrl)
+   ?event.posterUrl:"/Image/hero/saudi-panorama-hero.jpg";
+  return buildPageMetadata({
+   title:event.nameAr,
+   description:event.descriptionAr.replace(/<[^>]+>/g," ").slice(0,160),
+   path:"/events/"+encodeURIComponent(id),
+   image,imageWidth:1200,imageHeight:630,
+   imageType:image.toLowerCase().endsWith(".png")?"image/png":image.toLowerCase().endsWith(".jpg")?"image/jpeg":"image/webp",
+   imageAlt:event.nameAr+" — "+event.city
+  });
+ }catch{return {title:"الفعالية",robots:{index:false,follow:false}};}
+}
+
 export default async function EventPage({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{lang?:string}>}){
  const {id}=await params;
  const english=(await searchParams).lang==="en";
