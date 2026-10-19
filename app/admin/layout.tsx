@@ -15,6 +15,13 @@ type AdminIdentity = {
 };
 
 type NavItem = { href: string; label: string; icon: string; permission: string | null; superOnly?: boolean; badge?: string | number };
+type ServiceCounters = {ferries:number|null;flights:number|null;hotels:number|null;visas:number|null;drivingLicenses:number|null};
+const emptyCounters:ServiceCounters={ferries:0,flights:0,hotels:0,visas:0,drivingLicenses:0};
+const requestKeyByPath:Record<string,keyof ServiceCounters>={
+  "/admin/transport/flights":"flights", "/admin/transport/ferries":"ferries",
+  "/admin/hotels":"hotels", "/admin/transport/visas":"visas",
+  "/admin/transport/driving-licenses":"drivingLicenses",
+};
 
 const nav: NavItem[] = [
   { href: "/admin/dashboard", label: "الرئيسية", icon: "⌂", permission: null },
@@ -59,6 +66,8 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const [financeMenuOpen,setFinanceMenuOpen]=useState(false);
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
   const [pendingServiceCount, setPendingServiceCount] = useState(0);
+  const [requestBadgeCounts,setRequestBadgeCounts]=useState<ServiceCounters>(emptyCounters);
+  const [actionBadgeCounts,setActionBadgeCounts]=useState<ServiceCounters>(emptyCounters);
 
   useEffect(() => {
     if (pathname === "/admin/login" || pathname === "/admin/invite") return;
@@ -89,6 +98,24 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, [pathname]);
 
+  useEffect(()=>{
+    if(pathname==="/admin/login"||pathname==="/admin/invite")return;
+    let live=true;
+    const refresh=async()=>{
+      try{
+        const response=await fetch("/api/admin/request-alerts",{cache:"no-store",credentials:"include"});
+        if(!response.ok){if(live){setRequestBadgeCounts(emptyCounters);setActionBadgeCounts(emptyCounters);}return;}
+        const data=await response.json();
+        if(live&&data.success){setRequestBadgeCounts(data.counts);setActionBadgeCounts(data.needsAttention);}
+      }catch{ /* An alert failure never prevents administration. */ }
+    };
+    void refresh();
+    const interval=window.setInterval(()=>{void refresh()},60000);
+    const onFocus=()=>{void refresh()};
+    window.addEventListener("focus",onFocus);
+    return()=>{live=false;window.clearInterval(interval);window.removeEventListener("focus",onFocus)};
+  },[pathname]);
+
   if (pathname === "/admin/login" || pathname === "/admin/invite") return <>{children}</>;
 
   const isSuperAdmin = admin?.role === "SUPER_ADMIN";
@@ -111,6 +138,12 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   };
   const platformMenuActive = visiblePlatformNav.some(isActive) || pathname.startsWith("/admin/settings");
   const requestsMenuActive = visibleRequestsNav.some(isActive);
+  const badgeFor=(item:NavItem)=>{
+    const key=requestKeyByPath[item.href.split("?")[0]];
+    if(!key)return 0;
+    return (requestBadgeCounts[key]??0)+(actionBadgeCounts[key]??0);
+  };
+  const totalRequestBadges=visibleRequestsNav.reduce((sum,item)=>sum+badgeFor(item),0);
   const fullName = [admin?.firstName, admin?.lastName].filter(Boolean).join(" ") || (isSuperAdmin ? "Arees Admin" : "Admin");
   const initials = fullName.split(" ").filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "A";
 
@@ -208,10 +241,11 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 <button type="button" aria-expanded={requestsMenuOpen} onClick={()=>setRequestsMenuOpen(v=>!v)} className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-[14px] font-semibold transition-all ${requestsMenuActive?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}>
                   <span className="flex h-8 w-8 items-center justify-center rounded-[10px] text-lg">▣</span>
                   <span className="flex-1 text-right">طلبات خدمات أريس</span>
+                  {totalRequestBadges>0&&<span aria-label={totalRequestBadges+" طلب أو تفاعل يحتاج متابعة"} className="rounded-full bg-[#B54133] px-2 py-0.5 text-xs font-black text-white">{totalRequestBadges}</span>}
                   <span className="text-xs">{requestsMenuOpen?"⌃":"⌄"}</span>
                 </button>
                 {requestsMenuOpen&&<div className="mr-5 mt-1 space-y-1 border-r border-[#D4AF37]/30 pr-3">
-                  {visibleRequestsNav.map(item=><Link key={item.href} href={item.href} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold ${isActive(item)?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}><span className="w-5 text-center text-base">{item.icon}</span><span>{item.label}</span></Link>)}
+                  {visibleRequestsNav.map(item=><Link key={item.href} href={item.href} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold ${isActive(item)?"bg-[#F3E5BD]/75":"hover:bg-[#D4AF37]/10"}`}><span className="w-5 text-center text-base">{item.icon}</span><span className="flex-1">{item.label}</span>{badgeFor(item)>0&&<span aria-label={badgeFor(item)+" طلب أو تفاعل يحتاج متابعة"} className="rounded-full bg-[#B54133] px-2 py-0.5 text-[11px] font-extrabold text-white">{badgeFor(item)}</span>}</Link>)}
                 </div>}
               </div>
             )}
@@ -389,23 +423,12 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-4">
 
                 {/* Notification */}
-                <button
-                  className="
-                    relative flex h-10 w-10
-                    items-center justify-center
-                    rounded-[13px]
-                    bg-white/40
-                    text-lg
-                    transition-all duration-200
-                    hover:bg-[#D4AF37]/10
-                    hover:text-[#B68A21]
-                    hover:shadow-[0_6px_20px_rgba(181,138,37,.13)]
-                  "
-                >
-                  ♧
-
-                  <span className="absolute right-[8px] top-[8px] h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-                </button>
+                <Link href="/admin/dashboard#admin-work-queue"
+                  aria-label={totalRequestBadges>0?"فتح تنبيهات الإدارة؛ "+totalRequestBadges+" طلب أو إجراء يحتاج متابعة":"فتح تنبيهات الإدارة"}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-[13px] bg-white/40 text-lg transition hover:bg-[#D4AF37]/10 hover:text-[#B68A21]"
+                >🔔
+                  {totalRequestBadges>0&&<span className="absolute -right-1 -top-1 rounded-full bg-[#B54133] px-1.5 py-0.5 text-[10px] font-black text-white">{totalRequestBadges}</span>}
+                </Link>
 
                 <div className="hidden text-left md:block">
                   <p className="text-[9px] font-bold tracking-[.18em] text-[#B68A21]">
