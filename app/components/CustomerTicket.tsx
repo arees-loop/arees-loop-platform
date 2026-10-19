@@ -7,7 +7,7 @@ export default function CustomerTicket({reference}:{reference:string}){
  const [tickets,setTickets]=useState<Ticket[]>([]);
  const [error,setError]=useState(""),[busy,setBusy]=useState(false);
  const [preview,setPreview]=useState<string|null>(null);
- const claimHeaders=()=>{
+ const claimHeaders=():Record<string,string>=>{
   const claim=readCustomerClaims().find(c=>c.reference===reference);
   return claim?{"x-arees-request-token":claim.token}:{};
  };
