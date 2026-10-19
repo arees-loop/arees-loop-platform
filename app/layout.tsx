@@ -3,6 +3,7 @@ import Script from "next/script";
 import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
 import PublicGlobalHeader from "./components/PublicGlobalHeader";
+import PageTitleSync from "./components/PageTitleSync";
 import "./globals.css";
 
 const SITE_URL = "https://www.areesloop.com";
@@ -120,6 +121,7 @@ export default function RootLayout({
       className={`${elMessiri.variable} ${ibmPlexArabic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <PageTitleSync />
         <InitialSplash />
         <PublicGlobalHeader />
 
