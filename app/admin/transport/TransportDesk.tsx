@@ -1,5 +1,6 @@
 "use client";
 import AdminPaymentReview from "@/app/components/AdminPaymentReview";
+import AdminTicketFulfillment from "@/app/components/AdminTicketFulfillment";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -409,7 +410,12 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F3F8F6] p-4"><h3 className="text-sm font-black text-[#0D3B34]">التواصل مع العميل</h3><p className="mt-2 text-xs text-[#0D3B34]/65">يمكنك مراجعة الرد والملاحظات وإرسال الرسائل من أقسام الطلب.</p><a className="mt-3 inline-flex rounded-lg bg-[#147D55] px-3 py-2 text-xs font-bold text-white" href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">واتساب العميل ↗</a></div>
                 <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F9F6EC] p-4"><h3 className="text-sm font-black">المرفقات والسداد</h3>
                 <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">📎 المرفقات وطلب مستندات إضافية</summary><AdminRequestAttachments reference={selected.reference}/></details>
-                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference}/></details>
+                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference} onReviewed={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}/></details>
+                {selected.kind==="FERRY"&&<AdminTicketFulfillment
+                   reference={selected.reference} id={selected.id} status={selected.status}
+                   kind="FERRY" itineraryReady={true} whatsappPhone={customerWhatsApp}
+                   onStatusChange={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}
+                />}
                 </div>
                 </div>
                 {initialOfferKind!=="VISA"&&<div className="mt-4 grid items-start gap-4 lg:grid-cols-2"><section className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
