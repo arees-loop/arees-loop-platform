@@ -130,7 +130,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                   <div className="pointer-events-none absolute inset-x-3 top-2 h-8 rounded-[28px] bg-white/10 offer-studio-layer offer-studio-layer-mid" />
                   {offers.filter((_,index)=>index===offerIndex%offers.length).map(offer=>(
                     <article key={offer.id} className="offer-studio-slide relative overflow-hidden rounded-[24px] border border-white/20 bg-[#F7F4ED] text-[#0D3B34] shadow-2xl" aria-live="polite">
-                      <div className="relative aspect-[2/1] overflow-hidden bg-[radial-gradient(circle_at_75%_15%,#EBD38B,#F7F4ED_48%,#D8E9E2)]">
+                      <div className="relative aspect-square overflow-hidden bg-[radial-gradient(circle_at_75%_15%,#EBD38B,#F7F4ED_48%,#D8E9E2)]">
                         {(offer.imageUrls?.length||offer.bannerUrl)? <>
                           <OfferImageCarousel images={offer.imageUrls} fallback={offer.bannerUrl} title={offer.title} imageClassName="offer-studio-art"/>
                           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#082F2A]/80 via-[#082F2A]/10 to-transparent" />
