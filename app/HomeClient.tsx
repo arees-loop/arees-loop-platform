@@ -1450,25 +1450,22 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Informational payment-method badges; actual payment options depend on activation. */}
-                <div aria-label="وسائل الدفع" dir="rtl" className="mt-3 flex max-w-[380px] flex-wrap items-center justify-center gap-1.5">
-                  {[
-                    { name: "تحويل بنكي", mark: "▥", color: "#275F87" },
-                    { name: "VISA", mark: "VISA", color: "#145999" },
-                    { name: "Mastercard", mark: "🔴🟠", color: "#202020" },
-                    { name: "مدى", mark: "مدى", color: "#168F9D" },
-                    { name: "stc pay", mark: "stc pay", color: "#4F008F" },
-                    { name: "Apple Pay", mark: " Pay", color: "#151515" },
-                  ].map((method) => (
-                    <div key={method.name} aria-label={method.name} title={method.name} className="group flex h-9 min-w-[52px] cursor-default select-none items-center justify-center gap-0.5 rounded-lg border border-[#E6D4A3] bg-white px-1.5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:rotate-1 hover:border-[#C99B32] hover:shadow-[0_8px_20px_rgba(185,148,50,0.22)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none">
-                      {method.name === "Apple Pay" && <span className="text-sm text-black" aria-hidden="true">●</span>}
-                      <span dir={method.name === "مدى" || method.name === "تحويل بنكي" ? "rtl" : "ltr"} className="whitespace-nowrap text-[10px] font-black" style={{ color: method.color }}>{method.mark}</span>
+                {/* Small centered payment badges beneath the app download cards. Informational only. */}
+                <div aria-label="وسائل الدفع" dir="rtl" className="mx-auto mt-3 flex w-full max-w-[360px] flex-wrap items-center justify-center gap-1.5">
+                  {["تحويل بنكي", "Visa", "Mastercard", "مدى", "stc pay", "Apple Pay"].map((name) => (
+                    <div key={name} aria-label={name} title={name} className="flex h-[38px] w-[54px] shrink-0 cursor-default select-none items-center justify-center rounded-lg border border-[#E6D4A3] bg-white p-1 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:rotate-1 hover:border-[#C99B32] hover:shadow-[0_8px_20px_rgba(185,148,50,0.22)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none">
+                      {name === "تحويل بنكي" && <svg viewBox="0 0 48 32" className="h-7 w-9 fill-[#316796]" aria-hidden="true"><path d="M24 2 3 12v3h42v-3L24 2ZM8 17h6v10H8zm13 0h6v10h-6zm13 0h6v10h-6zM4 28h40v3H4z"/></svg>}
+                      {name === "Visa" && <span dir="ltr" className="text-[15px] font-black italic tracking-tight text-[#0C56A3]">VISA</span>}
+                      {name === "Mastercard" && <svg viewBox="0 0 45 28" className="h-6 w-10" aria-hidden="true"><circle cx="17" cy="14" r="12" fill="#EB001B"/><circle cx="28" cy="14" r="12" fill="#F79E1B" fillOpacity=".9"/></svg>}
+                      {name === "مدى" && <div className="flex items-center gap-1" aria-hidden="true"><div className="flex flex-col gap-0.5"><span className="h-[5px] w-4 bg-[#229CD0]"/><span className="h-[5px] w-4 bg-[#84BE43]"/></div><span className="text-[12px] font-black leading-none text-[#252525]">مدى</span></div>}
+                      {name === "stc pay" && <span dir="ltr" className="whitespace-nowrap text-[11px] font-black tracking-tighter"><span className="text-[#4F008F]">stc</span><span className="text-[#00C389]">pay</span></span>}
+                      {name === "Apple Pay" && <div dir="ltr" className="flex items-center gap-0.5 text-black"><svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true"><path d="M16.7 12.9c0-2.5 2.1-3.7 2.2-3.8-1.2-1.8-3.1-2-3.8-2-1.6-.2-3.2 1-4 1-0.9 0-2.2-1-3.6-.9-1.9 0-3.6 1.1-4.6 2.8-2 3.4-.5 8.5 1.4 11.3.9 1.4-0.1 1.9-0.9 3.6-0.9 1.7 0 2.2 0.9 3.7 0.9 1.5 0 2.5-1.4 3.4-2.8 1.1-1.6 1.5-3.1 1.5-3.2-0.1 0-3.3-1.3-3.3-5.2Zm-2.7-7.5c.8-1 1.4-2.4 1.2-3.8-1.2.1-2.7.8-3.6 1.8-.8.9-1.5 2.3-1.3 3.6 1.4.1 2.8-.7 3.7-1.6Z"/></svg><span className="text-[12px] font-semibold">Pay</span></div>}
                     </div>
                   ))}
                 </div>
-                <p className="mt-1 text-center text-[8px] text-[#789087]">تختلف وسائل السداد المتاحة بحسب الخدمة وتفعيلها</p>
+                <p className="mx-auto mt-1 text-center text-[8px] text-[#789087]">تختلف وسائل السداد المتاحة بحسب الخدمة وتفعيلها</p>
 
-                <div className="mt-2 flex items-center justify-center gap-2">
+                                <div className="mt-2 flex items-center justify-center gap-2">
                   <span className="h-px w-8 bg-[#0D3B34]/20" />
                   <p className="text-[11px] font-black text-[#0D3B34]">
                     حلول متكاملة ... لرحلة أذكى
