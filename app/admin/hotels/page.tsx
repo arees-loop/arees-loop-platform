@@ -168,33 +168,35 @@ export default function HotelAdminPage(){
    {tab==="requests"&&<div className="mt-7 space-y-5">
      <section className={`space-y-3 ${selected?"hidden":""}`}>
        {rows.length===0&&!loading&&<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات فنادق بعد.</p>}
-       {rows.map(item=><button key={item.id} onClick={()=>choose(item)} className={`w-full rounded-2xl border p-5 text-right ${selected?.id===item.id?"border-[#B88A30] bg-[#FFF8E8]":"border-[#D4AF37]/30 bg-white"}`}>
-         <div className="flex items-start justify-between"><b>{item.customerName}</b><span className="rounded-full bg-[#EEF3ED] px-3 py-1 text-xs">{stages[item.status]||item.status}</span></div>
-         <p className="mt-2 text-sm">{item.destination} · {item.hotelName||"لم يحدد الفندق"}</p>
-         <p className="mt-2 text-xs text-[#0D3B34]/65">{item.reference} · {day(item.checkInDate)} → {day(item.checkOutDate)}</p>
-         {item.notificationStatus==="FAILED"&&<p className="mt-2 text-xs text-amber-800">الطلب محفوظ لكن تعذر إرسال بريد التنبيه.</p>}
+       {rows.map(item=><button key={item.id} onClick={()=>choose(item)} className="grid w-full min-w-0 grid-cols-1 items-center gap-2 rounded-xl border border-[#D4AF37]/25 bg-white px-4 py-3 text-right transition hover:border-[#D4AF37] hover:shadow-md sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,.8fr)_minmax(0,.7fr)]">
+         <div className="min-w-0"><p className="truncate text-sm font-black">{item.customerName}</p><p className="mt-1 truncate text-[11px] text-[#0D3B34]/60">{item.reference} · فندق</p></div>
+         <div className="min-w-0 text-xs"><p className="truncate">{item.destination} · {item.hotelName||"لم يحدد الفندق"}</p><p className="mt-1 text-[#0D3B34]/60">دخول {day(item.checkInDate)} · خروج {day(item.checkOutDate)}</p></div>
+         <div className="text-xs font-bold">{item.quoteAmountSar==null?"لم يسعّر بعد":Number(item.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</div>
+         <div className="flex items-center justify-between gap-2 sm:justify-end"><span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-[11px] font-bold">{stages[item.status]||item.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
+         {item.notificationStatus==="FAILED"&&<p className="text-xs text-amber-800 sm:col-span-4">الطلب محفوظ لكن تعذر إرسال بريد التنبيه.</p>}
        </button>)}
      </section>
      <section className={`rounded-[24px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm ${!selected?"hidden":""}`}>
        {selected&&<button type="button" onClick={()=>setSelected(null)} className="mb-5 rounded-full border border-[#D4AF37]/60 px-5 py-2 text-sm font-bold">→ العودة إلى جميع طلبات الفنادق</button>}
        {!selected?<p className="text-sm">اختر طلباً لمراجعة التفاصيل والرد عليه.</p>:<>
-         <h2 className="text-xl font-black">{selected.reference}</h2>
+         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">{selected.customerName} · {selected.reference}</h2><span className="rounded-full bg-[#E8F2EC] px-4 py-2 text-xs font-black">{stages[selected.status]||selected.status}</span><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يسعّر بعد":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
+         <a target="_blank" rel="noopener noreferrer" href={`https://wa.me/${(selected.countryCode+selected.phone).replace(/\\D/g,"")}?text=${encodeURIComponent(`السلام عليكم ${selected.customerName}، بخصوص طلبك رقم ${selected.reference} لخدمة الفنادق لدى أريس لوب. نتابع معك تفاصيل طلبك.`)}`} className="mt-4 inline-flex rounded-xl bg-[#147D55] px-5 py-3 text-sm font-black text-white">واتساب العميل مباشرة ↗</a>
          <p className="mt-3 text-sm leading-7">{selected.customerName} · {selected.destination} · {selected.hotelName||"فندق حسب الطلب"}</p>
          <p className="mt-1 text-sm leading-7">دخول {day(selected.checkInDate)} · خروج {day(selected.checkOutDate)}</p>
          <p className="mt-1 text-sm">الغرف: {selected.rooms} · البالغون: {selected.adults} · الأطفال: {selected.children}</p>
          <p className="mt-1 text-sm" dir="ltr">+{selected.countryCode}{selected.phone}</p>
          {selected.notes&&<p className="mt-3 rounded-xl bg-[#F7F4EC] p-4 text-sm leading-7">ملاحظات العميل: {selected.notes}</p>}
-         {admin&&<label className="mt-5 block text-sm font-bold">إسناد الطلب
+         {admin&&<details className="mt-4 rounded-xl border border-[#D4AF37]/35 p-3"><summary className="cursor-pointer text-sm font-bold">إسناد الطلب للموظف</summary><label className="mt-3 block text-sm font-bold">إسناد الطلب
            <select className={field+" mt-2"} value={selected.assignedToId||""} onChange={e=>void action("ASSIGN",{assignedToId:e.target.value})} disabled={busy}>
              <option value="">غير مسند</option>
              {staff.map(s=><option key={s.id} value={s.id}>{[s.firstName,s.lastName].filter(Boolean).join(" ")||s.email}</option>)}
            </select>
-         </label>}
+         </label></details>}
          <label className="mt-5 block text-sm font-bold">رد أريس الذي سيظهر للعميل في «طلباتي»
            <textarea rows={3} maxLength={2500} className={field+" mt-2"} value={reply} onChange={e=>setReply(e.target.value)}/>
          </label>
          <button type="button" disabled={busy||!reply.trim()} onClick={()=>void action("REPLY",{customerReply:reply})} className="mt-2 rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-bold text-white disabled:opacity-40">نشر رد العميل</button>
-         <div className="mt-5 grid gap-3 sm:grid-cols-2">
+         <details className="mt-5 rounded-xl border border-[#D4AF37]/35 bg-[#FFFAED]"><summary className="cursor-pointer px-4 py-3 text-sm font-black">▤ عرض سعر الفندق — اضغط لفتح التفاصيل</summary><div className="px-4 pb-4">         <div className="mt-5 grid gap-3 sm:grid-cols-2">
            <label className="text-xs font-bold">إجمالي العرض بالريال
              <input className={field+" mt-2"} type="number" min="0" step=".01" value={amount} onChange={e=>setAmount(e.target.value)}/>
            </label>
@@ -203,13 +205,14 @@ export default function HotelAdminPage(){
            </label>
            <button type="button" disabled={busy||!amount} onClick={()=>void action("QUOTE",{quoteAmountSar:amount,quoteNotes})} className="rounded-xl border border-[#D4AF37] bg-[#FFF8DE] px-5 py-3 text-sm font-bold disabled:opacity-40">حفظ عرض الفندق</button>
          </div>
+</div></details>
          <div className="mt-6 flex flex-wrap gap-2">
            {(next[selected.status]||[]).filter(v=>v!=="CANCELED").map(v=><button key={v} disabled={busy} onClick={()=>void action("STATUS",{status:v})} className="rounded-xl border border-[#D4AF37] px-4 py-2.5 text-xs font-bold disabled:opacity-40">{stages[v]}</button>)}
          </div>
-         {(next[selected.status]||[]).includes("CANCELED")&&<div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
+         {(next[selected.status]||[]).includes("CANCELED")&&<details className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4"><summary className="cursor-pointer text-sm font-bold text-red-800">إلغاء الطلب</summary><div className="mt-3">
            <label className="text-xs font-bold">سبب الإلغاء<input className={field+" mt-2"} maxLength={1500} value={cancelReason} onChange={e=>setCancelReason(e.target.value)}/></label>
            <button disabled={busy||cancelReason.trim().length<5} onClick={()=>void action("STATUS",{status:"CANCELED",reason:cancelReason})} className="mt-3 rounded-xl bg-red-700 px-5 py-3 text-xs font-bold text-white disabled:opacity-40">إلغاء الطلب</button>
-         </div>}
+         </div></details>}
          <section className="mt-6 border-t border-[#D4AF37]/35 pt-4">
            <h3 className="font-black">سجل إجراءات الموظفين</h3>
            {events.length===0?<p className="mt-3 text-xs text-[#0D3B34]/60">لا توجد أحداث محفوظة بعد.</p>:
