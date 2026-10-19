@@ -108,37 +108,37 @@ export default function InternationalLicenseForm(){
  function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();void addToCart(true);}
  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
   <div className="mx-auto max-w-[1450px]">
-   <div className="overflow-hidden rounded-[28px] bg-[#F7F5EF]"><img src="/Image/hero/arees-driving-license-banner-v2.png" alt="رخصة القيادة الدولية من أريس لوب" className="block h-auto w-full object-contain"/></div>
-   {offer&&<article className="mt-6 overflow-hidden rounded-[28px] border border-[#D4AF37]/35 bg-white shadow-sm">
-    <div className="grid items-center gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(280px,420px)_1fr]">
-     <div className="mx-auto aspect-square w-full max-w-[420px] overflow-hidden rounded-[22px] bg-[#F7F3E8]" aria-label="صورة مربعة لبطاقة العرض 1200 في 1200">
-      <OfferImageCarousel images={offer.imageUrls} fallback={offer.bannerUrl} title={offer.title} className="h-full w-full"/>
-     </div>
-     <div className="py-2">
-      <span className="inline-flex rounded-full bg-[#F5EBD0] px-3 py-1 text-xs font-black text-[#806320]">عرض الرخصة الدولية · {offer.operationStatus==="AVAILABLE"?"متاح":offer.operationStatus==="LIMITED"?"مقاعد محدودة":offer.operationStatus==="SOLD_OUT"?"مكتمل":"متوقف مؤقتاً"}</span>
-      <h2 className="mt-4 text-2xl font-black text-[#0D3B34]">{offer.title}</h2>
-      {offer.description&&<p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#0D3B34]/75">{offer.description}</p>}
-      {offer.destination&&<p className="mt-2 text-sm font-bold text-[#0D3B34]">{offer.destination}</p>}
-      {(offer.amountSar!==null||offer.priceUnit)&&<p className="mt-4 text-xl font-black text-[#987324]">{offer.amountSar!==null?`${offer.amountSar} ر.س`:""}{offer.priceUnit?` ${offer.priceUnit}`:""}</p>}
-      <a href="#license-form" className="mt-5 inline-flex rounded-xl bg-[#0D3B34] px-6 py-3 font-black text-white">أكمل نموذج الرخصة</a>
-     </div>
-    </div>
-   </article>}
-   <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(290px,.78fr)_minmax(0,1.22fr)]">
+   <div className="grid items-start gap-6 lg:grid-cols-[minmax(290px,.78fr)_minmax(0,1.22fr)]">
     <aside className="lg:sticky lg:top-28">
-     <div className="rounded-[28px] bg-[#0D3B34] p-6 text-white">
-      <h1 className="text-2xl font-black">إصدار رخصة القيادة الدولية</h1>
-      <p className="mt-3 text-sm leading-7 text-white/80">سنة واحدة، شاملة التوصيل إلى الموقع المحدد. تعبئة النموذج لا تعني تأكيد الإصدار.</p>
-      <p className="mt-6 text-3xl font-black text-[#E5C17B]">199 ر.س</p>
-      <p className="mt-2 text-sm">شامل التوصيل · صلاحية سنة واحدة</p>
-      <div className="mt-6 rounded-2xl bg-white/10 p-4">
-       <h2 className="font-black text-[#E5C17B]">المتطلبات الأساسية</h2>
-       <p className="mt-2 text-xs leading-7">جواز سفر ساري المفعول، رخصة قيادة محلية سارية، صورة شخصية حديثة بخلفية بيضاء، الطول ولون العين، وعنوان وموقع التوصيل.</p>
+     <div className="rounded-[28px] bg-[#0D3B34] p-3 text-white shadow-[0_18px_44px_rgba(13,59,52,.14)] sm:p-4">
+      <div className="flex items-center justify-between gap-3 px-2 pb-3">
+       <span className="text-xs font-bold text-white/80">خدمة مميزة لك</span>
+       <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black">{offer?.operationStatus==="AVAILABLE"?"متاح":offer?.operationStatus==="LIMITED"?"مقاعد محدودة":offer?.operationStatus==="SOLD_OUT"?"مكتمل":"عرض الرخصة الدولية"}</span>
       </div>
-       <button type="button" onClick={()=>void addToCart(false)} disabled={busy} className="mt-5 w-full rounded-xl bg-[#D5B15D] px-5 py-3 font-black text-[#0D3B34] disabled:opacity-50">أضف للسلة</button>
-       <button type="button" onClick={()=>void addToCart(true)} disabled={busy} className="mt-3 w-full rounded-xl border border-white/60 px-5 py-3 font-black disabled:opacity-50">اشترِ الآن</button>
+      <div className="overflow-hidden rounded-[22px] bg-white p-3 text-[#0D3B34]">
+       <div className="aspect-[1.55] w-full overflow-hidden rounded-[16px] bg-[#F7F3E8]" aria-label="صورة العرض الأصلية 1200 في 1200 بكسل">
+        <OfferImageCarousel images={offer?.imageUrls} fallback={offer?.bannerUrl||"/Image/social/arees-international-driving-license.webp"} title={offer?.title||"رخصة القيادة الدولية"} className="h-full w-full"/>
+       </div>
+       <h1 className="mt-4 text-lg font-black">{offer?.title||"إصدار رخصة القيادة الدولية"}</h1>
+       {offer?.description&&<p className="mt-2 text-xs leading-6 text-[#0D3B34]/75">{offer.description}</p>}
+       <p className="mt-2 text-xs font-bold">{offer?.destination||"سنة واحدة"}</p>
+       <p className="mt-3 text-sm font-black text-[#977121]">{offer?.amountSar??199} ر.س {offer?.priceUnit||"شامل التوصيل · سنة واحدة"}</p>
+       <p className="mt-1 text-[11px] text-[#0D3B34]/70">مدة الصلاحية: سنة واحدة</p>
+       <button type="button" onClick={()=>void addToCart(false)} disabled={busy} className="mt-4 w-full rounded-xl bg-[#0D3B34] px-4 py-3 text-sm font-black text-white disabled:opacity-50">{busy?"جارٍ رفع المستندات...":"أضف العرض للسلة"}</button>
+      </div>
+      <div className="mt-3 rounded-[18px] border border-white/15 bg-white/10 p-4">
+       <h2 className="font-black text-[#E5C17B]">المتطلبات الأساسية</h2>
+       <ul className="mt-2 space-y-1.5 text-xs leading-6 text-white/90">
+        <li>• جواز سفر ساري المفعول</li>
+        <li>• رخصة قيادة محلية سارية</li>
+        <li>• صورة شخصية حديثة بخلفية بيضاء</li>
+        <li>• الطول التقريبي ولون العين</li>
+        <li>• عنوان ورابط موقع التوصيل</li>
+       </ul>
+       <p className="mt-3 border-t border-white/15 pt-3 text-[10px] leading-5 text-white/70">السعر 199 ريال شامل التوصيل. تعبئة الطلب لا تعني تأكيد الإصدار، وتُراجع المتطلبات قبل استكمال الخدمة.</p>
+      </div>
       <div className="mt-3 text-center text-xs text-white/70">احصل على 150 نقطة Loop بعد إكمال الخدمة وفق شروط البرنامج.</div>
-      <Link href="/cart" className="mt-4 block text-center text-xs underline">عرض السلة</Link>
+      <Link href="/cart" className="mt-3 block text-center text-xs underline text-white/80">عرض السلة</Link>
      </div>
     </aside>
     <section id="license-form" className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm sm:p-8">
