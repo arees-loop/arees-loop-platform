@@ -1,4 +1,12 @@
 import Image from "next/image";
+import type {Metadata} from "next";
+import {buildPageMetadata} from "@/lib/seo-metadata";
+export const metadata:Metadata=buildPageMetadata({
+ title:"المرشدون السياحيون المعتمدون",
+ description:"استكشف دليل المرشدين السياحيين المرخصين عبر أريس لوب، واعثر على مرشد حسب المدينة والتخصص واكتشف طرق التقديم كمرشد.",
+ path:"/guides",image:"/Image/social/arees-guide-share.webp",imageWidth:1254,imageHeight:1254,imageType:"image/webp",
+ imageAlt:"المرشدون السياحيون المحليون عبر أريس لوب"
+});
 import Link from "next/link";
 import GuidesHeroCards from "./GuidesHeroCards";
 
