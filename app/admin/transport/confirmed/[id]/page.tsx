@@ -48,7 +48,7 @@ export default async function ConfirmedBookingPdf({params}:Props){
  const ferry=request.kind==="FERRY";
  return <main dir="rtl" className="mx-auto max-w-[960px] bg-[#F8F6EF] px-4 py-8 text-[#0D3B34] print:max-w-none print:bg-white print:p-0">
   <div className="mb-4 flex flex-wrap justify-between gap-3 print:hidden"><Link href={ferry?"/admin/transport/ferries?view=requests":"/admin/transport/flights?view=requests"} className="rounded-xl border border-[#D4AF37] bg-white px-5 py-3 text-xs font-bold">← العودة لإدارة الطلبات</Link><QuotePrintButton disabled={false}/></div>
-  <article className="overflow-hidden rounded-[24px] border border-[#D4AF37]/45 bg-white shadow-lg print:border-0 print:rounded-none print:shadow-none">
+  <article id="arees-print-sheet" className="overflow-hidden rounded-[24px] border border-[#D4AF37]/45 bg-white shadow-lg print:border-0 print:rounded-none print:shadow-none">
    <header className="border-b-4 border-[#B99333] bg-white p-6 print:p-4 sm:p-8">
     <div className="flex flex-wrap items-center justify-between gap-5">
      <div className="min-w-0 flex-1">
