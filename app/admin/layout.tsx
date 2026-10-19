@@ -42,7 +42,6 @@ const platformNav: NavItem[] = [
   { href: "/admin/services", label: "الخدمات والتجارب", icon: "▤", permission: "CONTENT_EXPERIENCES" },
   { href: "/admin/rewards", label: "النقاط وتقارير الاستبدال", icon: "✦", permission: "REPORTS_ANALYTICS" },
   { href: "/admin/settings", label: "إعدادات المنصة", icon: "⚙", permission: "PLATFORM_SETTINGS" },
-  { href: "/admin/settings/bank-accounts", label: "الحسابات البنكية", icon: "▣", permission: null, superOnly: true },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
