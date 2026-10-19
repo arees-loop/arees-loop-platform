@@ -37,6 +37,7 @@ export default function AdminNotificationCenter({
  const initialized=useRef(false);
  const polling=useRef(false);
  const storageKey="arees-admin-alert-last:"+identityKey;
+ const soundPreferenceKey="arees-admin-sound-enabled:"+identityKey;
  const playSound=useCallback(async()=>{
    try {
      const player=audio.current;
@@ -93,6 +94,7 @@ export default function AdminNotificationCenter({
  useEffect(()=>{
    if(!identityKey)return;
    initialized.current=false;baseline.current=null;
+   try{const preference=window.localStorage.getItem(soundPreferenceKey)==="true";enabledRef.current=preference;setEnabled(preference);}catch{}
    void refresh();
    const timer=window.setInterval(()=>{void refresh()},45_000);
    const focus=()=>{void refresh()};
@@ -100,13 +102,17 @@ export default function AdminNotificationCenter({
    window.addEventListener("focus",focus);
    document.addEventListener("visibilitychange",visible);
    return()=>{window.clearInterval(timer);window.removeEventListener("focus",focus);document.removeEventListener("visibilitychange",visible)};
- },[identityKey,refresh]);
+ },[identityKey,refresh,soundPreferenceKey]);
 
  async function activate(){
    if(busy)return;setBusy(true);setNotice("");
    try{
      if(typeof window==="undefined")return;
      if(!window.isSecureContext){setNotice("إشعارات الجهاز تتطلب اتصال HTTPS.");return;}
+     // Unlock audio synchronously on the actual button gesture, before any await.
+     enabledRef.current=true;setEnabled(true);
+     try{window.localStorage.setItem(soundPreferenceKey,"true");}catch{}
+     void playSound();
      if("serviceWorker" in navigator)await navigator.serviceWorker.register("/admin-alerts-sw.js",{scope:"/"});
      if("Notification" in window){
        let p=Notification.permission;
@@ -116,9 +122,7 @@ export default function AdminNotificationCenter({
        else if(p==="granted")setNotice("تم السماح بإشعارات الجهاز طالما التطبيق مفتوح. التنبيه عند إغلاقه يحتاج تفعيل Web Push في الخادم.");
        else setNotice("تم تشغيل صوت الإدارة. لم تسمح بعد بإشعارات الجهاز.");
      }else setNotice("جهازك لا يدعم إشعارات المتصفح من هذه الصفحة؛ صوت اللوحة سيظل متاحاً.");
-     enabledRef.current=true;setEnabled(true);
-     // Only play in response to this user gesture to unlock media playback.
-     await playSound();
+     // The preview chime was initiated directly by the user action.
    }catch{setNotice("تعذر تفعيل إشعارات الجهاز. يمكنك متابعة التنبيهات داخل لوحة الإدارة.");}
    finally{setBusy(false);}
  }
