@@ -20,6 +20,18 @@ const shortcuts:QuickLink[]=[
 const label=(s?:string|null)=>({ACTIVE:"معتمد ونشط",UNDER_REVIEW:"تحت التدقيق",SUBMITTED:"تم استلام الطلب",NEEDS_COMPLETION:"مطلوب استكمال",NEEDS_INFO:"مطلوب استكمال",REJECTED:"مرفوض"}[s||""]||s||"غير محدد");
 const tone=(s?:string|null)=>s==="ACTIVE"?"bg-[#E2F4E9] text-[#287B50]":s==="REJECTED"?"bg-[#FFE8E8] text-[#E44C4C]":s==="NEEDS_COMPLETION"||s==="NEEDS_INFO"?"bg-[#FFF2D5] text-[#B67C00]":"bg-[#E5F3FF] text-[#1880D0]";
 
+
+const bookingLabels:Record<string,string>={PENDING:"بانتظار الدفع",PAID:"مدفوع",CONFIRMED:"مؤكد",IN_PROGRESS:"قيد التنفيذ",COMPLETED:"مكتمل",CANCELLED:"ملغي",REFUNDED:"مسترد"};
+const money=(amount:number)=>new Intl.NumberFormat("ar-SA",{minimumFractionDigits:0,maximumFractionDigits:2}).format(amount)+" ر.س";
+const heroLinks=[
+ {href:"/admin/customer-reports",text:"تقارير العملاء"},
+ {href:"/admin/bookings",text:"الحجوزات"},
+ {href:"/admin/transport/flights?view=requests",text:"طلبات الطيران"},
+ {href:"/admin/transport/ferries?view=requests",text:"طلبات البواخر"},
+ {href:"/admin/partners",text:"الشركاء"},
+ {href:"#financial-report",text:"المؤشرات المالية"},
+];
+
 export default function AdminDashboardPage(){
  const [partners,setPartners]=useState<Partner[]>([]),[services,setServices]=useState<Service[]>([]),[loading,setLoading]=useState(true);
  const [customerCount,setCustomerCount]=useState<number|null>(null);
@@ -58,8 +70,18 @@ export default function AdminDashboardPage(){
  useEffect(()=>{if(period==="custom"&&!periodRange){setMetrics(null);return;}let active=true;const params=new URLSearchParams({period});if(period==="custom"){params.set("from",fromDate);params.set("to",toDate)}fetch("/api/admin/dashboard-metrics?"+params.toString(),{cache:"no-store"}).then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(({ok,data})=>{if(!active)return;if(!ok||!data.success)throw Error(data.message||"تعذر تحميل المؤشرات");setMetrics(data);setMetricsError("");}).catch(e=>{if(active){setMetrics(null);setMetricsError(e instanceof Error?e.message:"تعذر تحميل المؤشرات");}});return()=>{active=false};},[period,fromDate,toDate,periodRange]);
  const recent=[...partners].sort((a,b)=>new Date(b.submittedAt||0).getTime()-new Date(a.submittedAt||0).getTime()).slice(0,5);
  return <main dir="rtl" className="min-h-screen bg-[#FBF8F1] px-6 py-10 text-[#171717] md:px-10 xl:px-12"><div className="mx-auto max-w-[1500px]">
-  <section><h1 className="text-3xl font-bold md:text-4xl">لوحة إدارة Arees Loop</h1><p className="mt-2 text-sm text-[#171717]/50">بيانات تشغيلية مباشرة من قاعدة بيانات المنصة — بدون بيانات تجريبية.</p></section>
-  <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#D4AF37]/25 bg-white p-4"><div><h2 className="font-bold text-[#0D3B34]">نظرة عامة على التشغيل</h2><p className="text-xs text-[#0D3B34]/60">فلتر الفترة يطبق حالياً على طلبات انضمام الشركاء فقط؛ عدادات الطلبات الجديدة تعرض الحالة الحالية.</p></div><div className="flex flex-wrap gap-2">{([{id:"today",name:"اليوم"},{id:"month",name:"هذا الشهر"},{id:"year",name:"هذه السنة"},{id:"custom",name:"من تاريخ إلى تاريخ"}] as const).map(item=><button key={item.id} type="button" aria-pressed={period===item.id} onClick={()=>setPeriod(item.id)} className={`rounded-xl px-3 py-2 text-xs font-bold ${period===item.id?"bg-[#0D3B34] text-white":"bg-[#F7F0DF] text-[#0D3B34]"}`}>{item.name}</button>)}</div>{period==="custom"&&<div className="mt-4 flex flex-wrap items-end gap-3 border-t border-[#D4AF37]/20 pt-4"><label className="text-xs font-bold">من تاريخ<input type="date" value={fromDate} max={toDate||undefined} onChange={e=>setFromDate(e.target.value)} className="mt-1 block rounded-lg border border-[#D4AF37]/40 bg-white p-2"/></label><label className="text-xs font-bold">إلى تاريخ<input type="date" value={toDate} min={fromDate||undefined} onChange={e=>setToDate(e.target.value)} className="mt-1 block rounded-lg border border-[#D4AF37]/40 bg-white p-2"/></label>{!periodRange&&<p className="text-xs text-amber-700">حدد تاريخ البداية والنهاية بشكل صحيح لعرض النتائج.</p>}</div>}</section>
+  <section className="relative overflow-hidden rounded-[28px] border border-[#D4AF37]/30 bg-gradient-to-bl from-[#103F35] via-[#0D3B34] to-[#082920] px-5 py-7 text-white shadow-[0_20px_50px_rgba(13,59,52,.16)] md:px-8 md:py-9">
+    <div className="pointer-events-none absolute -left-16 -top-20 h-72 w-72 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/5 blur-2xl" aria-hidden="true"/>
+    <div className="relative">
+      <p className="text-[10px] font-bold tracking-[.2em] text-[#DCC27A]">AREES LOOP · EXECUTIVE OVERVIEW</p>
+      <h1 className="mt-3 text-2xl font-black tracking-tight md:text-4xl">مركز قيادة المنصة</h1>
+      <p className="mt-3 max-w-2xl text-sm leading-7 text-white/75">نظرة تشغيلية ومالية مباشرة تساعد السوبر أدمن على متابعة الأداء والانتقال سريعاً للأقسام. القيم مستخرجة من المنصة وليست بيانات تجريبية.</p>
+      <div className="mt-6 flex flex-wrap gap-2" aria-label="روابط أقسام الإدارة">
+        {heroLinks.map(link=><Link key={link.href} href={link.href} className="rounded-xl border border-[#D9B764]/35 bg-white/10 px-4 py-2.5 text-xs font-bold text-white backdrop-blur-sm transition hover:border-[#E5C97A] hover:bg-[#D4AF37]/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E5C97A]">{link.text} <span aria-hidden="true">←</span></Link>)}
+      </div>
+    </div>
+  </section>
+  <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#D4AF37]/25 bg-white p-4"><div><h2 className="font-bold text-[#0D3B34]">نظرة عامة على التشغيل</h2><p className="text-xs text-[#0D3B34]/60">فلتر الفترة يشمل الحجوزات والتسويات والطلبات المنشأة وانضمام الشركاء. عدادات الطلبات الجديدة والعملاء المسجلين تعرض الحالة الحالية.</p></div><div className="flex flex-wrap gap-2">{([{id:"today",name:"اليوم"},{id:"month",name:"هذا الشهر"},{id:"year",name:"هذه السنة"},{id:"custom",name:"من تاريخ إلى تاريخ"}] as const).map(item=><button key={item.id} type="button" aria-pressed={period===item.id} onClick={()=>setPeriod(item.id)} className={`rounded-xl px-3 py-2 text-xs font-bold ${period===item.id?"bg-[#0D3B34] text-white":"bg-[#F7F0DF] text-[#0D3B34]"}`}>{item.name}</button>)}</div>{period==="custom"&&<div className="mt-4 flex flex-wrap items-end gap-3 border-t border-[#D4AF37]/20 pt-4"><label className="text-xs font-bold">من تاريخ<input type="date" value={fromDate} max={toDate||undefined} onChange={e=>setFromDate(e.target.value)} className="mt-1 block rounded-lg border border-[#D4AF37]/40 bg-white p-2"/></label><label className="text-xs font-bold">إلى تاريخ<input type="date" value={toDate} min={fromDate||undefined} onChange={e=>setToDate(e.target.value)} className="mt-1 block rounded-lg border border-[#D4AF37]/40 bg-white p-2"/></label>{!periodRange&&<p className="text-xs text-amber-700">حدد تاريخ البداية والنهاية بشكل صحيح لعرض النتائج.</p>}</div>}</section>
   <section className="mt-5 rounded-[24px] border border-[#D4AF37]/35 bg-white p-5 shadow-sm" aria-label="إشعارات طلبات العملاء الجديدة">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-xl font-black text-[#0D3B34]">🔔 الطلبات الجديدة</h2><p className="mt-1 text-xs text-[#0D3B34]/60">اضغط على أي قسم للانتقال مباشرة إلى طلبات العملاء. تتجدد العدادات كل دقيقة.</p></div>
@@ -83,7 +105,43 @@ export default function AdminDashboardPage(){
     </div>
   </section>
   {metricsError&&<p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{metricsError}</p>}
-  <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Link href="/admin/bookings" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">حجوزات تجارب الشركاء</p><p className="mt-2 text-3xl font-black">{metrics?.bookings??"—"}</p><p className="mt-2 text-xs text-black/45">حجوزات منشأة خلال الفترة المحددة</p></Link><Link href="/admin/dashboard?section=settlements" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">المالية والتسويات</p><p className="mt-2 text-3xl font-black">{metrics?.settlements??"—"}</p><p className="mt-2 text-xs text-black/45">سجلات تسوية منشأة خلال الفترة، لا تعني المدفوعات المحصلة</p></Link><Link href="/admin/partners" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">طلبات انضمام الشركاء</p><p className="mt-2 text-3xl font-black">{loading?"—":periodPartners.length}</p><p className="mt-2 text-xs text-black/45">حسب الفترة المختارة</p></Link><Link href="/admin/customer-reports" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">العملاء المسجلون</p><p className="mt-2 text-3xl font-black">{customerCount??"—"}</p><p className="mt-2 text-xs text-black/45">الإجمالي الحالي • جميع الفترات</p></Link></section>
+  <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Link href="/admin/bookings" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">حجوزات تجارب الشركاء</p><p className="mt-2 text-3xl font-black">{metrics?.bookings??"—"}</p><p className="mt-2 text-xs text-black/45">حجوزات منشأة خلال الفترة المحددة</p></Link><Link href="#financial-report" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">المالية والتسويات</p><p className="mt-2 text-3xl font-black">{metrics?.settlements??"—"}</p><p className="mt-2 text-xs text-black/45">سجلات تسوية منشأة خلال الفترة، لا تعني المدفوعات المحصلة</p></Link><Link href="/admin/partners" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">طلبات انضمام الشركاء</p><p className="mt-2 text-3xl font-black">{loading?"—":periodPartners.length}</p><p className="mt-2 text-xs text-black/45">حسب الفترة المختارة</p></Link><Link href="/admin/customer-reports" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">العملاء المسجلون</p><p className="mt-2 text-3xl font-black">{customerCount??"—"}</p><p className="mt-2 text-xs text-black/45">الإجمالي الحالي • جميع الفترات</p></Link></section>
+
+  <section className="mt-7 grid gap-4 xl:grid-cols-3" aria-label="التقارير المصورة">
+    <div className="rounded-[24px] border border-[#D4AF37]/25 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black tracking-wider text-[#B38A25]">BOOKING STATUS</p><h2 className="mt-1 text-lg font-black text-[#0D3B34]">حالة الحجوزات</h2></div><Link href="/admin/bookings" className="rounded-lg bg-[#EDF4F1] px-3 py-2 text-xs font-bold text-[#0D3B34] hover:bg-[#D4E6DB]">عرض الحجوزات ←</Link></div>
+      <p className="mt-2 text-xs text-[#0D3B34]/60">توزيع حجوزات تجارب الشركاء المنشأة خلال الفترة المختارة.</p>
+      <div className="mt-5 space-y-4">
+        {metrics&&metrics.bookingStatuses.length?metrics.bookingStatuses.slice().sort((a,b)=>b.count-a.count).map(item=><Link href={"/admin/bookings?status="+encodeURIComponent(item.status)} key={item.status} className="block rounded-lg p-1 transition hover:bg-[#F5F7F4]">
+          <div className="mb-1.5 flex items-center justify-between gap-2 text-xs"><span className="font-bold text-[#0D3B34]">{bookingLabels[item.status]||item.status}</span><span className="font-black tabular-nums text-[#0D3B34]">{item.count.toLocaleString("ar-SA")}</span></div>
+          <div role="meter" aria-label={bookingLabels[item.status]||item.status} aria-valuemin={0} aria-valuemax={Math.max(1,metrics.bookings)} aria-valuenow={item.count} className="h-2.5 overflow-hidden rounded-full bg-[#EAF0EB]"><div className="h-full rounded-full bg-gradient-to-l from-[#0D3B34] to-[#54A28B]" style={{width:Math.min(100,(item.count/Math.max(1,metrics.bookings))*100)+"%"}}/></div>
+        </Link>):<p className="rounded-xl bg-[#F7F8F5] p-5 text-center text-xs text-[#0D3B34]/65">{metrics?"لا توجد حجوزات خلال الفترة المحددة.":"بانتظار بيانات الحجوزات الفعلية."}</p>}
+      </div>
+    </div>
+    <div className="rounded-[24px] border border-[#D4AF37]/25 bg-white p-5 shadow-sm">
+      <div><p className="text-[10px] font-black tracking-wider text-[#B38A25]">LIVE REQUESTS</p><h2 className="mt-1 text-lg font-black text-[#0D3B34]">الطلبات الجديدة حسب الخدمة</h2></div>
+      <p className="mt-2 text-xs text-[#0D3B34]/60">الحالة الحالية للطلبات الجديدة، وليست مجموع الفترة المحددة.</p>
+      <div className="mt-5 space-y-4">
+        {requestAlerts?shortcuts.filter(item=>requestAlerts[item.key]!==null).map(item=><Link key={item.key} href={item.href} className="block rounded-lg p-1 transition hover:bg-[#F5F7F4]">
+          <div className="mb-1.5 flex items-center justify-between gap-2 text-xs"><span className="font-bold text-[#0D3B34]">{item.label}</span><span className="font-black tabular-nums text-[#0D3B34]">{(requestAlerts[item.key]??0).toLocaleString("ar-SA")}</span></div>
+          <div role="meter" aria-label={item.label} aria-valuemin={0} aria-valuemax={Math.max(1,...Object.values(requestAlerts).map(value=>value??0))} aria-valuenow={requestAlerts[item.key]??0} className="h-2.5 overflow-hidden rounded-full bg-[#FBF0D5]"><div className="h-full rounded-full bg-gradient-to-l from-[#C59A33] to-[#E0C77C]" style={{width:((requestAlerts[item.key]??0)/Math.max(1,...Object.values(requestAlerts).map(value=>value??0))*100)+"%"}}/></div>
+        </Link>):<p className="rounded-xl bg-[#F7F8F5] p-5 text-center text-xs text-[#0D3B34]/65">بانتظار عدادات الطلبات من النظام.</p>}
+      </div>
+    </div>
+    <div id="financial-report" className="scroll-mt-24 rounded-[24px] border border-[#D4AF37]/30 bg-gradient-to-b from-white to-[#FFFCF4] p-5 shadow-sm">
+      <div><p className="text-[10px] font-black tracking-wider text-[#B38A25]">SETTLEMENT OVERVIEW</p><h2 className="mt-1 text-lg font-black text-[#0D3B34]">مؤشرات التسويات المالية</h2></div>
+      <p className="mt-2 text-xs leading-6 text-[#0D3B34]/60">مبالغ مسجلة في سجلات التسوية المنشأة خلال الفترة، ولا تمثل بالضرورة تحصيلاً مصرفياً.</p>
+      <div className="mt-5 space-y-5">
+        {metrics?([
+          {label:"إجمالي مبيعات التسويات",amount:metrics.settlementTotals.grossSales,color:"#0D3B34"},
+          {label:"عمولة المنصة المسجلة",amount:metrics.settlementTotals.platformCommission,color:"#BE963F"},
+          {label:"صافي مبالغ التسويات",amount:metrics.settlementTotals.netAmount,color:"#36866A"},
+        ]).map(item=><div key={item.label}><div className="mb-2 flex items-center justify-between gap-2 text-xs"><span className="font-semibold text-[#0D3B34]">{item.label}</span><strong className="tabular-nums text-[#0D3B34]">{money(item.amount)}</strong></div><div role="meter" aria-label={item.label} aria-valuemin={0} aria-valuemax={Math.max(1,metrics.settlementTotals.grossSales,metrics.settlementTotals.platformCommission,metrics.settlementTotals.netAmount)} aria-valuenow={Math.max(0,item.amount)} className="h-3 overflow-hidden rounded-full bg-[#EEECE4]"><div className="h-full rounded-full" style={{width:(Math.max(0,item.amount)/Math.max(1,metrics.settlementTotals.grossSales,metrics.settlementTotals.platformCommission,metrics.settlementTotals.netAmount)*100)+"%",backgroundColor:item.color}}/></div></div>):<p className="rounded-xl bg-[#F7F8F5] p-5 text-center text-xs text-[#0D3B34]/65">بانتظار بيانات التسويات الفعلية.</p>}
+      </div>
+      <Link href="/admin/customer-reports" className="mt-6 inline-flex rounded-xl border border-[#D4AF37]/35 px-4 py-2 text-xs font-bold text-[#0D3B34] hover:bg-[#FFF4D7]">العملاء والتقارير ←</Link>
+    </div>
+  </section>
+
   {loading?<div className="mt-8 rounded-3xl bg-white p-8 text-center">جارٍ تحميل البيانات...</div>:<>
    <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Stat label="الشركاء المعتمدون" value={stats.active}/><Stat label="مطلوب استكمال" value={stats.needs}/><Stat label="طلبات قيد المراجعة" value={stats.review}/><Stat label="إجمالي الشركاء" value={stats.total}/><Link href="/admin/users" className="block rounded-[20px] border border-[#D8CDB8]/55 bg-white p-5 shadow-sm hover:border-[#D4AF37]"><span className="text-sm font-semibold">إجمالي العملاء</span><div className="mt-3 text-3xl font-black">{customerCount??"—"}</div><span className="mt-2 block text-xs text-[#947426]">عرض العملاء والتقارير ←</span></Link></section>
    <section className="mt-6 grid gap-5 xl:grid-cols-[1.6fr_1fr]">
