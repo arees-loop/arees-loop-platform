@@ -2,8 +2,8 @@
 import {useCallback,useEffect,useState} from "react";
 
 type Ticket={id:string;name:string;size:number|null;createdAt:string};
-export default function AdminTicketFulfillment({reference,id,status,onStatusChange}:{
- reference:string;id:string;status:string;onStatusChange?:(status:string)=>void
+export default function AdminTicketFulfillment({reference,id,status,onStatusChange,itineraryReady,kind}:{
+ reference:string;id:string;status:string;kind:"FLIGHT"|"FERRY";itineraryReady:boolean;onStatusChange?:(status:string)=>void
 }){
  const [tickets,setTickets]=useState<Ticket[]>([]);
  const [file,setFile]=useState<File|null>(null);
@@ -33,7 +33,7 @@ export default function AdminTicketFulfillment({reference,id,status,onStatusChan
   finally{setBusy(false);}
  }
  async function complete(){
-  if(!tickets.length||!["PAID","EXECUTING"].includes(status)||busy)return;
+  if(!tickets.length||!["PAID","EXECUTING"].includes(status)||busy||(kind==="FLIGHT"&&!itineraryReady))return;
   if(!window.confirm("هل أكدت وصول السداد للبنك، وتسليم تذكرة PDF صحيحة لهذا العميل؟ سيتم تحويل حالة الطلب إلى «تم التنفيذ» وإعلام العميل داخل طلباتي."))return;
   setBusy(true);setError("");setMessage("");
   try{
@@ -59,7 +59,8 @@ export default function AdminTicketFulfillment({reference,id,status,onStatusChan
     <button disabled={!file||busy} onClick={()=>void upload()} type="button" className="rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-bold text-white disabled:opacity-40">{busy?"جارٍ حفظ التذكرة...":"إرفاق التذكرة وتسليمها للعميل"}</button>
     <div className="rounded-xl border border-[#CDE0D1] bg-[#F4FAF5] p-3">
       <p className="text-xs text-[#18593C]">حالة التسليم: {tickets.length?"التذكرة محفوظة ومتاحة للعميل":"لم تُرفق التذكرة بعد"}</p>
-      <button disabled={busy||tickets.length===0} onClick={()=>void complete()} type="button" className="mt-3 rounded-xl bg-[#137B4A] px-5 py-3 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40">✓ تم التنفيذ وإغلاق الطلب</button>
+      {kind==="FLIGHT"&&!itineraryReady&&<p className="mt-2 text-xs text-[#966C21]">أكمل «تفاصيل الحجز المؤكد» واحفظها أولاً حتى يتم تفعيل زر «تم التنفيذ».</p>}
+      <button disabled={busy||tickets.length===0||(kind==="FLIGHT"&&!itineraryReady)} onClick={()=>void complete()} type="button" className="mt-3 rounded-xl bg-[#137B4A] px-5 py-3 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40">✓ تم التنفيذ وإغلاق الطلب</button>
     </div>
    </div>}
   {status==="DONE"&&<p className="mt-3 rounded-xl bg-[#E9F8EE] p-3 text-xs font-bold text-[#165D3C]">تم تنفيذ الطلب. التذكرة متاحة لصاحب الطلب.</p>}
