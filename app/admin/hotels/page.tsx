@@ -100,7 +100,7 @@ export default function HotelAdminPage(){
  }
  async function saveOffer(e:FormEvent){
    e.preventDefault();if(!admin||busy)return;
-   if(banner&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height)){setError(imageDimensionMessage(IMAGE_REQUIREMENTS.offer));return;}
+   if(banner&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.hotelOffer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.hotelOffer.height)){setError(imageDimensionMessage(IMAGE_REQUIREMENTS.hotelOffer));return;}
    setBusy(true);setError("");setNotice("");
    try{
      let bannerUrl=edit.bannerUrl;
@@ -246,12 +246,12 @@ export default function HotelAdminPage(){
          <label className="text-xs font-bold sm:col-span-2 xl:col-span-2 xl:col-start-3">صور العرض — يمكنك اختيار عدة صور (PNG / JPG / WEBP)
            <input type="file" accept="image/png,image/jpeg,image/webp" className={field+" mt-2"} multiple onChange={e=>{const files=Array.from(e.target.files||[]);setBanner(files[0]||null);setExtraBanners(files.slice(1));setBannerDimensions(null);}}/>
          </label>
-         <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.offer} actual={banner?bannerDimensions:null}/><p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت للصورة وبحد أقصى 10 صور. كل صورة لازم تكون بالمقاس المحدد، وإلا يرفضها النظام.</p></div>
+         <div className="sm:col-span-2 xl:col-span-2 xl:col-start-3"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.hotelOffer} actual={banner?bannerDimensions:null}/><p className="mt-2 text-xs text-[#0D3B34]/60">PNG أو JPG أو WEBP، بحد أقصى 4 ميجابايت للصورة وبحد أقصى 10 صور. كل صورة لازم تكون بالمقاس المحدد، وإلا يرفضها النظام.</p></div>
          {!banner&&edit.imageUrls.length>0&&<p className="text-xs font-bold text-[#0D3B34]/65 sm:col-span-2">الصور الحالية محفوظة ({edit.imageUrls.length}). اختيار صور جديدة يستبدل الصور الحالية.</p>}
          <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={edit.isVisible} onChange={e=>setEdit(f=>({...f,isVisible:e.target.checked}))}/>نشر الإعلان</label>
          <label className="text-xs font-bold">ترتيب الإعلان<input type="number" min={0} className={field+" mt-2"} value={edit.sortOrder} onChange={e=>setEdit(f=>({...f,sortOrder:Number(e.target.value)}))}/></label>
          <div className="flex flex-wrap gap-3 sm:col-span-2 xl:col-span-2 xl:col-start-3">
-           <button disabled={!admin||busy||Boolean(banner&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.offer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.offer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">حفظ الإعلان</button>
+           <button disabled={!admin||busy||Boolean(banner&&(bannerDimensions?.width!==IMAGE_REQUIREMENTS.hotelOffer.width||bannerDimensions?.height!==IMAGE_REQUIREMENTS.hotelOffer.height))} className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">حفظ الإعلان</button>
            <button type="button" onClick={()=>selectOffer()} className="rounded-xl border px-5 py-3 text-sm">عرض جديد</button>
          </div>
        <div className="mt-6 overflow-hidden rounded-[22px] border border-[#D4AF37]/40 bg-[#FFFDF8] sm:col-span-2 xl:col-span-2 xl:col-start-3">
