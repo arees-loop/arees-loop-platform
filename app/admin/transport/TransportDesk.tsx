@@ -1,5 +1,7 @@
 "use client";
 import AdminPaymentReview from "@/app/components/AdminPaymentReview";
+import AdminTicketFulfillment from "@/app/components/AdminTicketFulfillment";
+import AdminConfirmedBooking from "@/app/components/AdminConfirmedBooking";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -26,7 +28,17 @@ const operators={FLIGHT:["تاركو للطيران","بدر للطيران","ا
 type Staff={id:string;firstName:string|null;lastName:string|null;email:string;role:string;adminPermissions:unknown};
 type HistoryEvent={id:string;actorName:string;action:string;fromStatus:string|null;toStatus:string|null;details:unknown;createdAt:string};
 const statusNames:Record<string,string>={NEW:"جديد",PROCESSING:"تحت المعالجة",QUOTE_READY:"عرض السعر جاهز",QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"تم الإلغاء"};
-const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],QUOTE_READY:["PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
+const transitions:Record<string,string[]>={NEW:["PROCESSING","CANCELED"],PROCESSING:["QUOTE_READY","CANCELED"],QUOTE_READY:["PROCESSING","CANCELED"],QUOTE_SENT:["PAID","PROCESSING","CANCELED"],PAID:["EXECUTING","DONE","CANCELED"],EXECUTING:["DONE","CANCELED"],DONE:[],CANCELED:[]};
+const rowTheme:Record<string,{row:string;badge:string}>={
+ NEW:{row:"border-[#B9DAC4] bg-[#F2FAF3] hover:bg-[#EAF8ED]",badge:"bg-[#DBF1E1] text-[#16603C]"},
+ PROCESSING:{row:"border-[#E9D6A1] bg-[#FFFBEC] hover:bg-[#FFF5D9]",badge:"bg-[#F8E8B9] text-[#88611B]"},
+ QUOTE_READY:{row:"border-[#E9D6A1] bg-[#FFFBEC] hover:bg-[#FFF5D9]",badge:"bg-[#F8E8B9] text-[#88611B]"},
+ QUOTE_SENT:{row:"border-[#E9D6A1] bg-[#FFFBEC] hover:bg-[#FFF5D9]",badge:"bg-[#F8E8B9] text-[#88611B]"},
+ PAID:{row:"border-[#B4D9E7] bg-[#F1F9FC] hover:bg-[#E4F3FA]",badge:"bg-[#DAEEF6] text-[#1D607B]"},
+ EXECUTING:{row:"border-[#DACFF0] bg-[#F8F4FD] hover:bg-[#F0E9F8]",badge:"bg-[#EEE3F8] text-[#66438D]"},
+ DONE:{row:"border-[#B1DBC8] bg-[#EFFAF5] hover:bg-[#E5F5EC]",badge:"bg-[#D3EEDF] text-[#116442]"},
+ CANCELED:{row:"border-[#F0C7C2] bg-[#FFF2F0] hover:bg-[#FFE9E6]",badge:"bg-[#F9D9D5] text-[#9C3028]"},
+};
 const blankOffer={
   id:"",kind:"FERRY",title:"",description:"",carrierName:"",origin:"سواكن",destination:"جدة",
   travelDate:"",scheduleType:"SINGLE",scheduleDates:"",rangeFrom:"",rangeTo:"",weekdaysText:"",monthDaysText:"",scheduleUntil:"",amountSar:"",adultPriceSar:"",childPriceSar:"",infantPriceSar:"",priceUnit:"للبالغ",bannerUrl:"",imageUrls:[] as string[],operationStatus:"AVAILABLE",operationNote:"",
@@ -343,11 +355,11 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             <div className={"grid grid-cols-1 gap-2"}>
             {filteredRequests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
             {filteredRequests.map(q=>(
-              <button key={q.id} onClick={()=>choose(q)} className={`grid w-full min-w-0 grid-cols-1 items-center gap-2 rounded-xl border border-[#D4AF37]/25 bg-white px-4 py-3 text-right transition hover:border-[#D4AF37] hover:shadow-md sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,.8fr)_minmax(0,.7fr)]`}>
+              <button key={q.id} onClick={()=>choose(q)} className={`grid w-full min-w-0 grid-cols-1 items-center gap-2 rounded-xl border px-4 py-3 text-right transition hover:shadow-md sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,.8fr)_minmax(0,.7fr)] ${rowTheme[q.status]?.row||"border-[#D4AF37]/25 bg-white"}`}>
                 <div className="min-w-0"><p className="truncate text-sm font-black">{q.customerName}</p><p className="mt-1 truncate text-[11px] text-[#0D3B34]/60">{q.reference} · {q.kind==="FERRY"?"باخرة":q.kind==="VISA"?"تأشيرة":q.kind==="DRIVING_LICENSE"?"رخصة دولية":"طيران"}</p></div>
                 <div className="min-w-0 text-xs"><p className="truncate">{q.origin} ← {q.destination}</p><p className="mt-1 text-[#0D3B34]/60">{day(q.travelDate)}</p></div>
                 <div className="text-xs font-bold">{q.quoteAmountSar==null?"لم يسعّر بعد":Number(q.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</div>
-                <div className="flex items-center justify-between gap-2 sm:justify-end"><span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-[11px] font-bold">{statusNames[q.status]||q.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
+                <div className="flex items-center justify-between gap-2 sm:justify-end"><span className={`rounded-full px-3 py-1 text-[11px] font-black ${rowTheme[q.status]?.badge||"bg-[#EDF2EB]"}`}>{statusNames[q.status]||q.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
               </button>
             ))}
             </div>
@@ -387,7 +399,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                   </div>}
                   <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-bold">الحالة: {statusNames[selected.status]||selected.status}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {(transitions[selected.status]||[]).filter(x=>x!=="CANCELED"&&x!=="QUOTE_READY").map(next=>
+                    {(transitions[selected.status]||[]).filter(x=>x!=="CANCELED"&&x!=="QUOTE_READY"&&x!=="PAID"&&!(["FLIGHT","FERRY"].includes(selected.kind)&&x==="DONE")).map(next=>
                       <button key={next} type="button" disabled={busy} onClick={()=>void performAction("SET_STATUS",{status:next})}
                         className="rounded-full border border-[#D4AF37]/40 bg-white px-4 py-2 text-xs font-bold disabled:opacity-40">
                         {statusNames[next]}
@@ -409,7 +421,9 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F3F8F6] p-4"><h3 className="text-sm font-black text-[#0D3B34]">التواصل مع العميل</h3><p className="mt-2 text-xs text-[#0D3B34]/65">يمكنك مراجعة الرد والملاحظات وإرسال الرسائل من أقسام الطلب.</p><a className="mt-3 inline-flex rounded-lg bg-[#147D55] px-3 py-2 text-xs font-bold text-white" href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">واتساب العميل ↗</a></div>
                 <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F9F6EC] p-4"><h3 className="text-sm font-black">المرفقات والسداد</h3>
                 <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">📎 المرفقات وطلب مستندات إضافية</summary><AdminRequestAttachments reference={selected.reference}/></details>
-                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference}/></details>
+                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference} onReviewed={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}/></details>
+                {["FLIGHT","FERRY"].includes(selected.kind)&&<AdminTicketFulfillment reference={selected.reference} id={selected.id} status={selected.status} onStatusChange={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}/>}
+                {selected.kind==="FLIGHT"&&<AdminConfirmedBooking id={selected.id}/>}
                 </div>
                 </div>
                 {initialOfferKind!=="VISA"&&<div className="mt-4 grid items-start gap-4 lg:grid-cols-2"><section className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
