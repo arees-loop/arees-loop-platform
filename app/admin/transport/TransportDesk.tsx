@@ -438,7 +438,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                    kind={selected.kind==="FERRY"?"FERRY":"FLIGHT"} itineraryReady={itineraryReady} whatsappPhone={customerWhatsApp}
                    onStatusChange={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}
                 />}
-                {["FLIGHT","FERRY"].includes(selected.kind)&&<AdminConfirmedBooking id={selected.id} onReadyChange={setItineraryReady}/>}
+                {["FLIGHT","FERRY"].includes(selected.kind)&&<AdminConfirmedBooking id={selected.id} status={selected.status} onReadyChange={setItineraryReady}/>}
                 </div>
                 </div>
                 {initialOfferKind!=="VISA"&&<div className="mt-4 grid items-start gap-4 lg:grid-cols-2"><section className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFAEE] p-4">
