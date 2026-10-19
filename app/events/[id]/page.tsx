@@ -1,3 +1,25 @@
+import type {Metadata} from "next";
+import {buildPageMetadata} from "@/lib/seo-metadata";
+export async function generateMetadata({params}:{params:Promise<{id:string}>}):Promise<Metadata>{
+ const {id}=await params;
+ const event=await prisma.publicEvent.findFirst({
+  where:{id,status:"PUBLISHED",partner:{partnerType:"GOVERNMENT_NONPROFIT",status:"ACTIVE"}},
+  select:{nameAr:true,descriptionAr:true,city:true,posterUrl:true}
+ }).catch(()=>null);
+ if(!event)return {title:"الفعالية غير متاحة",robots:{index:false,follow:false}};
+ const availablePoster=typeof event.posterUrl==="string"&&(
+  event.posterUrl.startsWith("/")||/^https:\/\/[^\s]+$/i.test(event.posterUrl)
+ );
+ const image=availablePoster?event.posterUrl!:"/api/og/event?title="+encodeURIComponent(event.nameAr);
+ const suffix=image.toLowerCase().split("?")[0];
+ const imageType=suffix.endsWith(".png")?"image/png" as const:/\.jpe?g$/i.test(suffix)?"image/jpeg" as const:suffix.endsWith(".webp")?"image/webp" as const:"image/png" as const;
+ return buildPageMetadata({
+  title:event.nameAr+" — "+event.city,
+  description:event.descriptionAr.replace(/<[^>]*>/g," ").slice(0,175),
+  path:"/events/"+encodeURIComponent(id),image,imageWidth:1200,imageHeight:630,imageType,
+  imageAlt:"فعالية "+event.nameAr+" في "+event.city
+ });
+}
 import Link from "next/link";
 import {notFound} from "next/navigation";
 import {prisma} from "@/lib/prisma";
