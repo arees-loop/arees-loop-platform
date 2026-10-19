@@ -1,3 +1,24 @@
+import type {Metadata} from "next";
+import {buildPageMetadata} from "@/lib/seo-metadata";
+export async function generateMetadata({params}:{params:Promise<{id:string}>}):Promise<Metadata>{
+ const {id}=await params;
+ const guide=await prisma.partner.findFirst({
+  where:{id,partnerType:"INDIVIDUAL",status:"ACTIVE",licenses:{some:{
+   status:"VERIFIED",expiryDate:{gt:new Date()},
+   OR:[{type:{contains:"إرشاد"}},{type:{contains:"GUIDE",mode:"insensitive"}}]
+  }}},select:{publicName:true,legalNameAr:true,descriptionAr:true,city:true}
+ });
+ if(!guide)return {title:"المرشد غير متاح",robots:{index:false,follow:false}};
+ const name=guide.publicName||guide.legalNameAr;
+ return buildPageMetadata({
+  title:"المرشد السياحي "+name,
+  description:(guide.descriptionAr||"").slice(0,160)||"ملف المرشد السياحي "+name+" في "+(guide.city||"السعودية")+" مع التحقق من الترخيص عبر أريس لوب.",
+  path:"/guides/"+encodeURIComponent(id),
+  image:"/api/og/guides?type=profile&name="+encodeURIComponent(name),
+  imageWidth:1200,imageHeight:630,imageType:"image/png",
+  imageAlt:"المرشد السياحي "+name+" — أريس لوب"
+ });
+}
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
