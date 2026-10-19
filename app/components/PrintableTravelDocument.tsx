@@ -95,14 +95,35 @@ export default function PrintableTravelDocument({type}:{type:"quote"|"confirmed"
     {type==="quote"&&r.quoteAmountSar!==null&&<>
      <section className="overflow-hidden rounded-xl border border-[#E2D3B2]">
       <table className="w-full border-collapse text-right text-xs">
-       <thead className="bg-[#F4ECD9]"><tr><th className="p-3">البند</th><th className="p-3">الكمية</th><th className="p-3">السعر الإجمالي</th></tr></thead>
-       <tbody><tr className="border-t border-[#E2D3B2]"><td className="p-3">عرض خدمة {ferry?"الباخرة":"الطيران"} حسب البيانات الموضحة أعلاه</td><td className="p-3">1</td><td className="p-3 font-black">{price(r.quoteAmountSar)}</td></tr></tbody>
+       <thead className="bg-[#F4ECD9]"><tr>
+         <th className="border border-[#E2D3B2] p-3"><DualLabel ar="البند" en="Item"/></th>
+         <th className="border border-[#E2D3B2] p-3"><DualLabel ar="الوصف" en="Description"/></th>
+         <th className="border border-[#E2D3B2] p-3"><DualLabel ar="الكمية" en="Qty"/></th>
+         <th className="border border-[#E2D3B2] p-3"><DualLabel ar="المبلغ الإجمالي" en="Total Amount"/></th>
+       </tr></thead>
+       <tbody><tr>
+         <td className="border border-[#E2D3B2] p-3"><DualLabel ar={ferry?"تذكرة باخرة دولية":"تذكرة طيران"} en={ferry?"International Ferry Ticket":"Air Ticket"}/></td>
+         <td className="border border-[#E2D3B2] p-3"><p>{r.origin} ← {r.destination}</p><p dir="ltr" className="mt-1 text-right text-[10px]">From {r.origin} to {r.destination}</p></td>
+         <td className="border border-[#E2D3B2] p-3">1</td>
+         <td dir="ltr" className="border border-[#E2D3B2] p-3 text-right font-bold">{sar(r.quoteAmountSar)}</td>
+       </tr></tbody>
       </table>
      </section>
-     <div className="flex justify-between rounded-xl bg-[#0D3B34] px-4 py-3 text-white"><span className="font-bold">إجمالي عرض السعر</span><strong>{price(r.quoteAmountSar)}</strong></div>
-     {r.quoteNotes&&<section><h3 className="text-sm font-black">تفاصيل العرض</h3><p className="mt-2 whitespace-pre-wrap rounded-xl bg-[#F7F5EF] p-4 text-xs leading-7">{r.quoteNotes}</p></section>}
-     {r.quoteValidUntil&&<p className="text-xs">صالح حتى: {shortDate(r.quoteValidUntil)}</p>}
+     <section className="rounded-xl border border-[#D4AF37]/40 p-4">
+       <h3 className="mb-3"><DualLabel ar="ملخص السعر وضريبة القيمة المضافة" en="Price Summary & Value Added Tax (VAT)"/></h3>
+       <div className="space-y-3 text-xs">
+         <div className="flex justify-between gap-3"><DualLabel ar="نسبة ضريبة القيمة المضافة" en="VAT Rate"/><b>{r.quoteVatTreatment==="STANDARD_15_INCLUDED"?"15%":r.quoteVatTreatment==="ZERO_RATED_INTERNATIONAL"?"0%":"قيد المراجعة / Pending"}</b></div>
+         <div className="flex justify-between gap-3"><DualLabel ar="السعر قبل الضريبة" en="Amount Excluding VAT"/><b>{vat?.net===null||vat===null?"—":sar(vat.net)}</b></div>
+         <div className="flex justify-between gap-3"><DualLabel ar="قيمة ضريبة القيمة المضافة" en="VAT Amount"/><b>{vat?.vat===null||vat===null?"—":sar(vat.vat)}</b></div>
+         <div className="flex justify-between gap-3 border-t border-[#D4AF37]/40 pt-3"><DualLabel ar="إجمالي عرض السعر" en="Total Quotation (SAR)"/><strong>{sar(r.quoteAmountSar)}</strong></div>
+       </div>
+       <p className="mt-3 text-[10px] leading-5 text-[#776437]">{r.quoteVatTreatment==="STANDARD_15_INCLUDED"?"ضريبة 15% مشمولة ضمن السعر الإجمالي ولا تُضاف عليه.":r.quoteVatTreatment==="ZERO_RATED_INTERNATIONAL"?"النقل الدولي مصنّف بنسبة صفر بعد مراجعة الإدارة.":"لم يُعتمد التصنيف الضريبي بعد؛ لا تُحسب 15% تلقائياً على النقل الدولي المؤهل."}</p>
+       <p dir="ltr" className="mt-1 text-right text-[10px] leading-5 text-[#776437]">{r.quoteVatTreatment==="STANDARD_15_INCLUDED"?"15% VAT is included in the gross price.":r.quoteVatTreatment==="ZERO_RATED_INTERNATIONAL"?"Eligible international transport: zero-rated after review.":"VAT treatment is pending; standard 15% is not automatically applicable to eligible international transport."}</p>
+     </section>
+     {r.quoteNotes&&<section><DualLabel ar="تفاصيل وملاحظات العرض" en="Quotation Details & Notes"/><p className="mt-2 whitespace-pre-wrap rounded-xl bg-[#F7F5EF] p-4 text-xs leading-7">{r.quoteNotes}</p></section>}
+     {r.quoteValidUntil&&<div><DualLabel ar="صلاحية العرض" en="Valid Until"/><p className="whitespace-pre-line text-xs">{shortDate(r.quoteValidUntil)}</p></div>}
      <p className="rounded-xl border border-[#D4AF37]/40 bg-[#FFFAED] p-3 text-[11px] leading-6">هذا المستند عرض سعر وليس فاتورة ضريبية أو تذكرة صادرة أو تأكيد حجز. الأسعار والخدمات خاضعة للشروط والتوفر حتى إتمام التأكيد النهائي. لا يُفترض من هذا المستند وحده أن السداد تم.</p>
+     <p dir="ltr" className="text-right text-[10px] leading-5">This is a quotation, not a tax invoice, issued ticket or confirmed booking. Payment is not confirmed by this quotation.</p>
     </>}
     {type==="confirmed"&&c&&<>
      <section><h3 className="border-b border-[#D4AF37] pb-2 text-sm font-black">تفاصيل الرحلة المؤكدة</h3>
