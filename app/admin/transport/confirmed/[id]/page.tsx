@@ -25,9 +25,9 @@ export default async function ConfirmedBookingPdf({params}:Props){
  if(!session||!["ADMIN","SUPER_ADMIN"].includes(session.user.role))redirect("/admin/login");
  const {id}=await params;
  const request=await prisma.transportRequest.findFirst({
-  where:{id,kind:"FLIGHT",...(session.user.role==="SUPER_ADMIN"?{}:{assignedToId:session.user.id})},
+  where:{id,kind:{in:["FLIGHT","FERRY"]},...(session.user.role==="SUPER_ADMIN"?{}:{assignedToId:session.user.id})},
  });
- if(!request||!canManageTransport(session.user,"FLIGHT"))notFound();
+ if(!request||!canManageTransport(session.user,request.kind==="FERRY"?"FERRY":"FLIGHT"))notFound();
  const [event,verified]=await Promise.all([
   prisma.transportRequestEvent.findFirst({
    where:{requestId:id,action:"BOOKING_CONFIRMATION_DETAILS_SAVED"},
@@ -39,14 +39,15 @@ export default async function ConfirmedBookingPdf({params}:Props){
  ]);
  if(!event||!verified||!["PAID","EXECUTING","DONE"].includes(request.status))notFound();
  const d=(event.details||{}) as Details;
- if(!d.bookingReference||!d.flightNumber)notFound();
+ if(!d.bookingReference||(request.kind==="FLIGHT"&&!d.flightNumber))notFound();
  const passengers=[
   {name:"البالغون / Adults",quantity:request.adults,baggage:d.adultBaggage},
   {name:"الأطفال / Children",quantity:request.children,baggage:d.childBaggage},
   {name:"الرضّع / Infants",quantity:request.infants,baggage:d.infantBaggage}
  ];
+ const ferry=request.kind==="FERRY";
  return <main dir="rtl" className="mx-auto max-w-[960px] bg-[#F8F6EF] px-4 py-8 text-[#0D3B34] print:max-w-none print:bg-white print:p-0">
-  <div className="mb-4 flex flex-wrap justify-between gap-3 print:hidden"><Link href="/admin/transport/flights?view=requests" className="rounded-xl border border-[#D4AF37] bg-white px-5 py-3 text-xs font-bold">← العودة لإدارة طلبات الطيران</Link><QuotePrintButton disabled={false}/></div>
+  <div className="mb-4 flex flex-wrap justify-between gap-3 print:hidden"><Link href={ferry?"/admin/transport/ferries?view=requests":"/admin/transport/flights?view=requests"} className="rounded-xl border border-[#D4AF37] bg-white px-5 py-3 text-xs font-bold">← العودة لإدارة الطلبات</Link><QuotePrintButton disabled={false}/></div>
   <article className="overflow-hidden rounded-[24px] border border-[#D4AF37]/45 bg-white shadow-lg print:border-0 print:rounded-none print:shadow-none">
    <header className="border-b-4 border-[#B99333] bg-white p-6 print:p-4 sm:p-8">
     <div className="flex flex-wrap items-center justify-between gap-5">
@@ -63,7 +64,7 @@ export default async function ConfirmedBookingPdf({params}:Props){
      </div>
      <Image src="/Logo/arees-integrated-solutions-logo.png" alt="شعار شركة أريس" width={140} height={140} unoptimized className="h-[106px] w-[106px] shrink-0 object-contain"/>
     </div>
-    <div className="mt-5 rounded-xl bg-[#0D3B34] px-5 py-4 text-white"><h2 className="text-xl font-black">تفاصيل حجز طيران مؤكد</h2><p dir="ltr" className="mt-1 text-left text-xs font-bold">Confirmed Flight Booking Details</p></div>
+    <div className="mt-5 rounded-xl bg-[#0D3B34] px-5 py-4 text-white"><h2 className="text-xl font-black">{ferry?"تفاصيل حجز باخرة مؤكد":"تفاصيل حجز طيران مؤكد"}</h2><p dir="ltr" className="mt-1 text-left text-xs font-bold">{ferry?"Confirmed Ferry Booking Details":"Confirmed Flight Booking Details"}</p></div>
    </header>
    <div className="space-y-6 px-6 py-7 print:space-y-4 print:px-5 print:py-4 sm:px-8">
     <section className="grid gap-3 text-xs sm:grid-cols-3 print:grid-cols-3">
@@ -74,13 +75,13 @@ export default async function ConfirmedBookingPdf({params}:Props){
     <section><h3 className="border-b border-[#D4AF37]/45 pb-2 text-base font-black">بيانات المسافر والرحلة</h3>
      <div className="mt-3 grid gap-3 sm:grid-cols-2 print:grid-cols-2">
       <Detail title="اسم العميل" value={request.customerName}/>
-      <Detail title="شركة الطيران / الناقل" value={request.carrierName||"غير محدد"}/>
+      <Detail title={ferry?"مشغل الباخرة":"شركة الطيران / الناقل"} value={request.carrierName||"غير محدد"}/>
       <Detail title="من" value={request.origin}/>
       <Detail title="إلى" value={request.destination}/>
       <Detail title="تاريخ السفر" value={arabicDate(request.travelDate)}/>
       {request.returnDate&&<Detail title="تاريخ العودة" value={arabicDate(request.returnDate)}/>}
-      <Detail title="رقم رحلة الذهاب" value={d.flightNumber||""}/>
-      <Detail title="المغادرة / الوقت المحلي" value={d.departureTime||""}/>
+      <Detail title={ferry?"اسم الباخرة / رقم الرحلة البحرية":"رقم رحلة الذهاب"} value={d.flightNumber||""}/>
+      <Detail title={ferry?"الإبحار / الوقت المحلي":"الإقلاع / الوقت المحلي"} value={d.departureTime||""}/>
       <Detail title="الوصول / الوقت المحلي" value={d.arrivalTime||""}/>
       <Detail title="صالة المغادرة" value={d.departureTerminal||""}/>
       <Detail title="صالة الوصول" value={d.arrivalTerminal||""}/>
