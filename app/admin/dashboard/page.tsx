@@ -94,7 +94,7 @@ export default function AdminDashboardPage(){
       })}
     </div>
   </section>
-  {adminAlerts&&<section className="mt-5 rounded-[24px] border border-[#D4AF37]/35 bg-white p-5 shadow-sm" aria-label="متابعة ردود العملاء والسداد والطلبات تحت الإجراء">
+  {adminAlerts&&<section id="admin-work-queue" className="mt-5 scroll-mt-28 rounded-[24px] border border-[#D4AF37]/35 bg-white p-5 shadow-sm" aria-label="متابعة ردود العملاء والسداد والطلبات تحت الإجراء">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h2 className="text-xl font-black text-[#0D3B34]">📣 متابعة العملاء والطلبات تحت الإجراء</h2><p className="mt-2 text-xs leading-6 text-[#0D3B34]/65">تنبيهات فعلية من سجل الطلبات، تُحدّث كل دقيقة. العدد يمثل إجراءات تنتظر معالجة وليس رسائل غير مقروءة.</p></div>
       <span className="rounded-full border border-[#D4AF37]/40 bg-[#FFFBEE] px-4 py-2 text-xs font-black text-[#805F1D]">متابعة مطلوبة: {adminAlerts.totals.attention.toLocaleString("ar-SA")}</span>
