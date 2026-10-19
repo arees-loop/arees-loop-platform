@@ -1,3 +1,11 @@
+import type {Metadata} from "next";
+import {buildPageMetadata} from "@/lib/seo-metadata";
+export const metadata:Metadata=buildPageMetadata({
+ title:"المرشدون السياحيون",
+ description:"استكشف دليل المرشدين السياحيين المرخصين في السعودية عبر أريس لوب وابحث حسب المدينة والتخصص لتتعرف على الجولات والخدمات المنشورة.",
+ path:"/guides",image:"/api/og/guides?type=directory",imageWidth:1200,imageHeight:630,imageType:"image/png",
+ imageAlt:"المرشدون السياحيون المرخصون على أريس لوب"
+});
 import Image from "next/image";
 import Link from "next/link";
 import GuidesHeroCards from "./GuidesHeroCards";
