@@ -73,8 +73,8 @@ export default async function QuotePage({params}:Props){
      <div className="min-w-0 flex-1 space-y-1">
        <TwoLine ar="شركة أريس الحلول المتكاملة المحدودة" en="AREES AL-HELLOUL AL-MUTAKAMLA CO.LTD" large/>
        <TwoLine ar="الرقم الضريبي: 311897578200003" en="Tax No.: 311897578200003"/>
-       <TwoLine ar="ترخيص وزارة السياحة: 73104550" en="Ministry of Tourism License No.: 73104550"/>
-       <TwoLine ar="وكيل سفر وسياحة" en="Travel and Tourism Agent"/>
+       <TwoLine ar="ترخيص وزارة السياحة رقم 73104550" en="Ministry of Tourism License No.: 73104550"/>
+       <TwoLine ar="فئة الترخيص: وكالة سفر وسياحة" en="License Category: Travel and Tourism Agency"/>
        <TwoLine ar="السجل التجاري: 7037003618" en="Commercial Registration No.: 7037003618"/>
        <TwoLine ar="المملكة العربية السعودية — المدينة المنورة، حي قربان" en="Saudi Arabia — Medina, Qurban District"/>
        <TwoLine ar="الهاتف: ‎+9660148390473" en="Phone: +9660148390473"/>
