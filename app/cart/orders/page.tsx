@@ -5,7 +5,8 @@ import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 
 type Item={title?:string;itemType?:string;application?:{requestReference?:string}};
 type BankOrder={reference:string;amountSar:number;createdAt:string;status:string;hasVoucher:boolean;rows:Item[]};
-type LicenseApplication={reference:string;createdAt:string;priceSar:number;status:string;serviceStatus:string;bankReference:string|null};
+type LicenseApplication={reference:string;createdAt:string;priceSar:number;status:string;serviceStatus:string;bankReference:string|null;
+ trackingNumber?:string;trackingUrl?:string;customerMessages?:{text:string;createdAt:string}[]};
 const labels:Record<string,string>={
  AWAITING_PAYMENT:"النموذج مسجل — بانتظار اختيار السداد",
  CART_BANK_CREATED:"بانتظار تحويل المبلغ",
@@ -44,8 +45,21 @@ export default function CartOrdersPage(){
        <Reference value={x.reference} label="رقم طلب الرخصة"/>
        <b className="text-lg">{Number(x.priceSar).toLocaleString("ar-SA")} ر.س (السعر قبل الخصم)</b>
       </div>
-      <p className="mt-3 text-xs">{new Date(x.createdAt).toLocaleString("ar-SA")} — {labels[x.status]||x.status} · حالة الخدمة: {x.serviceStatus==="EXECUTING"?"تحت التنفيذ":x.serviceStatus==="DONE"?"تم التنفيذ":x.serviceStatus==="PAID"?"تم السداد":x.serviceStatus==="CANCELED"?"ملغي":"جديد"}</p>
+      <p className="mt-3 text-xs">{new Date(x.createdAt).toLocaleString("ar-SA")} — {labels[x.status]||x.status} · حالة الخدمة: {x.serviceStatus==="EXECUTING"?"تحت التنفيذ":x.serviceStatus==="DONE"?"تم التنفيذ":x.serviceStatus==="SHIPPING"?"تحت التوصيل":x.serviceStatus==="DELIVERED"?"تم التوصيل":x.serviceStatus==="PAID"?"تم السداد":x.serviceStatus==="CANCELED"?"ملغي":"جديد"}</p>
       {x.bankReference&&<div className="mt-3 rounded-lg bg-[#F8F5E9] p-3"><Reference value={x.bankReference} label="مرجع التحويل البنكي المرتبط"/></div>}
+      {!!x.customerMessages?.length&&<div role="status" className="mt-4 space-y-2 rounded-xl border border-[#E0C482] bg-[#FFFAE9] p-4">
+       <h3 className="text-sm font-black">ملاحظات فريق أريس على الطلب</h3>
+       {x.customerMessages.map((m,i)=><div key={i} className="border-b border-[#E8D6AA] py-2 last:border-0">
+        <p className="whitespace-pre-wrap text-sm">{m.text}</p>
+        <p className="mt-1 text-xs text-[#6F806F]">{new Date(m.createdAt).toLocaleString("ar-SA")}</p>
+       </div>)}
+      </div>}
+      {!!x.trackingNumber&&<div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
+       <p className="font-bold">تتبع توصيل الرخصة</p>
+       <p className="mt-2">رقم التتبع: <b dir="ltr">{x.trackingNumber}</b></p>
+       {x.trackingUrl?.startsWith("https://")&&<a href={x.trackingUrl} target="_blank" rel="noopener noreferrer"
+         className="mt-2 inline-flex rounded-lg bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white">فتح رابط التتبع</a>}
+      </div>}
       {x.status!=="CART_BANK_VERIFIED"&&<Link href={x.bankReference?"/cart?reference="+encodeURIComponent(x.bankReference):"/cart"} className="mt-4 inline-flex rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">متابعة السداد من السلة</Link>}
      </article>)}</div>
     </section>}
