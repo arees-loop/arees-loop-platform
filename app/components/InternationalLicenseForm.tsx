@@ -46,7 +46,31 @@ export default function InternationalLicenseForm(){
  const [auth,setAuth]=useState<"checking"|"signed-in"|"guest">("checking");
  const [added,setAdded]=useState(false),[checkoutOpen,setCheckoutOpen]=useState(false);
  const [cartItem,setCartItem]=useState<{serviceId:string;quantity:number;itemType:"DRIVING_LICENSE";application:Record<string,unknown>}|null>(null);
- useEffect(()=>{let active=true;fetch("/api/auth/me",{cache:"no-store",credentials:"include"}).then(r=>{if(active)setAuth(r.ok?"signed-in":"guest");}).catch(()=>{if(active)setAuth("guest");});return()=>{active=false;};},[]);
+ useEffect(()=>{
+  let active=true;
+  fetch("/api/auth/me",{cache:"no-store",credentials:"include"}).then(async r=>{
+   if(!r.ok){if(active)setAuth("guest");return;}
+   const user=await r.json().catch(()=>null);
+   if(!active)return;
+   setAuth("signed-in");
+   const userId=user?.data?.user?.id;
+   if(typeof userId!=="string")return;
+   try{
+    const list=JSON.parse(localStorage.getItem("arees-loop-cart-v1")||"[]");
+    const previous=Array.isArray(list)?list.find((v:unknown)=>{
+     if(!v||typeof v!=="object")return false;
+     const x=v as {ownerId?:unknown;itemType?:unknown;application?:{requestReference?:unknown}};
+     return x.ownerId===userId&&x.itemType==="DRIVING_LICENSE"&&typeof x.application?.requestReference==="string";
+    }):null;
+    if(!previous)return;
+    const ref=previous.application.requestReference;
+    const checked=await fetch("/api/license-cart-application?reference="+encodeURIComponent(ref),{credentials:"include",cache:"no-store"});
+    const result=await checked.json().catch(()=>null);
+    if(active&&checked.ok&&result?.found){setCartItem(previous);setAdded(true);}
+   }catch{}
+  }).catch(()=>{if(active)setAuth("guest");});
+  return()=>{active=false};
+ },[]);
  useEffect(()=>{let active=true;fetch("/api/transport/offers?kind=DRIVING_LICENSE",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(result=>{const item=result?.success&&Array.isArray(result.data)?result.data[0]:null;if(active&&item)setOffer(item);}).catch(()=>{});return()=>{active=false;};},[]);
  const [name,setName]=useState("");
  const [countryCode,setCountryCode]=useState("966");
@@ -59,6 +83,13 @@ export default function InternationalLicenseForm(){
  const [deliveryLocation,setDeliveryLocation]=useState("");
  const [files,setFiles]=useState<Record<Slot,File|null>>({PASSPORT:null,LOCAL_LICENSE:null,PORTRAIT:null});
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ function newApplication(){
+  setAdded(false);setCartItem(null);setCheckoutOpen(false);setError("");setNotice("");
+  setName("");setCountryCode("966");setOtherCode("");setPhone("");setHeight("");setEyes([]);
+  setStreet("");setDuration("1");setDeliveryLocation("");
+  setFiles({PASSPORT:null,LOCAL_LICENSE:null,PORTRAIT:null});
+  window.requestAnimationFrame(()=>document.getElementById("license-form")?.scrollIntoView({behavior:"smooth",block:"start"}));
+ }
  const pick=(slot:Slot,file:File|null)=>setFiles(existing=>({...existing,[slot]:file}));
  const setEye=(eye:string)=>setEyes(current=>current.includes(eye)?current.filter(x=>x!==eye):[...current,eye]);
  async function addToCart(goToCart:boolean){
@@ -71,7 +102,16 @@ export default function InternationalLicenseForm(){
       (countryCode==="other"&&!/^\d{1,4}$/.test(otherCode))||Object.values(files).some(f=>!f)){
      setError("أكمل جميع الحقول والصور الثلاث وموقع التوصيل الصحيح قبل الإضافة إلى السلة.");return;
    }
+   try{
+    const existing=JSON.parse(localStorage.getItem("arees-loop-cart-v1")||"[]");
+    if(Array.isArray(existing)&&existing.some((x:unknown)=>x&&typeof x==="object"&&
+      (x as {itemType?:string}).itemType==="DRIVING_LICENSE")){
+      setError("لديك طلب رخصة محفوظ في السلة. أكمل سداده أو احذفه قبل تسجيل طلب آخر حتى لا تضيع بياناته.");
+      return;
+    }
+   }catch{setError("تعذر قراءة السلة بأمان. أعد تحميل الصفحة.");return;}
    setBusy(true);
+   let registeredReference:string|null=null;
    let uploadedDocumentIds:string[]=[];
    try{
     const own=await fetch("/api/auth/me",{cache:"no-store",credentials:"include"});
@@ -98,6 +138,7 @@ export default function InternationalLicenseForm(){
     const registration=await registered.json().catch(()=>null);
     if(!registered.ok||!registration?.success||typeof registration.reference!=="string")
       throw Error(registration?.message||"تعذر تسجيل طلب الرخصة في النظام.");
+    registeredReference=registration.reference;
     const registeredApplication={...application,requestReference:registration.reference};
     const key="arees-loop-cart-v1",serviceId="international-driving-license-1";
     const raw=JSON.parse(localStorage.getItem(key)||"[]");
@@ -111,9 +152,16 @@ export default function InternationalLicenseForm(){
     uploadedDocumentIds=[];
     window.dispatchEvent(new Event("arees-cart-updated"));
     setCartItem(savedItem);setAdded(true);setCheckoutOpen(goToCart);
-    setNotice("✓ تمت إضافة طلب الرخصة إلى السلة بنجاح.");
+    setNotice("✓ تم تسجيل طلب الرخصة برقم "+registration.reference+" وإضافته للسلة.");
     window.requestAnimationFrame(()=>document.getElementById("license-form")?.scrollIntoView({behavior:"smooth",block:"start"}));
-   }catch(err){await Promise.all(uploadedDocumentIds.map(id=>fetch("/api/license-documents",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({documentId:id}),credentials:"include"}).catch(()=>null)));setError(err instanceof Error?err.message:"تعذر حفظ طلب الرخصة. لم تتم إضافته للسلة.");}
+   }catch(err){
+    if(registeredReference){
+     setError("تم تسجيل طلب الرخصة لدى الإدارة برقم "+registeredReference+"، لكن تعذّر حفظه في سلة هذا المتصفح. راجع «طلباتي» ولا تعيد رفع المستندات.");
+    }else{
+     await Promise.all(uploadedDocumentIds.map(id=>fetch("/api/license-documents",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({documentId:id}),credentials:"include"}).catch(()=>null)));
+     setError(err instanceof Error?err.message:"تعذر حفظ طلب الرخصة. لم تتم إضافته للسلة.");
+    }
+   }
    finally{setBusy(false);}
  }
  function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();void addToCart(true);}
@@ -155,7 +203,7 @@ export default function InternationalLicenseForm(){
     </aside>
     <section id="license-form" className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm sm:p-8">
      <p className="text-xs font-black tracking-widest text-[#B08A35]">AREES LOOP · INTERNATIONAL DRIVING PERMIT</p>
-     <h2 className="mt-3 text-2xl font-black">نموذج طلب الرخصة الدولية</h2>
+     <h2 className="mt-3 text-2xl font-black">{added?"طلب الرخصة محفوظ في السلة":"نموذج طلب الرخصة الدولية"}</h2>
      <p className="mt-2 text-sm leading-7 text-[#0D3B34]/70">سجّل الدخول أولاً، ثم أكمل البيانات والمستندات. بعد الإضافة للسلة يمكنك الانتقال مباشرة إلى التحويل البنكي.</p>
      {error&&<p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}
      {notice&&<p role="status" className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{notice}</p>}
@@ -169,10 +217,17 @@ export default function InternationalLicenseForm(){
        <div className="rounded-2xl border border-[#9ABA88] bg-[#EFF8EC] p-6 text-center">
         <div aria-hidden="true" className="text-4xl text-[#20713D]">✓</div>
         <h3 className="mt-2 text-xl font-black text-[#155A32]">تمت إضافة طلب الرخصة إلى السلة بنجاح</h3>
+        <div className="mx-auto mt-4 max-w-md rounded-xl border border-[#A5C5A7] bg-white px-4 py-3">
+         <p className="text-xs font-bold text-[#47674F]">رقم طلب الرخصة الدولية</p>
+         <p dir="ltr" className="mt-1 break-all text-center font-mono text-sm font-black text-[#0D3B34]">{String(cartItem.application.requestReference||"")}</p>
+         <button type="button" className="mt-2 text-xs font-bold underline" onClick={()=>void navigator.clipboard.writeText(String(cartItem.application.requestReference||""))}>نسخ رقم الطلب</button>
+        </div>
         <p className="mt-2 text-sm leading-7">تم حفظ البيانات والمستندات الخاصة، ويمكنك الآن إكمال التحويل البنكي. لا يبدأ إصدار الرخصة قبل اعتماد السداد.</p>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
          <button type="button" onClick={()=>setCheckoutOpen(true)} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white">اشترِ الآن — التحويل البنكي</button>
          <Link href="/cart" className="rounded-xl border border-[#B9974A] bg-white px-5 py-3 text-sm font-bold">عرض السلة</Link>
+         <Link href="/cart/orders" className="rounded-xl border border-[#B9974A] bg-white px-5 py-3 text-sm font-bold">متابعة الطلب</Link>
+         <button type="button" onClick={newApplication} className="rounded-xl border border-[#B9974A] bg-white px-5 py-3 text-sm font-bold">تقديم طلب جديد</button>
         </div>
        </div>
        {checkoutOpen&&<CartBankCheckout items={[cartItem]} couponCode="" total={offer?.amountSar??199} pointsDiscount={0}/>}
