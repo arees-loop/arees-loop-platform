@@ -2,13 +2,14 @@
 import {useEffect,useState} from "react";
 type CartItem={serviceId:string;quantity:number;itemType?:"DRIVING_LICENSE";application?:Record<string,unknown>};
 type Bank={id:string;bankName:string;beneficiaryName:string;iban:string;note:string};
-type Order={reference:string;amountSar:number;bankAccountId:string;status:string};
+type Order={reference:string;amountSar:number;bankAccountId:string;status:string;licenseRequestReference?:string};
 type Props={items:CartItem[];couponCode:string;total:number;pointsDiscount:number};
 export default function CartBankCheckout({items,couponCode,total,pointsDiscount}:Props){
  const [method,setMethod]=useState<"BANK"|"CARD">("BANK");
  const [banks,setBanks]=useState<Bank[]>([]);
  const [bankId,setBankId]=useState("");
  const [order,setOrder]=useState<Order|null>(null);
+ const licenseRequestReference=items.find(item=>item.itemType==="DRIVING_LICENSE")?.application?.requestReference;
  const [file,setFile]=useState<File|null>(null);
  const [voucherAvailable,setVoucherAvailable]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
@@ -42,7 +43,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
   try{
    const r=await fetch("/api/cart/bank-checkout",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"CREATE",items,couponCode,bankAccountId:bankId,expectedTotalSar:total})});
    const d=await r.json();if(!r.ok)throw Error(d.message||"تعذر إنشاء طلب التحويل.");
-   setOrder({reference:d.reference,amountSar:Number(d.amountSar),bankAccountId:bankId,status:"AWAITING_TRANSFER"});
+   setOrder({reference:d.reference,amountSar:Number(d.amountSar),bankAccountId:bankId,status:"AWAITING_TRANSFER",licenseRequestReference:typeof licenseRequestReference==="string"?licenseRequestReference:undefined});
    localStorage.setItem("arees-loop-cart-bank-reference",d.reference);
    setNotice(d.message);
   }catch(e){setError(e instanceof Error?e.message:"تعذر إنشاء الطلب.");}
@@ -76,6 +77,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
     {bank.note&&<p className="mt-2 whitespace-pre-wrap rounded-lg bg-[#FFF8E6] px-3 py-2 text-xs">{bank.note}</p>}
    </div>:<p className="rounded-xl border border-[#E6C77C] bg-[#FFF8EA] p-3 text-xs">{error||"لا يوجد حساب بنكي معتمد ظاهر حالياً. يرجى المحاولة لاحقاً."}</p>}
    {order?<div className="space-y-3 rounded-xl border border-[#D4AF37]/30 bg-white p-4">
+    {(order.licenseRequestReference||licenseRequestReference)&&<p className="break-all text-sm font-bold">رقم طلب الرخصة: <span dir="ltr" className="block font-mono text-xs">{String(order.licenseRequestReference||licenseRequestReference)}</span></p>}
     <p className="text-sm font-bold">مرجع التحويل: <span dir="ltr">{order.reference}</span></p>
     <p className="font-black">المبلغ المطلوب: {money(order.amountSar)}</p>
     <div className="flex flex-wrap gap-2">
