@@ -31,6 +31,13 @@ export default function AdminBookingsPage(){
   finally{setLoading(false)}
  },[filter]);
  useEffect(()=>{void Promise.resolve().then(load);},[load]);
+ useEffect(()=>{
+  void Promise.resolve().then(()=>{
+   const value=new URLSearchParams(window.location.search).get("source");
+   if(value==="cart")setSource("CART");
+  });
+ },[]);
+
  const filtered=useMemo(()=>rows.filter(x=>{
   if(source!=="ALL"&&source!==x.source)return false;
   const term=search.toLowerCase().trim();
