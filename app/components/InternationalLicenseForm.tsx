@@ -3,6 +3,7 @@
 import {useEffect,useState,type FormEvent} from "react";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
 import Link from "next/link";
+import AreesServiceActions from "@/app/components/AreesServiceActions";
 import CartBankCheckout from "@/app/components/CartBankCheckout";
 
 type LicenseOffer={id:string;title:string;description:string|null;destination:string|null;imageUrls:string[];bannerUrl:string|null;amountSar:number|null;priceUnit:string|null;operationStatus:string};
@@ -118,6 +119,7 @@ export default function InternationalLicenseForm(){
  function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();void addToCart(true);}
  return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-4 pb-24 pt-32 text-[#0D3B34] md:px-8">
   <div className="mx-auto max-w-[1450px]">
+   <AreesServiceActions kind="DRIVING_LICENSE" title="الرخصة الدولية" href="/international-driving-license" className="mb-4" />
    <div className="grid items-start gap-6 lg:grid-cols-[minmax(290px,.78fr)_minmax(0,1.22fr)]">
     <aside className="lg:sticky lg:top-28">
      <div className="rounded-[28px] bg-[#0D3B34] p-3 text-white shadow-[0_18px_44px_rgba(13,59,52,.14)] sm:p-4">
