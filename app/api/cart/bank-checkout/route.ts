@@ -54,6 +54,11 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
    const original=await prisma.auditLog.findFirst({where:{entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_FORM_ADDED_TO_CART",
     entityId:app.requestReference,userId},select:{afterData:true}});
    if(!original)throw Error("رقم طلب الرخصة غير مسجل في حسابك.");
+   const change=await prisma.auditLog.findFirst({where:{entityType:"LICENSE_CART_WORKFLOW",
+    entityId:app.requestReference,action:"STATUS_CHANGED"},orderBy:[{createdAt:"desc"},{id:"desc"}],
+    select:{afterData:true}});
+   if(jsonData(change?.afterData).status==="CANCELED")throw Error("تم إلغاء طلب الرخصة؛ لا يمكن إتمام دفعه.");
+
    const info=jsonData(original.afterData);
    if(!Array.isArray(info.documentIds)||!ids.every(id=>info.documentIds instanceof Array&&info.documentIds.includes(id)))
     throw Error("مستندات الرخصة لا تطابق رقم الطلب المحفوظ.");
