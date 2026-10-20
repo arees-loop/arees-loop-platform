@@ -35,7 +35,7 @@ jobs:
       - name: TypeScript checks
         run: npx tsc --noEmit
       - name: Changed checkout files ESLint (errors blocking)
-        run: npx eslint app/cart app/components/CartBankCheckout.tsx app/components/InternationalLicenseForm.tsx app/api/cart app/api/admin/cart-bank-payments app/admin/cart-bank-payments app/admin/bookings/page.tsx app/api/license-cart-application app/api/customer/saved-arees-services app/api/admin/request-alerts/route.ts app/components/AreesServiceActions.tsx app/components/SavedAreesServices.tsx app/components/AdminNotificationCenter.tsx app/favorites/page.tsx app/transport/TransportRequestPage.tsx app/components/RequestServicePage.tsx app/hotels/HotelsClient.tsx app/api/coupons/validate/route.ts lib/license-cart-coupon.ts --quiet
+        run: npx eslint app/cart app/components/CartBankCheckout.tsx app/components/InternationalLicenseForm.tsx app/api/cart app/api/admin/cart-bank-payments app/admin/cart-bank-payments app/admin/bookings/page.tsx app/api/license-cart-application app/api/customer/saved-arees-services app/api/admin/request-alerts/route.ts app/components/AreesServiceActions.tsx app/components/SavedAreesServices.tsx app/components/AdminNotificationCenter.tsx app/favorites/page.tsx app/transport/TransportRequestPage.tsx app/components/RequestServicePage.tsx app/hotels/HotelsClient.tsx app/api/coupons/validate/route.ts lib/license-cart-coupon.ts app/api/admin/license-cart-workflow/route.ts app/api/admin/license-cart-document/route.ts app/components/LicenseCartOrderDetail.tsx --quiet
       - name: Global ESLint audit (legacy debt visible, not a release bypass)
         continue-on-error: true
         run: npm run lint
