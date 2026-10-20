@@ -18,7 +18,7 @@ const publicRoutes = [
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: MetadataRoute.Sitemap = publicRoutes.map((path) => ({
     url: `${SITE_URL}${path}`,
-    changeFrequency: path === "" ? "weekly" : "monthly",
+    changeFrequency: path === "" ? ("weekly" as const) : ("monthly" as const),
     priority: path === "" ? 1 : path === "/services" ? 0.8 : 0.9,
   }));
 
