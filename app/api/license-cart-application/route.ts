@@ -48,6 +48,10 @@ export async function POST(req:NextRequest){
   });
   await prisma.auditLog.create({data:{userId:session.user.id,entityType:TYPE,entityId:reference,action:ACTION,
    afterData:{name:a.name.trim(),phone:"+"+a.countryCode+a.phone,documentIds:ids,
+     height:typeof body.application.height==="string"?body.application.height.slice(0,8):"",
+     eyeColor:typeof body.application.eyeColor==="string"?body.application.eyeColor.slice(0,60):"",
+     deliveryAddress:typeof body.application.deliveryAddress==="string"?body.application.deliveryAddress.slice(0,250):"",
+     deliveryLink:typeof body.application.deliveryLink==="string"?body.application.deliveryLink.slice(0,400):"",
      priceSar:currentOffer?.amountSar===null||!currentOffer?199:Number(currentOffer.amountSar),
      stage:"IN_CART_AWAITING_PAYMENT"}
   }});
