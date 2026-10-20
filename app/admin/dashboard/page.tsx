@@ -29,6 +29,7 @@ export default function AdminDashboardPage(){
  const [toDate,setToDate]=useState("");
  useEffect(()=>{let live=true;fetch("/api/admin/customer-count",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(live&&d.success)setCustomerCount(d.count)}).catch(()=>{});return()=>{live=false}},[]);
  const [requestAlerts,setRequestAlerts]=useState<RequestAlerts|null>(null);
+ const [recentLicenseAlerts,setRecentLicenseAlerts]=useState<{reference:string;createdAt:string;href:string}[]>([]);
  const [alertsLoading,setAlertsLoading]=useState(true),[alertsError,setAlertsError]=useState("");
  const [refreshSignal,setRefreshSignal]=useState(0);
  useEffect(()=>{
@@ -38,7 +39,7 @@ export default function AdminDashboardPage(){
        const response=await fetch("/api/admin/request-alerts",{cache:"no-store",credentials:"include"});
        const data=await response.json();
        if(!response.ok||!data.success)throw Error(data.message||"تعذر قراءة الإشعارات.");
-       if(active){setRequestAlerts(data.counts);setAlertsError("");}
+       if(active){setRequestAlerts(data.counts);setRecentLicenseAlerts((Array.isArray(data.recent)?data.recent:[]).filter((x:{kind:string})=>x.kind==="DRIVING_LICENSE").slice(0,5));setAlertsError("");}
      }catch(err){if(active)setAlertsError(err instanceof Error?err.message:"تعذر تحديث الإشعارات.");}
      finally{if(active)setAlertsLoading(false);}
    }
@@ -82,6 +83,14 @@ export default function AdminDashboardPage(){
       })}
     </div>
   </section>
+   {recentLicenseAlerts.length>0&&<section className="mt-4 rounded-xl border border-[#B5D5B7] bg-[#F1F9F2] p-4">
+     <h3 className="text-sm font-black text-[#13552F]">طلبات الرخص الدولية الجديدة</h3>
+     <div className="mt-3 space-y-2">{recentLicenseAlerts.map(item=><Link key={item.reference} href={item.href}
+      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#D0E4D0] bg-white p-3 text-xs font-bold">
+      <span dir="ltr" className="break-all font-mono">{item.reference}</span><span>{new Date(item.createdAt).toLocaleString("ar-SA")}</span>
+      <span className="text-[#1D7549]">فتح الطلب ←</span>
+     </Link>)}</div>
+   </section>}
   {metricsError&&<p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{metricsError}</p>}
   <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Link href="/admin/bookings" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">حجوزات تجارب الشركاء</p><p className="mt-2 text-3xl font-black">{metrics?.bookings??"—"}</p><p className="mt-2 text-xs text-black/45">حجوزات منشأة خلال الفترة المحددة</p></Link><Link href="/admin/dashboard?section=settlements" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">المالية والتسويات</p><p className="mt-2 text-3xl font-black">{metrics?.settlements??"—"}</p><p className="mt-2 text-xs text-black/45">سجلات تسوية منشأة خلال الفترة، لا تعني المدفوعات المحصلة</p></Link><Link href="/admin/partners" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">طلبات انضمام الشركاء</p><p className="mt-2 text-3xl font-black">{loading?"—":periodPartners.length}</p><p className="mt-2 text-xs text-black/45">حسب الفترة المختارة</p></Link><Link href="/admin/customer-reports" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">العملاء المسجلون</p><p className="mt-2 text-3xl font-black">{customerCount??"—"}</p><p className="mt-2 text-xs text-black/45">الإجمالي الحالي • جميع الفترات</p></Link></section>
   {loading?<div className="mt-8 rounded-3xl bg-white p-8 text-center">جارٍ تحميل البيانات...</div>:<>
