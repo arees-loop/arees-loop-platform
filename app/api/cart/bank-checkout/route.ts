@@ -94,6 +94,14 @@ export async function GET(req:NextRequest){
  if(!session||session.user.status!=="ACTIVE")return fail("سجّل الدخول لحفظ طلب التحويل البنكي.",401);
  try{
   const banks=await activeBanks();
+  if(req.nextUrl.searchParams.get("history")==="true"){
+   const orders=await prisma.auditLog.findMany({where:{userId:session.user.id,entityType:TYPE,action:CREATED},orderBy:{createdAt:"desc"},take:100,select:{entityId:true,createdAt:true,afterData:true}});
+   const references=orders.map(o=>o.entityId).filter((s):s is string=>!!s);
+   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true}}):[];
+   const last=new Map<string,string>();
+   for(const event of actions)if(event.entityId&&!last.has(event.entityId))last.set(event.entityId,event.action);
+   return NextResponse.json({success:true,orders:orders.map(o=>{const data=jsonData(o.afterData);return {reference:o.entityId,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,status:last.get(o.entityId||"")||CREATED};})},{headers:{"Cache-Control":"private, no-store"}});
+  }
   const reference=req.nextUrl.searchParams.get("reference");
   if(reference){
    const order=await orderFor(reference,session.user.id);
