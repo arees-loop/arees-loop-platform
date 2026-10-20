@@ -109,7 +109,7 @@ export async function PATCH(req:NextRequest){
    const eyeColor=typeof details.eyeColor==="string"?details.eyeColor.trim():"";
    const deliveryAddress=typeof details.deliveryAddress==="string"?details.deliveryAddress.trim():"";
    const deliveryLink=typeof details.deliveryLink==="string"?details.deliveryLink.trim():"";
-   if(name.length<2||name.length>100||!/^\\+?\\d{8,17}$/.test(phone)||height.length>8||
+   if(name.length<2||name.length>100||!/^\+?\d{8,17}$/.test(phone)||height.length>8||
     eyeColor.length>80||deliveryAddress.length>300||
     (deliveryLink&&(!deliveryLink.startsWith("https://")||deliveryLink.length>500)))
     return fail("تأكد من الاسم والهاتف وعنوان التوصيل والرابط الصحيح.");
