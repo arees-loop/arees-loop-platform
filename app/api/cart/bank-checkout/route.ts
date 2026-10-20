@@ -147,7 +147,12 @@ export async function GET(req:NextRequest){
    const order=await orderFor(reference,session.user.id);
    if(!order)return fail("طلب السداد غير موجود.",404);
    const event=await lastEvent(reference),details=jsonData(order.afterData);
-   return NextResponse.json({success:true,banks,order:{reference,amountSar:details.amountSar,bankAccountId:details.bankAccountId,status:event?.action||CREATED}},{headers:{"Cache-Control":"private, no-store"}});
+   const savedRows=Array.isArray(details.rows)?details.rows:[];
+   const licenseRow=savedRows.find(row=>jsonData(row).itemType==="DRIVING_LICENSE");
+   const licenseRequestReference=jsonData(jsonData(licenseRow).application).requestReference;
+   return NextResponse.json({success:true,banks,order:{reference,amountSar:details.amountSar,bankAccountId:details.bankAccountId,
+    licenseRequestReference:typeof licenseRequestReference==="string"?licenseRequestReference:undefined,
+    status:event?.action||CREATED}},{headers:{"Cache-Control":"private, no-store"}});
   }
   return NextResponse.json({success:true,banks},{headers:{"Cache-Control":"private, no-store"}});
  }catch(error){console.error("Cart bank account read failed",error);return fail("تعذر تحميل الحسابات البنكية مؤقتاً.",503);}
