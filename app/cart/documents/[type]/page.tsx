@@ -37,7 +37,8 @@ export default async function CartOrderDocument({params,searchParams}:Props){
  const net=vat===null?null:Math.round((gross-vat)*100)/100;
  const heading=type==="quote"?"عرض سعر":"فاتورة سداد";
  const issueDate=type==="invoice"?(events.find(e=>e.action==="CART_BANK_VERIFIED")?.createdAt||order.createdAt):order.createdAt;
- return <main dir="rtl" className="min-h-screen bg-[#F6F5F1] px-4 py-8 text-[#123D35] print:bg-white print:p-0">\n  <style>{`@page{size:A4;margin:12mm} @media print{html,body{background:#fff!important} table{page-break-inside:auto} tr{page-break-inside:avoid} article{box-shadow:none!important}}`}</style>
+ return <main dir="rtl" className="min-h-screen bg-[#F6F5F1] px-4 py-8 text-[#123D35] print:bg-white print:p-0">
+  <style>{`@page{size:A4;margin:12mm} @media print{html,body{background:#fff!important} table{page-break-inside:auto} tr{page-break-inside:avoid} article{box-shadow:none!important}}`}</style>
   <div className="mx-auto mb-4 flex max-w-[210mm] justify-end print:hidden"><PrintCartDocument/></div>
   <article className="mx-auto min-h-[275mm] max-w-[210mm] bg-white px-8 py-9 shadow-xl print:min-h-0 print:shadow-none md:px-12">
    <header className="border-b-[3px] border-[#B99444] pb-5">
