@@ -7,7 +7,7 @@ export default function AdminCartBankPayments(){
  const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[busy,setBusy]=useState("");
  const [files,setFiles]=useState<Record<string,File|null>>({});
  const load=useCallback(async()=>{setLoading(true);try{const r=await fetch("/api/admin/cart-bank-payments",{cache:"no-store"});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر التحميل");setOrders(d.orders||[]);setError("");}catch(e){setError(e instanceof Error?e.message:"تعذر التحميل")}finally{setLoading(false)}},[]);
- useEffect(()=>{void load()},[load]);
+ useEffect(()=>{void Promise.resolve().then(load)},[load]);
  async function decide(reference:string,decision:"VERIFY"|"REJECT"){
   if(!window.confirm(decision==="VERIFY"?"هل تحققت من وصول المبلغ للحساب البنكي رسمياً؟":"هل تريد رفض الإيصال والسماح بإعادة إرساله؟"))return;
   setBusy(reference);setError("");
