@@ -98,7 +98,7 @@ export default function InternationalLicenseForm(){
     const registration=await registered.json().catch(()=>null);
     if(!registered.ok||!registration?.success||typeof registration.reference!=="string")
       throw Error(registration?.message||"تعذر تسجيل طلب الرخصة في النظام.");
-    application.requestReference=registration.reference;
+    const registeredApplication={...application,requestReference:registration.reference};
     const key="arees-loop-cart-v1",serviceId="international-driving-license-1";
     const raw=JSON.parse(localStorage.getItem(key)||"[]");
     const prior=Array.isArray(raw)?raw.filter((x:unknown)=>{
@@ -106,7 +106,7 @@ export default function InternationalLicenseForm(){
     }):[];
     // ONLY metadata and opaque private document IDs are stored in the browser.
     const savedItem={serviceId,ownerId,quantity:1,itemType:"DRIVING_LICENSE" as const,title:"رخصة القيادة الدولية",
-      durationYears:1,unitPriceSar:offer?.amountSar??199,imageUrl:"/Image/social/arees-international-driving-license.webp",application};
+      durationYears:1,unitPriceSar:offer?.amountSar??199,imageUrl:"/Image/social/arees-international-driving-license.webp",application:registeredApplication};
     localStorage.setItem(key,JSON.stringify([...prior,savedItem]));
     uploadedDocumentIds=[];
     window.dispatchEvent(new Event("arees-cart-updated"));
