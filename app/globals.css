@@ -763,6 +763,29 @@ a.arees-primary-action[href]:active {
   }
 }
 
+/* Rewards uses a four-slot bottom bar on phones. The official Saudi Business
+   Center seal must remain visible and clickable ABOVE it, never over 'حسابي'.
+   Do not alter or recreate the third-party seal or its verification token. */
+@media (max-width: 1023px) {
+  body:has(.rewards-mobile-nav) .sbc-verify-seal[data-position="bottom-left"] {
+    left: max(12px, env(safe-area-inset-left, 0px)) !important;
+    right: auto !important;
+    bottom: calc(106px + env(safe-area-inset-bottom, 0px)) !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    z-index: 70 !important;
+  }
+
+  /* Some seal script revisions position the injected node rather than
+     the provided placeholder; handle both without affecting other routes. */
+  body:has(.rewards-mobile-nav) .sbc-verify-seal[data-position="bottom-left"] > [style*="position: fixed"],
+  body:has(.rewards-mobile-nav) .sbc-verify-seal[data-position="bottom-left"] > [style*="position:fixed"] {
+    bottom: calc(106px + env(safe-area-inset-bottom, 0px)) !important;
+    left: max(12px, env(safe-area-inset-left, 0px)) !important;
+  }
+}
+
+
 .guide-team-frame{display:grid;grid-template-columns:1fr 1fr;flex:0 0 116px;width:116px;height:94px;overflow:hidden;border:2px solid rgba(255,244,207,.88);border-radius:17px;box-shadow:0 8px 22px rgba(0,0,0,.32);direction:rtl}
 .guide-team-half{width:100%;height:100%;background-position:center 30%;background-size:cover;border-radius:0}
 .guide-team-half-man{transform:scaleX(-1);background-position:57% 28%}
