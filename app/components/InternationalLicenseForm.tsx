@@ -12,14 +12,6 @@ const label="block space-y-2 text-sm font-bold text-[#0D3B34]";
 const phoneCodes=[["966","السعودية +966"],["249","السودان +249"],["20","مصر +20"],["971","الإمارات +971"],["1","أمريكا / كندا +1"],["44","بريطانيا +44"],["other","دولة أخرى"]];
 const COLORS=["أسود","بني","أزرق","أخضر","رمادي","عسلي"] as const;
 type Slot="PASSPORT"|"LOCAL_LICENSE"|"PORTRAIT";
-async function requireCustomerSession(next:string):Promise<boolean>{
- try{
-  const response=await fetch("/api/auth/me",{cache:"no-store",credentials:"include"});
-  if(response.ok)return true;
- }catch{}
- window.location.assign("/login?next="+encodeURIComponent(next));
- return false;
-}
 const documents:ReadonlyArray<{key:Slot;name:string;hint:string}>=[
  {key:"PASSPORT",name:"صورة جواز السفر",hint:"صورة واضحة لكامل صفحة البيانات؛ جواز ساري المفعول"},
  {key:"LOCAL_LICENSE",name:"صورة رخصة القيادة المحلية",hint:"رخصة بلد الأم سارية المفعول، والبيانات واضحة"},
@@ -43,18 +35,20 @@ function PhotoInput({name,hint,file,onPick,disabled}:{name:string;hint:string;fi
 }
 export default function InternationalLicenseForm(){
  const [offer,setOffer]=useState<LicenseOffer|null>(null);
- const [auth,setAuth]=useState<"checking"|"signed-in"|"guest">("checking");
+ const [auth,setAuth]=useState<"checking"|"signed-in"|"guest"|"unavailable">("checking");
  const [added,setAdded]=useState(false),[checkoutOpen,setCheckoutOpen]=useState(false);
+ const [authRetry,setAuthRetry]=useState(0);
  const [cartItem,setCartItem]=useState<{serviceId:string;quantity:number;itemType:"DRIVING_LICENSE";application:Record<string,unknown>}|null>(null);
  useEffect(()=>{
   let active=true;
   fetch("/api/auth/me",{cache:"no-store",credentials:"include"}).then(async r=>{
-   if(!r.ok){if(active)setAuth("guest");return;}
+   if(r.status===401){if(active)setAuth("guest");return;}
+   if(!r.ok){if(active)setAuth("unavailable");return;}
    const user=await r.json().catch(()=>null);
-   if(!active)return;
-   setAuth("signed-in");
    const userId=user?.data?.user?.id;
-   if(typeof userId!=="string")return;
+   if(!active)return;
+   if(!user?.success||typeof userId!=="string"||!userId){setAuth("unavailable");return;}
+   setAuth("signed-in");
    try{
     const list=JSON.parse(localStorage.getItem("arees-loop-cart-v1")||"[]");
     const previous=Array.isArray(list)?list.find((v:unknown)=>{
@@ -68,9 +62,9 @@ export default function InternationalLicenseForm(){
     const result=await checked.json().catch(()=>null);
     if(active&&checked.ok&&result?.found){setCartItem(previous);setAdded(true);}
    }catch{}
-  }).catch(()=>{if(active)setAuth("guest");});
+  }).catch(()=>{if(active)setAuth("unavailable");});
   return()=>{active=false};
- },[]);
+ },[authRetry]);
  useEffect(()=>{let active=true;fetch("/api/transport/offers?kind=DRIVING_LICENSE",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(result=>{const item=result?.success&&Array.isArray(result.data)?result.data[0]:null;if(active&&item)setOffer(item);}).catch(()=>{});return()=>{active=false;};},[]);
  const [name,setName]=useState("");
  const [countryCode,setCountryCode]=useState("966");
@@ -94,7 +88,8 @@ export default function InternationalLicenseForm(){
  const setEye=(eye:string)=>setEyes(current=>current.includes(eye)?current.filter(x=>x!==eye):[...current,eye]);
  async function addToCart(goToCart:boolean){
    if(busy)return;
-   if(auth!=="signed-in"||!(await requireCustomerSession("/international-driving-license")))return;
+   if(auth==="guest"){setError("سجّل الدخول أولاً للمتابعة.");return;}
+   if(auth!=="signed-in"){setError("تعذر التحقق من الجلسة مؤقتاً. أعد المحاولة دون إعادة رفع المستندات.");return;}
    setError("");setNotice("");
    if(!name.trim()||name.trim().length<2||!phone.trim()||!/^\d{6,15}$/.test(phone.trim())||
       !height.trim()||!/^\d{2,3}(\.\d{1,2})?$/.test(height.trim())||eyes.length===0||
@@ -117,7 +112,8 @@ export default function InternationalLicenseForm(){
     const own=await fetch("/api/auth/me",{cache:"no-store",credentials:"include"});
     const ownData=await own.json().catch(()=>null);
     const ownerId=ownData?.data?.user?.id;
-    if(!own.ok||typeof ownerId!=="string"||!ownerId)throw Error("يرجى تسجيل الدخول مجدداً قبل حفظ مستندات الرخصة.");
+    if(own.status===401){setAuth("guest");throw Error("انتهت جلسة الحساب، يرجى تسجيل الدخول للمتابعة.");}
+    if(!own.ok||typeof ownerId!=="string"||!ownerId)throw Error("تعذر التحقق من حسابك مؤقتاً بسبب اتصال الخادم. حاول مجدداً دون إعادة رفع المستندات.");
     const ids:Partial<Record<Slot,string>>={};
     for(const item of documents){
       const file=files[item.key]!;
@@ -184,7 +180,7 @@ export default function InternationalLicenseForm(){
        <p className="mt-2 text-xs font-bold">{offer?.destination||"سنة واحدة"}</p>
        <p className="mt-3 text-sm font-black text-[#977121]">{offer?.amountSar??199} ر.س {offer?.priceUnit||"شامل التوصيل · سنة واحدة"}</p>
        <p className="mt-1 text-[11px] text-[#0D3B34]/70">مدة الصلاحية: سنة واحدة</p>
-       <button type="button" onClick={()=>{if(auth!=="signed-in"){window.location.assign("/login?next=%2Finternational-driving-license");return;}document.getElementById("license-form")?.scrollIntoView({behavior:"smooth",block:"start"});}} className="mt-4 w-full rounded-xl bg-[#0D3B34] px-4 py-3 text-sm font-black text-white">{added?"✓ الطلب في السلة — متابعة":"أضف للسلة"}</button>
+       <button type="button" onClick={()=>{if(auth==="guest"){window.location.assign("/login?next=%2Finternational-driving-license");return;}document.getElementById("license-form")?.scrollIntoView({behavior:"smooth",block:"start"});}} className="mt-4 w-full rounded-xl bg-[#0D3B34] px-4 py-3 text-sm font-black text-white">{added?"✓ الطلب في السلة — متابعة":"أضف للسلة"}</button>
       </div>
       <div className="mt-3 rounded-[18px] border border-white/15 bg-white/10 p-4">
        <h2 className="font-black text-[#E5C17B]">المتطلبات الأساسية</h2>
@@ -208,6 +204,11 @@ export default function InternationalLicenseForm(){
      {error&&<p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}
      {notice&&<p role="status" className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{notice}</p>}
      {auth==="checking"?<div role="status" className="mt-6 rounded-2xl bg-[#F7F3E8] p-6 text-sm">جارٍ التحقق من تسجيل الدخول...</div>:
+      auth==="unavailable"?<div role="alert" className="mt-6 space-y-3 rounded-2xl border border-[#D4AF37]/40 bg-[#FFF9E8] p-6 text-center">
+       <h3 className="font-black">تعذر التحقق من الجلسة مؤقتاً</h3>
+       <p className="text-sm leading-7">قد تكون خدمة الحسابات مشغولة. هذا لا يعني أنك خرجت من حسابك، ولا تحتاج إلى إنشاء حساب جديد.</p>
+       <button type="button" onClick={()=>{setAuth("checking");setAuthRetry(x=>x+1);}} className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white">إعادة المحاولة</button>
+      </div>:
       auth==="guest"?<div className="mt-6 space-y-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFF9E8] p-6 text-center">
        <h3 className="text-lg font-black">سجّل الدخول قبل تعبئة طلب الرخصة</h3>
        <p className="text-sm leading-7">حتى لا تفقد بياناتك أو تضطر لإعادة رفع المستندات بعد تسجيل الدخول.</p>
