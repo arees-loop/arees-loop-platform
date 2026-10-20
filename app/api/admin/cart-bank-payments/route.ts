@@ -66,11 +66,46 @@ export async function POST(req:NextRequest){
  const decision=body?.decision;
  if(!/^CART-[0-9a-f-]{36}$/.test(reference)||!["VERIFY","REJECT"].includes(decision))return fail("قرار غير صحيح.");
  try{
-  const order=await prisma.auditLog.findFirst({where:{entityType:TYPE,entityId:reference,action:CREATED}});
-  if(!order)return fail("الطلب غير موجود.",404);
-  const last=await prisma.auditLog.findFirst({where:{entityType:TYPE,entityId:reference,action:{in:[SUBMITTED,VERIFIED,REJECTED]}},orderBy:[{createdAt:"desc"},{id:"desc"}]});
-  if(!last||last.action!==SUBMITTED)return fail("لا يوجد إيصال جديد ينتظر المراجعة.",409);
-  await prisma.auditLog.create({data:{userId:session.user.id,entityType:TYPE,entityId:reference,action:decision==="VERIFY"?VERIFIED:REJECTED,afterData:{receiptAuditId:last.id,comment:typeof body.comment==="string"?body.comment.trim().slice(0,500):null}}});
+  await prisma.$transaction(async tx=>{
+   const order=await tx.auditLog.findFirst({where:{entityType:TYPE,entityId:reference,action:CREATED}});
+   if(!order)throw Error("ORDER_NOT_FOUND");
+   const last=await tx.auditLog.findFirst({where:{entityType:TYPE,entityId:reference,action:{in:[SUBMITTED,VERIFIED,REJECTED]}},orderBy:[{createdAt:"desc"},{id:"desc"}]});
+   if(!last||last.action!==SUBMITTED)throw Error("RECEIPT_NOT_PENDING");
+   const details=obj(order.afterData);
+   if(decision==="VERIFY"&&typeof details.coupon==="string"&&details.coupon){
+    const rows=Array.isArray(details.rows)?details.rows.map(obj):[];
+    // Coupon uses on IDP payments are accounted only after staff verifies the bank transfer.
+    if(rows.some(row=>row.itemType==="DRIVING_LICENSE")){
+     const coupon=await tx.coupon.findUnique({where:{code:details.coupon}});
+     if(!coupon||coupon.serviceId!==null||(coupon.category!==null&&coupon.category!=="DRIVING_LICENSE"))
+      throw Error("COUPON_SCOPE_INVALID");
+     const already=await tx.auditLog.findFirst({where:{entityType:"CART_LICENSE_COUPON_USAGE",entityId:reference,action:"REDEEMED"}});
+     if(already)throw Error("COUPON_ALREADY_USED");
+     if(coupon.maxUsesPerUser!==null&&order.userId){
+      const [bookings,licenseUses]=await Promise.all([
+       tx.couponRedemption.count({where:{couponId:coupon.id,userId:order.userId}}),
+       tx.auditLog.count({where:{entityType:"CART_LICENSE_COUPON_USAGE",action:"REDEEMED",userId:order.userId,
+        afterData:{path:["couponId"],equals:coupon.id}}})
+      ]);
+      if(bookings+licenseUses>=coupon.maxUsesPerUser)throw Error("COUPON_PER_USER_EXHAUSTED");
+     }
+     const changed=await tx.coupon.updateMany({where:{id:coupon.id,
+      ...(coupon.maxUses===null?{}:{usedCount:{lt:coupon.maxUses}})},data:{usedCount:{increment:1}}});
+     if(changed.count!==1)throw Error("COUPON_LIMIT_EXHAUSTED");
+     await tx.auditLog.create({data:{entityType:"CART_LICENSE_COUPON_USAGE",entityId:reference,
+      userId:order.userId,action:"REDEEMED",afterData:{couponId:coupon.id,code:coupon.code,
+       discountSar:Number(details.discount||0)}}});
+    }
+   }
+   await tx.auditLog.create({data:{userId:session.user.id,entityType:TYPE,entityId:reference,
+    action:decision==="VERIFY"?VERIFIED:REJECTED,
+    afterData:{receiptAuditId:last.id,comment:typeof body.comment==="string"?body.comment.trim().slice(0,500):null}}});
+  },{isolationLevel:"Serializable"});
   return NextResponse.json({success:true,message:decision==="VERIFY"?"تم تسجيل اعتماد التحويل من الإدارة.":"تم تسجيل رفض الإثبات؛ يمكن للعميل إعادة إرساله."},{headers:{"Cache-Control":"private, no-store"}});
- }catch(error){console.error("Admin cart payment review failed",error);return fail("تعذرت مراجعة الطلب.",503);}
+ }catch(error){
+  if(error instanceof Error&&/^(ORDER_NOT_FOUND|RECEIPT_NOT_PENDING|COUPON_SCOPE_INVALID|COUPON_ALREADY_USED|COUPON_PER_USER_EXHAUSTED|COUPON_LIMIT_EXHAUSTED)$/.test(error.message))
+   return fail("تعذر اعتماد الدفع: الطلب أو الإيصال أو صلاحية الكوبون تحتاج مراجعة جديدة.",409);
+  console.error("Admin cart payment review failed",error instanceof Error?error.name:"UNKNOWN");
+  return fail("تعذرت مراجعة الطلب، حاول إعادة تحميله.",503);
+ }
 }
