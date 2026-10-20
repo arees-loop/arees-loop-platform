@@ -8,6 +8,7 @@ const hiddenPrefixes = [
   "/login",
   "/auth",
   "/partner",
+  "/cart/documents",
 ];
 
 export default function PublicGlobalHeader() {
