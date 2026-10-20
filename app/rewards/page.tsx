@@ -92,8 +92,13 @@ export default function RewardsPage() {
   }
 
   useEffect(() => {
-    refreshProgress();
-    loadWallet();
+    let mounted = true;
+    void Promise.resolve().then(() => {
+      if (!mounted) return;
+      refreshProgress();
+      void loadWallet();
+    });
+    return () => { mounted = false; };
   }, []);
 
   const balance = walletBalance ?? (progress ? getTotalLoopPoints() : 0);
