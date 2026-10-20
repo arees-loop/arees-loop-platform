@@ -142,7 +142,7 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
    </div>
    <div className="rounded-2xl border border-[#D4AF37]/35 p-5"><h3 className="text-base font-black">سجل مراحل الطلب</h3>
     {order.history.length===0?<p className="mt-3 text-xs">الطلب جديد ولا توجد تعديلات يدوية.</p>:
-     <div className="mt-3 space-y-2">{order.history.map((x,i)=><div key={i} className="rounded-lg bg-[#F8F5EB] p-3 text-xs"><b>{x.action==="NOTES_UPDATED"?"تعديل الملاحظات":"تغيير حالة الطلب"}</b> · {names[x.status]||x.status}<p className="mt-1">{new Date(x.createdAt).toLocaleString("ar-SA")}</p></div>)}</div>}
+     <div className="mt-3 space-y-2">{order.history.map((x,i)=><div key={i} className="rounded-lg bg-[#F8F5EB] p-3 text-xs"><b>{x.action==="NOTES_UPDATED"?"تعديل الملاحظات":x.action==="DETAILS_UPDATED"?"تعديل بيانات الطلب":"تغيير حالة الطلب"}</b> · {names[x.status]||x.status}<p className="mt-1">{new Date(x.createdAt).toLocaleString("ar-SA")}</p></div>)}</div>}
    </div>
   </>}
  </section>;
