@@ -74,21 +74,57 @@ export async function GET(){
         createdAt:latest.createdAt.toISOString(),href:serviceLink.hotels});
     }else if(r.status==="NEW")recent.push({id:r.id,reference:r.reference,kind:"HOTEL",type:"NEW_REQUEST",createdAt:r.createdAt.toISOString(),href:serviceLink.hotels});
   }
-  // Completed license forms saved to cart are real backend events, not browser-only cart state.
-  if(counts.drivingLicenses!==null){
+  // IDP applications use the same service badge and notification link as legacy travel requests.
+  if(superAdmin&&counts.drivingLicenses!==null){
    const drafts=await prisma.auditLog.findMany({
     where:{entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_FORM_ADDED_TO_CART",
-      createdAt:{gte:new Date(Date.now()-30*24*60*60*1000)}},
-    orderBy:[{createdAt:"desc"},{id:"desc"}],take:100,
+     createdAt:{gte:new Date(Date.now()-30*24*60*60*1000)}},
+    orderBy:[{createdAt:"desc"},{id:"desc"}],take:200,
     select:{id:true,entityId:true,createdAt:true}
    });
-   counts.drivingLicenses!+=drafts.length;
-   for(const d of drafts)recent.push({id:d.id,reference:d.entityId||"رخصة",kind:"DRIVING_LICENSE",
-     type:"LICENSE_FORM_ADDED_TO_CART",createdAt:d.createdAt.toISOString(),href:"/admin/cart-bank-payments"});
-   const failures=drafts.length?await prisma.auditLog.count({
-    where:{entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_CART_EMAIL_FAILED",
-      entityId:{in:drafts.map(x=>x.entityId).filter((id):id is string=>!!id)}}}):0;
-   emailFailed.drivingLicenses!+=failures;
+   const refs=drafts.map(x=>x.entityId).filter((x):x is string=>!!x);
+   const [statuses,payments,emails]=await Promise.all([
+    refs.length?prisma.auditLog.findMany({where:{entityType:"LICENSE_CART_WORKFLOW",entityId:{in:refs},action:"STATUS_CHANGED"},
+     orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,afterData:true}}):Promise.resolve([]),
+    prisma.auditLog.findMany({where:{entityType:"CART_BANK_CHECKOUT",action:"CART_BANK_CREATED"},
+     orderBy:{createdAt:"desc"},take:300,select:{entityId:true,afterData:true}}),
+    refs.length?prisma.auditLog.findMany({where:{entityType:"LICENSE_CART_APPLICATION",entityId:{in:refs},
+     action:"LICENSE_CART_EMAIL_FAILED"},select:{entityId:true}}):Promise.resolve([])
+   ]);
+   const stateMap=new Map<string,string>();
+   for(const x of statuses)if(x.entityId&&!stateMap.has(x.entityId)){
+    const d=x.afterData&&typeof x.afterData==="object"&&!Array.isArray(x.afterData)?x.afterData as Record<string,unknown>:{};
+    stateMap.set(x.entityId,String(d.status||""));
+   }
+   const bankByLicense=new Map<string,string>();
+   for(const x of payments){
+    const d=x.afterData&&typeof x.afterData==="object"&&!Array.isArray(x.afterData)?x.afterData as Record<string,unknown>:{};
+    const items=Array.isArray(d.rows)?d.rows:[];
+    for(const line of items){
+     const row=line&&typeof line==="object"&&!Array.isArray(line)?line as Record<string,unknown>:{};
+     const app=row.application&&typeof row.application==="object"&&!Array.isArray(row.application)?row.application as Record<string,unknown>:{};
+     if(row.itemType==="DRIVING_LICENSE"&&typeof app.requestReference==="string"&&x.entityId)
+      bankByLicense.set(app.requestReference,x.entityId);
+    }
+   }
+   const bankRefs=[...bankByLicense.values()];
+   const paid=bankRefs.length?await prisma.auditLog.findMany({where:{entityType:"CART_BANK_CHECKOUT",
+    entityId:{in:bankRefs},action:"CART_BANK_VERIFIED"},select:{entityId:true}}):[];
+   const paidRefs=new Set(paid.map(x=>x.entityId));
+   const failures=new Set(emails.map(x=>x.entityId));
+   for(const d of drafts){
+    if(!d.entityId)continue;
+    const custom=stateMap.get(d.entityId);
+    const verified=paidRefs.has(bankByLicense.get(d.entityId)||"");
+    const closed=custom==="CANCELED"&&!verified||custom==="DONE"&&verified;
+    if(closed)continue;
+    if(verified)processing.drivingLicenses!++;else counts.drivingLicenses!++;
+    if(failures.has(d.entityId))emailFailed.drivingLicenses!++;
+    if(!verified&&custom!=="CANCELED")
+     recent.push({id:d.id,reference:d.entityId,kind:"DRIVING_LICENSE",
+      type:"LICENSE_FORM_ADDED_TO_CART",createdAt:d.createdAt.toISOString(),
+      href:"/admin/transport/driving-licenses?view=requests"});
+   }
   }
   recent.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
   const sum=(v:Counters)=>Object.values(v).reduce<number>((n,x)=>n+(x??0),0);
