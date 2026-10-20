@@ -131,10 +131,23 @@ export async function GET(req:NextRequest){
      if(typeof ref==="string"&&ref&&!linked.has(ref))linked.set(ref,o.entityId);
     }
    }
+   const licenseRefs=licenseRecords.map(x=>x.entityId).filter((x):x is string=>!!x);
+   const workflowEvents=licenseRefs.length?await prisma.auditLog.findMany({
+    where:{entityType:"LICENSE_CART_WORKFLOW",entityId:{in:licenseRefs},action:"STATUS_CHANGED"},
+    orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,afterData:true}}):[];
+   const workflowStates=new Map<string,string>();
+   for(const event of workflowEvents)if(event.entityId&&!workflowStates.has(event.entityId)){
+    const data=jsonData(event.afterData);
+    workflowStates.set(event.entityId,String(data.status||""));
+   }
    const licenseApplications=licenseRecords.filter(x=>!!x.entityId).map(x=>{
     const d=jsonData(x.afterData),bankReference=linked.get(x.entityId||"")||null;
+    const bankStatus=bankReference?last.get(bankReference)||CREATED:"AWAITING_PAYMENT";
+    const paid=bankStatus==="CART_BANK_VERIFIED",custom=workflowStates.get(x.entityId||"");
+    const serviceStatus=custom==="CANCELED"&&!paid?"CANCELED":
+      paid&&["EXECUTING","DONE"].includes(custom||"")?custom:paid?"PAID":"NEW";
     return {reference:x.entityId,createdAt:x.createdAt,priceSar:Number(d.priceSar||199),
-     bankReference,status:bankReference?last.get(bankReference)||CREATED:"AWAITING_PAYMENT"};
+     bankReference,status:bankStatus,serviceStatus};
    });
    return NextResponse.json({success:true,licenseApplications,orders:orders.map(o=>{
     const data=jsonData(o.afterData);
