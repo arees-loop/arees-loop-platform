@@ -1,22 +1,27 @@
 "use client";
 import {useCallback,useEffect,useState} from "react";
 import BankReceiptPreview from "@/app/components/BankReceiptPreview";
+import LicenseDocumentPreview from "@/app/components/LicenseDocumentPreview";
 type Order={reference:string;customerName:string;customerEmail:string|null;phone:string;status:string;priceSar:number;amountSar:number;
  bankReference:string|null;bankStatus:string|null;bankVerified:boolean;hasVoucher:boolean;notes:string;deliveryAddress:string;deliveryLink:string;
+ trackingNumber:string;trackingUrl:string;
  eyeColor:string;height:string;emailStatus:string;createdAt:string;history:{action:string;status:string;notes:string;createdAt:string}[]};
-const names:Record<string,string>={NEW:"جديد / بانتظار السداد",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",CANCELED:"ملغي",
+const names:Record<string,string>={NEW:"جديد / بانتظار السداد",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",DONE:"تم التنفيذ",SHIPPING:"تحت التوصيل",DELIVERED:"تم التوصيل",CANCELED:"ملغي",
  CART_BANK_CREATED:"بانتظار الحوالة",CART_BANK_RECEIPT_SUBMITTED:"إيصال يحتاج مراجعة",CART_BANK_VERIFIED:"تحويل معتمد",CART_BANK_REJECTED:"إيصال مرفوض"};
 const field="w-full rounded-xl border border-[#D4AF37]/40 bg-white px-3 py-3 text-sm outline-[#C19845]";
 export default function LicenseCartOrderDetail({reference,onClose,onChange}:{reference:string;onClose:()=>void;onChange:()=>void}){
  const [order,setOrder]=useState<Order|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(true);
  const [busy,setBusy]=useState(false),[selectedStatus,setSelectedStatus]=useState(""),[notes,setNotes]=useState("");
  const [file,setFile]=useState<File|null>(null);
+ const [trackingNumber,setTrackingNumber]=useState(""),[trackingUrl,setTrackingUrl]=useState("");
+ const [customerMessage,setCustomerMessage]=useState("");
  const [edit,setEdit]=useState({name:"",phone:"",height:"",eyeColor:"",deliveryAddress:"",deliveryLink:""});
  const load=useCallback(async()=>{
   try{
    const r=await fetch("/api/admin/license-cart-workflow?reference="+encodeURIComponent(reference),{credentials:"include",cache:"no-store"});
    const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر تحميل الطلب.");
    setOrder(d.order);setSelectedStatus(d.order.status);setNotes(d.order.notes||"");
+   setTrackingNumber(d.order.trackingNumber||"");setTrackingUrl(d.order.trackingUrl||"");
    setEdit({name:d.order.customerName||"",phone:d.order.phone||"",height:d.order.height||"",
     eyeColor:d.order.eyeColor||"",deliveryAddress:d.order.deliveryAddress||"",deliveryLink:d.order.deliveryLink||""});setError("");
   }catch(e){setError(e instanceof Error?e.message:"تعذر تحميل الطلب.")}
@@ -55,6 +60,27 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
   }catch(e){setError(e instanceof Error?e.message:"تعذر تعديل بيانات الطلب.")}
   finally{setBusy(false)}
  }
+ async function saveTracking(){
+  if(!order||busy)return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   const r=await fetch("/api/admin/license-cart-workflow",{method:"PATCH",credentials:"include",
+    headers:{"Content-Type":"application/json"},body:JSON.stringify({reference,action:"DELIVERY",trackingNumber,trackingUrl})});
+   const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر حفظ معلومات التوصيل.");
+   setNotice(d.message);await load();onChange();
+  }catch(e){setError(e instanceof Error?e.message:"تعذر الحفظ.")}finally{setBusy(false)}
+ }
+ async function sendCustomerNote(){
+  if(!order||busy||customerMessage.trim().length<5)return;
+  if(!window.confirm("إرسال الملاحظة للعميل وحفظها في طلباته؟"))return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   const r=await fetch("/api/admin/license-cart-workflow",{method:"PATCH",credentials:"include",
+    headers:{"Content-Type":"application/json"},body:JSON.stringify({reference,action:"CUSTOMER_MESSAGE",message:customerMessage})});
+   const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر إرسال الملاحظة.");
+   setNotice(d.message);setCustomerMessage("");await load();onChange();
+  }catch(e){setError(e instanceof Error?e.message:"تعذر الإرسال.")}finally{setBusy(false)}
+ }
  async function upload(){
   if(!order?.bankReference||!file||busy)return;
   setBusy(true);setError("");setNotice("");
@@ -65,7 +91,7 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
    setNotice(d.message);setFile(null);await load();onChange();
   }catch(e){setError(e instanceof Error?e.message:"تعذر رفع الملف.")}finally{setBusy(false)}
  }
- const actions=order?.status==="NEW"?(order.bankReference?["NEW"]:["NEW","CANCELED"]):order?.status==="PAID"?["PAID","EXECUTING"]:order?.status==="EXECUTING"?["EXECUTING","DONE"]:[order?.status||"NEW"];
+ const actions=order?.status==="NEW"?(order.bankReference?["NEW"]:["NEW","CANCELED"]):order?.status==="PAID"?["PAID","EXECUTING"]:order?.status==="EXECUTING"?["EXECUTING","DONE"]:order?.status==="DONE"?["DONE","SHIPPING"]:order?.status==="SHIPPING"?["SHIPPING","DELIVERED"]:[order?.status||"NEW"];
  return <section dir="rtl" className="space-y-5">
   <button type="button" onClick={onClose} className="rounded-xl border border-[#D4AF37] px-4 py-2 text-sm font-bold">← العودة لقائمة الطلبات</button>
   {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
@@ -102,17 +128,18 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
     </div>
     <button type="button" disabled={busy||order.bankVerified} onClick={()=>void saveDetails()} className="mt-4 rounded-xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white disabled:opacity-40">حفظ تعديل بيانات الطلب</button>
    </section>
+   <LicenseDocumentPreview reference={reference}/>
    <section className="rounded-2xl border border-[#D4AF37]/35 p-5">
-    <h3 className="text-base font-black">مستندات العميل الثلاثة — خاصة بالإدارة</h3>
-    <div className="mt-3 flex flex-wrap gap-2">
-     {([{slot:"PASSPORT",title:"تحميل جواز السفر"},{slot:"LOCAL_LICENSE",title:"تحميل الرخصة المحلية"},{slot:"PORTRAIT",title:"تحميل الصورة الشخصية"}] as const).map(d=>
-      <a key={d.slot} className="rounded-xl border border-[#D4AF37]/50 px-3 py-2 text-xs font-bold" href={"/api/admin/license-cart-document?reference="+encodeURIComponent(reference)+"&slot="+d.slot}>{d.title}</a>
-     )}
-    </div>
+    <h3 className="text-base font-black">ملاحظة إلى العميل</h3>
+    <p className="mt-2 text-xs text-[#66766A]">تظهر الملاحظة في «طلباتي» للعميل، وتُرسل إلى بريده إذا كانت خدمة البريد متاحة. لا تشارك صور الهوية أو تفاصيل الملاحظات الداخلية.</p>
+    <textarea aria-label="ملاحظة للعميل" rows={4} maxLength={2000} value={customerMessage} onChange={e=>setCustomerMessage(e.target.value)}
+     placeholder="مثال: الصورة الشخصية غير واضحة، يرجى التواصل معنا لتحديثها." className={field+" mt-3"}/>
+    <button type="button" disabled={busy||customerMessage.trim().length<5} onClick={()=>void sendCustomerNote()}
+     className="mt-3 rounded-xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white disabled:opacity-40">إرسال الملاحظة إلى العميل</button>
    </section>
    <div className="rounded-2xl border border-[#D4AF37]/35 p-5">
     <h3 className="text-base font-black">دورة الطلب</h3>
-    <div className="mt-3 flex flex-wrap gap-2">{(["NEW","PAID","EXECUTING","DONE"] as const).map(st=><span key={st} className={"rounded-full border px-3 py-2 text-xs font-bold "+(order.status===st?"border-[#B89439] bg-[#FFF1C9]":st==="DONE"?"border-emerald-200":"border-[#E3DAC4]")}>{names[st]}</span>)}</div>
+    <div className="mt-3 flex flex-wrap gap-2">{(["NEW","PAID","EXECUTING","DONE","SHIPPING","DELIVERED"] as const).map(st=><span key={st} className={"rounded-full border px-3 py-2 text-xs font-bold "+(order.status===st?"border-[#B89439] bg-[#FFF1C9]":st==="DONE"?"border-emerald-200":"border-[#E3DAC4]")}>{names[st]}</span>)}</div>
     <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
      <label className="text-xs font-bold">تغيير حالة الطلب<select aria-label="حالة الطلب" className={field+" mt-2"} value={selectedStatus} onChange={e=>setSelectedStatus(e.target.value)}>{actions.map(a=><option key={a} value={a}>{names[a]||a}</option>)}</select></label>
      <button disabled={busy||selectedStatus===order.status} onClick={()=>void change("STATUS",selectedStatus)} className="self-end rounded-xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white disabled:opacity-40">حفظ الحالة</button>
@@ -121,6 +148,18 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
     <label className="mt-4 block text-xs font-bold">ملاحظات الإدارة الداخلية<textarea className={field+" mt-2"} rows={3} maxLength={2500} value={notes} onChange={e=>setNotes(e.target.value)}/></label>
     <button disabled={busy||notes===order.notes} onClick={()=>void change("NOTES")} className="mt-3 rounded-xl border border-[#B89439] px-4 py-2 text-xs font-bold disabled:opacity-40">حفظ الملاحظات</button>
    </div>
+   {order.bankVerified&&["DONE","SHIPPING","DELIVERED"].includes(order.status)&&<section className="rounded-2xl border border-[#D4AF37]/35 p-5">
+    <h3 className="text-base font-black">التوصيل وتتبع الشحنة</h3>
+    <p className="mt-2 text-xs">احفظ بيانات الشحنة قبل تغيير الحالة إلى «تحت التوصيل». سيظهر رقم التتبع والرابط للعميل في «طلباتي».</p>
+    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+     <label className="text-xs font-bold">رقم التتبع
+      <input value={trackingNumber} maxLength={80} onChange={e=>setTrackingNumber(e.target.value)} className={field+" mt-2"} placeholder="رقم بوليصة الشحن" /></label>
+     <label className="text-xs font-bold">رابط التتبع HTTPS
+      <input value={trackingUrl} maxLength={700} onChange={e=>setTrackingUrl(e.target.value)} className={field+" mt-2"} placeholder="https://..." /></label>
+    </div>
+    <button type="button" disabled={busy||trackingNumber.trim().length<4||!trackingUrl.startsWith("https://")}
+     onClick={()=>void saveTracking()} className="mt-3 rounded-xl border border-[#B89439] px-4 py-2 text-xs font-bold disabled:opacity-40">حفظ بيانات التوصيل</button>
+   </section>}
    <div className="rounded-2xl border border-[#D4AF37]/35 p-5">
     <h3 className="text-base font-black">التحويل البنكي والمستندات PDF</h3>
     {order.bankReference?<div className="mt-3 space-y-3 text-sm">
@@ -136,8 +175,8 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
       {order.hasVoucher&&<a href={"/api/cart/service-voucher?download=true&reference="+encodeURIComponent(order.bankReference)} className="rounded-xl border border-[#D4AF37] px-4 py-2 text-xs font-bold">ملف الخدمة / الفاوتشر PDF</a>}
      </div>
      {order.bankVerified&&<div className="rounded-xl bg-[#F8F5EB] p-4">
-      <label className="text-xs font-bold">إرفاق ملف الرخصة أو الفاوتشر (PDF أو صورة)<input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="mt-2 block max-w-full text-xs" onChange={e=>setFile(e.target.files?.[0]||null)}/></label>
-      <button disabled={!file||busy} onClick={()=>void upload()} className="mt-3 rounded-xl bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">رفع الملف وإتاحته للعميل</button>
+      <label className="text-xs font-bold">إرفاق ملف الرخصة النهائي أو الفاوتشر (PDF أو صورة حتى 4 ميجابايت)<input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="mt-2 block max-w-full text-xs" onChange={e=>setFile(e.target.files?.[0]||null)}/></label>
+      <button disabled={!file||busy||file.size>4*1024*1024} onClick={()=>void upload()} className="mt-3 rounded-xl bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">رفع الملف وإتاحته للعميل</button>
      </div>}
     </div>:<p className="mt-2 text-sm text-[#6E7A72]">العميل لم ينشئ مرجع تحويل بعد؛ الطلب مسجل وينتظر سداداً.</p>}
    </div>
