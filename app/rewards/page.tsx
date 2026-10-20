@@ -706,13 +706,13 @@ function MobileNavItem({
   return (
     <Link
       href={href}
-      className={`flex w-[56px] min-w-0 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 text-center transition-colors hover:bg-[#F5ECD6] focus-visible:outline-2 focus-visible:outline-[#B99124] ${
+      className={`relative z-[1] flex w-[52px] max-[360px]:w-[40px] min-w-0 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 text-center transition-colors hover:bg-[#F5ECD6] focus-visible:outline-2 focus-visible:outline-[#B99124] ${
         active ? "text-[#0D3B34]" : "text-[#0D3B34]/55"
       }`}
     >
       <div className={active ? "text-[#B99124]" : ""}>{icon}</div>
 
-      <span className="whitespace-nowrap text-[10px] font-semibold leading-tight">{label}</span>
+      <span className="whitespace-nowrap text-[10px] max-[360px]:text-[9px] font-semibold leading-tight">{label}</span>
     </Link>
   );
 }
