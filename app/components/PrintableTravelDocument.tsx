@@ -26,7 +26,7 @@ export default function PrintableTravelDocument({type}:{type:"quote"|"confirmed"
  const reference=params.get("reference")||"";
  const [data,setData]=useState<Docs|null>(null),[error,setError]=useState(""),[loading,setLoading]=useState(true);
  useEffect(()=>{
-  if(!reference){setError("لم يتم تحديد مرجع الطلب.");setLoading(false);return;}
+  if(!reference){void Promise.resolve().then(()=>{setError("لم يتم تحديد مرجع الطلب.");setLoading(false);});return;}
   let live=true;
   const load=async()=>{
    try{
