@@ -1,5 +1,6 @@
 "use client";
 import {useCallback,useEffect,useState} from "react";
+import BankReceiptPreview from "@/app/components/BankReceiptPreview";
 
 export type PartnerBookingRow={
  id:string;source:"CART"|"BOOKING";reference:string;customerName:string;customerEmail:string|null;
@@ -123,8 +124,7 @@ export default function PartnerBookingDetail({row,onClose,onUpdated}:{
     <p className="mt-2 text-sm">حالة الحوالة: <b>{row.bankStatus==="CART_BANK_RECEIPT_SUBMITTED"?"الإيصال قيد المراجعة":row.bankStatus==="CART_BANK_VERIFIED"?"تم اعتماد التحويل":row.bankStatus==="CART_BANK_REJECTED"?"الإيصال مرفوض":"بانتظار الحوالة"}</b></p>
     <div className="mt-3 flex flex-wrap gap-2">
      {row.hasReceipt&&row.bankReference&&<>
-      <a href={"/api/admin/cart-bank-payments?receipt=true&reference="+encodeURIComponent(row.bankReference)}
-       className="rounded-xl border border-[#D4AF37] px-4 py-2 text-xs font-bold">تنزيل إيصال التحويل</a>
+      <BankReceiptPreview reference={row.bankReference}/>
       {!row.mixedWithLicense&&<><button type="button" disabled={busy} onClick={()=>void receipt("VERIFY")}
        className="rounded-xl bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">اعتماد وصول المبلغ</button>
       <button type="button" disabled={busy} onClick={()=>void receipt("REJECT")}
