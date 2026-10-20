@@ -108,6 +108,7 @@ export async function PATCH(req:NextRequest){
   if(body.action!=="STATUS")return fail("إجراء غير معروف.");
   const status=body.status;
   const allowed:Record<string,string[]>={NEW:["CANCELED"],PAID:["EXECUTING"],EXECUTING:["DONE"],DONE:[],CANCELED:[]};
+  if(status==="CANCELED"&&current.bankReference)return fail("لا يمكن إلغاء طلب بدأ تحويله إلا بعد مراجعة مالية منفصلة.",409);
   if(!allowed[current.status]?.includes(status))
    return fail("لا يمكن الانتقال لهذه الحالة. اعتماد السداد يتم فقط بعد التحقق من التحويل البنكي.",409);
   if((status==="EXECUTING"||status==="DONE")&&!current.bankVerified)
