@@ -52,6 +52,7 @@ export async function PATCH(req:NextRequest){
    const row=(await getPartnerCartRows()).find(x=>x.reference===reference);
    if(!row)return fail("طلب السلة غير موجود.",404);
    if(action==="STATUS"){
+    if(row.mixedWithLicense)return fail("السلة مختلطة مع الرخصة؛ يلزم فصل متابعة التنفيذ ومراجعة المعاملة الموحدة.",409);
     const target=body?.status;
     const expected=row.status==="PAID"?"IN_PROGRESS":row.status==="IN_PROGRESS"?"COMPLETED":null;
     if(!row.bankVerified||!expected||target!==expected)
