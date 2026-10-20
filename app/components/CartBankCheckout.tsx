@@ -28,7 +28,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
    if(alive){setOrder(d.order);setBankId(d.order.bankAccountId);setMethod("BANK");}
   }).catch(()=>{});return()=>{alive=false};
  },[]);
- const bank=banks.find(x=>x.id===bankId)||null;
+ const bank=banks.find(x=>x.id===(order?.bankAccountId||bankId))||null;
  const money=(n:number)=>n.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
  async function createOrder(){
   setError("");setNotice("");setBusy(true);
@@ -75,6 +75,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
      <label className="block text-xs font-bold">إثبات التحويل (صورة أو PDF)<input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" className="mt-2 block w-full rounded-lg border p-3 text-sm" onChange={e=>setFile(e.target.files?.[0]||null)}/></label>
      <button type="button" disabled={!file||busy} onClick={()=>void submitReceipt()} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white disabled:opacity-40">{busy?"جارٍ رفع الإيصال":"إرسال إثبات التحويل للإدارة"}</button>
     </>}
+   <button type="button" onClick={()=>{localStorage.removeItem("arees-loop-cart-bank-reference");setOrder(null);setNotice("");setError("");}} className="mt-3 rounded-lg border border-[#D4AF37]/40 px-3 py-2 text-xs font-bold">بدء طلب جديد دون حذف الطلب السابق</button>
    </div>:<div>
     <p className="mb-2 text-sm font-bold">الإجمالي بعد الخصم: {money(total)}</p>
     {pointsDiscount>0&&<p className="mb-2 text-xs text-[#986A19]">استخدام نقاط المكافآت مع التحويل غير مفعل؛ ألغِ خيار النقاط لإكمال السداد البنكي.</p>}
