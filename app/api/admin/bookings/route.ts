@@ -34,11 +34,18 @@ export async function GET(req:NextRequest){
  const combined=[...real,...partnerCart].filter(b=>status==="ALL"||b.status===status)
   .sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,250);
  const allCounts=new Map<string,number>();
+ const cartCounts=new Map<string,number>();
  for(const group of groups)allCounts.set(group.status,group._count._all);
- for(const row of partnerCart)allCounts.set(row.status,(allCounts.get(row.status)||0)+1);
+ for(const row of partnerCart){
+  allCounts.set(row.status,(allCounts.get(row.status)||0)+1);
+  cartCounts.set(row.status,(cartCounts.get(row.status)||0)+1);
+ }
  return NextResponse.json({success:true,data:combined,
   counts:[...allCounts].map(([name,count])=>({status:name,count})),
-  info:{partnerCartCount:partnerCart.length,cartScanLimited:partnerCart.length>=300,
+  info:{countsBySource:{
+    BOOKING:groups.map(group=>({status:group.status,count:group._count._all})),
+    CART:[...cartCounts].map(([name,count])=>({status:name,count}))
+   },partnerCartCount:partnerCart.length,cartScanLimited:partnerCart.length>=300,
    note:"Orders from bank cart remain pending until the transfer is verified; they are not confirmed bookings."}},
   {headers:{"Cache-Control":"private, no-store"}});
  }catch(e){console.error("Admin bookings read failed",e);return NextResponse.json({success:false,message:"تعذر تحميل الحجوزات"},{status:503})}
