@@ -2,7 +2,7 @@
 import {useEffect,useState} from "react";
 import Link from "next/link";
 import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
-type Order={reference:string;amountSar:number;createdAt:string;status:string;rows:{title?:string;itemType?:string}[]};
+type Order={reference:string;amountSar:number;createdAt:string;status:string;hasVoucher:boolean;rows:{title?:string;itemType?:string}[]};
 const labels:Record<string,string>={CART_BANK_CREATED:"بانتظار تحويل المبلغ",CART_BANK_RECEIPT_SUBMITTED:"إيصال التحويل قيد المراجعة",CART_BANK_VERIFIED:"تم اعتماد السداد",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة رفعه"};
 export default function CartOrdersPage(){
  const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState("");
@@ -18,7 +18,7 @@ export default function CartOrdersPage(){
   <p className="mt-2 text-xs">{(o.rows||[]).map(x=>x.title||"خدمة").join("، ")}</p>
   <div className="mt-4 flex flex-wrap gap-2">
    {o.status==="CART_BANK_VERIFIED"&&<a target="_blank" rel="noreferrer" href={"/cart/documents/invoice?reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">فاتورة السداد PDF</a>}
-   {o.status==="CART_BANK_VERIFIED"&&<a href={"/api/cart/service-voucher?download=true&reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">ملف الخدمة (إن توفر)</a>}
+   {o.status==="CART_BANK_VERIFIED"&&o.hasVoucher&&<a href={"/api/cart/service-voucher?download=true&reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">ملف الخدمة (إن توفر)</a>}
    {o.status!=="CART_BANK_VERIFIED"&&<Link href={"/cart?reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">استكمال التحويل / رفع الإيصال</Link>}
   </div>
  </article>)}</div>}
