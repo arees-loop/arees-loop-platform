@@ -24,7 +24,7 @@ export default function PublicServicesPage(){
 <section className="mx-auto max-w-7xl px-5 pb-10 pt-28 md:pt-32">
       <p className="text-xs font-bold text-[#B99124]">AREES LOOP</p>
       <h1 className="mt-2 text-3xl font-black md:text-4xl">الخدمات والتجارب</h1>
-      <p className="mt-3 max-w-2xl text-sm leading-7 text-[#0D3B34]/65">برامج وتجارب معتمدة ومنشورة عبر Arees Loop.</p>
+      <p className="mt-3 max-w-2xl text-sm leading-7 text-[#0D3B34]/65">اكتشف البرامج السياحية المحلية والدولية والخدمات والتجارب المنشورة من شركاء أريس لوب. راجع تفاصيل البرنامج والجهة المنظمة والتوفر قبل الحجز.</p>
 
       {loading ? <div className="mt-10 rounded-3xl bg-white p-8 text-center">جارٍ تحميل التجارب...</div> :
       services.length===0 ? <div className="mt-10 rounded-3xl border border-[#0D3B34]/10 bg-white p-8 text-center">لا توجد خدمات منشورة حالياً.</div> :
