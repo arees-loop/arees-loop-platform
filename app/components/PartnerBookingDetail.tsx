@@ -110,7 +110,7 @@ export default function PartnerBookingDetail({row,onClose,onUpdated}:{
     </label>
     <button type="button" disabled={busy||notes===(row.notes||"")} onClick={()=>void update("NOTES")}
      className="mt-2 rounded-xl border border-[#D4AF37] px-4 py-2 text-xs font-bold disabled:opacity-40">حفظ الملاحظات</button>
-    {row.source==="CART"&&!row.bankVerified&&<div className="mt-4 grid gap-3 sm:grid-cols-2">
+    {(row.source==="CART"&&!row.bankVerified||row.source==="BOOKING"&&row.status==="PENDING")&&<div className="mt-4 grid gap-3 sm:grid-cols-2">
      <label className="text-xs font-bold">اسم العميل<input value={customerName} onChange={e=>setCustomerName(e.target.value)}
       className="mt-2 w-full rounded-lg border p-3 text-sm"/></label>
      <label className="text-xs font-bold">هاتف العميل<input value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)}
