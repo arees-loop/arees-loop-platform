@@ -14,8 +14,11 @@ export async function POST(request:NextRequest){
  const contentLength=Number(request.headers.get("content-length")||"0");
  if(Number.isFinite(contentLength)&&contentLength>limit+128*1024)return response("حجم الصورة يتجاوز 4 ميجابايت.",413);
  if(!guarded())return response("رفع مستندات الرخصة قيد الاختبار الآمن، ولا يمكن إرسال طلب ناقص.",503);
- const session=await getCurrentSession();
- if(!session||session.user.status!=="ACTIVE")return response("سجّل الدخول لإرفاق مستندات الرخصة.",401);
+ let session:Awaited<ReturnType<typeof getCurrentSession>>;
+ try{session=await getCurrentSession();}
+ catch(error){console.error("License session check unavailable",error instanceof Error?error.name:"UNKNOWN");return response("تعذر التحقق من الجلسة مؤقتاً. يرجى إعادة المحاولة.",503);}
+ if(!session)return response("سجّل الدخول لإرفاق مستندات الرخصة.",401);
+ if(session.user.status!=="ACTIVE")return response("حسابك مسجّل دخول، لكن يلزم استكمال تفعيل الحساب قبل إرسال مستندات الرخصة.",403);
  let path:string|undefined;
  try{
   const data=await request.formData(),file=data.get("file"),slot=data.get("slot");
