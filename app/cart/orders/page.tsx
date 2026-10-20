@@ -5,7 +5,7 @@ import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 
 type Item={title?:string;itemType?:string;application?:{requestReference?:string}};
 type BankOrder={reference:string;amountSar:number;createdAt:string;status:string;hasVoucher:boolean;rows:Item[]};
-type LicenseApplication={reference:string;createdAt:string;priceSar:number;status:string;bankReference:string|null};
+type LicenseApplication={reference:string;createdAt:string;priceSar:number;status:string;serviceStatus:string;bankReference:string|null};
 const labels:Record<string,string>={
  AWAITING_PAYMENT:"النموذج مسجل — بانتظار اختيار السداد",
  CART_BANK_CREATED:"بانتظار تحويل المبلغ",
@@ -44,7 +44,7 @@ export default function CartOrdersPage(){
        <Reference value={x.reference} label="رقم طلب الرخصة"/>
        <b className="text-lg">{Number(x.priceSar).toLocaleString("ar-SA")} ر.س (السعر قبل الخصم)</b>
       </div>
-      <p className="mt-3 text-xs">{new Date(x.createdAt).toLocaleString("ar-SA")} — {labels[x.status]||x.status}</p>
+      <p className="mt-3 text-xs">{new Date(x.createdAt).toLocaleString("ar-SA")} — {labels[x.status]||x.status} · حالة الخدمة: {x.serviceStatus==="EXECUTING"?"تحت التنفيذ":x.serviceStatus==="DONE"?"تم التنفيذ":x.serviceStatus==="PAID"?"تم السداد":x.serviceStatus==="CANCELED"?"ملغي":"جديد"}</p>
       {x.bankReference&&<div className="mt-3 rounded-lg bg-[#F8F5E9] p-3"><Reference value={x.bankReference} label="مرجع التحويل البنكي المرتبط"/></div>}
       {x.status!=="CART_BANK_VERIFIED"&&<Link href={x.bankReference?"/cart?reference="+encodeURIComponent(x.bankReference):"/cart"} className="mt-4 inline-flex rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">متابعة السداد من السلة</Link>}
      </article>)}</div>
