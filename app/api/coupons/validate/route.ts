@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import {getCurrentSession} from "@/lib/session";
+import {LICENSE_SERVICE_ID,currentLicensePrice,validateLicenseCoupon,LicenseCouponError} from "@/lib/license-cart-coupon";
 
 function money(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
@@ -19,6 +21,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "INVALID_REQUEST", message: "بيانات الكوبون غير مكتملة." }, { status: 400 });
     }
 
+    if(serviceId===LICENSE_SERVICE_ID){
+      if(quantity!==1)return NextResponse.json({success:false,error:"INVALID_QUANTITY",message:"الرخصة الدولية تُطلب بكمية واحدة لكل نموذج."},{status:400});
+      try{
+        const session=await getCurrentSession();
+        const subtotal=await currentLicensePrice();
+        const result=await validateLicenseCoupon(code,subtotal,session?.user.id);
+        return NextResponse.json({success:true,data:{
+          code:result.code,subtotal:result.subtotal,discountAmount:result.discount,total:result.total,
+          discountType:result.discountType,discountValue:result.discountValue
+        },message:"تم تطبيق الكوبون على الرخصة الدولية."},{headers:{"Cache-Control":"private, no-store"}});
+      }catch(err){
+        if(err instanceof LicenseCouponError)
+          return NextResponse.json({success:false,error:"LICENSE_COUPON_NOT_APPLICABLE",message:err.message},{status:400});
+        throw err;
+      }
+    }
     const { prisma } = await import("@/lib/prisma");
     const [coupon, service] = await Promise.all([
       prisma.coupon.findUnique({ where: { code } }),
