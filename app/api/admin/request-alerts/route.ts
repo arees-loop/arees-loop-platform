@@ -74,6 +74,22 @@ export async function GET(){
         createdAt:latest.createdAt.toISOString(),href:serviceLink.hotels});
     }else if(r.status==="NEW")recent.push({id:r.id,reference:r.reference,kind:"HOTEL",type:"NEW_REQUEST",createdAt:r.createdAt.toISOString(),href:serviceLink.hotels});
   }
+  // Completed license forms saved to cart are real backend events, not browser-only cart state.
+  if(counts.drivingLicenses!==null){
+   const drafts=await prisma.auditLog.findMany({
+    where:{entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_FORM_ADDED_TO_CART",
+      createdAt:{gte:new Date(Date.now()-30*24*60*60*1000)}},
+    orderBy:[{createdAt:"desc"},{id:"desc"}],take:100,
+    select:{id:true,entityId:true,createdAt:true}
+   });
+   counts.drivingLicenses!+=drafts.length;
+   for(const d of drafts)recent.push({id:d.id,reference:d.entityId||"رخصة",kind:"DRIVING_LICENSE",
+     type:"LICENSE_FORM_ADDED_TO_CART",createdAt:d.createdAt.toISOString(),href:"/admin/cart-bank-payments"});
+   const failures=drafts.length?await prisma.auditLog.count({
+    where:{entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_CART_EMAIL_FAILED",
+      entityId:{in:drafts.map(x=>x.entityId).filter((id):id is string=>!!id)}}}):0;
+   emailFailed.drivingLicenses!+=failures;
+  }
   recent.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
   const sum=(v:Counters)=>Object.values(v).reduce<number>((n,x)=>n+(x??0),0);
   const emailConfigured=Boolean(process.env.RESEND_API_KEY&&
