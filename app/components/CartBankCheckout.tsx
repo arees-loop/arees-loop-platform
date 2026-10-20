@@ -10,6 +10,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
  const [bankId,setBankId]=useState("");
  const [order,setOrder]=useState<Order|null>(null);
  const [file,setFile]=useState<File|null>(null);
+ const [voucherAvailable,setVoucherAvailable]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  useEffect(()=>{
   let alive=true;
@@ -28,6 +29,12 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
    if(alive){setOrder(d.order);setBankId(d.order.bankAccountId);setMethod("BANK");}
   }).catch(()=>{});return()=>{alive=false};
  },[]);
+ useEffect(()=>{
+  if(!order||order.status!=="CART_BANK_VERIFIED")return;
+  fetch("/api/cart/service-voucher?reference="+encodeURIComponent(order.reference),{credentials:"include",cache:"no-store"}).then(async r=>{
+   const d=await r.json();if(r.ok&&d.success)setVoucherAvailable(!!d.available);
+  }).catch(()=>{});
+ },[order?.reference,order?.status]);
  const bank=banks.find(x=>x.id===(order?.bankAccountId||bankId))||null;
  const money=(n:number)=>n.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
  async function createOrder(){
@@ -71,6 +78,11 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
    {order?<div className="space-y-3 rounded-xl border border-[#D4AF37]/30 bg-white p-4">
     <p className="text-sm font-bold">مرجع التحويل: <span dir="ltr">{order.reference}</span></p>
     <p className="font-black">المبلغ المطلوب: {money(order.amountSar)}</p>
+    <div className="flex flex-wrap gap-2">
+     <a href={"/cart/documents/quote?reference="+encodeURIComponent(order.reference)} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#D4AF37] px-3 py-2 text-xs font-bold">عرض السعر PDF</a>
+     {order.status==="CART_BANK_VERIFIED"&&<a href={"/cart/documents/invoice?reference="+encodeURIComponent(order.reference)} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#D4AF37] px-3 py-2 text-xs font-bold">الفاتورة بعد السداد</a>}
+     {voucherAvailable&&<a href={"/api/cart/service-voucher?download=true&reference="+encodeURIComponent(order.reference)} className="rounded-lg border border-[#D4AF37] px-3 py-2 text-xs font-bold">تنزيل الفاوتشر / ملف الخدمة</a>}
+    </div>
     {order.status==="PENDING_REVIEW"||order.status==="CART_BANK_RECEIPT_SUBMITTED"?<p role="status" className="rounded-lg bg-[#EFF8F0] p-3 text-sm text-[#1B663A]">تم تسجيل الإيصال، والتحويل بانتظار مراجعة الإدارة. لا يعتبر السداد مؤكداً بعد.</p>:order.status==="CART_BANK_VERIFIED"?<p role="status" className="rounded-lg bg-[#EFF8F0] p-3 text-sm text-[#1B663A]">تم التحقق من التحويل بواسطة الإدارة. ستُتابع معالجة الخدمة.</p>:<>
      <label className="block text-xs font-bold">إثبات التحويل (صورة أو PDF)<input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" className="mt-2 block w-full rounded-lg border p-3 text-sm" onChange={e=>setFile(e.target.files?.[0]||null)}/></label>
      <button type="button" disabled={!file||busy} onClick={()=>void submitReceipt()} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white disabled:opacity-40">{busy?"جارٍ رفع الإيصال":"إرسال إثبات التحويل للإدارة"}</button>
