@@ -6,6 +6,9 @@ on:
       - feature/customer-experience-r07-r09-r10-20261012
       - feature/government-partner-join-20261013
       - feature/cart-bank-checkout-20261020
+  pull_request:
+    branches:
+      - codex/license-card-layout-20261020
   workflow_dispatch:
 
 permissions:
@@ -31,3 +34,5 @@ jobs:
         run: npx tsc --noEmit
       - name: ESLint checks
         run: npm run lint
+      - name: Next.js production build (dummy DB only)
+        run: npm run build
