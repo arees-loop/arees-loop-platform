@@ -33,7 +33,6 @@ export default function AdminCartBankPayments(){
    <p className="mt-2 text-xs">{new Date(order.createdAt).toLocaleString("ar-SA")}</p>
    <ul className="mt-3 list-inside list-disc space-y-1 text-xs">{(order.rows||[]).map((x,i)=><li key={i}>{x.title||"خدمة"} × {x.quantity||1}</li>)}</ul>
    <div className="mt-3 flex flex-wrap gap-2">
-    <a target="_blank" rel="noreferrer" href={"/cart/documents/quote?reference="+encodeURIComponent(order.reference)} className="rounded-lg border border-[#E0CB91] px-3 py-2 text-xs font-bold">عرض السعر PDF</a>
     {order.status==="CART_BANK_VERIFIED"&&<a target="_blank" rel="noreferrer" href={"/cart/documents/invoice?reference="+encodeURIComponent(order.reference)} className="rounded-lg border border-[#E0CB91] px-3 py-2 text-xs font-bold">الفاتورة</a>}
    </div>
    {order.status==="CART_BANK_VERIFIED"&&<div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-[#E0CB91] bg-[#FFF9ED] p-3">
