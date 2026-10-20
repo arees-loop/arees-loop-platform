@@ -100,7 +100,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     }catch{setError("تعذر الاتصال بالخادم.");}
     finally{setLoading(false);}
   },[initialOfferKind]);
-  useEffect(()=>{void load();},[load]);
+  useEffect(()=>{void Promise.resolve().then(load);},[load]);
   useEffect(()=>{
     void fetch("/api/admin/me",{cache:"no-store"}).then(r=>r.json()).then(d=>{
       if(d.success)setIdentity({role:d.data.role,id:d.data.id});
@@ -110,9 +110,11 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     }).catch(()=>{});
   },[]);
   useEffect(()=>{
-    if(!bannerFile){setBannerPreview("");return;}
-    const url=URL.createObjectURL(bannerFile);setBannerPreview(url);
-    return()=>URL.revokeObjectURL(url);
+    let active=true;
+    if(!bannerFile){void Promise.resolve().then(()=>{if(active)setBannerPreview("");});return()=>{active=false;};}
+    const url=URL.createObjectURL(bannerFile);
+    void Promise.resolve().then(()=>{if(active)setBannerPreview(url);});
+    return()=>{active=false;URL.revokeObjectURL(url);};
   },[bannerFile]);
   const showSuper=identity?.role==="SUPER_ADMIN";
   const staffName=(id:string|null)=>{
@@ -348,7 +350,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const filteredRequests=serviceRequests.filter(q=>(requestStatusFilter==="ALL"||q.status===requestStatusFilter)&&
     (!requestSearch.trim()||[q.reference,q.customerName,q.customerEmail||"",q.phone].some(t=>t.toLowerCase().includes(requestSearch.trim().toLowerCase()))))
     .sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
-  const nowMs=Date.now();
+  const [nowMs,setNowMs]=useState(0);
+  useEffect(()=>{const update=()=>setNowMs(Date.now());void Promise.resolve().then(update);const timer=window.setInterval(update,60000);return()=>window.clearInterval(timer);},[]);
   const offerState=(o:Offer)=>{
     if(!o.isVisible)return "PAUSED";
     if(o.startsAt&&new Date(o.startsAt).getTime()>nowMs)return "UPCOMING";
