@@ -16,8 +16,11 @@ type Application={
 };
 function safe(s:string){return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");}
 export async function POST(req:NextRequest){
- const session=await getCurrentSession();
- if(!session||session.user.status!=="ACTIVE")return fail("سجّل الدخول أولاً لإضافة الرخصة إلى السلة.",401);
+ let session:Awaited<ReturnType<typeof getCurrentSession>>;
+ try{session=await getCurrentSession();}
+ catch(error){console.error("License registration session unavailable",error instanceof Error?error.name:"UNKNOWN");return fail("تعذر التحقق من الجلسة مؤقتاً؛ أعد المحاولة دون رفع الصور من جديد.",503);}
+ if(!session)return fail("سجّل الدخول أولاً لإضافة الرخصة إلى السلة.",401);
+ if(session.user.status!=="ACTIVE")return fail("الحساب مسجّل دخوله، لكنه يحتاج استكمال التفعيل قبل إرسال الرخصة.",403);
  try{
   const body=await req.json().catch(()=>null);
   const a=body?.application as Application|undefined;
