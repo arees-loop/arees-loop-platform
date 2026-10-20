@@ -37,7 +37,7 @@ export default async function CartOrderDocument({params,searchParams}:Props){
  const net=vat===null?null:Math.round((gross-vat)*100)/100;
  const heading=type==="quote"?"عرض سعر":"فاتورة سداد";
  const issueDate=type==="invoice"?(events.find(e=>e.action==="CART_BANK_VERIFIED")?.createdAt||order.createdAt):order.createdAt;
- return <main dir="rtl" className="min-h-screen bg-[#F6F5F1] px-4 py-8 text-[#123D35] print:bg-white print:p-0">
+ return <main dir="rtl" className="min-h-screen bg-[#F6F5F1] px-4 py-8 text-[#123D35] print:bg-white print:p-0">\n  <style>{`@page{size:A4;margin:12mm} @media print{html,body{background:#fff!important} table{page-break-inside:auto} tr{page-break-inside:avoid} article{box-shadow:none!important}}`}</style>
   <div className="mx-auto mb-4 flex max-w-[210mm] justify-end print:hidden"><PrintCartDocument/></div>
   <article className="mx-auto min-h-[275mm] max-w-[210mm] bg-white px-8 py-9 shadow-xl print:min-h-0 print:shadow-none md:px-12">
    <header className="border-b-[3px] border-[#B99444] pb-5">
@@ -68,7 +68,7 @@ export default async function CartOrderDocument({params,searchParams}:Props){
     <div className="flex justify-between gap-6 border-t border-[#D9C38D] pt-3 text-base font-black"><Dual ar="الإجمالي شامل الضريبة عند انطباقها" en="Total Amount (VAT Inclusive Where Applicable)"/><b>{money(data.amountSar)}</b></div>
    </section>
    <div className="mt-6 rounded-xl border border-[#E8DAC1] bg-[#FFFBF2] p-4 text-xs leading-6">
-     {isLicenseOnly?<><b>الرخصة الدولية: 199 ريال شامل ضريبة القيمة المضافة بحسب السعر المعتمد وقت إنشاء الطلب.</b><p dir="ltr" className="text-right">International Driving Permit: price includes VAT. No additional VAT is added on top of the displayed total.</p></>:<><p>تُحدد المعالجة الضريبية النهائية لكل تجربة حسب المورد واللوائح السارية؛ لا يُفترض أن جميع خدمات الشركاء خاضعة لنفس النسبة.</p><p dir="ltr" className="text-right">Applicable VAT treatment depends on each service supplier; this document is not a compliant tax e-invoice.</p></>}
+     {isLicenseOnly?<><b>الرخصة الدولية: السعر المبين أعلاه شامل ضريبة القيمة المضافة بحسب السعر المعتمد وقت إنشاء الطلب.</b><p dir="ltr" className="text-right">International Driving Permit: price includes VAT. No additional VAT is added on top of the displayed total.</p></>:<><p>تُحدد المعالجة الضريبية النهائية لكل تجربة حسب المورد واللوائح السارية؛ لا يُفترض أن جميع خدمات الشركاء خاضعة لنفس النسبة.</p><p dir="ltr" className="text-right">Applicable VAT treatment depends on each service supplier; this document is not a compliant tax e-invoice.</p></>}
      <p className="mt-2">{type==="quote"?"العرض ليس إثبات دفع أو حجز مؤكد.":"تم اعتماد استلام المبلغ من الإدارة. يبدأ تنفيذ الخدمة وفق المتطلبات. يُتاح الفاوتشر أو ملف الخدمة عند صدوره."}</p>
      <p dir="ltr" className="text-right">{type==="quote"?"Quotation only; not proof of payment or a confirmed booking.":"Bank transfer receipt verified by AREES administration. Service fulfilment and voucher delivery follow applicable requirements."}</p>
    </div>
