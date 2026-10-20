@@ -509,7 +509,7 @@ export default function RewardsPage() {
       </div>
 
       {/* MOBILE NAV */}
-      <nav aria-label="التنقل السريع للعميل" dir="rtl" className="rewards-mobile-nav fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[100] mx-auto grid w-[calc(100%-24px)] max-w-md grid-cols-4 items-center gap-0 rounded-[20px] border border-white/80 bg-white/95 px-1 py-2 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
+      <nav aria-label="التنقل السريع للعميل" dir="rtl" className="rewards-mobile-nav fixed bottom-[calc(12px+env(safe-area-inset-bottom,0px))] right-3 z-[100] flex w-max max-w-[calc(100%-24px)] items-center justify-start gap-1 rounded-[20px] border border-white/80 bg-white/95 px-2 py-2 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
         <MobileNavItem
           href="/discover"
           icon={<CompassIcon />}
@@ -519,7 +519,7 @@ export default function RewardsPage() {
         <MobileNavItem
           href="/bookings"
           icon={<TicketIcon />}
-          label="حجوزات"
+          label="حجوزاتي"
         />
 
         <MobileNavItem
@@ -706,7 +706,7 @@ function MobileNavItem({
   return (
     <Link
       href={href}
-      className={`flex min-w-0 w-full flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 text-center transition-colors hover:bg-[#F5ECD6] focus-visible:outline-2 focus-visible:outline-[#B99124] ${
+      className={`flex w-[56px] min-w-0 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 text-center transition-colors hover:bg-[#F5ECD6] focus-visible:outline-2 focus-visible:outline-[#B99124] ${
         active ? "text-[#0D3B34]" : "text-[#0D3B34]/55"
       }`}
     >
