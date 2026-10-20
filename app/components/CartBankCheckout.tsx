@@ -21,12 +21,12 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
   return()=>{alive=false;};
  },[]);
  useEffect(()=>{
-  const reference=localStorage.getItem("arees-loop-cart-bank-reference");
+  const reference=new URLSearchParams(window.location.search).get("reference")||localStorage.getItem("arees-loop-cart-bank-reference");
   if(!reference)return;
   let alive=true;
   fetch("/api/cart/bank-checkout?reference="+encodeURIComponent(reference),{cache:"no-store",credentials:"include"}).then(async r=>{
    const d=await r.json();if(!r.ok||!d.success){if(r.status===404||r.status===401)localStorage.removeItem("arees-loop-cart-bank-reference");return;}
-   if(alive){setOrder(d.order);setBankId(d.order.bankAccountId);setMethod("BANK");}
+   if(alive){setOrder(d.order);setBankId(d.order.bankAccountId);setMethod("BANK");localStorage.setItem("arees-loop-cart-bank-reference",reference);}
   }).catch(()=>{});return()=>{alive=false};
  },[]);
  useEffect(()=>{
