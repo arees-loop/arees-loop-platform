@@ -146,14 +146,19 @@ export async function getCurrentSession() {
     return null;
   }
 
-  await prisma.session.update({
-    where: {
-      id: session.id,
-    },
-    data: {
-      lastUsedAt: new Date(),
-    },
-  });
+  // Avoid a write on every auth check. A transient failure recording lastUsedAt
+  // must not invalidate an otherwise valid session (e.g. pg connection exhaustion).
+  const touchBefore = new Date(Date.now() - 15 * 60 * 1000);
+  if (!session.lastUsedAt || session.lastUsedAt < touchBefore) {
+    try {
+      await prisma.session.updateMany({
+        where: { id: session.id, OR: [{ lastUsedAt: null }, { lastUsedAt: { lt: touchBefore } }] },
+        data: { lastUsedAt: new Date() },
+      });
+    } catch (error) {
+      console.warn("Session last-used update deferred", error instanceof Error ? error.name : "UNKNOWN");
+    }
+  }
 
   return session;
 }
