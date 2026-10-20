@@ -130,12 +130,12 @@ export async function PATCH(req:NextRequest){
     return fail("رقم التتبع لا يُضاف إلا بعد إتمام الخدمة واعتماد السداد.",409);
    const trackingNumber=typeof body.trackingNumber==="string"?body.trackingNumber.trim():"";
    const trackingUrl=typeof body.trackingUrl==="string"?body.trackingUrl.trim():"";
-   if(!/^[A-Za-z0-9._\\/\\- ]{4,80}$/.test(trackingNumber)||!trackingUrl||trackingUrl.length>700)
+   if((trackingNumber.length<4||trackingNumber.length>80||/[<>]/.test(trackingNumber))||!trackingUrl||trackingUrl.length>700)
     return fail("أدخل رقم تتبع صحيحاً ورابط تتبع آمن.",400);
    let parsed:URL;
    try{parsed=new URL(trackingUrl)}catch{return fail("رابط التتبع غير صالح.",400)}
    if(parsed.protocol!=="https:"||!parsed.hostname||parsed.username||parsed.password||
-    /^(localhost|127\\.|10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)/i.test(parsed.hostname))
+    /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/i.test(parsed.hostname))
     return fail("رابط التتبع يجب أن يكون HTTPS عاماً دون بيانات دخول.",400);
    await prisma.auditLog.create({data:{entityType:workflow,entityId:ref,userId:session.user.id,
     action:"DELIVERY_UPDATED",beforeData:{trackingNumber:current.trackingNumber,trackingUrl:current.trackingUrl},
@@ -153,7 +153,7 @@ export async function PATCH(req:NextRequest){
     action:"CUSTOMER_MESSAGE_SENT",afterData:{message,customerId:orig.userId}}});
    const user=await prisma.user.findUnique({where:{id:orig.userId},select:{email:true}});
    let sent=false;
-   if(user?.email&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(user.email)){
+   if(user?.email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)){
     const escape=(s:string)=>s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
     const result=await sendEmail({to:user.email,subject:"ملاحظة على طلب الرخصة الدولية "+ref,
      html:'<main dir="rtl" style="font-family:Arial,sans-serif"><h2>ملاحظة من فريق أريس لوب</h2><p>رقم الطلب: '+escape(ref)+'</p><p style="white-space:pre-wrap">'+escape(message)+'</p><p>يمكنك متابعة طلبك في <a href="https://www.areesloop.com/cart/orders">طلباتي</a>.</p></main>'});
