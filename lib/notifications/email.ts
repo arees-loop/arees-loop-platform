@@ -33,7 +33,7 @@ function getEmailConfig() {
 
 export function getAdminNotificationEmails() {
   return (process.env.AREES_ADMIN_EMAILS ?? "")
-    .split(",")
+    .split(/[;,]/)
     .map((email) => email.trim())
     .filter(Boolean);
 }
