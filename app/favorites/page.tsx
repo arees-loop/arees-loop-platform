@@ -29,7 +29,7 @@ export default function FavoritesPage() {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    void Promise.resolve().then(refresh);
     window.addEventListener(savedExperiencesEvent, refresh);
     return () => window.removeEventListener(savedExperiencesEvent, refresh);
   }, [refresh]);
