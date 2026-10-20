@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import LegalDocumentHeader from "@/app/components/LegalDocumentHeader";
 import Link from "next/link";
 import {useSearchParams} from "next/navigation";
 import {useEffect,useState} from "react";
@@ -56,19 +56,8 @@ export default function PrintableTravelDocument({type}:{type:"quote"|"confirmed"
   {error&&<p role="alert" className="mx-auto max-w-3xl rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">{error}</p>}
   {!loading&&!error&&!ready&&<p className="mx-auto max-w-3xl rounded-xl border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900">هذا المستند لم يُعتمد بعد، ولا يمكن إصداره قبل استكمال مرحلته. عرض السعر يتطلب نشر الإدارة، وتأكيد الحجز يتطلب اعتماد السداد وتسجيل بيانات الحجز الفعلية.</p>}
   {ready&&r&&<article id="arees-print-sheet" className="print-document mx-auto max-w-[820px] overflow-hidden rounded-2xl border border-[#D4AF37]/40 bg-white shadow-lg">
-   <header className="border-b-4 border-[#B99644] p-6 print:p-3 sm:p-8">
-    <div className="flex flex-wrap items-center justify-between gap-4">
-     <div className="min-w-0 flex-1 space-y-1">
-      <DualLabel ar="شركة أريس الحلول المتكاملة المحدودة" en="AREES AL-HELLOUL AL-MUTAKAMLA CO.LTD"/>
-      <DualLabel ar="الرقم الضريبي: 311897578200003" en="Tax No.: 311897578200003"/>
-      <DualLabel ar="ترخيص وزارة السياحة رقم 73104550" en="Ministry of Tourism License No.: 73104550"/>
-      <DualLabel ar="فئة الترخيص: وكالة سفر وسياحة" en="License Category: Travel and Tourism Agency"/>
-      <DualLabel ar="السجل التجاري: 7037003618" en="Commercial Registration No.: 7037003618"/>
-      <DualLabel ar="السعودية — المدينة المنورة، حي قربان" en="Saudi Arabia — Medina, Qurban District"/>
-      <DualLabel ar="الهاتف: +9660148390473" en="Phone: +9660148390473"/>
-     </div>
-     <Image src="/Logo/arees-integrated-solutions-logo.png" width={112} height={112} unoptimized alt="شعار شركة أريس" className="h-[100px] w-[100px] shrink-0 object-contain"/>
-    </div>
+   <header className="p-6 print:p-3 sm:p-8">
+    <LegalDocumentHeader compact/>
     <div className="mt-4 rounded-xl bg-[#0D3B34] px-5 py-4 text-white">
      <h2 className="text-xl font-black">{type==="quote"?("عرض سعر "+(ferry?"باخرة":"طيران")):("تفاصيل حجز "+(ferry?"باخرة":"طيران")+" مؤكد")}</h2>
      <p dir="ltr" className="mt-1 text-right text-xs font-bold">{type==="quote"?"Quotation / Estimate":"Confirmed Booking Details"}</p>
