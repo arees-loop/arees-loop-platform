@@ -905,3 +905,64 @@ body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding
     display: none !important;
   }
 }
+
+
+/*
+ * Cart quotation / payment receipt A4 isolation.
+ * RootLayout still mounts the public header, Saudi Business Center seal,
+ * floating status badge and scripts; these must never print as invoice content.
+ * The invoice sheet alone enters print flow, without altering website display.
+ */
+@media print {
+  body:has(#arees-cart-print-sheet) {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  body:has(#arees-cart-print-sheet) > :not(main) {
+    display: none !important;
+  }
+
+  body:has(#arees-cart-print-sheet) > main {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+
+  body:has(#arees-cart-print-sheet) > main > :not(#arees-cart-print-sheet) {
+    display: none !important;
+  }
+
+  body:has(#arees-cart-print-sheet) #arees-cart-print-sheet {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body:has(#arees-cart-print-sheet) #arees-cart-print-sheet header,
+  body:has(#arees-cart-print-sheet) #arees-cart-print-sheet section,
+  body:has(#arees-cart-print-sheet) #arees-cart-print-sheet tr {
+    break-inside: avoid-page;
+  }
+}
