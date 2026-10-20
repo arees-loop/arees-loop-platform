@@ -110,7 +110,12 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
             alt={ferry?"حجز البواخر — رحلتك البحرية تبدأ هنا":"حجز الطيران — رحلتك الجوية تبدأ هنا"}
             className="block h-auto w-full object-contain" />
         </div>
-        
+
+        <section aria-label={ferry ? "تفاصيل حجوزات البواخر" : "تفاصيل حجوزات الطيران"} className="mb-5 rounded-2xl border border-[#D4AF37]/30 bg-white/80 px-5 py-4 text-sm leading-7 text-[#0D3B34]/80">
+          <p>{ferry
+            ? "تستقبل أريس لوب طلبات حجز التذاكر عبر حسابات الحجز المتاحة لباخرة تاركو، باخرة عمان، باخرة دليلة، باخرة جودي، وباخرة مونتي. اطلب جدة–سواكن أو سواكن–جدة؛ ويؤكد فريق أريس السعر والموعد وتوفر المقاعد قبل إصدار التذكرة."
+            : "تستقبل أريس لوب طلبات حجز تذاكر تاركو للطيران وبدر للطيران حسب التوفر. أرسل خط سيرك، مثل الخرطوم–جدة أو جدة–الخرطوم، ليتحقق فريق أريس من السعر والمقاعد قبل إصدار التذكرة."}</p>
+        </section>
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(300px,0.9fr)_minmax(0,1.3fr)]">
           <aside className="min-w-0 space-y-4 lg:sticky lg:top-28">
