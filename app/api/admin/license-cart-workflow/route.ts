@@ -29,7 +29,7 @@ async function fetchRows(){
   ids.length?prisma.user.findMany({where:{id:{in:ids}},select:{id:true,firstName:true,lastName:true,email:true,phone:true}}):Promise.resolve([]),
   prisma.auditLog.findMany({where:{entityType:bank,action:"CART_BANK_CREATED"},orderBy:{createdAt:"desc"},take:400,
    select:{entityId:true,afterData:true,createdAt:true}}),
-  refs.length?prisma.auditLog.findMany({where:{entityType:workflow,entityId:{in:refs},action:{in:["STATUS_CHANGED","NOTES_UPDATED"]}},
+  refs.length?prisma.auditLog.findMany({where:{entityType:workflow,entityId:{in:refs},action:{in:["STATUS_CHANGED","NOTES_UPDATED","DETAILS_UPDATED"]}},
    orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true,afterData:true,createdAt:true}}):Promise.resolve([]),
   refs.length?prisma.auditLog.findMany({where:{entityType:root,entityId:{in:refs},
    action:{in:["LICENSE_CART_EMAIL_SENT","LICENSE_CART_EMAIL_FAILED"]}},orderBy:[{createdAt:"desc"},{id:"desc"}],
