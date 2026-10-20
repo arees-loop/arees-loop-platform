@@ -40,7 +40,23 @@ export async function GET(req:NextRequest){
   const latest=new Map<string,{action:string,createdAt:Date}>();
   for(const e of events)if(e.entityId&&!latest.has(e.entityId))latest.set(e.entityId,e);
   const users=orders.length?await prisma.user.findMany({where:{id:{in:orders.map(x=>x.userId).filter((v):v is string=>!!v)}},select:{id:true,firstName:true,lastName:true,email:true,phone:true}}):[];
-  return NextResponse.json({success:true,orders:orders.map(o=>{const d=obj(o.afterData),u=users.find(x=>x.id===o.userId);return {reference:o.entityId,amountSar:d.amountSar,bankAccountId:d.bankAccountId,rows:d.rows,status:latest.get(o.entityId||"")?.action||CREATED,createdAt:o.createdAt,customer:u?{name:[u.firstName,u.lastName].filter(Boolean).join(" "),email:u.email,phone:u.phone}:null};})},{headers:{"Cache-Control":"private, no-store"}});
+  const licenseDrafts=await prisma.auditLog.findMany({
+   where:{entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_FORM_ADDED_TO_CART"},
+   orderBy:[{createdAt:"desc"},{id:"desc"}],take:100,
+   select:{entityId:true,userId:true,createdAt:true,afterData:true}
+  });
+  const draftRefs=licenseDrafts.map(x=>x.entityId).filter((x):x is string=>!!x);
+  const statuses=draftRefs.length?await prisma.auditLog.findMany({
+   where:{entityType:"LICENSE_CART_APPLICATION",entityId:{in:draftRefs},
+    action:{in:["LICENSE_CART_EMAIL_SENT","LICENSE_CART_EMAIL_FAILED"]}},
+   select:{entityId:true,action:true},orderBy:[{createdAt:"desc"},{id:"desc"}]}):[];
+  const draftStatus=new Map<string,string>();for(const x of statuses)if(x.entityId&&!draftStatus.has(x.entityId))draftStatus.set(x.entityId,x.action);
+  return NextResponse.json({success:true,
+    licenseDrafts:licenseDrafts.map(x=>{const d=obj(x.afterData);return {
+     reference:x.entityId,name:d.name,phone:d.phone,priceSar:d.priceSar,
+     status:draftStatus.get(x.entityId||"")||"UNKNOWN",createdAt:x.createdAt
+    }}),
+    orders:orders.map(o=>{const d=obj(o.afterData),u=users.find(x=>x.id===o.userId);return {reference:o.entityId,amountSar:d.amountSar,bankAccountId:d.bankAccountId,rows:d.rows,status:latest.get(o.entityId||"")?.action||CREATED,createdAt:o.createdAt,customer:u?{name:[u.firstName,u.lastName].filter(Boolean).join(" "),email:u.email,phone:u.phone}:null};})},{headers:{"Cache-Control":"private, no-store"}});
  }catch(error){console.error("Admin cart payment list error",error);return fail("تعذر تحميل طلبات التحويل.",503);}
 }
 export async function POST(req:NextRequest){
