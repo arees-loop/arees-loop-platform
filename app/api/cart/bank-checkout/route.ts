@@ -138,21 +138,39 @@ export async function GET(req:NextRequest){
    }
    const licenseRefs=licenseRecords.map(x=>x.entityId).filter((x):x is string=>!!x);
    const workflowEvents=licenseRefs.length?await prisma.auditLog.findMany({
-    where:{entityType:"LICENSE_CART_WORKFLOW",entityId:{in:licenseRefs},action:"STATUS_CHANGED"},
-    orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,afterData:true}}):[];
+    where:{entityType:"LICENSE_CART_WORKFLOW",entityId:{in:licenseRefs},
+     action:{in:["STATUS_CHANGED","DELIVERY_UPDATED","CUSTOMER_MESSAGE_SENT"]}},
+    orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true,afterData:true,createdAt:true}}):[];
    const workflowStates=new Map<string,string>();
-   for(const event of workflowEvents)if(event.entityId&&!workflowStates.has(event.entityId)){
+   const shippingByRef=new Map<string,{trackingNumber:string;trackingUrl:string}>();
+   const messagesByRef=new Map<string,{message:string;createdAt:Date}[]>();
+   for(const event of workflowEvents){
+    if(!event.entityId)continue;
     const data=jsonData(event.afterData);
-    workflowStates.set(event.entityId,String(data.status||""));
+    if(event.action==="STATUS_CHANGED"&&!workflowStates.has(event.entityId))
+     workflowStates.set(event.entityId,String(data.status||""));
+    if(event.action==="DELIVERY_UPDATED"&&!shippingByRef.has(event.entityId))
+     shippingByRef.set(event.entityId,{trackingNumber:String(data.trackingNumber||""),
+      trackingUrl:String(data.trackingUrl||"")});
+    if(event.action==="CUSTOMER_MESSAGE_SENT"){
+     const message=String(data.message||"");
+     if(message)messagesByRef.set(event.entityId,[...(messagesByRef.get(event.entityId)||[]),
+      {message,createdAt:event.createdAt}].slice(0,20));
+    }
    }
    const licenseApplications=licenseRecords.filter(x=>!!x.entityId).map(x=>{
     const d=jsonData(x.afterData),bankReference=linked.get(x.entityId||"")||null;
     const bankStatus=bankReference?last.get(bankReference)||CREATED:"AWAITING_PAYMENT";
     const paid=bankStatus==="CART_BANK_VERIFIED",custom=workflowStates.get(x.entityId||"");
     const serviceStatus=custom==="CANCELED"&&!paid?"CANCELED":
-      paid&&["EXECUTING","DONE"].includes(custom||"")?custom:paid?"PAID":"NEW";
+      paid&&["EXECUTING","DONE","SHIPPING","DELIVERED"].includes(custom||"")?custom:paid?"PAID":"NEW";
+    const shipping=shippingByRef.get(x.entityId||"");
     return {reference:x.entityId,createdAt:x.createdAt,priceSar:Number(d.priceSar||199),
-     bankReference,status:bankStatus,serviceStatus};
+     bankReference,status:bankStatus,serviceStatus,
+     trackingNumber:paid?shipping?.trackingNumber||"": "",
+     trackingUrl:paid?shipping?.trackingUrl||"": "",
+     customerMessages:(messagesByRef.get(x.entityId||"")||[]).map(m=>({
+      text:m.message,createdAt:m.createdAt.toISOString()}))};
    });
    return NextResponse.json({success:true,licenseApplications,orders:orders.map(o=>{
     const data=jsonData(o.afterData);
