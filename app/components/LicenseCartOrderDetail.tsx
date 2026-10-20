@@ -50,7 +50,7 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
    setNotice(d.message);setFile(null);await load();onChange();
   }catch(e){setError(e instanceof Error?e.message:"تعذر رفع الملف.")}finally{setBusy(false)}
  }
- const actions=order?.status==="NEW"?["NEW","CANCELED"]:order?.status==="PAID"?["PAID","EXECUTING"]:order?.status==="EXECUTING"?["EXECUTING","DONE"]:[order?.status||"NEW"];
+ const actions=order?.status==="NEW"?(order.bankReference?["NEW"]:["NEW","CANCELED"]):order?.status==="PAID"?["PAID","EXECUTING"]:order?.status==="EXECUTING"?["EXECUTING","DONE"]:[order?.status||"NEW"];
  return <section dir="rtl" className="space-y-5">
   <button type="button" onClick={onClose} className="rounded-xl border border-[#D4AF37] px-4 py-2 text-sm font-bold">← العودة لقائمة الطلبات</button>
   {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
