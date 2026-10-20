@@ -74,3 +74,28 @@ export async function POST(req:NextRequest){
   return fail("تعذر تسجيل الطلب في النظام، حاول مرة أخرى.",503);
  }
 }
+
+export async function GET(req:NextRequest){
+ const session=await getCurrentSession();
+ if(!session||session.user.status!=="ACTIVE")return fail("سجّل الدخول لمتابعة طلبات الرخصة.",401);
+ try{
+  const reference=req.nextUrl.searchParams.get("reference");
+  if(reference&&(!/^LICC-[0-9a-f-]{36}$/.test(reference)))return fail("رقم الطلب غير صحيح.");
+  const rows=await prisma.auditLog.findMany({
+   where:{userId:session.user.id,entityType:TYPE,action:ACTION,
+    ...(reference?{entityId:reference}:{})},
+   orderBy:[{createdAt:"desc"},{id:"desc"}],take:100,
+   select:{entityId:true,createdAt:true,afterData:true}
+  });
+  const requests=rows.filter(row=>!!row.entityId).map(row=>{
+   const d=row.afterData&&typeof row.afterData==="object"&&!Array.isArray(row.afterData)?
+    row.afterData as Record<string,unknown>:{};
+   return {reference:row.entityId,createdAt:row.createdAt,priceSar:typeof d.priceSar==="number"?d.priceSar:Number(d.priceSar||199),
+    status:"AWAITING_PAYMENT" as const};
+  });
+  return NextResponse.json({success:true,requests,...(reference?{found:requests.length>0}:{})},{headers});
+ }catch(error){
+  console.error("License application history failed",error instanceof Error?error.name:"UNKNOWN");
+  return fail("تعذر تحميل طلبات الرخصة.",503);
+ }
+}
