@@ -26,8 +26,11 @@ export async function GET(req:NextRequest){
   if(!blob||blob.statusCode!==200)return fail("المستند غير موجود.",404);
   const ext=doc.mimeType==="image/png"?"png":doc.mimeType==="image/jpeg"?"jpg":null;
   if(!ext)return fail("صيغة غير مدعومة.",415);
-  return new Response(blob.stream,{headers:{"Content-Type":doc.mimeType,"Content-Disposition":'attachment; filename="license-'+slot.toLowerCase()+'.'+ext+'"',
-   "Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox"}});
+  const preview=req.nextUrl.searchParams.get("preview")==="true";
+  return new Response(blob.stream,{headers:{"Content-Type":doc.mimeType,"Content-Disposition":(preview?"inline":"attachment")+'; filename="license-'+slot.toLowerCase()+'.'+ext+'"',
+   "Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff",
+   "Referrer-Policy":"no-referrer","X-Frame-Options":"SAMEORIGIN",
+   "Content-Security-Policy":"default-src 'none'; sandbox"}});
  }catch(e){console.error("License document admin retrieval failed",e instanceof Error?e.name:"UNKNOWN");
   return fail("تعذر فتح مستندات الرخصة.",503);}
 }
