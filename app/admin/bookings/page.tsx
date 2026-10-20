@@ -19,7 +19,7 @@ export default function AdminBookingsPage(){
  const [counts,setCounts]=useState<{status:string;count:number}[]>([]);
  const [filter,setFilter]=useState("ALL"),[source,setSource]=useState("ALL"),[search,setSearch]=useState("");
  const [loading,setLoading]=useState(true),[error,setError]=useState(""),[selected,setSelected]=useState<PartnerBookingRow|null>(null);
- const [info,setInfo]=useState<{partnerCartCount:number;cartScanLimited:boolean}|null>(null);
+ const [info,setInfo]=useState<{partnerCartCount:number;cartScanLimited:boolean;countsBySource:Record<string,{status:string;count:number}[]>}|null>(null);
  const load=useCallback(async()=>{
   setLoading(true);
   try{
@@ -45,7 +45,8 @@ export default function AdminBookingsPage(){
   return [x.reference,x.customerName,x.customerPhone||"",x.customerEmail||"",x.service.nameAr,
    x.partner.tradeNameAr||x.partner.legalNameAr].some(v=>v.toLowerCase().includes(term));
  }),[rows,search,source]);
- const count=(k:string)=>k==="ALL"?counts.reduce((n,v)=>n+v.count,0):counts.find(x=>x.status===k)?.count||0;
+ const count=(k:string)=>{const data=source==="ALL"?counts:info?.countsBySource?.[source]||[];
+  return k==="ALL"?data.reduce((n,v)=>n+v.count,0):data.find(x=>x.status===k)?.count||0;};
  return <main dir="rtl" className="mx-auto max-w-7xl px-4 py-8 text-[#0D3B34]">
   <header className="flex flex-wrap items-center justify-between gap-3">
    <div><p className="text-xs font-bold text-[#B38A25]">AREES LOOP • PARTNER BOOKINGS</p>
