@@ -49,6 +49,15 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
   if(!ids.every(v=>typeof v==="string"&&v.length>0))throw Error("أكمل مستندات الرخصة من نموذج الطلب.");
   const docs=await prisma.internationalLicenseDocument.findMany({where:{userId,id:{in:ids as string[]}},select:{id:true,slot:true}});
   if(docs.length!==3||!slots.every(([slot,field])=>docs.some(d=>d.id===app[field]&&d.slot===slot)))throw Error("مستندات الرخصة غير مرتبطة بحسابك.");
+  if(typeof app.requestReference==="string"&&app.requestReference){
+   if(!/^LICC-[0-9a-f-]{36}$/.test(app.requestReference))throw Error("رقم طلب الرخصة غير صحيح.");
+   const original=await prisma.auditLog.findFirst({where:{entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_FORM_ADDED_TO_CART",
+    entityId:app.requestReference,userId},select:{afterData:true}});
+   if(!original)throw Error("رقم طلب الرخصة غير مسجل في حسابك.");
+   const info=jsonData(original.afterData);
+   if(!Array.isArray(info.documentIds)||!ids.every(id=>info.documentIds instanceof Array&&info.documentIds.includes(id)))
+    throw Error("مستندات الرخصة لا تطابق رقم الطلب المحفوظ.");
+  }
   const now=new Date();
   const offer=await prisma.transportOffer.findFirst({where:{kind:"DRIVING_LICENSE",isVisible:true,deletedAt:null,AND:[{OR:[{startsAt:null},{startsAt:{lte:now}}]},{OR:[{endsAt:null},{endsAt:{gte:now}}]}]},orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],select:{amountSar:true,operationStatus:true}});
   if(offer?.operationStatus==="SOLD_OUT")throw Error("عرض الرخصة غير متاح حالياً.");
@@ -63,7 +72,8 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
     countryCode:String(a.countryCode||"").slice(0,5),height:String(a.height||"").slice(0,8),
     eyeColor:String(a.eyeColor||"").slice(0,80),deliveryAddress:String(a.deliveryAddress||"").slice(0,300),
     deliveryLink:String(a.deliveryLink||"").slice(0,500),
-    passportDocumentId:String(a.passportDocumentId||""),localLicenseDocumentId:String(a.localLicenseDocumentId||""),portraitDocumentId:String(a.portraitDocumentId||"")
+    passportDocumentId:String(a.passportDocumentId||""),localLicenseDocumentId:String(a.localLicenseDocumentId||""),portraitDocumentId:String(a.portraitDocumentId||""),
+    requestReference:typeof a.requestReference==="string"?a.requestReference:""
    }};
   }
   const s=found.find(x=>x.id===r.serviceId)!;
