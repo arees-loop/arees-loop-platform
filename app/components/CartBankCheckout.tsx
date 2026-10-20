@@ -34,7 +34,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
   fetch("/api/cart/service-voucher?reference="+encodeURIComponent(order.reference),{credentials:"include",cache:"no-store"}).then(async r=>{
    const d=await r.json();if(r.ok&&d.success)setVoucherAvailable(!!d.available);
   }).catch(()=>{});
- },[order?.reference,order?.status]);
+ },[order]);
  const bank=banks.find(x=>x.id===(order?.bankAccountId||bankId))||null;
  const money=(n:number)=>n.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
  async function createOrder(){
