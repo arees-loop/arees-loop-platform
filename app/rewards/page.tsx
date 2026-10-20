@@ -509,7 +509,8 @@ export default function RewardsPage() {
       </div>
 
       {/* MOBILE NAV */}
-      <nav aria-label="التنقل السريع للعميل" dir="rtl" className="rewards-mobile-nav fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[100] mx-auto flex w-[calc(100%-24px)] max-w-md items-center justify-start gap-1 rounded-[20px] border border-white/80 bg-white/95 px-2 py-2 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
+      <div dir="rtl" className="rewards-mobile-nav fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[100] mx-auto w-[calc(100%-24px)] max-w-md rounded-[20px] border border-white/80 bg-white/95 px-2 py-2 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
+        <nav aria-label="التنقل السريع للعميل" dir="rtl" className="flex w-max max-w-full items-center justify-start gap-1">
         <MobileNavItem
           href="/discover"
           icon={<CompassIcon />}
@@ -534,7 +535,8 @@ export default function RewardsPage() {
           icon={<UserIcon />}
           label="حسابي"
         />
-      </nav>
+        </nav>
+      </div>
     </main>
   );
 }
@@ -706,13 +708,13 @@ function MobileNavItem({
   return (
     <Link
       href={href}
-      className={`relative z-[1] flex w-[50px] max-[360px]:w-[39px] min-w-0 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 text-center transition-colors hover:bg-[#F5ECD6] focus-visible:outline-2 focus-visible:outline-[#B99124] ${
+      className={`flex w-[56px] min-w-0 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 text-center transition-colors hover:bg-[#F5ECD6] focus-visible:outline-2 focus-visible:outline-[#B99124] ${
         active ? "text-[#0D3B34]" : "text-[#0D3B34]/55"
       }`}
     >
       <div className={active ? "text-[#B99124]" : ""}>{icon}</div>
 
-      <span className="whitespace-nowrap text-[10px] max-[360px]:text-[9px] font-semibold leading-tight">{label}</span>
+      <span className="whitespace-nowrap text-[10px] font-semibold leading-tight">{label}</span>
     </Link>
   );
 }
