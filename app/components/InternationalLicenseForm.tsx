@@ -3,6 +3,7 @@
 import {useEffect,useState,type FormEvent} from "react";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
 import Link from "next/link";
+import CartBankCheckout from "@/app/components/CartBankCheckout";
 
 type LicenseOffer={id:string;title:string;description:string|null;destination:string|null;imageUrls:string[];bannerUrl:string|null;amountSar:number|null;priceUnit:string|null;operationStatus:string};
 const style="w-full rounded-xl border border-[#D7C18F]/55 bg-[#FCFBF6] px-4 py-3 text-sm text-[#0D3B34] outline-[#A8842A]";
@@ -41,6 +42,10 @@ function PhotoInput({name,hint,file,onPick,disabled}:{name:string;hint:string;fi
 }
 export default function InternationalLicenseForm(){
  const [offer,setOffer]=useState<LicenseOffer|null>(null);
+ const [auth,setAuth]=useState<"checking"|"signed-in"|"guest">("checking");
+ const [added,setAdded]=useState(false),[checkoutOpen,setCheckoutOpen]=useState(false);
+ const [cartItem,setCartItem]=useState<{serviceId:string;quantity:number;itemType:"DRIVING_LICENSE";application:Record<string,unknown>}|null>(null);
+ useEffect(()=>{let active=true;fetch("/api/auth/me",{cache:"no-store",credentials:"include"}).then(r=>{if(active)setAuth(r.ok?"signed-in":"guest");}).catch(()=>{if(active)setAuth("guest");});return()=>{active=false;};},[]);
  useEffect(()=>{let active=true;fetch("/api/transport/offers?kind=DRIVING_LICENSE",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(result=>{const item=result?.success&&Array.isArray(result.data)?result.data[0]:null;if(active&&item)setOffer(item);}).catch(()=>{});return()=>{active=false;};},[]);
  const [name,setName]=useState("");
  const [countryCode,setCountryCode]=useState("966");
@@ -57,7 +62,7 @@ export default function InternationalLicenseForm(){
  const setEye=(eye:string)=>setEyes(current=>current.includes(eye)?current.filter(x=>x!==eye):[...current,eye]);
  async function addToCart(goToCart:boolean){
    if(busy)return;
-   if(!(await requireCustomerSession("/international-driving-license")))return;
+   if(auth!=="signed-in"||!(await requireCustomerSession("/international-driving-license")))return;
    setError("");setNotice("");
    if(!name.trim()||name.trim().length<2||!phone.trim()||!/^\d{6,15}$/.test(phone.trim())||
       !height.trim()||!/^\d{2,3}(\.\d{1,2})?$/.test(height.trim())||eyes.length===0||
@@ -88,20 +93,25 @@ export default function InternationalLicenseForm(){
       deliveryLink:deliveryLocation.trim(),durationYears:"1",
       passportDocumentId:ids.PASSPORT!,localLicenseDocumentId:ids.LOCAL_LICENSE!,portraitDocumentId:ids.PORTRAIT!
     };
+    const registered=await fetch("/api/license-cart-application",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({application})});
+    const registration=await registered.json().catch(()=>null);
+    if(!registered.ok||!registration?.success||typeof registration.reference!=="string")
+      throw Error(registration?.message||"تعذر تسجيل طلب الرخصة في النظام.");
+    application.requestReference=registration.reference;
     const key="arees-loop-cart-v1",serviceId="international-driving-license-1";
     const raw=JSON.parse(localStorage.getItem(key)||"[]");
     const prior=Array.isArray(raw)?raw.filter((x:unknown)=>{
       return x!==null&&typeof x==="object"&&"serviceId" in x&&(x as {serviceId?:string}).serviceId!==serviceId;
     }):[];
     // ONLY metadata and opaque private document IDs are stored in the browser.
-    localStorage.setItem(key,JSON.stringify([...prior,{
-      serviceId,ownerId,quantity:1,itemType:"DRIVING_LICENSE",title:"رخصة القيادة الدولية",
-      durationYears:1,unitPriceSar:offer?.amountSar??199,imageUrl:"/Image/social/arees-international-driving-license.webp",application
-    }]));
+    const savedItem={serviceId,ownerId,quantity:1,itemType:"DRIVING_LICENSE" as const,title:"رخصة القيادة الدولية",
+      durationYears:1,unitPriceSar:offer?.amountSar??199,imageUrl:"/Image/social/arees-international-driving-license.webp",application};
+    localStorage.setItem(key,JSON.stringify([...prior,savedItem]));
     uploadedDocumentIds=[];
     window.dispatchEvent(new Event("arees-cart-updated"));
-    setNotice("تم حفظ نموذج الرخصة والمستندات الخاصة في السلة؛ لم يتم الدفع أو تأكيد الإصدار.");
-    if(goToCart)window.location.assign("/cart");
+    setCartItem(savedItem);setAdded(true);setCheckoutOpen(goToCart);
+    setNotice("✓ تمت إضافة طلب الرخصة إلى السلة بنجاح.");
+    window.requestAnimationFrame(()=>document.getElementById("license-form")?.scrollIntoView({behavior:"smooth",block:"start"}));
    }catch(err){await Promise.all(uploadedDocumentIds.map(id=>fetch("/api/license-documents",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({documentId:id}),credentials:"include"}).catch(()=>null)));setError(err instanceof Error?err.message:"تعذر حفظ طلب الرخصة. لم تتم إضافته للسلة.");}
    finally{setBusy(false);}
  }
@@ -124,7 +134,7 @@ export default function InternationalLicenseForm(){
        <p className="mt-2 text-xs font-bold">{offer?.destination||"سنة واحدة"}</p>
        <p className="mt-3 text-sm font-black text-[#977121]">{offer?.amountSar??199} ر.س {offer?.priceUnit||"شامل التوصيل · سنة واحدة"}</p>
        <p className="mt-1 text-[11px] text-[#0D3B34]/70">مدة الصلاحية: سنة واحدة</p>
-       <button type="button" onClick={()=>void addToCart(false)} disabled={busy} className="mt-4 w-full rounded-xl bg-[#0D3B34] px-4 py-3 text-sm font-black text-white disabled:opacity-50">{busy?"جارٍ رفع المستندات...":"أضف العرض للسلة"}</button>
+       <button type="button" onClick={()=>{if(auth!=="signed-in"){window.location.assign("/login?next=%2Finternational-driving-license");return;}document.getElementById("license-form")?.scrollIntoView({behavior:"smooth",block:"start"});}} className="mt-4 w-full rounded-xl bg-[#0D3B34] px-4 py-3 text-sm font-black text-white">{added?"✓ الطلب في السلة — متابعة":"أضف للسلة"}</button>
       </div>
       <div className="mt-3 rounded-[18px] border border-white/15 bg-white/10 p-4">
        <h2 className="font-black text-[#E5C17B]">المتطلبات الأساسية</h2>
@@ -144,9 +154,27 @@ export default function InternationalLicenseForm(){
     <section id="license-form" className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-5 shadow-sm sm:p-8">
      <p className="text-xs font-black tracking-widest text-[#B08A35]">AREES LOOP · INTERNATIONAL DRIVING PERMIT</p>
      <h2 className="mt-3 text-2xl font-black">نموذج طلب الرخصة الدولية</h2>
-     <p className="mt-2 text-sm leading-7 text-[#0D3B34]/70">يمكنك استعراض المتطلبات وتعبئة البيانات بحرية. يُطلب تسجيل الدخول فقط عند الضغط على «أضف للسلة» أو «اشترِ الآن».</p>
+     <p className="mt-2 text-sm leading-7 text-[#0D3B34]/70">سجّل الدخول أولاً، ثم أكمل البيانات والمستندات. بعد الإضافة للسلة يمكنك الانتقال مباشرة إلى التحويل البنكي.</p>
      {error&&<p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}
      {notice&&<p role="status" className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{notice}</p>}
+     {auth==="checking"?<div role="status" className="mt-6 rounded-2xl bg-[#F7F3E8] p-6 text-sm">جارٍ التحقق من تسجيل الدخول...</div>:
+      auth==="guest"?<div className="mt-6 space-y-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFF9E8] p-6 text-center">
+       <h3 className="text-lg font-black">سجّل الدخول قبل تعبئة طلب الرخصة</h3>
+       <p className="text-sm leading-7">حتى لا تفقد بياناتك أو تضطر لإعادة رفع المستندات بعد تسجيل الدخول.</p>
+       <Link href="/login?next=%2Finternational-driving-license" className="inline-flex rounded-xl bg-[#0D3B34] px-6 py-3 font-bold text-white">تسجيل الدخول والمتابعة</Link>
+      </div>:
+      added&&cartItem?<div className="mt-6 space-y-4" role="status">
+       <div className="rounded-2xl border border-[#9ABA88] bg-[#EFF8EC] p-6 text-center">
+        <div aria-hidden="true" className="text-4xl text-[#20713D]">✓</div>
+        <h3 className="mt-2 text-xl font-black text-[#155A32]">تمت إضافة طلب الرخصة إلى السلة بنجاح</h3>
+        <p className="mt-2 text-sm leading-7">تم حفظ البيانات والمستندات الخاصة، ويمكنك الآن إكمال التحويل البنكي. لا يبدأ إصدار الرخصة قبل اعتماد السداد.</p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+         <button type="button" onClick={()=>setCheckoutOpen(true)} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white">اشترِ الآن — التحويل البنكي</button>
+         <Link href="/cart" className="rounded-xl border border-[#B9974A] bg-white px-5 py-3 text-sm font-bold">عرض السلة</Link>
+        </div>
+       </div>
+       {checkoutOpen&&<CartBankCheckout items={[cartItem]} couponCode="" total={offer?.amountSar??199} pointsDiscount={0}/>}
+      </div>:
       <form onSubmit={submit} className="mt-6 grid gap-5 sm:grid-cols-2">
        <label className={label}>اسم مقدم الطلب *<input className={style} required minLength={2} maxLength={100} value={name} onChange={e=>setName(e.target.value)} autoComplete="name"/></label>
        <div className="grid grid-cols-[minmax(0,1fr)_130px] gap-3"><label className={label}>رقم الجوال *<input className={style} required inputMode="tel" pattern="[0-9]{6,15}" maxLength={15} value={phone} onChange={e=>setPhone(e.target.value.replace(/[^0-9]/g,""))}/></label><label className={label}>مفتاح الدولة<select className={style} value={countryCode} onChange={e=>setCountryCode(e.target.value)}>{phoneCodes.map(([v,txt])=><option key={v} value={v}>{txt}</option>)}</select></label>{countryCode==="other"&&<input className={style} inputMode="numeric" value={otherCode} onChange={e=>setOtherCode(e.target.value.replace(/\D/g,""))} placeholder="المفتاح" maxLength={4}/>}</div>
@@ -166,7 +194,7 @@ export default function InternationalLicenseForm(){
         <button disabled={busy} type="button" onClick={()=>void addToCart(false)} className="rounded-xl bg-[#0D3B34] px-5 py-3.5 text-sm font-black text-white disabled:opacity-50">{busy?"جارٍ رفع المستندات...":"أضف للسلة"}</button>
         <button disabled={busy} type="submit" className="rounded-xl border border-[#B99C59] px-5 py-3.5 text-sm font-black disabled:opacity-50">اشترِ الآن</button>
        </div>
-      </form>
+      </form>}
     </section>
    </div>
   </div>
