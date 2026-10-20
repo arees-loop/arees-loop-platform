@@ -21,9 +21,10 @@ export async function GET(req:NextRequest){
  const session=await staff();if(!session)return fail("غير مصرح.",403);
  const reference=req.nextUrl.searchParams.get("reference");
  const download=req.nextUrl.searchParams.get("receipt")==="true";
+ const preview=download&&req.nextUrl.searchParams.get("preview")==="true";
  try{
   if(download){
-   if(!reference)return fail("مرجع غير موجود.");
+   if(!reference||!/^CART-[0-9a-f-]{36}$/.test(reference))return fail("مرجع التحويل غير صالح.");
    const order=await prisma.auditLog.findFirst({where:{entityType:TYPE,entityId:reference,action:CREATED}});
    if(!order)return fail("طلب غير موجود.",404);
    const receipt=await prisma.auditLog.findFirst({where:{entityType:TYPE,entityId:reference,action:SUBMITTED},orderBy:[{createdAt:"desc"},{id:"desc"}]});
@@ -32,7 +33,15 @@ export async function GET(req:NextRequest){
    const blob=await get(pathname,{access:"private"});
    if(!blob||blob.statusCode!==200)return fail("الإيصال غير موجود.",404);
    const type=typeof data.contentType==="string"&&["application/pdf","image/jpeg","image/png","image/webp"].includes(data.contentType)?data.contentType:"application/octet-stream";
-   return new Response(blob.stream,{headers:{"Content-Type":type,"Content-Disposition":"attachment; filename=\"arees-bank-receipt\"","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox"}});
+   if(!["application/pdf","image/jpeg","image/png","image/webp"].includes(type))return fail("لا يمكن عرض هذه الصيغة بأمان.",415);
+   const ext=type==="application/pdf"?"pdf":type==="image/png"?"png":type==="image/webp"?"webp":"jpg";
+   return new Response(blob.stream,{headers:{
+    "Content-Type":type,
+    "Content-Disposition":(preview?"inline":"attachment")+'; filename="arees-bank-receipt.'+ext+'"',
+    "Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff",
+    "Referrer-Policy":"no-referrer","X-Frame-Options":"SAMEORIGIN",
+    "Content-Security-Policy":"default-src 'none'; sandbox"
+   }});
   }
   const orders=await prisma.auditLog.findMany({where:{entityType:TYPE,action:CREATED},orderBy:{createdAt:"desc"},take:100,select:{id:true,entityId:true,userId:true,afterData:true,createdAt:true}});
   const references=orders.map(x=>x.entityId).filter((x):x is string=>!!x);
