@@ -70,12 +70,13 @@ async function fetchRows(){
   const status=custom==="CANCELED"&&!verified?"CANCELED":
    verified&&["EXECUTING","DONE"].includes(custom)?custom:verified?"PAID":"NEW";
   const note=ev.find(x=>x.action==="NOTES_UPDATED");
-  return {id:ref,reference:ref,kind:"DRIVING_LICENSE" as const,customerName:String(info.name||[user?.firstName,user?.lastName].filter(Boolean).join(" ")||"عميل"),
-   customerEmail:user?.email||null,phone:String(info.phone||user?.phone||""),createdAt:d.createdAt.toISOString(),
+  const edited=obj(ev.find(x=>x.action==="DETAILS_UPDATED")?.afterData);
+  return {id:ref,reference:ref,kind:"DRIVING_LICENSE" as const,customerName:String(edited.name||info.name||[user?.firstName,user?.lastName].filter(Boolean).join(" ")||"عميل"),
+   customerEmail:user?.email||null,phone:String(edited.phone||info.phone||user?.phone||""),createdAt:d.createdAt.toISOString(),
    status,priceSar:Number(info.priceSar||199),amountSar:payment?.amountSar??Number(info.priceSar||199),
    bankReference:payment?.reference||null,bankStatus,bankVerified:verified,hasVoucher:!!payment&&voucherSet.has(payment.reference),
-   notes:String(obj(note?.afterData).notes||""),deliveryAddress:String(info.deliveryAddress||""),
-   deliveryLink:String(info.deliveryLink||""),eyeColor:String(info.eyeColor||""),height:String(info.height||""),
+   notes:String(obj(note?.afterData).notes||""),deliveryAddress:String(edited.deliveryAddress??info.deliveryAddress??""),
+   deliveryLink:String(edited.deliveryLink??info.deliveryLink??""),eyeColor:String(edited.eyeColor??info.eyeColor??""),height:String(edited.height??info.height??""),
    emailStatus:emailMap.get(ref)||"UNKNOWN",email:user?.email||null,
    history:ev.slice(0,30).map(x=>({action:x.action,status:String(obj(x.afterData).status||""),
     notes:String(obj(x.afterData).notes||""),createdAt:x.createdAt.toISOString()}))}
@@ -98,6 +99,28 @@ export async function PATCH(req:NextRequest){
  try{
   const rows=await fetchRows(),current=rows.find(x=>x.reference===ref);
   if(!current)return fail("الطلب غير موجود.",404);
+  if(body.action==="DETAILS"){
+   if(current.bankVerified)return fail("بعد اعتماد السداد لا يمكن تعديل بيانات الطلب الأصلية؛ أضف ملاحظة تنفيذية بدلاً من ذلك.",409);
+   const details=body.details&&typeof body.details==="object"&&!Array.isArray(body.details)?
+    body.details as Record<string,unknown>:{};
+   const name=typeof details.name==="string"?details.name.trim():"";
+   const phone=typeof details.phone==="string"?details.phone.trim():"";
+   const height=typeof details.height==="string"?details.height.trim():"";
+   const eyeColor=typeof details.eyeColor==="string"?details.eyeColor.trim():"";
+   const deliveryAddress=typeof details.deliveryAddress==="string"?details.deliveryAddress.trim():"";
+   const deliveryLink=typeof details.deliveryLink==="string"?details.deliveryLink.trim():"";
+   if(name.length<2||name.length>100||!/^\\+?\\d{8,17}$/.test(phone)||height.length>8||
+    eyeColor.length>80||deliveryAddress.length>300||
+    (deliveryLink&&(!deliveryLink.startsWith("https://")||deliveryLink.length>500)))
+    return fail("تأكد من الاسم والهاتف وعنوان التوصيل والرابط الصحيح.");
+   const updated={name,phone,height,eyeColor,deliveryAddress,deliveryLink};
+   await prisma.auditLog.create({data:{entityType:workflow,entityId:ref,userId:session.user.id,
+    action:"DETAILS_UPDATED",
+    beforeData:{name:current.customerName,phone:current.phone,height:current.height,
+     eyeColor:current.eyeColor,deliveryAddress:current.deliveryAddress,deliveryLink:current.deliveryLink},
+    afterData:updated}});
+   return NextResponse.json({success:true,message:"تم حفظ تعديل بيانات الطلب مع الاحتفاظ بسجل التغييرات."},{headers:h});
+  }
   if(body.action==="NOTES"){
    const notes=typeof body.notes==="string"?body.notes.trim():"";
    if(notes.length>2500)return fail("الملاحظات لا تتجاوز 2500 حرف.");
