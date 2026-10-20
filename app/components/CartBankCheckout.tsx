@@ -79,7 +79,6 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
     <p className="text-sm font-bold">مرجع التحويل: <span dir="ltr">{order.reference}</span></p>
     <p className="font-black">المبلغ المطلوب: {money(order.amountSar)}</p>
     <div className="flex flex-wrap gap-2">
-     <a href={"/cart/documents/quote?reference="+encodeURIComponent(order.reference)} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#D4AF37] px-3 py-2 text-xs font-bold">عرض السعر PDF</a>
      {order.status==="CART_BANK_VERIFIED"&&<a href={"/cart/documents/invoice?reference="+encodeURIComponent(order.reference)} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#D4AF37] px-3 py-2 text-xs font-bold">الفاتورة بعد السداد</a>}
      {voucherAvailable&&<a href={"/api/cart/service-voucher?download=true&reference="+encodeURIComponent(order.reference)} className="rounded-lg border border-[#D4AF37] px-3 py-2 text-xs font-bold">تنزيل الفاوتشر / ملف الخدمة</a>}
     </div>
