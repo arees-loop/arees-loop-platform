@@ -94,7 +94,7 @@ export default function AdminNotificationCenter({
  useEffect(()=>{
    if(!identityKey)return;
    initialized.current=false;baseline.current=null;
-   try{const preference=window.localStorage.getItem(soundPreferenceKey)==="true";enabledRef.current=preference;setEnabled(preference);}catch{}
+   try{const preference=window.localStorage.getItem(soundPreferenceKey)==="true";enabledRef.current=preference;void Promise.resolve().then(()=>setEnabled(preference));}catch{}
    void refresh();
    const timer=window.setInterval(()=>{void refresh()},45_000);
    const focus=()=>{void refresh()};
