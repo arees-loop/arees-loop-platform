@@ -4,6 +4,7 @@ import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { findBankTransferNotes } from "@/lib/bank-transfer-notes";
+import {validateLicenseCoupon} from "@/lib/license-cart-coupon";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const TYPE = "CART_BANK_CHECKOUT";
@@ -73,7 +74,11 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
  const code=typeof couponRaw==="string"?couponRaw.trim().toUpperCase():"";
  let discount=0;
  if(code){
-  if(licenses.length||services.length!==1)throw Error("الكوبون في السلة المختلطة أو الرخصة غير متاح حتى اكتمال دعم الخصم.");
+  if(licenses.length){
+   if(services.length)throw Error("الكوبون للسلة المختلطة غير متاح؛ اطلب الرخصة بشكل مستقل.");
+   discount=(await validateLicenseCoupon(code,total,userId)).discount;
+  }else{
+   if(services.length!==1)throw Error("الكوبون متاح حالياً لسلة تحتوي على خدمة واحدة.");
   const c=await prisma.coupon.findUnique({where:{code}});
   const svc=found[0],now=new Date();
   if(!c||!c.isActive||(c.startsAt&&c.startsAt>now)||(c.expiresAt&&c.expiresAt<now)||(c.maxUses!==null&&c.usedCount>=c.maxUses))throw Error("الكوبون غير صالح أو انتهت صلاحيته.");
@@ -86,6 +91,7 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
    if(used>=c.maxUsesPerUser)throw Error("تم استنفاد عدد استخدامات الكوبون لهذا الحساب.");
   }
   discount=round(Math.min(total,c.discountType==="PERCENTAGE"?total*Number(c.discountValue)/100:Number(c.discountValue),c.maxDiscountAmount===null?total:Number(c.maxDiscountAmount)));
+  }
  }
  return {rows:savedRows,total,discount,amountSar:round(total-discount),coupon:code||null};
 }
