@@ -1,6 +1,7 @@
 "use client";
 import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 import Link from "next/link";
+import AreesServiceActions from "@/app/components/AreesServiceActions";
 import {useEffect,useState,type FormEvent} from "react";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
 import {storeCustomerClaim} from "@/lib/customer-request-claims";
@@ -31,6 +32,7 @@ export default function RequestServicePage({kind}:{kind:Kind}){
  const matchingVisas=offers.filter(o=>(o.destination||o.title).toLocaleLowerCase().includes(visaSearch.trim().toLocaleLowerCase())||o.title.toLocaleLowerCase().includes(visaSearch.trim().toLocaleLowerCase()));
  const offer=offers[index];
  if(visa&&!visaRequestOpen)return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-16 pt-28 text-[#0D3B34] md:px-8 md:pt-32"><section className="mx-auto max-w-7xl">
+ <AreesServiceActions kind="VISA" title="التأشيرات" href="/visas" className="mb-4" />
  <div className="overflow-hidden rounded-3xl"><img src="/Image/hero/arees-visas-banner-v2.png" alt="خدمات التأشيرات - أريس لوب" className="h-auto w-full object-contain"/></div>
  <div className="my-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold text-[#B38A25]">AREES LOOP · VISAS</p><h1 className="mt-2 text-3xl font-black">اختر وجهتك واطلب تأشيرتك</h1><p className="mt-2 text-sm text-[#49655D]">اختر الدولة ونوع التأشيرة، واطّلع على المتطلبات، ثم اضغط «إرسال طلب التأشيرة» وأكمل بياناتك. يراجع فريق أريس طلبك ويتواصل معك لتأكيد الإجراءات قبل الدفع.</p></div><input aria-label="البحث عن دولة أو تأشيرة" className={field+" max-w-md"} placeholder="ابحث عن الدولة أو نوع التأشيرة..." value={visaSearch} onChange={e=>setVisaSearch(e.target.value)}/></div>
  {offersError&&<p role="status" className="rounded-2xl bg-white p-6">تعذر تحميل التأشيرات حالياً. يمكنك تقديم طلب تأشيرة غير مدرجة.</p>}
