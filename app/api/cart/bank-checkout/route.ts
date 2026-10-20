@@ -118,7 +118,29 @@ export async function GET(req:NextRequest){
    const voucherRefs=new Set(vouchers.map(x=>x.entityId));
    const last=new Map<string,string>();
    for(const event of actions)if(event.entityId&&!last.has(event.entityId))last.set(event.entityId,event.action);
-   return NextResponse.json({success:true,orders:orders.map(o=>{const data=jsonData(o.afterData);return {reference:o.entityId,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,status:last.get(o.entityId||"")||CREATED,hasVoucher:!!o.entityId&&voucherRefs.has(o.entityId)};})},{headers:{"Cache-Control":"private, no-store"}});
+   const licenseRecords=await prisma.auditLog.findMany({where:{
+     userId:session.user.id,entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_FORM_ADDED_TO_CART"
+    },orderBy:[{createdAt:"desc"},{id:"desc"}],take:100,
+    select:{entityId:true,createdAt:true,afterData:true}});
+   const linked=new Map<string,string>();
+   for(const o of orders){
+    if(!o.entityId)continue;
+    const d=jsonData(o.afterData),lines=Array.isArray(d.rows)?d.rows:[];
+    for(const line of lines){
+     const ref=jsonData(jsonData(line).application).requestReference;
+     if(typeof ref==="string"&&ref&&!linked.has(ref))linked.set(ref,o.entityId);
+    }
+   }
+   const licenseApplications=licenseRecords.filter(x=>!!x.entityId).map(x=>{
+    const d=jsonData(x.afterData),bankReference=linked.get(x.entityId||"")||null;
+    return {reference:x.entityId,createdAt:x.createdAt,priceSar:Number(d.priceSar||199),
+     bankReference,status:bankReference?last.get(bankReference)||CREATED:"AWAITING_PAYMENT"};
+   });
+   return NextResponse.json({success:true,licenseApplications,orders:orders.map(o=>{
+    const data=jsonData(o.afterData);
+    return {reference:o.entityId,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,
+      status:last.get(o.entityId||"")||CREATED,hasVoucher:!!o.entityId&&voucherRefs.has(o.entityId)};
+   })},{headers:{"Cache-Control":"private, no-store"}});
   }
   const reference=req.nextUrl.searchParams.get("reference");
   if(reference){
