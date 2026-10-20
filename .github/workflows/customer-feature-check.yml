@@ -5,6 +5,7 @@ on:
     branches:
       - feature/customer-experience-r07-r09-r10-20261012
       - feature/government-partner-join-20261013
+      - feature/cart-bank-checkout-20261020
   workflow_dispatch:
 
 permissions:
