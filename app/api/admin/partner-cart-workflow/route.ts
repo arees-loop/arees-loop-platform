@@ -81,7 +81,26 @@ export async function PATCH(req:NextRequest){
 
   const booking=await prisma.booking.findUnique({where:{reference},select:{id:true,status:true}});
   if(!booking)return fail("الحجز غير موجود.",404);
-  if(action==="CUSTOMER")return fail("تعديل بيانات حجز مؤكد يحتاج مسار مراجعة منفصل.",409);
+  if(action==="CUSTOMER"){
+   if(booking.status!=="PENDING")return fail("لا يمكن تعديل بيانات العميل بعد اعتماد أو بدء تنفيذ الحجز.",409);
+   const name=typeof body?.name==="string"?body.name.trim():"";
+   const phone=typeof body?.phone==="string"?body.phone.trim():"";
+   if(name.length<2||name.length>100||(phone&&!/^\\+?[0-9]{6,16}$/.test(phone)))
+    return fail("تحقق من اسم العميل ورقم الهاتف.");
+   await prisma.$transaction(async tx=>{
+    const existing=await tx.booking.findUnique({where:{id:booking.id},
+     select:{customerName:true,customerPhone:true,status:true}});
+    if(!existing||existing.status!=="PENDING")throw Error("STALE_BOOKING_STATUS");
+    const changed=await tx.booking.updateMany({where:{id:booking.id,status:"PENDING"},
+      data:{customerName:name,customerPhone:phone||null}});
+    if(changed.count!==1)throw Error("STALE_BOOKING_STATUS");
+    await tx.auditLog.create({data:{entityType:"PARTNER_BOOKING_WORKFLOW",entityId:reference,
+     userId:s.user.id,action:"CUSTOMER_UPDATED",
+     beforeData:{name:existing.customerName,phone:existing.customerPhone},
+     afterData:{name,phone:phone||null}}});
+   });
+   return NextResponse.json({success:true,message:"تم تعديل بيانات العميل وحفظ سجل المراجعة."},{headers});
+  }
   if(action==="NOTES"){
    const notes=typeof body?.notes==="string"?body.notes.trim():"";
    if(notes.length>2500)return fail("الملاحظات طويلة جداً.");
