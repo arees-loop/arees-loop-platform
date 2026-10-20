@@ -11,6 +11,7 @@ on:
       - fix/mobile-rewards-nav-seal-20261020
       - fix/rewards-bottom-nav-tight-spacing-20261020
       - fix/rewards-pill-background-width-20261020
+      - fix/rewards-original-spacing-inside-pill-20261020
   pull_request:
     branches:
       - codex/license-card-layout-20261020
