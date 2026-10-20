@@ -61,7 +61,7 @@ export async function POST(req:NextRequest){
      <p><strong>اسم العميل:</strong> ${safe(a.name.trim())}</p>
      <p><strong>الجوال:</strong> ${safe("+"+a.countryCode+a.phone)}</p>
      <p>للمتابعة افتح <a href="https://www.areesloop.com/admin/cart-bank-payments">تحويلات السلة</a>.</p>
-     <p style="color:#777;font-size:12px">لا تدرج صور الهوية أو المستندات الحساسة في البريد.</p></main>`});
+     <p style="color:#777;font-size:12px">لا تدرج صور الهوية أو المستندات الحساسة في البريد.</p></main>`}).catch((error:unknown)=>{console.error("License admin email failed",error instanceof Error?error.name:"UNKNOWN");return {sent:false};});
    sent=result.sent;
   }
   await prisma.auditLog.create({data:{userId:session.user.id,entityType:TYPE,entityId:reference,
