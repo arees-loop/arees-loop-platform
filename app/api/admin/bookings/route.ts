@@ -1,7 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {getCurrentSession} from "@/lib/session";
 import {prisma} from "@/lib/prisma";
-import {getPartnerCartRows} from "@/lib/partner-cart-bookings";
+import {getPartnerCartRows,safeObject} from "@/lib/partner-cart-bookings";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 export async function GET(req:NextRequest){
@@ -22,8 +22,15 @@ export async function GET(req:NextRequest){
   prisma.booking.groupBy({by:["status"],_count:{_all:true}}),
   getPartnerCartRows()
  ]);
+ const bookingNotes=bookings.length?await prisma.auditLog.findMany({where:{
+  entityType:"PARTNER_BOOKING_WORKFLOW",entityId:{in:bookings.map(b=>b.reference)},action:"NOTES_UPDATED"},
+  orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,afterData:true}}):[];
+ const notesByRef=new Map<string,string>();
+ for(const entry of bookingNotes)if(entry.entityId&&!notesByRef.has(entry.entityId))
+  notesByRef.set(entry.entityId,String(safeObject(entry.afterData).notes||""));
  const real=bookings.map(b=>({...b,source:"BOOKING" as const,totalAmount:Number(b.totalAmount),
-  createdAt:b.createdAt.toISOString(),serviceDate:b.serviceDate?.toISOString()||null}));
+  createdAt:b.createdAt.toISOString(),serviceDate:b.serviceDate?.toISOString()||null,
+  notes:notesByRef.get(b.reference)||""}));
  const combined=[...real,...partnerCart].filter(b=>status==="ALL"||b.status===status)
   .sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,250);
  const allCounts=new Map<string,number>();
