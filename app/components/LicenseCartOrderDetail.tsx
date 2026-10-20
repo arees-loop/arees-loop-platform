@@ -10,11 +10,14 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
  const [order,setOrder]=useState<Order|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(true);
  const [busy,setBusy]=useState(false),[selectedStatus,setSelectedStatus]=useState(""),[notes,setNotes]=useState("");
  const [file,setFile]=useState<File|null>(null);
+ const [edit,setEdit]=useState({name:"",phone:"",height:"",eyeColor:"",deliveryAddress:"",deliveryLink:""});
  const load=useCallback(async()=>{
   try{
    const r=await fetch("/api/admin/license-cart-workflow?reference="+encodeURIComponent(reference),{credentials:"include",cache:"no-store"});
    const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر تحميل الطلب.");
-   setOrder(d.order);setSelectedStatus(d.order.status);setNotes(d.order.notes||"");setError("");
+   setOrder(d.order);setSelectedStatus(d.order.status);setNotes(d.order.notes||"");
+   setEdit({name:d.order.customerName||"",phone:d.order.phone||"",height:d.order.height||"",
+    eyeColor:d.order.eyeColor||"",deliveryAddress:d.order.deliveryAddress||"",deliveryLink:d.order.deliveryLink||""});setError("");
   }catch(e){setError(e instanceof Error?e.message:"تعذر تحميل الطلب.")}
   finally{setLoading(false)}
  },[reference]);
@@ -39,6 +42,17 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
    const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر مراجعة الإيصال.");
    setNotice(d.message);await load();onChange();
   }catch(e){setError(e instanceof Error?e.message:"تعذر مراجعة الإيصال.")}finally{setBusy(false)}
+ }
+ async function saveDetails(){
+  if(!order||busy||order.bankVerified)return;
+  setBusy(true);setError("");setNotice("");
+  try{
+   const r=await fetch("/api/admin/license-cart-workflow",{method:"PATCH",credentials:"include",
+    headers:{"Content-Type":"application/json"},body:JSON.stringify({reference,action:"DETAILS",details:edit})});
+   const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر حفظ بيانات الطلب.");
+   setNotice(d.message);await load();onChange();
+  }catch(e){setError(e instanceof Error?e.message:"تعذر تعديل بيانات الطلب.")}
+  finally{setBusy(false)}
  }
  async function upload(){
   if(!order?.bankReference||!file||busy)return;
@@ -76,6 +90,17 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
     {order.deliveryLink?.startsWith("https://")&&<a className="text-xs font-bold underline sm:col-span-2" href={order.deliveryLink} target="_blank" rel="noopener noreferrer">فتح موقع التوصيل ↗</a>}
     <p className="sm:col-span-2">حالة إشعار البريد: <b>{order.emailStatus==="LICENSE_CART_EMAIL_SENT"?"تم قبول الإرسال":order.emailStatus==="LICENSE_CART_EMAIL_FAILED"?"فشل الإرسال":"لم يتم التأكد"}</b></p>
    </div>
+   <section className="rounded-2xl border border-[#D4AF37]/35 p-5">
+    <h3 className="text-base font-black">تعديل بيانات طلب العميل</h3>
+    <p className="mt-2 text-xs text-[#66766A]">تُحفظ التعديلات كسجل إضافي ولا تمس المستندات الأصلية. يتوقف تعديل بيانات الهوية والتواصل بعد اعتماد السداد.</p>
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+     {([{key:"name",title:"اسم العميل"},{key:"phone",title:"رقم الهاتف"},{key:"height",title:"الطول"},{key:"eyeColor",title:"لون العين"},{key:"deliveryAddress",title:"عنوان التوصيل"},{key:"deliveryLink",title:"رابط موقع التوصيل"}] as const).map(v=>
+      <label key={v.key} className="text-xs font-bold">{v.title}<input disabled={busy||order.bankVerified}
+       className={field+" mt-2 disabled:bg-[#F2F2EF]"} value={edit[v.key]} onChange={e=>setEdit(x=>({...x,[v.key]:e.target.value}))}/></label>
+     )}
+    </div>
+    <button type="button" disabled={busy||order.bankVerified} onClick={()=>void saveDetails()} className="mt-4 rounded-xl bg-[#0D3B34] px-4 py-3 text-xs font-bold text-white disabled:opacity-40">حفظ تعديل بيانات الطلب</button>
+   </section>
    <section className="rounded-2xl border border-[#D4AF37]/35 p-5">
     <h3 className="text-base font-black">مستندات العميل الثلاثة — خاصة بالإدارة</h3>
     <div className="mt-3 flex flex-wrap gap-2">
