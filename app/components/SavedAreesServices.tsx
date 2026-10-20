@@ -15,7 +15,7 @@ export default function SavedAreesServices(){
   }catch{setError("تعذر عرض خدمات أريس المحفوظة حالياً.");}
   finally{setLoading(false);}
  },[]);
- useEffect(()=>{void refresh();window.addEventListener(savedExperiencesEvent,refresh);return()=>window.removeEventListener(savedExperiencesEvent,refresh);},[refresh]);
+ useEffect(()=>{void Promise.resolve().then(refresh);window.addEventListener(savedExperiencesEvent,refresh);return()=>window.removeEventListener(savedExperiencesEvent,refresh);},[refresh]);
  async function remove(kind:string){
   if(busy)return;setBusy(kind);
   try{
