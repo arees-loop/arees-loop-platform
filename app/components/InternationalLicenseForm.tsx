@@ -96,7 +96,7 @@ export default function InternationalLicenseForm(){
     // ONLY metadata and opaque private document IDs are stored in the browser.
     localStorage.setItem(key,JSON.stringify([...prior,{
       serviceId,ownerId,quantity:1,itemType:"DRIVING_LICENSE",title:"رخصة القيادة الدولية",
-      durationYears:1,unitPriceSar:199,imageUrl:"/Image/social/arees-international-driving-license.webp",application
+      durationYears:1,unitPriceSar:offer?.amountSar??199,imageUrl:"/Image/social/arees-international-driving-license.webp",application
     }]));
     uploadedDocumentIds=[];
     window.dispatchEvent(new Event("arees-cart-updated"));
