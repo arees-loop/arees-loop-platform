@@ -9,7 +9,8 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
  const [banks,setBanks]=useState<Bank[]>([]);
  const [bankId,setBankId]=useState("");
  const [order,setOrder]=useState<Order|null>(null);
- const licenseRequestReference=items.find(item=>item.itemType==="DRIVING_LICENSE")?.application?.requestReference;
+ const rawLicenseRequestReference=items.find(item=>item.itemType==="DRIVING_LICENSE")?.application?.requestReference;
+ const licenseRequestReference=typeof rawLicenseRequestReference==="string"?rawLicenseRequestReference:"";
  const [file,setFile]=useState<File|null>(null);
  const [voucherAvailable,setVoucherAvailable]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
