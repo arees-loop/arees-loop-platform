@@ -85,7 +85,7 @@ export async function PATCH(req:NextRequest){
    if(booking.status!=="PENDING")return fail("لا يمكن تعديل بيانات العميل بعد اعتماد أو بدء تنفيذ الحجز.",409);
    const name=typeof body?.name==="string"?body.name.trim():"";
    const phone=typeof body?.phone==="string"?body.phone.trim():"";
-   if(name.length<2||name.length>100||(phone&&!/^\\+?[0-9]{6,16}$/.test(phone)))
+   if(name.length<2||name.length>100||(phone&&!/^\+?[0-9]{6,16}$/.test(phone)))
     return fail("تحقق من اسم العميل ورقم الهاتف.");
    await prisma.$transaction(async tx=>{
     const existing=await tx.booking.findUnique({where:{id:booking.id},
