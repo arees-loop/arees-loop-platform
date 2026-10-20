@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { get, put } from "@vercel/blob";
+import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { findBankTransferNotes } from "@/lib/bank-transfer-notes";
@@ -14,7 +14,6 @@ const REJECTED = "CART_BANK_REJECTED";
 const fail = (message:string,status=400) => NextResponse.json({success:false,message},{status,headers:{"Cache-Control":"private, no-store"}});
 const round = (n:number) => Math.round((n+Number.EPSILON)*100)/100;
 type Row = {serviceId:string;quantity:number;itemType?:"DRIVING_LICENSE";application?:Record<string,unknown>};
-type OrderData = {reference:string;amountSar:number;bankAccountId:string;rows:unknown[];coupon?:string|null};
 const jsonData = (x:unknown):Record<string,unknown> => x && typeof x==="object" && !Array.isArray(x) ? x as Record<string,unknown> : {};
 async function activeBanks(){
  const accounts=await prisma.bankTransferAccount.findMany({where:{active:true},orderBy:{createdAt:"desc"},select:{id:true,bankName:true,beneficiaryName:true,iban:true}});
@@ -32,7 +31,7 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
  const rows:Row[]=[];
  for(const x of items){
   const v=jsonData(x),serviceId=v.serviceId,quantity=v.quantity;
-  if(typeof serviceId!=="string"||serviceId.length>120||!Number.isInteger(quantity)||Number(quantity)<1||Number(quantity)>20) throw Error("الكمية أو الخدمة غير صالحة.");
+  if(typeof serviceId!=="string"||serviceId.length>120||typeof quantity!=="number"||!Number.isInteger(quantity)||quantity<1||Number(quantity)>20) throw Error("الكمية أو الخدمة غير صالحة.");
   rows.push({serviceId,quantity:Number(quantity),itemType:v.itemType==="DRIVING_LICENSE"?"DRIVING_LICENSE":undefined,application:jsonData(v.application)});
  }
  if(new Set(rows.map(r=>r.serviceId)).size!==rows.length)throw Error("توجد خدمات مكررة في السلة.");
@@ -63,7 +62,7 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
     countryCode:String(a.countryCode||"").slice(0,5),height:String(a.height||"").slice(0,8),
     eyeColor:String(a.eyeColor||"").slice(0,80),deliveryAddress:String(a.deliveryAddress||"").slice(0,300),
     deliveryLink:String(a.deliveryLink||"").slice(0,500),
-    passportDocumentId:a.passportDocumentId,localLicenseDocumentId:a.localLicenseDocumentId,portraitDocumentId:a.portraitDocumentId
+    passportDocumentId:String(a.passportDocumentId||""),localLicenseDocumentId:String(a.localLicenseDocumentId||""),portraitDocumentId:String(a.portraitDocumentId||"")
    }};
   }
   const s=found.find(x=>x.id===r.serviceId)!;
