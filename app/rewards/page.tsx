@@ -509,7 +509,7 @@ export default function RewardsPage() {
       </div>
 
       {/* MOBILE NAV */}
-      <nav aria-label="التنقل السريع للعميل" dir="rtl" className="rewards-mobile-nav fixed bottom-[calc(12px+env(safe-area-inset-bottom,0px))] right-3 z-[100] flex w-max max-w-[calc(100%-24px)] items-center justify-start gap-1 rounded-[20px] border border-white/80 bg-white/95 px-2 py-2 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
+      <nav aria-label="التنقل السريع للعميل" dir="rtl" className="rewards-mobile-nav fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[100] mx-auto flex w-[calc(100%-24px)] max-w-md items-center justify-start gap-1 rounded-[20px] border border-white/80 bg-white/95 px-2 py-2 shadow-[0_12px_40px_rgba(13,59,52,0.12)] backdrop-blur-2xl lg:hidden">
         <MobileNavItem
           href="/discover"
           icon={<CompassIcon />}
