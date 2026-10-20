@@ -9,6 +9,7 @@ on:
       - fix/license-form-mail-alerts-20261020
       - feature/partner-cart-in-bookings-20261020
       - fix/mobile-rewards-nav-seal-20261020
+      - fix/rewards-bottom-nav-tight-spacing-20261020
   pull_request:
     branches:
       - codex/license-card-layout-20261020
