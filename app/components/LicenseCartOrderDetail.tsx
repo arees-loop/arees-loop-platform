@@ -76,6 +76,14 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
     {order.deliveryLink?.startsWith("https://")&&<a className="text-xs font-bold underline sm:col-span-2" href={order.deliveryLink} target="_blank" rel="noopener noreferrer">فتح موقع التوصيل ↗</a>}
     <p className="sm:col-span-2">حالة إشعار البريد: <b>{order.emailStatus==="LICENSE_CART_EMAIL_SENT"?"تم قبول الإرسال":order.emailStatus==="LICENSE_CART_EMAIL_FAILED"?"فشل الإرسال":"لم يتم التأكد"}</b></p>
    </div>
+   <section className="rounded-2xl border border-[#D4AF37]/35 p-5">
+    <h3 className="text-base font-black">مستندات العميل الثلاثة — خاصة بالإدارة</h3>
+    <div className="mt-3 flex flex-wrap gap-2">
+     {([{slot:"PASSPORT",title:"تحميل جواز السفر"},{slot:"LOCAL_LICENSE",title:"تحميل الرخصة المحلية"},{slot:"PORTRAIT",title:"تحميل الصورة الشخصية"}] as const).map(d=>
+      <a key={d.slot} className="rounded-xl border border-[#D4AF37]/50 px-3 py-2 text-xs font-bold" href={"/api/admin/license-cart-document?reference="+encodeURIComponent(reference)+"&slot="+d.slot}>{d.title}</a>
+     )}
+    </div>
+   </section>
    <div className="rounded-2xl border border-[#D4AF37]/35 p-5">
     <h3 className="text-base font-black">دورة الطلب</h3>
     <div className="mt-3 flex flex-wrap gap-2">{(["NEW","PAID","EXECUTING","DONE"] as const).map(st=><span key={st} className={"rounded-full border px-3 py-2 text-xs font-bold "+(order.status===st?"border-[#B89439] bg-[#FFF1C9]":st==="DONE"?"border-emerald-200":"border-[#E3DAC4]")}>{names[st]}</span>)}</div>
