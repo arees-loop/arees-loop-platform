@@ -1,5 +1,6 @@
 "use client";
 import {useCallback,useEffect,useState} from "react";
+import BankReceiptPreview from "@/app/components/BankReceiptPreview";
 type Order={reference:string;customerName:string;customerEmail:string|null;phone:string;status:string;priceSar:number;amountSar:number;
  bankReference:string|null;bankStatus:string|null;bankVerified:boolean;hasVoucher:boolean;notes:string;deliveryAddress:string;deliveryLink:string;
  eyeColor:string;height:string;emailStatus:string;createdAt:string;history:{action:string;status:string;notes:string;createdAt:string}[]};
@@ -127,7 +128,7 @@ export default function LicenseCartOrderDetail({reference,onClose,onChange}:{ref
      <p>حالة التحويل: <b>{names[order.bankStatus||""]||order.bankStatus||"لم يبدأ السداد"}</b></p>
      <div className="flex flex-wrap gap-2">
       {order.bankStatus==="CART_BANK_RECEIPT_SUBMITTED"&&<>
-       <a href={"/api/admin/cart-bank-payments?receipt=true&reference="+encodeURIComponent(order.bankReference)} className="rounded-xl border border-[#D4AF37] px-4 py-2 text-xs font-bold">تحميل إيصال التحويل</a>
+       <BankReceiptPreview reference={order.bankReference}/>
        <button disabled={busy} onClick={()=>void decide("VERIFY")} className="rounded-xl bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">اعتماد وصول المبلغ</button>
        <button disabled={busy} onClick={()=>void decide("REJECT")} className="rounded-xl border border-red-300 px-4 py-2 text-xs font-bold text-red-800 disabled:opacity-40">رفض الإيصال</button>
       </>}
