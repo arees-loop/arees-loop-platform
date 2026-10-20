@@ -95,7 +95,7 @@ export default function AdminNotificationCenter({
    if(!identityKey)return;
    initialized.current=false;baseline.current=null;
    try{const preference=window.localStorage.getItem(soundPreferenceKey)==="true";enabledRef.current=preference;void Promise.resolve().then(()=>setEnabled(preference));}catch{}
-   void refresh();
+   void Promise.resolve().then(refresh);
    const timer=window.setInterval(()=>{void refresh()},45_000);
    const focus=()=>{void refresh()};
    const visible=()=>{if(document.visibilityState==="visible")void refresh()};
