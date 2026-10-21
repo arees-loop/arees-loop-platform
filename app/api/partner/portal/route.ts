@@ -30,7 +30,7 @@ export async function GET(request:Request){
    prisma.partnerMember.findMany({where:{partnerId},include:{user:{select:{id:true,firstName:true,lastName:true,email:true,phone:true}}},orderBy:{createdAt:"asc"}}),
    prisma.agreement.findMany({where:{partnerId},orderBy:{createdAt:"desc"}})
   ]);
-  return NextResponse.json({success:true,dashboardSummary:(section==="dashboard"||section==="reports")?{bookings:allowed("bookings")?bookings.length:0,services:allowed("services")?services.length:0,sales:allowed("invoices")?bookings.reduce((sum,b)=>sum+Number(b.totalAmount||0),0):0,settlements:allowed("settlements")?settlements.reduce((sum,s)=>sum+Number(s.netAmount||0),0):0}:null,access:{bookings:allowed("bookings"),services:allowed("services"),canEditTradeName:canManagePartnerTeam(member.user.role)},partner:allowed("business")?{...partner,commissionRate:n(partner?.commissionRate),transferFee:n(partner?.transferFee),latitude:n(partner?.latitude),longitude:n(partner?.longitude)}:{id:partner?.id,tradeNameAr:partner?.tradeNameAr,legalNameAr:partner?.legalNameAr},services:allowed("services")?services.map(s=>({...s,basePrice:n(s.basePrice),vatRate:n(s.vatRate),finalPrice:n(s.finalPrice),bookingCount:s._count.bookings})):[],bookings:allowed("bookings")?bookings.map(b=>({...b,baseAmount:n(b.baseAmount),vatAmount:n(b.vatAmount),totalAmount:n(b.totalAmount)})):[],invoices:allowed("invoices")?invoices.map(i=>({...i,subtotal:n(i.subtotal),vatAmount:n(i.vatAmount),totalAmount:n(i.totalAmount)})):[],settlements:allowed("settlements")?settlements.map(s=>({...s,grossSales:n(s.grossSales),platformCommission:n(s.platformCommission),paymentFees:n(s.paymentFees),transferFees:n(s.transferFees),refunds:n(s.refunds),adjustments:n(s.adjustments),netAmount:n(s.netAmount)})):[],licenses:allowed("business")?licenses:[],members:[],agreements:allowed("business")?agreements.map(a=>({...a,commissionRate:n(a.commissionRate)})):[]});
+  return NextResponse.json({success:true,dashboardSummary:(section==="dashboard"||section==="reports")?{bookings:allowed("bookings")?bookings.length:0,services:allowed("services")?services.length:0,sales:allowed("invoices")?bookings.reduce((sum,b)=>sum+Number(b.totalAmount||0),0):0,settlements:allowed("settlements")?settlements.reduce((sum,s)=>sum+Number(s.netAmount||0),0):0}:null,access:{bookings:allowed("bookings"),services:allowed("services"),canEditTradeName:canManagePartnerTeam(member.user.role),canEditLegalName:canManagePartnerTeam(member.user.role)},partner:allowed("business")?{...partner,commissionRate:n(partner?.commissionRate),transferFee:n(partner?.transferFee),latitude:n(partner?.latitude),longitude:n(partner?.longitude)}:{id:partner?.id,tradeNameAr:partner?.tradeNameAr,legalNameAr:partner?.legalNameAr},services:allowed("services")?services.map(s=>({...s,basePrice:n(s.basePrice),vatRate:n(s.vatRate),finalPrice:n(s.finalPrice),bookingCount:s._count.bookings})):[],bookings:allowed("bookings")?bookings.map(b=>({...b,baseAmount:n(b.baseAmount),vatAmount:n(b.vatAmount),totalAmount:n(b.totalAmount)})):[],invoices:allowed("invoices")?invoices.map(i=>({...i,subtotal:n(i.subtotal),vatAmount:n(i.vatAmount),totalAmount:n(i.totalAmount)})):[],settlements:allowed("settlements")?settlements.map(s=>({...s,grossSales:n(s.grossSales),platformCommission:n(s.platformCommission),paymentFees:n(s.paymentFees),transferFees:n(s.transferFees),refunds:n(s.refunds),adjustments:n(s.adjustments),netAmount:n(s.netAmount)})):[],licenses:allowed("business")?licenses:[],members:[],agreements:allowed("business")?agreements.map(a=>({...a,commissionRate:n(a.commissionRate)})):[]});
  }catch(error){console.error("GET /api/partner/portal failed:",error);return NextResponse.json({success:false,message:"تعذر تحميل بيانات بوابة الشريك."},{status:500});}
 }
 
@@ -43,17 +43,24 @@ export async function PATCH(request: Request) {
   if (!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
   const member = await getActivePartnerMembership(session.user.id);
   if (!member) return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});
-  if (!canManagePartnerTeam(member.user.role)) return NextResponse.json({success:false,message:"ليس لديك صلاحية تعديل الاسم التجاري."},{status:403});
+  if (!canManagePartnerTeam(member.user.role)) return NextResponse.json({success:false,message:"ليس لديك صلاحية تعديل بيانات اسم المنشأة."},{status:403});
   const body: unknown = await request.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({success:false,message:"بيانات غير صالحة."},{status:400});
   const keys = Object.keys(body);
-  if (keys.length !== 1 || keys[0] !== "tradeNameAr") return NextResponse.json({success:false,message:"يمكن تعديل الاسم التجاري فقط."},{status:400});
-  const tradeNameAr = (body as Record<string,unknown>).tradeNameAr;
-  if (typeof tradeNameAr !== "string" || !tradeNameAr.trim() || tradeNameAr.trim().length > 160) return NextResponse.json({success:false,message:"أدخل اسماً تجارياً صالحاً (حتى 160 حرفاً)."},{status:400});
-  const partner = await prisma.partner.update({where:{id:member.partnerId},data:{tradeNameAr:tradeNameAr.trim()},select:{id:true,tradeNameAr:true,legalNameAr:true}});
+  if (keys.length !== 1 || !["tradeNameAr","legalNameAr"].includes(keys[0])) return NextResponse.json({success:false,message:"يمكن تعديل اسم واحد فقط في كل طلب."},{status:400});
+  const field = keys[0] as "tradeNameAr"|"legalNameAr";
+  const proposedName = (body as Record<string,unknown>)[field];
+  if (typeof proposedName !== "string" || !proposedName.trim() || proposedName.trim().length > 160) return NextResponse.json({success:false,message:"أدخل اسماً صالحاً (حتى 160 حرفاً)."},{status:400});
+  const previous = await prisma.partner.findUnique({where:{id:member.partnerId},select:{legalNameAr:true,tradeNameAr:true}});
+  if (!previous) return NextResponse.json({success:false,message:"المنشأة غير موجودة."},{status:404});
+  const partner = await prisma.$transaction(async(tx)=>{
+    const updated = await tx.partner.update({where:{id:member.partnerId},data:{[field]:proposedName.trim()},select:{id:true,tradeNameAr:true,legalNameAr:true}});
+    await tx.auditLog.create({data:{userId:session.user.id,action:"PARTNER_NAME_UPDATED",entityType:"Partner",entityId:member.partnerId,beforeData:{[field]:previous[field]},afterData:{[field]:updated[field]}}});
+    return updated;
+  });
   return NextResponse.json({success:true,partner});
  } catch(error) {
   console.error("PATCH /api/partner/portal failed:",error);
-  return NextResponse.json({success:false,message:"تعذر حفظ الاسم التجاري."},{status:500});
+  return NextResponse.json({success:false,message:"تعذر حفظ اسم المنشأة."},{status:500});
  }
 }
