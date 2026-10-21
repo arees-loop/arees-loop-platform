@@ -73,11 +73,11 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           {navVisible.guides !== false && (<Link href="/#tour-guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
           {navVisible.flights !== false && <Link href="/#travel-bookings" className="transition hover:text-[#D4AF37]">الطيران والبواخر</Link>}
           <div className="group relative">
-            <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">خدمات السفر والسياحة <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span></button>
+            <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">خدمات السفر <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span></button>
             <div className="invisible absolute right-1/2 top-[64px] w-60 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
               {navVisible.hotels !== false && <Link href="/hotels" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">الفنادق</Link>}
-              <Link href="/international-driving-license" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">الرخصة الدولية</Link>
               <Link href="/visas" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">التأشيرات</Link>
+              <Link href="/international-driving-license" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">رخصة القيادة الدولية</Link>
             </div>
           </div>
           {navVisible.partners !== false && (
@@ -164,10 +164,10 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           {navVisible.guides !== false && <Link href="/#tour-guides" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">المرشدون السياحيون</Link>}
           {navVisible.flights !== false && <Link href="/#travel-bookings" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">الطيران والبواخر</Link>}
           <details className="border-t border-[#D4AF37]/20 px-4 py-2">
-            <summary className="cursor-pointer py-2 font-bold">خدمات السفر والسياحة</summary>
+            <summary className="cursor-pointer py-2 font-bold">خدمات السفر</summary>
             {navVisible.hotels !== false && <Link href="/hotels" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">الفنادق</Link>}
-            <Link href="/international-driving-license" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">الرخصة الدولية</Link>
             <Link href="/visas" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">التأشيرات</Link>
+            <Link href="/international-driving-license" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">رخصة القيادة الدولية</Link>
           </details>
           {navVisible.partners !== false && <Link href="/partner/select-type" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">للشركاء</Link>}
         </div>
