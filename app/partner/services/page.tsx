@@ -169,7 +169,7 @@ export default function PartnerServicesPage() {
     latitude: null as number | null,
     longitude: null as number | null,
     basePrice: "",
-    loyaltyPoints: "150",
+    loyaltyPoints: "500",
     vatRate: "included",
     locationUrl: "",
     hasMeetingPoint: false,
@@ -222,7 +222,7 @@ export default function PartnerServicesPage() {
           basePrice: Number(service.basePrice ?? 0),
           vatRate: Number(service.vatRate ?? 0),
           finalPrice: Number(service.finalPrice ?? 0),
-          loyaltyPoints: Number(service.loyaltyPoints ?? 150),
+          loyaltyPoints: Number(service.loyaltyPoints ?? 500),
           capacity: Number(service.capacity ?? 0),
           bookings: Number(service.bookingCount ?? 0),
           status: service.status,
@@ -296,7 +296,7 @@ export default function PartnerServicesPage() {
       latitude: null,
       longitude: null,
       basePrice: "",
-      loyaltyPoints: "150",
+      loyaltyPoints: "500",
       vatRate: "included",
       locationUrl: "",
       hasMeetingPoint: false,
@@ -355,7 +355,7 @@ export default function PartnerServicesPage() {
       latitude: service.latitude,
       longitude: service.longitude,
       basePrice: String(service.basePrice),
-      loyaltyPoints: String(service.loyaltyPoints || 150),
+      loyaltyPoints: String(service.loyaltyPoints ?? 500),
       vatRate: "included",
       locationUrl: "",
       hasMeetingPoint: false,
@@ -415,7 +415,7 @@ export default function PartnerServicesPage() {
     basePrice: Number(form.basePrice) || 0,
     vatRate: Number(form.vatRate) || 0,
     finalPrice: calculatedFinalPrice,
-    loyaltyPoints: Math.max(150, Number(form.loyaltyPoints) || 150),
+    loyaltyPoints: Math.max(0, Math.floor(Number(form.loyaltyPoints) || 0)),
     capacity: Number(form.capacity) || 0,
     bookings: existing?.bookings ?? 0,
     status,
@@ -425,7 +425,7 @@ export default function PartnerServicesPage() {
 
   const servicePayload = (submitForReview=false) => ({
     nameAr:form.nameAr,nameEn:form.nameEn,category:form.category,subCategory:form.subCategory,descriptionAr:stripProgramSections(form.descriptionAr)+sectionMarker("includes",form.programIncludes)+sectionMarker("excludes",form.programExcludes)+sectionMarker("notes",form.programNotes),descriptionEn:form.descriptionEn,
-    basePrice:form.basePrice,loyaltyPoints:Math.max(150,Number(form.loyaltyPoints)||150),vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
+    basePrice:form.basePrice,loyaltyPoints:Math.max(0,Math.floor(Number(form.loyaltyPoints)||0)),vatMode:form.vatRate,capacity:form.capacity,city:form.city,locationName:form.locationName,formattedAddress:form.formattedAddress,
     placeId:form.placeId,latitude:form.latitude,longitude:form.longitude,meetingInstructions:form.meetingInstructions,cancellationPolicy:form.cancellationPolicy,
     organizerType:form.organizerType,organizerName:form.organizerName,organizerLicenseNumber:form.organizerLicenseNumber,organizerLicenseIssuer:form.organizerLicenseIssuer,programApprovalNumber:form.programApprovalNumber,
     images:form.images.filter((image)=>image.url).map((image,index)=>({url:image.url,altText:image.name,sortOrder:image.name===form.primaryImage?-1:index})),submitForReview
@@ -1176,7 +1176,7 @@ export default function PartnerServicesPage() {
                   </Field>
                   <Field label="نقاط Arees Loop المكتسبة">
                     <input type="number" min="150" step="1" value={form.loyaltyPoints} onChange={(e)=>setForm((x)=>({...x,loyaltyPoints:String(Math.max(150,Math.floor(Number(e.target.value)||150)))}))} className={inputClass}/>
-                    <p className="mt-2 text-xs font-bold text-[#B99124]">احجز واحصل على {Math.max(150,Number(form.loyaltyPoints)||150)} نقطة Arees Loop</p>
+                    <p className="mt-2 text-xs font-bold text-[#B99124]">احجز واحصل على {Math.max(0,Math.floor(Number(form.loyaltyPoints)||0))} نقطة Arees Loop</p>
                     <p className="mt-2 text-xs leading-6 text-[#0D3B34]/70">الحد الأدنى 150 نقطة لكل خدمة، ويمكنك زيادة النقاط لجذب العملاء وتشجيعهم على العودة والحجز مرة أخرى. كل 100 نقطة تعادل 1 ريال عند الاستبدال وفق سياسة Arees Loop، وتحدد المنصة قواعد الاستبدال مركزياً.</p>
                   </Field>
                 </div>
