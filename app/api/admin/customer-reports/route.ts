@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+import { hash } from "bcryptjs";
 import {NextResponse} from "next/server";
 import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
@@ -36,4 +38,32 @@ export async function GET(){
   const archived=users.filter(u=>archivedIds.has(u.id)).map(u=>({id:u.id,name:[u.firstName,u.lastName].filter(Boolean).join(" ")||"غير محدد",email:u.email,phone:u.phone||"",archivedAt:lastEvent.get(u.id)?.createdAt.toISOString()||null}));
   return NextResponse.json({success:true,data,archived,summary:{archived:archived.length,registered:users.length-archived.length,customers:data.length,orders:data.reduce((n,x)=>n+x.orders,0),bookingValue:data.reduce((n,x)=>n+x.bookingValue,0)},financialNote:"قيمة الحجوزات بحالة PAID أو COMPLETED، وليست إثباتاً لتحصيل المدفوعات أو صافي المبيعات."},{headers:{"Cache-Control":"no-store"}});
  }catch(error){console.error("Customer report error",error);return NextResponse.json({success:false,message:"تعذر تحميل التقرير"},{status:500});}
+}
+
+export async function POST(request:Request){
+ const session=await getCurrentSession();
+ if(!session)return NextResponse.json({success:false,message:"تسجيل الدخول مطلوب"},{status:401});
+ if(session.user.role!=="SUPER_ADMIN")return NextResponse.json({success:false,message:"غير مصرح"},{status:403});
+ const body:unknown=await request.json().catch(()=>null);
+ if(!body||typeof body!=="object"||Array.isArray(body))return NextResponse.json({success:false,message:"بيانات غير صالحة"},{status:400});
+ const raw=body as Record<string,unknown>;
+ const firstName=typeof raw.firstName==="string"?raw.firstName.trim():"";
+ const lastName=typeof raw.lastName==="string"?raw.lastName.trim():"";
+ const email=typeof raw.email==="string"?raw.email.trim().toLowerCase():"";
+ const phone=typeof raw.phone==="string"?raw.phone.replace(/\\s+/g,"").trim():"";
+ if(!firstName||firstName.length>100||lastName.length>100||!email||email.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||phone.length>30)
+  return NextResponse.json({success:false,message:"الاسم الأول والبريد الإلكتروني الصحيح مطلوبان؛ الجوال اختياري"},{status:400});
+ const duplicate=await prisma.user.findFirst({where:{OR:[{email},...(phone?[{phone}]:[])]},select:{id:true}});
+ if(duplicate)return NextResponse.json({success:false,message:"يوجد حساب بنفس البريد أو رقم الجوال. افتح الحساب الحالي بدلاً من إنشاء مكرر."},{status:409});
+ // Random unknown password: no password is issued to the admin or customer.
+ // This is an administrative record pending a separate verified activation flow.
+ const passwordHash=await hash(randomBytes(48).toString("base64url"),12);
+ try{
+  const user=await prisma.$transaction(async tx=>{
+   const created=await tx.user.create({data:{firstName,lastName:firstName?lastName:null,email,phone:phone||null,passwordHash,role:"CUSTOMER",status:"PENDING_VERIFICATION"},select:{id:true,firstName:true,lastName:true,email:true,status:true}});
+   await tx.auditLog.create({data:{userId:session.user.id,action:"CUSTOMER_MANUALLY_CREATED",entityType:"CustomerAccount",entityId:created.id,afterData:{firstName,lastName,email,phone:phone||null,status:created.status}}});
+   return created;
+  });
+  return NextResponse.json({success:true,user,message:"تمت إضافة العميل كسجل غير مفعل. لم يتم إرسال دعوة أو كلمة مرور."},{status:201});
+ }catch(error){console.error("Manual customer creation failed",error);return NextResponse.json({success:false,message:"تعذر إنشاء العميل؛ تحقق من عدم تكرار البريد أو الهاتف"},{status:500});}
 }
