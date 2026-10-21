@@ -34,7 +34,7 @@ export default function NewPartnerServicePage() {
   const [loadingEntitlements,setLoadingEntitlements]=useState(true);
   useEffect(()=>{fetch("/api/partner/application",{cache:"no-store"}).then(r=>r.json()).then(j=>setApplication(j.application||null)).finally(()=>setLoadingEntitlements(false));},[]);
   const permittedTypes=useMemo(()=>allowedTypes(application),[application]);
-  useEffect(()=>{if(permittedTypes.length&&!permittedTypes.includes(serviceType)) setServiceType(permittedTypes[0]);},[permittedTypes,serviceType]);
+  useEffect(()=>{let active=true;void Promise.resolve().then(()=>{if(active&&permittedTypes.length&&!permittedTypes.includes(serviceType))setServiceType(permittedTypes[0]);});return()=>{active=false};},[permittedTypes,serviceType]);
   const verifiedLicenses=(application?.licenses||[]).filter(x=>x.status==="VERIFIED");
   const [priceMode, setPriceMode] = useState<PriceMode>("INCLUDED");
   const [location, setLocation] = useState<{lat:number;lng:number}|null>(null);
