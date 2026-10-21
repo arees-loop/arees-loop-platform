@@ -926,18 +926,21 @@ export default function Home() {
         id="travel-bookings"
         dir="rtl"
         aria-label={isArabic ? "حجوزات الطيران والبواخر" : "Flight and ferry bookings"}
-        className="relative isolate scroll-mt-24 flex items-center justify-center overflow-hidden bg-[#071713]"
+        className="relative isolate scroll-mt-24 flex min-h-[480px] items-center justify-center overflow-hidden bg-[#071713] md:min-h-[520px]"
         style={{ height: travelBookingsHeight ? `${travelBookingsHeight}px` : "420px" }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/Image/hero/arees-air-sea-clean-banner.webp"
           alt="منظر بحري عند الغروب مع باخرة وطائرة وأفق جدة"
-          className="absolute inset-0 h-full w-full object-cover object-[50%_40%]"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_70%]"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#071713]/25 via-[#071713]/35 to-[#071713]/65" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#071713]/10 via-[#071713]/18 to-[#071713]/42" aria-hidden="true" />
         <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-8 text-center text-white">
+          <div className="mb-3 flex h-14 items-center justify-center rounded-2xl border border-[#F0D37D]/70 bg-white/85 px-5 shadow-[0_10px_36px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl sm:h-16">
+            <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[136px] object-contain sm:w-[160px]" />
+          </div>
           <p className="text-sm font-black tracking-[0.18em] text-[#F0D37D]">
             {isArabic ? "أريس لوب · رحلتك تبدأ هنا" : "AREES LOOP · YOUR JOURNEY STARTS HERE"}
           </p>
