@@ -21,7 +21,7 @@ export async function POST(request:Request){
     const vatIncluded=body.vatMode==="included";
     const vatRate=15;
     const finalPrice=vatIncluded?basePrice:basePrice*1.15;
-    const loyaltyPoints=Math.max(150,Math.floor(Number(body.loyaltyPoints||150)));
+    const loyaltyPoints=Math.floor(Number(body.loyaltyPoints ?? 500)); if(!Number.isSafeInteger(loyaltyPoints)||loyaltyPoints<0) return NextResponse.json({success:false,message:"نقاط الولاء يجب أن تكون عدداً صحيحاً غير سالب."},{status:400});
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     const latitude=Number(body.latitude);
     const longitude=Number(body.longitude);
