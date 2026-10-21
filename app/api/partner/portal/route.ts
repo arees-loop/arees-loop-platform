@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { getActivePartnerMembership, hasPartnerPermission, type PartnerPermission } from "@/lib/partner-permissions";
+import { getActivePartnerMembership, hasPartnerPermission, canManagePartnerTeam, type PartnerPermission } from "@/lib/partner-permissions";
 const n=(v:unknown)=>v==null?null:Number(v);
 export async function GET(request:Request){
  try{
@@ -32,4 +32,28 @@ export async function GET(request:Request){
   ]);
   return NextResponse.json({success:true,dashboardSummary:(section==="dashboard"||section==="reports")?{bookings:allowed("bookings")?bookings.length:0,services:allowed("services")?services.length:0,sales:allowed("invoices")?bookings.reduce((sum,b)=>sum+Number(b.totalAmount||0),0):0,settlements:allowed("settlements")?settlements.reduce((sum,s)=>sum+Number(s.netAmount||0),0):0}:null,access:{bookings:allowed("bookings"),services:allowed("services")},partner:allowed("business")?{...partner,commissionRate:n(partner?.commissionRate),transferFee:n(partner?.transferFee),latitude:n(partner?.latitude),longitude:n(partner?.longitude)}:{id:partner?.id,tradeNameAr:partner?.tradeNameAr,legalNameAr:partner?.legalNameAr},services:allowed("services")?services.map(s=>({...s,basePrice:n(s.basePrice),vatRate:n(s.vatRate),finalPrice:n(s.finalPrice),bookingCount:s._count.bookings})):[],bookings:allowed("bookings")?bookings.map(b=>({...b,baseAmount:n(b.baseAmount),vatAmount:n(b.vatAmount),totalAmount:n(b.totalAmount)})):[],invoices:allowed("invoices")?invoices.map(i=>({...i,subtotal:n(i.subtotal),vatAmount:n(i.vatAmount),totalAmount:n(i.totalAmount)})):[],settlements:allowed("settlements")?settlements.map(s=>({...s,grossSales:n(s.grossSales),platformCommission:n(s.platformCommission),paymentFees:n(s.paymentFees),transferFees:n(s.transferFees),refunds:n(s.refunds),adjustments:n(s.adjustments),netAmount:n(s.netAmount)})):[],licenses:allowed("business")?licenses:[],members:[],agreements:allowed("business")?agreements.map(a=>({...a,commissionRate:n(a.commissionRate)})):[]});
  }catch(error){console.error("GET /api/partner/portal failed:",error);return NextResponse.json({success:false,message:"تعذر تحميل بيانات بوابة الشريك."},{status:500});}
+}
+
+
+// Only the owner or a partner administrator may change the public trade name.
+// Never trust a partnerId supplied in the request body: resolve the active membership.
+export async function PATCH(request: Request) {
+ try {
+  const session = await getCurrentSession();
+  if (!session) return NextResponse.json({success:false,message:"يجب تسجيل الدخول أولاً."},{status:401});
+  const member = await getActivePartnerMembership(session.user.id);
+  if (!member) return NextResponse.json({success:false,message:"لا توجد منشأة مرتبطة بالحساب."},{status:404});
+  if (!canManagePartnerTeam(member.user.role)) return NextResponse.json({success:false,message:"ليس لديك صلاحية تعديل الاسم التجاري."},{status:403});
+  const body: unknown = await request.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({success:false,message:"بيانات غير صالحة."},{status:400});
+  const keys = Object.keys(body);
+  if (keys.length !== 1 || keys[0] !== "tradeNameAr") return NextResponse.json({success:false,message:"يمكن تعديل الاسم التجاري فقط."},{status:400});
+  const tradeNameAr = (body as Record<string,unknown>).tradeNameAr;
+  if (typeof tradeNameAr !== "string" || !tradeNameAr.trim() || tradeNameAr.trim().length > 160) return NextResponse.json({success:false,message:"أدخل اسماً تجارياً صالحاً (حتى 160 حرفاً)."},{status:400});
+  const partner = await prisma.partner.update({where:{id:member.partnerId},data:{tradeNameAr:tradeNameAr.trim()},select:{id:true,tradeNameAr:true,legalNameAr:true}});
+  return NextResponse.json({success:true,partner});
+ } catch(error) {
+  console.error("PATCH /api/partner/portal failed:",error);
+  return NextResponse.json({success:false,message:"تعذر حفظ الاسم التجاري."},{status:500});
+ }
 }
