@@ -918,6 +918,47 @@ export default function Home() {
       </section>
 
       {/* =====================================================
+          AIR & SEA BOOKINGS — replaces the legacy city CTA
+          The image source is a local static asset so production does not
+          depend on externally hosted or short-lived chat attachments.
+      ====================================================== */}
+      <section
+        id="travel-bookings"
+        dir="rtl"
+        aria-label={isArabic ? "حجوزات الطيران والبواخر" : "Flight and ferry bookings"}
+        className="relative isolate scroll-mt-24 flex items-center justify-center overflow-hidden bg-[#071713]"
+        style={{ height: travelBookingsHeight ? `${travelBookingsHeight}px` : "420px" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/Image/hero/arees-air-sea-clean-banner.webp"
+          alt="منظر بحري عند الغروب مع باخرة وطائرة وأفق جدة"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_40%]"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#071713]/25 via-[#071713]/35 to-[#071713]/65" aria-hidden="true" />
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-8 text-center text-white">
+          <p className="text-sm font-black tracking-[0.18em] text-[#F0D37D]">
+            {isArabic ? "أريس لوب · رحلتك تبدأ هنا" : "AREES LOOP · YOUR JOURNEY STARTS HERE"}
+          </p>
+          <h2 className="mt-3 text-3xl font-black leading-tight drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] sm:text-4xl md:text-6xl">
+            {isArabic ? "من البحر إلى السماء" : "From Sea to Sky"}
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] sm:text-base md:text-lg">
+            {isArabic ? "اختر رحلتك البحرية أو الجوية، واتجه إلى صفحة الطلب مباشرة." : "Choose a sea or air journey and go directly to its request page."}
+          </p>
+          <div className="mt-6 flex w-full max-w-xl flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/flights" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full bg-[#0D3B34] px-7 py-3.5 text-sm font-black text-white shadow-[0_10px_30px_rgba(0,0,0,0.28)] ring-1 ring-white/45 transition hover:bg-[#145347]">
+              {isArabic ? "حجوزات الطيران" : "Flight bookings"}
+            </Link>
+            <Link href="/ferries" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full border-2 border-[#F0D37D] bg-white/95 px-7 py-3.5 text-sm font-black text-[#0D3B34] shadow-[0_10px_30px_rgba(0,0,0,0.28)] transition hover:bg-[#FFF8E7]">
+              {isArabic ? "حجوزات البواخر" : "Ferry bookings"}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
           اكتشف EXPERIENCES
       ====================================================== */}
 
@@ -1330,46 +1371,7 @@ export default function Home() {
         `}</style>
       </section>
 
-      {/* =====================================================
-          AIR & SEA BOOKINGS — replaces the legacy city CTA
-          The image source is a local static asset so production does not
-          depend on externally hosted or short-lived chat attachments.
-      ====================================================== */}
-      <section
-        id="travel-bookings"
-        dir="rtl"
-        aria-label={isArabic ? "حجوزات الطيران والبواخر" : "Flight and ferry bookings"}
-        className="relative isolate scroll-mt-24 flex items-center justify-center overflow-hidden bg-[#071713]"
-        style={{ height: travelBookingsHeight ? `${travelBookingsHeight}px` : "420px" }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/Image/hero/arees-air-sea-clean-banner.webp"
-          alt="منظر بحري عند الغروب مع باخرة وطائرة وأفق جدة"
-          className="absolute inset-0 h-full w-full object-cover object-[50%_40%]"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#071713]/25 via-[#071713]/35 to-[#071713]/65" aria-hidden="true" />
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-8 text-center text-white">
-          <p className="text-sm font-black tracking-[0.18em] text-[#F0D37D]">
-            {isArabic ? "أريس لوب · رحلتك تبدأ هنا" : "AREES LOOP · YOUR JOURNEY STARTS HERE"}
-          </p>
-          <h2 className="mt-3 text-3xl font-black leading-tight drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] sm:text-4xl md:text-6xl">
-            {isArabic ? "من البحر إلى السماء" : "From Sea to Sky"}
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] sm:text-base md:text-lg">
-            {isArabic ? "اختر رحلتك البحرية أو الجوية، واتجه إلى صفحة الطلب مباشرة." : "Choose a sea or air journey and go directly to its request page."}
-          </p>
-          <div className="mt-6 flex w-full max-w-xl flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/flights" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full bg-[#0D3B34] px-7 py-3.5 text-sm font-black text-white shadow-[0_10px_30px_rgba(0,0,0,0.28)] ring-1 ring-white/45 transition hover:bg-[#145347]">
-              {isArabic ? "حجوزات الطيران" : "Flight bookings"}
-            </Link>
-            <Link href="/ferries" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full border-2 border-[#F0D37D] bg-white/95 px-7 py-3.5 text-sm font-black text-[#0D3B34] shadow-[0_10px_30px_rgba(0,0,0,0.28)] transition hover:bg-[#FFF8E7]">
-              {isArabic ? "حجوزات البواخر" : "Ferry bookings"}
-            </Link>
-          </div>
-        </div>
-      </section>
+
 
       {/* =====================================================
           FOOTER
