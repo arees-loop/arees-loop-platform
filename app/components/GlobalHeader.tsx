@@ -87,7 +87,6 @@ export default function GlobalHeader() {
               </div>
             </div>
           )}
-          {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}
           {navVisible.partners !== false && (
             <div className="group relative">
               <Link href="/partner/select-type" className="inline-flex items-center gap-1.5 py-6 transition hover:text-[#B58C31] focus-visible:text-[#B58C31]" aria-label="للشركاء: خيارات الانضمام وتسجيل الدخول">
@@ -179,7 +178,6 @@ export default function GlobalHeader() {
                 </div>}
               </section>
             )}
-            {navVisible.cruise !== false && <Link href="/discover?type=cruise" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الكروز</Link>}
             {navVisible.guides !== false && <Link href="/#tour-guides" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">المرشدون السياحيون</Link>}
             {navVisible.partners !== false && <Link href="/partner/select-type" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">انضم كشريك</Link>}
             {navVisible.partners !== false && <Link href="/partner/login" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">دخول الشركاء</Link>}
