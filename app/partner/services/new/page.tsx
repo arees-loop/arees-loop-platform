@@ -220,7 +220,7 @@ export default function NewPartnerServicePage() {
             <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">أضف أكثر من صورة. الصورة الأولى هي الرئيسية، ويمكنك حذف الصور أو جعل أي صورة هي الرئيسية.</p>
             <div className="mt-4 flex flex-wrap gap-3">
               {images.map((img,i)=><div key={img.url} className="relative w-32 overflow-hidden rounded-2xl border border-[#0D3B34]/10 bg-[#F8F6EF]">
-                <img src={img.url} alt={img.file.name} className="h-24 w-full object-cover"/>
+                <img src={img.url} alt={img.file.name} className="aspect-square w-full object-cover"/>
                 <div className="p-2"><p className="truncate text-[10px]">{img.file.name}</p>{i===0?<span className="text-[10px] font-bold text-[#B99124]">الصورة الرئيسية</span>:<button type="button" onClick={()=>setImages(prev=>[prev[i],...prev.filter((_,x)=>x!==i)])} className="text-[10px] font-bold">اجعلها الرئيسية</button>}</div>
                 <button type="button" aria-label="حذف الصورة" onClick={()=>removeImage(i)} className="absolute left-1 top-1 h-7 w-7 rounded-full bg-white/90 text-xs font-bold">×</button>
               </div>)}
