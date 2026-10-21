@@ -82,7 +82,7 @@ export default function GlobalHeader() {
               <div className="invisible absolute right-1/2 top-[64px] z-50 w-56 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/75 p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
                 {navVisible.hotels !== false && <Link href="/hotels" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35"><span aria-hidden="true" className="text-[#0B4537]">▦</span> الفنادق</Link>}
                 <Link href="/visas" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35"><span aria-hidden="true" className="text-[#0B4537]">▣</span> التأشيرات</Link>
-                <Link href="/international-driving-license" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">رخصة القيادة الدولية</Link>}
+                <Link href="/international-driving-license" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">رخصة القيادة الدولية</Link>
               </div>
             </div>
           {navVisible.partners !== false && (
@@ -95,7 +95,7 @@ export default function GlobalHeader() {
                 <Link href="/partner/select-type" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-white/45">
                   <PartnerIcon kind="handshake" className="h-6 w-6 shrink-0 text-[#B58C31]" /> انضم كشريك
                 </Link>
-                                <Link href="/partner/login" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-[#FFF7DF]">
+                                <Link href="/partner/login" className="flex items-center gap-3 rounded-[14px] px-3 py-3 text-[#0D3B34] transition hover:bg-white/45">
                   <PartnerIcon kind="login" className="h-6 w-6 shrink-0 text-[#B58C31]" /> تسجيل دخول الشركاء
                 </Link>
               </div>
@@ -167,7 +167,7 @@ export default function GlobalHeader() {
                 </button>
                 {mobileTravelServicesOpen && <div id="arees-mobile-travel-links" className="grid grid-cols-2 gap-1 pr-3">
                   {navVisible.hotels !== false && <Link href="/hotels" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3"><span aria-hidden="true" className="text-[#0B4537]">▦</span> الفنادق</Link>}
-                  <Link href="/visas" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3"><span aria-hidden="true" className="text-[#0B4537]">▣</span> التأشيرات</Link>}
+                  <Link href="/visas" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3"><span aria-hidden="true" className="text-[#0B4537]">▣</span> التأشيرات</Link>
                   <Link href="/international-driving-license" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3">رخصة القيادة الدولية</Link>
                 </div>}
               </section>
