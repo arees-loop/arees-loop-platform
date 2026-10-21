@@ -936,26 +936,33 @@ export default function Home() {
           className="absolute inset-0 h-full w-full object-cover object-[50%_70%]"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#071713]/10 via-[#071713]/18 to-[#071713]/42" aria-hidden="true" />
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-8 text-center text-white">
-          <div className="mb-3 flex h-14 items-center justify-center rounded-2xl border border-[#F0D37D]/70 bg-white/85 px-5 shadow-[0_10px_36px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl sm:h-16">
-            <Image src="/Logo/arees-loop-logo.png" alt="Arees Loop" width={240} height={120} priority className="h-auto w-[136px] object-contain sm:w-[160px]" />
-          </div>
-          <p className="text-sm font-black tracking-[0.18em] text-[#F0D37D]">
-            {isArabic ? "أريس لوب · رحلتك تبدأ هنا" : "AREES LOOP · YOUR JOURNEY STARTS HERE"}
-          </p>
-          <h2 className="mt-3 text-3xl font-black leading-tight drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] sm:text-4xl md:text-6xl">
-            {isArabic ? "من البحر إلى السماء" : "From Sea to Sky"}
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-8 text-center text-[#0D3B34]">
+          <Image
+            src="/Logo/arees-loop-logo.png"
+            alt="Arees Loop"
+            width={240}
+            height={120}
+            priority
+            className="mb-2 h-auto w-[132px] object-contain drop-shadow-[0_2px_4px_rgba(255,255,255,0.65)] sm:w-[156px]"
+          />
+          <h2 className="mt-1 text-3xl font-black leading-tight drop-shadow-[0_2px_12px_rgba(255,255,255,0.72)] sm:text-4xl md:text-6xl">
+            <span>حجوزات الطيران </span>
+            <span className="text-[#B88325]">والبواخر</span>
           </h2>
-          <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] sm:text-base md:text-lg">
-            {isArabic ? "اختر رحلتك البحرية أو الجوية، واتجه إلى صفحة الطلب مباشرة." : "Choose a sea or air journey and go directly to its request page."}
+          <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-[#456D70] drop-shadow-[0_1px_8px_rgba(255,255,255,0.8)] sm:text-base md:text-lg">
+            بين أمواج البحر ورحابة السماء، نقرب لك رحلتك بخيارات حجز سهلة وواضحة.
           </p>
           <div className="mt-6 flex w-full max-w-xl flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/flights" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full bg-[#0D3B34] px-7 py-3.5 text-sm font-black text-white shadow-[0_10px_30px_rgba(0,0,0,0.28)] ring-1 ring-white/45 transition hover:bg-[#145347]">
-              {isArabic ? "حجوزات الطيران" : "Flight bookings"}
+            <Link href="/flights" className="inline-flex min-h-12 min-w-[190px] items-center justify-center gap-2 rounded-full bg-[#06483F] px-7 py-3.5 text-sm font-black text-white shadow-[0_10px_30px_rgba(0,0,0,0.22)] ring-1 ring-white/75 transition hover:bg-[#0D5B4F]">
+              <span>احجز تذكرة طيران</span>
+              <span aria-hidden="true" className="text-lg leading-none">✈</span>
             </Link>
-            <Link href="/ferries" className="inline-flex min-h-12 min-w-[190px] items-center justify-center rounded-full border-2 border-[#F0D37D] bg-white/95 px-7 py-3.5 text-sm font-black text-[#0D3B34] shadow-[0_10px_30px_rgba(0,0,0,0.28)] transition hover:bg-[#FFF8E7]">
-              {isArabic ? "حجوزات البواخر" : "Ferry bookings"}
+            <Link href="/ferries" className="inline-flex min-h-12 min-w-[190px] items-center justify-center gap-2 rounded-full border-2 border-[#B88325] bg-white/90 px-7 py-3.5 text-sm font-black text-[#0D3B34] shadow-[0_10px_30px_rgba(0,0,0,0.16)] transition hover:bg-white">
+              <span>احجز تذكرة باخرة</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.8]">
+                <path d="M3 14.5h18l-2.3 4.1a2 2 0 0 1-1.8 1H7.1a2 2 0 0 1-1.8-1L3 14.5Z" />
+                <path d="M6.5 14.5V8.2h11v6.3M9 8.2V5.5h6v2.7M4.5 21c1.4 0 1.4 1 2.8 1s1.4-1 2.8-1 1.4 1 2.8 1 1.4-1 2.8-1 1.4 1 2.8 1 1.4-1 2.8-1" />
+              </svg>
             </Link>
           </div>
         </div>
