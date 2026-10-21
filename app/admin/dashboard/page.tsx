@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import AdminIcon, {type AdminIconName} from "../AdminIcon";
 
 type Partner={id:string;legalNameAr?:string|null;tradeNameAr?:string|null;partnerType?:string|null;submittedAt?:string|null;status?:string|null};
-type Service={id:string;nameAr?:string|null;status?:string|null;country?:string|null;countryCode?:string|null};
+type Service={id:string;nameAr?:string|null;status?:string|null;category?:string|null;country?:string|null;countryCode?:string|null};
 type RequestAlerts={ferries:number|null;flights:number|null;hotels:number|null;drivingLicenses:number|null;visas:number|null;services:number|null};
 type DashboardMetrics={bookings:number;settlements:number;directRequests:number;bookingStatuses:{status:string;count:number}[];settlementTotals:{grossSales:number;platformCommission:number;netAmount:number}};
 type QuickLink={key:keyof RequestAlerts;label:string;icon:AdminIconName;href:string;bg:string;iconColor:string};
@@ -15,7 +15,7 @@ const shortcuts:QuickLink[]=[
  {key:"hotels",label:"طلبات الفنادق",icon:"hotel",href:"/admin/hotels?view=requests",bg:"bg-[#F5EDFF]",iconColor:"text-[#7955A3]"},
  {key:"visas",label:"طلبات التأشيرات",icon:"globe",href:"/admin/transport/visas?view=requests",bg:"bg-[#FFF3E5]",iconColor:"text-[#B97922]"},
  {key:"drivingLicenses",label:"الرخص الدولية",icon:"car",href:"/admin/transport/driving-licenses?view=requests",bg:"bg-[#E8F7EE]",iconColor:"text-[#1E8053]"},
- {key:"services",label:"الخدمات والتجارب للمراجعة",icon:"globe",href:"/admin/services?status=UNDER_REVIEW",bg:"bg-[#FFF6E4]",iconColor:"text-[#A67913]"},
+ {key:"services",label:"الخدمات والتجارب للمراجعة",icon:"globe",href:"/admin/services",bg:"bg-[#FFF6E4]",iconColor:"text-[#A67913]"},
 ];
 
 const label=(s?:string|null)=>({ACTIVE:"معتمد ونشط",UNDER_REVIEW:"تحت التدقيق",SUBMITTED:"تم استلام الطلب",NEEDS_COMPLETION:"مطلوب استكمال",NEEDS_INFO:"مطلوب استكمال",REJECTED:"مرفوض"}[s||""]||s||"غير محدد");
@@ -54,7 +54,7 @@ export default function AdminDashboardPage(){
   fetch("/api/admin/services",{cache:"no-store",credentials:"include"}).then(r=>r.json())
  ]).then(([p,s])=>{if(p?.success)setPartners(p.data||[]);if(s?.success)setServices(s.data||[])}).finally(()=>setLoading(false))},[]);
  const stats=useMemo(()=>({total:partners.length,active:partners.filter(x=>x.status==="ACTIVE").length,review:partners.filter(x=>x.status==="UNDER_REVIEW"||x.status==="SUBMITTED").length,needs:partners.filter(x=>x.status==="NEEDS_COMPLETION"||x.status==="NEEDS_INFO").length}),[partners]);
- const programCounts=useMemo(()=>{const published=services.filter(service=>service.status==="PUBLISHED");const isSaudi=(service:Service)=>{const code=(service.countryCode||"").trim().toUpperCase();const country=(service.country||"").trim().toLowerCase();return code==="SA"||code==="SAU"||country==="السعودية"||country==="المملكة العربية السعودية"||country==="saudi arabia";};return {local:published.filter(isSaudi).length,global:published.filter(service=>Boolean((service.countryCode||service.country||"").trim())&&!isSaudi(service)).length,unclassified:published.filter(service=>!(service.countryCode||service.country||"").trim()).length};},[services]);
+ const programCounts=useMemo(()=>{const published=services.filter(service=>service.status==="PUBLISHED"&&((service.category||"").trim().toUpperCase()==="PROGRAM"||(service.category||"").includes("برنامج سياحي")));const isSaudi=(service:Service)=>{const code=(service.countryCode||"").trim().toUpperCase();const country=(service.country||"").trim().toLowerCase();return code==="SA"||code==="SAU"||country==="السعودية"||country==="المملكة العربية السعودية"||country==="saudi arabia";};return {local:published.filter(isSaudi).length,global:published.filter(service=>Boolean((service.countryCode||service.country||"").trim())&&!isSaudi(service)).length,unclassified:published.filter(service=>!(service.countryCode||service.country||"").trim()).length};},[services]);
  const chartSlices=[{key:"local",label:"البرامج المحلية",value:programCounts.local,color:"#D4AF37"},{key:"global",label:"البرامج العالمية",value:programCounts.global,color:"#0D3B34"},{key:"partners",label:"الشركاء",value:stats.total,color:"#6D9D9A"},{key:"customers",label:"العملاء",value:customerCount??0,color:"#8E78A7"}];
  const chartTotal=chartSlices.reduce((sum,item)=>sum+item.value,0);
  let chartCursor=0;
