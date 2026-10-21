@@ -71,13 +71,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
             </div>
           </div>}
           {navVisible.guides !== false && (<Link href="/#tour-guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
-          {navVisible.flights !== false && <div className="group relative">
-            <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">الطيران والبواخر <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span></button>
-            <div className="invisible absolute right-1/2 top-[64px] w-56 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-              <Link href="/flights" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">حجوزات طيران</Link>
-              <Link href="/ferries" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">حجوزات بواخر</Link>
-            </div>
-          </div>}
+          {navVisible.flights !== false && <Link href="/#travel-bookings" className="transition hover:text-[#D4AF37]">الطيران والبواخر</Link>}
           <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">خدمات السفر والسياحة <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span></button>
             <div className="invisible absolute right-1/2 top-[64px] w-60 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
@@ -168,11 +162,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
             {navVisible.cruise !== false && <Link href="/discover?type=cruise" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">الكروز</Link>}
           </details>}
           {navVisible.guides !== false && <Link href="/#tour-guides" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">المرشدون السياحيون</Link>}
-          {navVisible.flights !== false && <details className="border-t border-[#D4AF37]/20 px-4 py-2">
-            <summary className="cursor-pointer py-2 font-bold">الطيران والبواخر</summary>
-            <Link href="/flights" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">حجوزات طيران</Link>
-            <Link href="/ferries" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">حجوزات بواخر</Link>
-          </details>}
+          {navVisible.flights !== false && <Link href="/#travel-bookings" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">الطيران والبواخر</Link>}
           <details className="border-t border-[#D4AF37]/20 px-4 py-2">
             <summary className="cursor-pointer py-2 font-bold">خدمات السفر والسياحة</summary>
             {navVisible.hotels !== false && <Link href="/hotels" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">الفنادق</Link>}
