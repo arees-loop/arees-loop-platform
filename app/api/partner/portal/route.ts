@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getActivePartnerMembership, hasPartnerPermission, canManagePartnerTeam, type PartnerPermission } from "@/lib/partner-permissions";
+import { getPartnerNameEditPermissions } from "@/lib/partner-name-edit-permissions";
 const n=(v:unknown)=>v==null?null:Number(v);
 export async function GET(request:Request){
  try{
@@ -18,6 +19,7 @@ export async function GET(request:Request){
   const requiredPermission = permissionBySection[section];
   if(!requiredPermission) return NextResponse.json({success:false,message:"القسم المطلوب غير متاح."},{status:400});
   if(!hasPartnerPermission(member.user.role,member.permissions,requiredPermission)) return NextResponse.json({success:false,message:"ما عندك صلاحية لعرض هذا القسم."},{status:403});
+  const nameEditPermissions = await getPartnerNameEditPermissions(partnerId);
   const allowed = (permission:PartnerPermission)=>hasPartnerPermission(member.user.role,member.permissions,permission);
 
   const [partner,services,bookings,invoices,settlements,licenses,members,agreements]=await Promise.all([
@@ -30,7 +32,7 @@ export async function GET(request:Request){
    prisma.partnerMember.findMany({where:{partnerId},include:{user:{select:{id:true,firstName:true,lastName:true,email:true,phone:true}}},orderBy:{createdAt:"asc"}}),
    prisma.agreement.findMany({where:{partnerId},orderBy:{createdAt:"desc"}})
   ]);
-  return NextResponse.json({success:true,dashboardSummary:(section==="dashboard"||section==="reports")?{bookings:allowed("bookings")?bookings.length:0,services:allowed("services")?services.length:0,sales:allowed("invoices")?bookings.reduce((sum,b)=>sum+Number(b.totalAmount||0),0):0,settlements:allowed("settlements")?settlements.reduce((sum,s)=>sum+Number(s.netAmount||0),0):0}:null,access:{bookings:allowed("bookings"),services:allowed("services"),canEditTradeName:canManagePartnerTeam(member.user.role),canEditLegalName:canManagePartnerTeam(member.user.role)},partner:allowed("business")?{...partner,commissionRate:n(partner?.commissionRate),transferFee:n(partner?.transferFee),latitude:n(partner?.latitude),longitude:n(partner?.longitude)}:{id:partner?.id,tradeNameAr:partner?.tradeNameAr,legalNameAr:partner?.legalNameAr},services:allowed("services")?services.map(s=>({...s,basePrice:n(s.basePrice),vatRate:n(s.vatRate),finalPrice:n(s.finalPrice),bookingCount:s._count.bookings})):[],bookings:allowed("bookings")?bookings.map(b=>({...b,baseAmount:n(b.baseAmount),vatAmount:n(b.vatAmount),totalAmount:n(b.totalAmount)})):[],invoices:allowed("invoices")?invoices.map(i=>({...i,subtotal:n(i.subtotal),vatAmount:n(i.vatAmount),totalAmount:n(i.totalAmount)})):[],settlements:allowed("settlements")?settlements.map(s=>({...s,grossSales:n(s.grossSales),platformCommission:n(s.platformCommission),paymentFees:n(s.paymentFees),transferFees:n(s.transferFees),refunds:n(s.refunds),adjustments:n(s.adjustments),netAmount:n(s.netAmount)})):[],licenses:allowed("business")?licenses:[],members:[],agreements:allowed("business")?agreements.map(a=>({...a,commissionRate:n(a.commissionRate)})):[]});
+  return NextResponse.json({success:true,dashboardSummary:(section==="dashboard"||section==="reports")?{bookings:allowed("bookings")?bookings.length:0,services:allowed("services")?services.length:0,sales:allowed("invoices")?bookings.reduce((sum,b)=>sum+Number(b.totalAmount||0),0):0,settlements:allowed("settlements")?settlements.reduce((sum,s)=>sum+Number(s.netAmount||0),0):0}:null,access:{bookings:allowed("bookings"),services:allowed("services"),canEditTradeName:canManagePartnerTeam(member.user.role)&&nameEditPermissions.tradeNameAr,canEditLegalName:canManagePartnerTeam(member.user.role)&&nameEditPermissions.legalNameAr},partner:allowed("business")?{...partner,commissionRate:n(partner?.commissionRate),transferFee:n(partner?.transferFee),latitude:n(partner?.latitude),longitude:n(partner?.longitude)}:{id:partner?.id,tradeNameAr:partner?.tradeNameAr,legalNameAr:partner?.legalNameAr},services:allowed("services")?services.map(s=>({...s,basePrice:n(s.basePrice),vatRate:n(s.vatRate),finalPrice:n(s.finalPrice),bookingCount:s._count.bookings})):[],bookings:allowed("bookings")?bookings.map(b=>({...b,baseAmount:n(b.baseAmount),vatAmount:n(b.vatAmount),totalAmount:n(b.totalAmount)})):[],invoices:allowed("invoices")?invoices.map(i=>({...i,subtotal:n(i.subtotal),vatAmount:n(i.vatAmount),totalAmount:n(i.totalAmount)})):[],settlements:allowed("settlements")?settlements.map(s=>({...s,grossSales:n(s.grossSales),platformCommission:n(s.platformCommission),paymentFees:n(s.paymentFees),transferFees:n(s.transferFees),refunds:n(s.refunds),adjustments:n(s.adjustments),netAmount:n(s.netAmount)})):[],licenses:allowed("business")?licenses:[],members:[],agreements:allowed("business")?agreements.map(a=>({...a,commissionRate:n(a.commissionRate)})):[]});
  }catch(error){console.error("GET /api/partner/portal failed:",error);return NextResponse.json({success:false,message:"تعذر تحميل بيانات بوابة الشريك."},{status:500});}
 }
 
@@ -51,6 +53,8 @@ export async function PATCH(request: Request) {
   const field = keys[0] as "tradeNameAr"|"legalNameAr";
   const proposedName = (body as Record<string,unknown>)[field];
   if (typeof proposedName !== "string" || !proposedName.trim() || proposedName.trim().length > 160) return NextResponse.json({success:false,message:"أدخل اسماً صالحاً (حتى 160 حرفاً)."},{status:400});
+  const permissions = await getPartnerNameEditPermissions(member.partnerId);
+  if (!permissions[field]) return NextResponse.json({success:false,message:"تعديل هذا الاسم مقفل. يرجى التواصل مع الإدارة وذكر سبب التعديل."},{status:403});
   const previous = await prisma.partner.findUnique({where:{id:member.partnerId},select:{legalNameAr:true,tradeNameAr:true}});
   if (!previous) return NextResponse.json({success:false,message:"المنشأة غير موجودة."},{status:404});
   const partner = await prisma.$transaction(async(tx)=>{
