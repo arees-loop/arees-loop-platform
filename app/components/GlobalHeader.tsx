@@ -63,20 +63,28 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           {navVisible.how !== false && (<Link href="/#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</Link>)}
           {navVisible.programs !== false && <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">برامج سياحية <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span></button>
-            <div className="invisible absolute right-1/2 top-[64px] w-52 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+            <div className="invisible absolute right-1/2 top-[64px] w-56 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
               <Link href="/discover?type=domestic" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">سياحة محلية</Link>
               <Link href="/discover?type=international" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">سياحة عالمية</Link>
+              {navVisible.cruise !== false && <Link href="/discover?type=cruise" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">الكروز</Link>}
             </div>
           </div>}
           {navVisible.guides !== false && (<Link href="/#tour-guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
-          {navVisible.hotels !== false && (<Link href="/hotels" className="transition hover:text-[#D4AF37]">الفنادق</Link>)}
-          {navVisible.flights !== false && (
-            <>
-              <Link href="/flights" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">✈ الطيران</Link>
-              <Link href="/ferries" className="inline-flex items-center gap-1.5 transition hover:text-[#D4AF37]">⚓ البواخر</Link>
-            </>
-          )}
-          {navVisible.cruise !== false && (<Link href="/discover?type=cruise" className="transition hover:text-[#D4AF37]">الكروز</Link>)}
+          {navVisible.flights !== false && <div className="group relative">
+            <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">الطيران والبواخر <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span></button>
+            <div className="invisible absolute right-1/2 top-[64px] w-56 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+              <Link href="/flights" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">حجوزات طيران</Link>
+              <Link href="/ferries" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">حجوزات بواخر</Link>
+            </div>
+          </div>}
+          <div className="group relative">
+            <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">خدمات السفر والسياحة <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span></button>
+            <div className="invisible absolute right-1/2 top-[64px] w-60 translate-x-1/2 translate-y-2 rounded-[22px] border border-[#D4AF37]/55 bg-white/[0.10] p-2 text-right opacity-0 shadow-[0_18px_55px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.30)] backdrop-blur-2xl backdrop-saturate-150 transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+              {navVisible.hotels !== false && <Link href="/hotels" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">الفنادق</Link>}
+              <Link href="/international-driving-license" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">الرخصة الدولية</Link>
+              <Link href="/visas" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-white/35">التأشيرات</Link>
+            </div>
+          </div>
           {navVisible.partners !== false && (
             <div className="group relative">
               <Link href="/partner/select-type" className="inline-flex items-center gap-1.5 py-6 transition hover:text-[#B58C31] focus-visible:text-[#B58C31]" aria-label="للشركاء: خيارات الانضمام وتسجيل الدخول">
