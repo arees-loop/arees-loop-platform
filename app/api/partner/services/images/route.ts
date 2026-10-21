@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ success: false, message: "غير مصرح." }, { status: 401 });
+  if (!await userHasPartnerPermission(session.user.id, "services")) return NextResponse.json({ success: false, message: "ليس لديك صلاحية لإضافة صور الخدمات والبرامج." }, { status: 403 });
 
   const formData = await request.formData();
   const file = formData.get("file");
