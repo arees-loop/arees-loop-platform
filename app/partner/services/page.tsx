@@ -437,7 +437,7 @@ export default function PartnerServicesPage() {
       id:service.id,nameAr:service.nameAr??"",nameEn:service.nameEn??"",category:service.category??"غير محدد",subCategory:service.subCategory??"",
       license:service.license?`${service.license.type} - ${service.license.licenseNumber}`:"غير مرتبط",city:service.city??"",locationName:service.locationName??"",
       formattedAddress:service.formattedAddress??"",placeId:service.placeId??"",latitude:service.latitude,longitude:service.longitude,basePrice:Number(service.basePrice??0),
-      vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),loyaltyPoints:Number(service.loyaltyPoints??150),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
+      vatRate:Number(service.vatRate??0),finalPrice:Number(service.finalPrice??0),loyaltyPoints:Number(service.loyaltyPoints??500),capacity:Number(service.capacity??0),bookings:Number(service.bookingCount??0),status:service.status,
       imageCount:Array.isArray(service.images)?service.images.length:0,descriptionAr:service.descriptionAr??"",descriptionEn:service.descriptionEn??"",
       cancellationPolicy:service.cancellationPolicy??"",meetingInstructions:service.meetingInstructions??"",organizerType:service.organizerType??"SELF",organizerName:service.organizerName??"",organizerLicenseNumber:service.organizerLicenseNumber??"",organizerLicenseIssuer:service.organizerLicenseIssuer??"",programApprovalNumber:service.programApprovalNumber??"",images:service.images??[]
     })));
@@ -1175,9 +1175,9 @@ export default function PartnerServicesPage() {
                     <input type="number" min="1" value={form.capacity} onChange={(e)=>setForm((x)=>({...x,capacity:e.target.value}))} className={inputClass}/>
                   </Field>
                   <Field label="نقاط Arees Loop المكتسبة">
-                    <input type="number" min="150" step="1" value={form.loyaltyPoints} onChange={(e)=>setForm((x)=>({...x,loyaltyPoints:String(Math.max(150,Math.floor(Number(e.target.value)||150)))}))} className={inputClass}/>
+                    <input type="number" min="0" step="1" value={form.loyaltyPoints} onChange={(e)=>setForm((x)=>({...x,loyaltyPoints:String(Math.max(0,Math.floor(Number(e.target.value)||0)))}))} className={inputClass}/>
                     <p className="mt-2 text-xs font-bold text-[#B99124]">احجز واحصل على {Math.max(0,Math.floor(Number(form.loyaltyPoints)||0))} نقطة Arees Loop</p>
-                    <p className="mt-2 text-xs leading-6 text-[#0D3B34]/70">الحد الأدنى 150 نقطة لكل خدمة، ويمكنك زيادة النقاط لجذب العملاء وتشجيعهم على العودة والحجز مرة أخرى. كل 100 نقطة تعادل 1 ريال عند الاستبدال وفق سياسة Arees Loop، وتحدد المنصة قواعد الاستبدال مركزياً.</p>
+                    <p className="mt-2 text-xs leading-6 text-[#0D3B34]/70">القيمة الابتدائية 500 نقطة لكل خدمة، ويمكنك اختيار صفر أو زيادة النقاط أو تقليلها لجذب العملاء وتشجيعهم على العودة والحجز مرة أخرى. كل 100 نقطة تعادل 1 ريال عند الاستبدال وفق سياسة Arees Loop، وتحدد المنصة قواعد الاستبدال مركزياً.</p>
                   </Field>
                 </div>
                 {form.bookingMode === "scheduled" && (
