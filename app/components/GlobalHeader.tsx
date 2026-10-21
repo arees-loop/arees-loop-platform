@@ -13,6 +13,7 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
   const [accountOpen, setAccountOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [navVisible, setNavVisible] = useState<Record<string,boolean>>({});
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => { let mounted=true; fetch("/api/navigation",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(mounted&&d.success)setNavVisible(d.data)}).catch(()=>{});return()=>{mounted=false}; }, []);
   const text = "text-[#0D3B34]";
   const border = overlay ? "border-white/35" : "border-[#0D3B34]/15";
@@ -107,6 +108,15 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className={`grid h-10 w-10 place-items-center rounded-full border text-xl font-bold lg:hidden ${border} ${text}`}
+            aria-label={mobileMenuOpen ? "إغلاق القائمة" : "فتح القائمة"}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            {mobileMenuOpen ? "×" : "☰"}
+          </button>
           <div className={`hidden rounded-full border p-1 text-[10px] font-black sm:flex ${border} ${text}`}>
             <button type="button" onClick={() => setLanguage("ar")} className={`rounded-full px-2.5 py-1.5 ${language === "ar" ? "bg-[#0D3B34] text-white" : ""}`}>AR</button>
             <button type="button" onClick={() => setLanguage("en")} className={`rounded-full px-2.5 py-1.5 ${language === "en" ? "bg-[#0D3B34] text-white" : ""}`}>EN</button>
@@ -146,6 +156,32 @@ export default function GlobalHeader({ overlay = false }: { overlay?: boolean })
           )}
         </div>
       </nav>
+
+      {mobileMenuOpen && (
+        <div dir="rtl" className="pointer-events-auto absolute inset-x-4 top-[86px] max-h-[calc(100vh-110px)] overflow-y-auto rounded-[22px] border border-[#D4AF37]/40 bg-white/95 p-3 text-[#0D3B34] shadow-[0_18px_48px_rgba(13,59,52,.20)] backdrop-blur-xl lg:hidden">
+          {navVisible.discover !== false && <Link href="/discover" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">اكتشف</Link>}
+          {navVisible.how !== false && <Link href="/#how" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">كيف تعمل؟</Link>}
+          {navVisible.programs !== false && <details className="border-t border-[#D4AF37]/20 px-4 py-2">
+            <summary className="cursor-pointer py-2 font-bold">برامج سياحية</summary>
+            <Link href="/discover?type=domestic" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">سياحة محلية</Link>
+            <Link href="/discover?type=international" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">سياحة عالمية</Link>
+            {navVisible.cruise !== false && <Link href="/discover?type=cruise" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">الكروز</Link>}
+          </details>}
+          {navVisible.guides !== false && <Link href="/#tour-guides" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">المرشدون السياحيون</Link>}
+          {navVisible.flights !== false && <details className="border-t border-[#D4AF37]/20 px-4 py-2">
+            <summary className="cursor-pointer py-2 font-bold">الطيران والبواخر</summary>
+            <Link href="/flights" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">حجوزات طيران</Link>
+            <Link href="/ferries" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">حجوزات بواخر</Link>
+          </details>}
+          <details className="border-t border-[#D4AF37]/20 px-4 py-2">
+            <summary className="cursor-pointer py-2 font-bold">خدمات السفر والسياحة</summary>
+            {navVisible.hotels !== false && <Link href="/hotels" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">الفنادق</Link>}
+            <Link href="/international-driving-license" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">الرخصة الدولية</Link>
+            <Link href="/visas" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-4 py-2.5 hover:bg-[#FFF7DF]">التأشيرات</Link>
+          </details>
+          {navVisible.partners !== false && <Link href="/partner/select-type" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl px-4 py-3 font-bold hover:bg-[#FFF7DF]">للشركاء</Link>}
+        </div>
+      )}
     </header>
   );
 }
