@@ -399,6 +399,35 @@ function AdminPartnersContent() {
   }, []);
 
   const selectedPartner = partners.find((partner) => partner.id === selectedId);
+  const [namePermissions,setNamePermissions]=useState<{legalNameAr:boolean;tradeNameAr:boolean}|null>(null);
+  const [namePermissionError,setNamePermissionError]=useState("");
+  const [savingNamePermission,setSavingNamePermission]=useState(false);
+  useEffect(()=>{
+    setNamePermissions(null);setNamePermissionError("");
+    if(!selectedId||selectedId.startsWith("manual-"))return;
+    let alive=true;
+    fetch("/api/admin/partners/"+encodeURIComponent(selectedId)+"/name-permissions",{credentials:"include",cache:"no-store"})
+     .then(async r=>({ok:r.ok,data:await r.json()}))
+     .then(({ok,data})=>{if(!alive)return;if(ok&&data.success)setNamePermissions(data.permissions);else setNamePermissionError(data.message||"تعذر تحميل الصلاحيات");})
+     .catch(()=>{if(alive)setNamePermissionError("تعذر تحميل الصلاحيات");});
+    return ()=>{alive=false};
+  },[selectedId]);
+  const toggleNamePermission=async(field:"legalNameAr"|"tradeNameAr")=>{
+    if(!selectedPartner||!namePermissions||savingNamePermission)return;
+    const enabled=!namePermissions[field];
+    const reason=window.prompt(enabled?"اكتب سبب فتح صلاحية تعديل الاسم بعد مراجعة طلب الشريك:":"اكتب سبب إغلاق صلاحية تعديل الاسم:");
+    if(!reason||reason.trim().length<5)return;
+    setSavingNamePermission(true);setNamePermissionError("");
+    try{
+      const r=await fetch("/api/admin/partners/"+encodeURIComponent(selectedPartner.id)+"/name-permissions",{method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({field,enabled,reason:reason.trim()})});
+      const data=await r.json();
+      if(!r.ok||!data.success)throw new Error(data.message||"تعذر حفظ الصلاحية");
+      setNamePermissions(data.permissions);
+      showToast("success",enabled?"تم فتح صلاحية التعديل للشريك. يمكنك إبلاغه الآن.":"تم إغلاق صلاحية التعديل.");
+    }catch(e){setNamePermissionError(e instanceof Error?e.message:"تعذر حفظ الصلاحية");}
+    finally{setSavingNamePermission(false);}
+  };
+
 
 
 
@@ -1093,6 +1122,13 @@ function AdminPartnersContent() {
 
           {/* REVIEW PANEL */}
 
+          {selectedPartner && <section className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-5 md:p-6">
+            <h3 className="text-lg font-bold">صلاحيات تعديل أسماء الشريك — السوبر أدمن</h3>
+            <p className="mt-2 text-xs leading-6 text-[#0D3B34]/70">الحقول مقفولة افتراضياً. بعد استلام رسالة الشريك ومراجعة أسباب الطلب، افتح الحقل المطلوب فقط. يُحفظ سبب القرار في سجل التدقيق.</p>
+            {namePermissionError&&<p role="alert" className="mt-3 text-sm text-red-700">{namePermissionError}</p>}
+            <div className="mt-4 flex flex-wrap gap-3">{([["legalNameAr","السماح بتعديل الاسم"],["tradeNameAr","السماح بتعديل الاسم التجاري"]] as const).map(([field,label])=><button key={field} type="button" onClick={()=>toggleNamePermission(field)} disabled={!namePermissions||savingNamePermission||selectedPartner.id.startsWith("manual-")} className="rounded-xl border border-[#D4AF37]/35 bg-[#FAF7ED] px-4 py-3 text-sm font-bold disabled:opacity-50">{label}: {namePermissions?.[field]?"مفتوح ✓":"مقفل 🔒"}</button>)}</div>
+            <p className="mt-3 text-xs text-[#0D3B34]/60">يمكن إغلاق الصلاحية بعد أن يكمل الشريك تعديل بياناته. التغيير لا يعدل الاسم نفسه.</p>
+          </section>}
           {selectedPartner && <section className="overflow-hidden rounded-[30px] border border-white/80 bg-white/72 backdrop-blur-xl">
 
             {/* PROFILE HEADER */}
