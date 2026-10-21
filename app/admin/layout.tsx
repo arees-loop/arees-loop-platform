@@ -61,9 +61,9 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
   const [pendingServiceCount, setPendingServiceCount] = useState(0);
   const [requestAlerts,setRequestAlerts]=useState<AlertPayload|null>(null);
-  const handleAlertUpdate=useCallback((payload:AlertPayload)=>setRequestAlerts(payload),[]);
-  const requestCounts:RequestCounters=requestAlerts?.counts??{flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0};
-  const attentionCounts:RequestCounters=requestAlerts?.needsAttention??{flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0};
+  const handleAlertUpdate=useCallback((payload:AlertPayload)=>{setRequestAlerts(payload);setPendingServiceCount(payload.counts.services??0)},[]);
+  const requestCounts:RequestCounters=requestAlerts?.counts??{flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0,services:0};
+  const attentionCounts:RequestCounters=requestAlerts?.needsAttention??{flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0,services:0};
 
   useEffect(() => {
     if (pathname === "/admin/login" || pathname === "/admin/invite") return;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {useCallback,useEffect,useRef,useState} from "react";
 
-export type CounterKey="flights"|"ferries"|"hotels"|"visas"|"drivingLicenses";
+export type CounterKey="flights"|"ferries"|"hotels"|"visas"|"drivingLicenses"|"services";
 export type RequestCounters=Record<CounterKey,number|null>;
 export type AlertPayload={
  success:boolean;counts:RequestCounters;needsAttention:RequestCounters;inProgress:RequestCounters;
@@ -12,14 +12,14 @@ export type AlertPayload={
  snapshotEventId:string|null;emailConfigured:boolean;limited:boolean;updatedAt:string;
 };
 const actionLabels:Record<string,string>={
- NEW_REQUEST:"طلب جديد",CUSTOMER_OFFER_ACCEPTED:"قبول عرض السعر",
+ NEW_REQUEST:"طلب جديد",NEW_SERVICE:"خدمة أو تجربة جديدة للمراجعة",CUSTOMER_OFFER_ACCEPTED:"قبول عرض السعر",
  CUSTOMER_TRANSFER_SUBMITTED:"إشعار سداد من العميل",CUSTOMER_ATTACHMENT_UPLOADED:"مرفق جديد من العميل",
  CUSTOMER_MESSAGE_SENT:"رد جديد من العميل",
 };
 const serviceLabels:Record<string,string>={
- FLIGHT:"الطيران",FERRY:"البواخر",VISA:"التأشيرات",HOTEL:"الفنادق",DRIVING_LICENSE:"الرخص الدولية",
+ FLIGHT:"الطيران",FERRY:"البواخر",VISA:"التأشيرات",HOTEL:"الفنادق",DRIVING_LICENSE:"الرخص الدولية",SERVICE:"الخدمات والتجارب",
 };
-const empty:RequestCounters={flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0};
+const empty:RequestCounters={flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0,services:0};
 const soundUrl="/audio/05_AreesLoop_Booking_Confirmed.mp3";
 
 export default function AdminNotificationCenter({
