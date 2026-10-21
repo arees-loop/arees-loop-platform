@@ -160,9 +160,9 @@ export default function NewPartnerServicePage() {
     finally{setSubmitting(false);}
   };
   const [price, setPrice] = useState(100);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(150);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(500);
   const commissionRate = 10;
-  const loyaltyField = <div className="rounded-[24px] border border-[#D4AF37]/30 bg-[#FFF8E5] p-5"><p className="text-sm font-bold">نقاط Arees Loop المكتسبة</p><p className="mt-1 text-xs leading-6 text-[#0D3B34]/55">يحصل عليها العميل بعد اكتمال الحجز. الحد الأدنى 150 نقطة ويمكنك زيادتها.</p><input type="number" min={150} step={1} value={loyaltyPoints} onChange={e=>setLoyaltyPoints(Math.max(150,Math.floor(Number(e.target.value)||150)))} className="input mt-3" /><div className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#B99124]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-7 w-auto" /> احجز واحصل على {loyaltyPoints} نقطة Arees Loop</div></div>;
+  const loyaltyField = <div className="rounded-[24px] border border-[#D4AF37]/30 bg-[#FFF8E5] p-5"><p className="text-sm font-bold">نقاط Arees Loop المكتسبة</p><p className="mt-1 text-xs leading-6 text-[#0D3B34]/55">يحصل عليها العميل بعد اكتمال الحجز. القيمة الابتدائية 500 نقطة، ويمكنك اختيار صفر أو أي عدد نقاط صحيح.</p><input type="number" min={0} step={1} value={loyaltyPoints} onChange={e=>setLoyaltyPoints(Math.max(0,Math.floor(Number(e.target.value)||0)))} className="input mt-3" /><div className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#B99124]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-7 w-auto" /> احجز واحصل على {loyaltyPoints} نقطة Arees Loop</div></div>;
 
   const preview = useMemo(() => {
     const areesBase = price * (commissionRate / 100);
