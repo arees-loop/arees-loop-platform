@@ -34,7 +34,7 @@ export async function GET(){
  const serviceLink:Record<Key,string>={
   flights:"/admin/transport/flights?view=requests",ferries:"/admin/transport/ferries?view=requests",
   visas:"/admin/transport/visas?view=requests",drivingLicenses:"/admin/transport/driving-licenses?view=requests",
-  hotels:"/admin/hotels?view=requests",services:"/admin/services?status=UNDER_REVIEW",
+  hotels:"/admin/hotels?view=requests",services:"/admin/services",
  };
  try{
   // Bounded last-action scan for in-app notifications; never expose private contact data.
@@ -80,7 +80,7 @@ export async function GET(){
   }
   for(const service of serviceRows){
     if(counts.services!==null)counts.services!++;
-    recent.push({id:service.id,reference:service.nameAr||"خدمة أو تجربة جديدة",kind:"SERVICE",type:"NEW_SERVICE",createdAt:service.createdAt.toISOString(),href:serviceLink.services});
+    recent.push({id:service.id,reference:service.nameAr||"خدمة أو تجربة جديدة",kind:"SERVICE",type:"NEW_SERVICE",createdAt:service.updatedAt.toISOString(),href:serviceLink.services});
   }
   recent.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
   const sum=(v:Counters)=>Object.values(v).reduce<number>((n,x)=>n+(x??0),0);
