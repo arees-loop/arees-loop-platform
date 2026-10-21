@@ -5,8 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import AdminIcon, {type AdminIconName} from "../AdminIcon";
 
 type Partner={id:string;legalNameAr?:string|null;tradeNameAr?:string|null;partnerType?:string|null;submittedAt?:string|null;status?:string|null};
-type Service={id:string;nameAr?:string|null;status?:string|null};
-type RequestAlerts={ferries:number|null;flights:number|null;hotels:number|null;drivingLicenses:number|null;visas:number|null};
+type Service={id:string;nameAr?:string|null;status?:string|null;country?:string|null;countryCode?:string|null};
+type RequestAlerts={ferries:number|null;flights:number|null;hotels:number|null;drivingLicenses:number|null;visas:number|null;services:number|null};
 type DashboardMetrics={bookings:number;settlements:number;directRequests:number;bookingStatuses:{status:string;count:number}[];settlementTotals:{grossSales:number;platformCommission:number;netAmount:number}};
 type QuickLink={key:keyof RequestAlerts;label:string;icon:AdminIconName;href:string;bg:string;iconColor:string};
 const shortcuts:QuickLink[]=[
@@ -15,6 +15,7 @@ const shortcuts:QuickLink[]=[
  {key:"hotels",label:"طلبات الفنادق",icon:"hotel",href:"/admin/hotels?view=requests",bg:"bg-[#F5EDFF]",iconColor:"text-[#7955A3]"},
  {key:"visas",label:"طلبات التأشيرات",icon:"globe",href:"/admin/transport/visas?view=requests",bg:"bg-[#FFF3E5]",iconColor:"text-[#B97922]"},
  {key:"drivingLicenses",label:"الرخص الدولية",icon:"car",href:"/admin/transport/driving-licenses?view=requests",bg:"bg-[#E8F7EE]",iconColor:"text-[#1E8053]"},
+ {key:"services",label:"الخدمات والتجارب للمراجعة",icon:"globe",href:"/admin/services?status=UNDER_REVIEW",bg:"bg-[#FFF6E4]",iconColor:"text-[#A67913]"},
 ];
 
 const label=(s?:string|null)=>({ACTIVE:"معتمد ونشط",UNDER_REVIEW:"تحت التدقيق",SUBMITTED:"تم استلام الطلب",NEEDS_COMPLETION:"مطلوب استكمال",NEEDS_INFO:"مطلوب استكمال",REJECTED:"مرفوض"}[s||""]||s||"غير محدد");
@@ -53,6 +54,12 @@ export default function AdminDashboardPage(){
   fetch("/api/admin/services",{cache:"no-store",credentials:"include"}).then(r=>r.json())
  ]).then(([p,s])=>{if(p?.success)setPartners(p.data||[]);if(s?.success)setServices(s.data||[])}).finally(()=>setLoading(false))},[]);
  const stats=useMemo(()=>({total:partners.length,active:partners.filter(x=>x.status==="ACTIVE").length,review:partners.filter(x=>x.status==="UNDER_REVIEW"||x.status==="SUBMITTED").length,needs:partners.filter(x=>x.status==="NEEDS_COMPLETION"||x.status==="NEEDS_INFO").length}),[partners]);
+ const programCounts=useMemo(()=>{const published=services.filter(service=>service.status==="PUBLISHED");const isSaudi=(service:Service)=>{const code=(service.countryCode||"").trim().toUpperCase();const country=(service.country||"").trim().toLowerCase();return code==="SA"||code==="SAU"||country==="السعودية"||country==="المملكة العربية السعودية"||country==="saudi arabia";};return {local:published.filter(isSaudi).length,global:published.filter(service=>Boolean((service.countryCode||service.country||"").trim())&&!isSaudi(service)).length,unclassified:published.filter(service=>!(service.countryCode||service.country||"").trim()).length};},[services]);
+ const chartSlices=[{key:"local",label:"البرامج المحلية",value:programCounts.local,color:"#D4AF37"},{key:"global",label:"البرامج العالمية",value:programCounts.global,color:"#0D3B34"},{key:"partners",label:"الشركاء",value:stats.total,color:"#6D9D9A"},{key:"customers",label:"العملاء",value:customerCount??0,color:"#8E78A7"}];
+ const chartTotal=chartSlices.reduce((sum,item)=>sum+item.value,0);
+ let chartCursor=0;
+ const chartBackground=chartTotal?`conic-gradient(${chartSlices.map(item=>{const start=chartCursor;chartCursor+=item.value/chartTotal*100;return `${item.color} ${start}% ${chartCursor}%`;}).join(", ")})`:"#ECE8DD";
+
  const periodRange=useMemo(()=>{const now=new Date();if(period==="custom"){if(!fromDate||!toDate||fromDate>toDate)return null;return {start:new Date(fromDate+"T00:00:00"),end:new Date(toDate+"T23:59:59.999")};}const start=period==="today"?new Date(now.getFullYear(),now.getMonth(),now.getDate()):period==="month"?new Date(now.getFullYear(),now.getMonth(),1):new Date(now.getFullYear(),0,1);return {start,end:now};},[period,fromDate,toDate]);
  const periodPartners=periodRange?partners.filter(p=>p.submittedAt&&new Date(p.submittedAt)>=periodRange.start&&new Date(p.submittedAt)<=periodRange.end):[];
  useEffect(()=>{if(period==="custom"&&!periodRange){setMetrics(null);return;}let active=true;const params=new URLSearchParams({period});if(period==="custom"){params.set("from",fromDate);params.set("to",toDate)}fetch("/api/admin/dashboard-metrics?"+params.toString(),{cache:"no-store"}).then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(({ok,data})=>{if(!active)return;if(!ok||!data.success)throw Error(data.message||"تعذر تحميل المؤشرات");setMetrics(data);setMetricsError("");}).catch(e=>{if(active){setMetrics(null);setMetricsError(e instanceof Error?e.message:"تعذر تحميل المؤشرات");}});return()=>{active=false};},[period,fromDate,toDate,periodRange]);
@@ -68,7 +75,7 @@ export default function AdminDashboardPage(){
     </div>
     {alertsLoading&&!requestAlerts?<p className="mt-5 text-sm">جارٍ تحميل إشعارات الطلبات...</p>:null}
     {alertsError?<p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{alertsError}</p>:null}
-    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
       {shortcuts.filter(item=>!requestAlerts||requestAlerts[item.key]!==null).map(item=>{
         const count=requestAlerts?.[item.key];
         return <Link key={item.key} href={item.href} className={`group rounded-2xl border border-white p-4 transition hover:-translate-y-0.5 hover:shadow-lg ${item.bg}`}>
@@ -90,7 +97,7 @@ export default function AdminDashboardPage(){
     <div className="rounded-[20px] border border-[#D8CDB8]/55 bg-[#FFFDF8] p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-lg font-bold">أحدث طلبات الشركاء</h2><Link href="/admin/partners" className="rounded-full bg-[#FFF4D9] px-4 py-2 text-xs font-bold text-[#B47D08]">عرض جميع الطلبات ←</Link></div>
      {recent.length===0?<p className="py-10 text-center text-sm text-[#171717]/45">لا توجد طلبات شركاء حالياً.</p>:<div className="mt-5 overflow-x-auto"><table className="w-full min-w-[650px] text-right text-xs"><thead><tr className="border-b border-black/10 text-black/45"><th className="pb-3">الشريك</th><th className="pb-3">النشاط</th><th className="pb-3">الحالة</th><th className="pb-3">تاريخ الطلب</th></tr></thead><tbody>{recent.map(p=><tr key={p.id} className="border-b border-black/5"><td className="py-4 font-bold">{p.tradeNameAr||p.legalNameAr||"غير مدخل"}</td><td>{p.partnerType||"غير مدخل"}</td><td><span className={`rounded-full px-3 py-1.5 font-bold ${tone(p.status)}`}>{label(p.status)}</span></td><td>{p.submittedAt?new Date(p.submittedAt).toLocaleDateString("ar-SA"):"غير مدخل"}</td></tr>)}</tbody></table></div>}
     </div>
-    <div className="grid gap-5"><div className="rounded-[20px] border border-black/8 bg-white/75 p-5 shadow-sm"><h2 className="text-lg font-bold">الخدمات الحقيقية</h2><p className="mt-5 text-4xl font-bold">{services.length}</p><div className="mt-4 space-y-2 text-xs"><p>منشورة: <b>{services.filter(s=>s.status==="PUBLISHED").length}</b></p><p>تحت المراجعة: <b>{services.filter(s=>s.status==="UNDER_REVIEW").length}</b></p></div><Link href="/admin/services" className="mt-5 inline-block rounded-full bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white">إدارة الخدمات</Link></div></div>
+    <div className="grid gap-5"><div className="rounded-[20px] border border-[#D8CDB8]/55 bg-white p-5 shadow-sm"><h2 className="text-lg font-black text-[#0D3B34]">إحصائية المنصة</h2><p className="mt-1 text-xs text-[#0D3B34]/55">البرامج المنشورة وإجمالي الشركاء والعملاء</p><div className="mt-5 flex flex-wrap items-center justify-center gap-5"><div role="img" aria-label={chartSlices.map(item=>item.label+": "+item.value).join("، ")} className="relative h-40 w-40 shrink-0 rounded-full" style={{background:chartBackground}}><div className="absolute inset-[24%] flex flex-col items-center justify-center rounded-full bg-white text-center"><b className="text-2xl text-[#0D3B34]">{chartTotal.toLocaleString("ar-SA")}</b><span className="text-[10px] text-[#0D3B34]/55">الإجمالي</span></div></div><ul className="grid min-w-[145px] gap-3">{chartSlices.map(item=><li key={item.key} className="flex items-center justify-between gap-4 text-xs"><span className="flex items-center gap-2"><i aria-hidden="true" className="h-3 w-3 rounded-full" style={{backgroundColor:item.color}}/><span>{item.label}</span></span><b className="tabular-nums">{item.value.toLocaleString("ar-SA")}</b></li>)}</ul></div>{programCounts.unclassified>0&&<p className="mt-4 text-[10px] leading-5 text-[#7A6B4E]">يوجد {programCounts.unclassified} برنامج منشور بلا دولة محددة؛ لم يُحتسب ضمن المحلي أو العالمي.</p>}<div className="mt-5 border-t border-[#D8CDB8]/50 pt-4 text-xs text-[#0D3B34]/70"><p>خدمات وتجارب منشورة: <b>{programCounts.local+programCounts.global+programCounts.unclassified}</b></p><p className="mt-2">تنتظر المراجعة: <b>{services.filter(s=>s.status==="UNDER_REVIEW").length}</b></p><Link href="/admin/services" className="mt-4 inline-block rounded-full bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white">إدارة الخدمات ←</Link></div></div></div>
    </section>
   </>}</div></main>
 }
