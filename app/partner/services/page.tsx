@@ -1254,7 +1254,7 @@ export default function PartnerServicesPage() {
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                       {form.imagePreviews.map((image,index)=>(
                         <div key={image.name+`-${index}`} className={`relative overflow-hidden rounded-[18px] border-2 bg-white ${form.primaryImage===image.name?"border-[#D4AF37]":"border-transparent"}`}>
-                          <img src={image.url} alt="" className="aspect-[4/3] w-full object-cover"/>
+                          <img src={image.url} alt="" className="aspect-square w-full object-cover"/>
                           {form.primaryImage===image.name && <span className="absolute right-2 top-2 rounded-full bg-[#D4AF37] px-2 py-1 text-[9px] font-bold text-[#0D3B34]">الرئيسية</span>}
                           <div className="flex items-center gap-1 p-2">
                             {form.primaryImage!==image.name && <button type="button" onClick={()=>setForm((x)=>({...x,primaryImage:image.name}))} className="flex-1 rounded-lg bg-[#EEF3F0] px-2 py-1.5 text-[10px] font-bold">تعيين كرئيسية</button>}
