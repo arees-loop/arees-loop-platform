@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { sendEmail } from "@/lib/notifications/email";
+import { getPartnerRequirements } from "@/lib/partners/application-requirements";
 
 type AdminDecision =
   | "REQUEST_COMPLETION"
@@ -123,6 +124,8 @@ export async function POST(
           orderBy: { createdAt: "desc" },
           take: 1,
         },
+        documents:{select:{type:true,label:true,fileUrl:true,fileName:true}},
+        licenses:{select:{type:true,issuer:true,licenseNumber:true,expiryDate:true}},
       },
     });
 
@@ -131,6 +134,15 @@ export async function POST(
         { success: false, message: "طلب الشريك غير موجود." },
         { status: 404 }
       );
+    }
+
+    if (action==="SEND_AGREEMENT" || action==="ACTIVATE") {
+      const missing = getPartnerRequirements(partner);
+      if (missing.length) return NextResponse.json({
+        success:false,
+        message:"لا يمكن اعتماد شريك قبل اكتمال الترخيص والمستندات المطلوبة.",
+        missing,
+      },{status:422});
     }
 
     const reviewActionsAllowed =
