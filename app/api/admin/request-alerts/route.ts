@@ -93,16 +93,20 @@ export async function GET(){
         select:{id:true,entityId:true,action:true,afterData:true,createdAt:true}
       });
       const latestPayment=new Map<string,string>();
-      const messageIds=new Set<string>();
+      const latestMessages=new Set<string>();
+      const customerReplies=new Set<string>();
       for(const event of cartEvents){
         const ref=event.entityId;
         if(!ref)continue;
         if(event.action==="CART_WORKFLOW_MESSAGE"){
           const v=event.afterData;
           const details=v&&typeof v==="object"&&!Array.isArray(v)?v as Record<string,unknown>:{};
-          if(details.from==="CUSTOMER"&&!messageIds.has(ref)){
-            messageIds.add(ref);
-            recent.push({id:event.id,reference:ref,kind:"CART",type:"CART_WORKFLOW_MESSAGE",createdAt:event.createdAt.toISOString(),href:"/admin/cart-bank-payments/"+encodeURIComponent(ref)});
+          if(!latestMessages.has(ref)){
+            latestMessages.add(ref);
+            if(details.from==="CUSTOMER"){
+              customerReplies.add(ref);
+              recent.push({id:event.id,reference:ref,kind:"CART",type:"CART_WORKFLOW_MESSAGE",createdAt:event.createdAt.toISOString(),href:"/admin/cart-bank-payments/"+encodeURIComponent(ref)});
+            }
           }
         } else if(!latestPayment.has(ref))latestPayment.set(ref,event.action);
       }
@@ -111,6 +115,7 @@ export async function GET(){
         const event=cartEvents.find(e=>e.entityId===ref&&e.action===action);
         if(event)recent.push({id:event.id,reference:ref,kind:"CART",type:action,createdAt:event.createdAt.toISOString(),href:"/admin/cart-bank-payments/"+encodeURIComponent(ref)});
       }
+      for(const ref of customerReplies)if(latestPayment.get(ref)!=="CART_BANK_RECEIPT_SUBMITTED")cartPending++;
     }catch(cartError){console.error("Cart notifications lookup failed",cartError);}
   }
   recent.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
