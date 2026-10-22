@@ -13,11 +13,11 @@ export type AlertPayload={
 };
 const actionLabels:Record<string,string>={
  NEW_REQUEST:"طلب جديد",NEW_SERVICE:"خدمة أو تجربة جديدة للمراجعة",CUSTOMER_OFFER_ACCEPTED:"قبول عرض السعر",
- CUSTOMER_TRANSFER_SUBMITTED:"إشعار سداد من العميل",CUSTOMER_ATTACHMENT_UPLOADED:"مرفق جديد من العميل",
+ CART_BANK_RECEIPT_SUBMITTED:"إيصال سداد في السلة يحتاج مراجعة",CART_WORKFLOW_MESSAGE:"رسالة جديدة في طلب السلة",CUSTOMER_TRANSFER_SUBMITTED:"إشعار سداد من العميل",CUSTOMER_ATTACHMENT_UPLOADED:"مرفق جديد من العميل",
  CUSTOMER_MESSAGE_SENT:"رد جديد من العميل",
 };
 const serviceLabels:Record<string,string>={
- FLIGHT:"الطيران",FERRY:"البواخر",VISA:"التأشيرات",HOTEL:"الفنادق",DRIVING_LICENSE:"الرخص الدولية",SERVICE:"الخدمات والتجارب",
+ FLIGHT:"الطيران",FERRY:"البواخر",VISA:"التأشيرات",HOTEL:"الفنادق",DRIVING_LICENSE:"الرخص الدولية",SERVICE:"الخدمات والتجارب",CART:"طلبات السلة",
 };
 const empty:RequestCounters={flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0,services:0};
 const soundUrl="/audio/05_AreesLoop_Booking_Confirmed.mp3";
