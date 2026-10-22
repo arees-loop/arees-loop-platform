@@ -1338,7 +1338,7 @@ function AdminPartnersContent() {
                           </button>
                         </div>
                         {open && isPreviewable && <iframe loading="lazy" title={doc.fileName || doc.label || "مرفق الشريك"}
-                          src={`/api/admin/partners/documents/${encodeURIComponent(doc.id)}`}
+                          src={`/api/admin/partners/${encodeURIComponent(selectedPartner.id)}/documents/${encodeURIComponent(doc.id)}`}
                           className="mt-3 h-[520px] w-full rounded-xl border border-[#D4AF37]/20 bg-white" />}
                       </div>;
                     })}
