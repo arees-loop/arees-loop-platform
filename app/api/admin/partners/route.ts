@@ -48,17 +48,6 @@ export async function GET() {
           },
         },
 
-        documents: {
-          orderBy: { createdAt: "asc" },
-          select: {
-            id: true,
-            type: true,
-            label: true,
-            fileName: true,
-            mimeType: true,
-            status: true,
-          },
-        },
         documents: { select: { id:true, type:true, label:true, fileName:true, mimeType:true, status:true, createdAt:true }, orderBy: { createdAt:"asc" } },
 
         members: {
