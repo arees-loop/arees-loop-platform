@@ -4,10 +4,10 @@ import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
 import PrintCartDocument from "../print-button";
 export const dynamic="force-dynamic";
-export const metadata:Metadata={title:"مستندات طلب السلة | أريس لوب",robots:{index:false,follow:false}};
+export const metadata:Metadata={title:"مستندات الطلب | شركة أريس الحلول المتكاملة المحدودة",robots:{index:false,follow:false}};
 type Props={params:Promise<{type:string}>;searchParams:Promise<{reference?:string}>};
 type OrderItem={title?:string;quantity?:number;unitPriceSar?:number;itemType?:string};
-function Dual({ar,en}:{ar:string;en:string}){return <span className="block text-right"><span className="block text-xs font-black">{ar}</span><span dir="ltr" className="mt-1 block text-right text-[10px] font-medium opacity-75">{en}</span></span>;}
+function Dual({ar,en}:{ar:string;en:string}){return <span className="block text-right"><span className="block text-xs font-black">{ar}</span><span dir="ltr" className="mt-1 block text-left text-[10px] font-medium opacity-75">{en}</span></span>;}
 const parse=(x:unknown):Record<string,unknown>=>x&&typeof x==="object"&&!Array.isArray(x)?x as Record<string,unknown>:{};
 const money=(x:unknown)=>Number(x||0).toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
 export default async function CartOrderDocument({params,searchParams}:Props){
@@ -42,21 +42,31 @@ export default async function CartOrderDocument({params,searchParams}:Props){
   <div className="mx-auto mb-4 flex max-w-[210mm] justify-end print:hidden"><PrintCartDocument/></div>
   <article className="mx-auto min-h-[275mm] max-w-[210mm] bg-white px-8 py-9 shadow-xl print:min-h-0 print:shadow-none md:px-12">
    <header className="border-b-[3px] border-[#B99444] pb-5">
-    <div className="flex justify-center"><img src="/Logo/arees-integrated-solutions-logo.png" alt="شعار شركة أريس الحلول المتكاملة المحدودة" className="h-[110px] w-[145px] object-contain"/></div>
-    <div className="mt-3 text-center"><h1 className="text-base font-black">شركة أريس الحلول المتكاملة المحدودة</h1><p dir="ltr" className="text-xs font-bold">AREES AL-HELLOUL AL-MUTAKAMLA CO. LTD.</p><p className="mt-1 text-xs">أريس لوب — منصة تجربة الزائر الذكية</p><p dir="ltr" className="text-[10px]">Arees Loop — Smart Visitor Experience Platform</p></div>
-    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] leading-5">
-      <div><b>السجل التجاري: 7037003618</b><p dir="ltr" className="text-right">CR No.: 7037003618</p></div>
-      <div><b>الرقم الضريبي: 311897578200003</b><p dir="ltr" className="text-right">VAT No.: 311897578200003</p></div>
-      <div><b>ترخيص وزارة السياحة: 73104550</b><p dir="ltr" className="text-right">Tourism License No.: 73104550</p></div>
-      <div><b>فئة الترخيص: وكالة سفر وسياحة</b><p dir="ltr" className="text-right">Travel and Tourism Agency</p></div>
-      <div><b>المدينة المنورة — المملكة العربية السعودية</b><p dir="ltr" className="text-right">Madinah — Saudi Arabia</p></div>
+    <div className="flex justify-center"><img src="/Logo/arees-integrated-solutions-logo.png" alt="شعار شركة أريس الحلول المتكاملة المحدودة" className="h-[115px] w-[170px] object-contain"/></div>
+    <div className="mt-4 grid grid-cols-2 gap-5 border-t border-[#EADFC6] pt-4 text-[10px] leading-6">
+     <section dir="rtl" className="text-right">
+      <h1 className="text-sm font-black">شركة أريس الحلول المتكاملة المحدودة</h1>
+      <p>السجل التجاري: 7037003618</p>
+      <p>الرقم الضريبي: 311897578200003</p>
+      <p>ترخيص وزارة السياحة: 73104550</p>
+      <p>فئة الترخيص: وكالة سفر وسياحة</p>
+      <p>المدينة المنورة — المملكة العربية السعودية</p>
+     </section>
+     <section dir="ltr" lang="en" className="text-left">
+      <h2 className="text-sm font-black">AREES AL-HELLOUL AL-MUTAKAMLA CO. LTD.</h2>
+      <p>CR No.: 7037003618</p>
+      <p>VAT No.: 311897578200003</p>
+      <p>Tourism License No.: 73104550</p>
+      <p>Travel and Tourism Agency</p>
+      <p>Madinah — Saudi Arabia</p>
+     </section>
     </div>
    </header>
    <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
-    <div><h2 className="text-xl font-black text-[#8B6A21]">{heading}</h2><p dir="ltr" className="text-right text-xs font-bold">{type==="quote"?"Quotation / Estimate":"Payment Invoice / Receipt"}</p><p className="mt-2 text-[10px]">{type==="quote"?"عرض سعر غير ملزم حتى اعتماد الطلب.":"صدر بعد اعتماد الإدارة وصول التحويل البنكي. ليس بديلاً عن الفاتورة الإلكترونية الضريبية المتوافقة مع متطلبات الهيئة."}</p></div>
+    <div><h2 className="text-xl font-black text-[#8B6A21]">{heading}</h2><p dir="ltr" className="text-left text-xs font-bold">{type==="quote"?"Quotation / Estimate":"Payment Invoice / Receipt"}</p><p className="mt-2 text-[10px]">{type==="quote"?"عرض سعر غير ملزم حتى اعتماد الطلب.":"صدر بعد اعتماد الإدارة وصول التحويل البنكي. ليس بديلاً عن الفاتورة الإلكترونية الضريبية المتوافقة مع متطلبات الهيئة."}</p></div>
     <div className="text-xs leading-7"><p><b>رقم المرجع / Reference:</b> <span dir="ltr">{reference}</span></p><p><b>تاريخ المستند / Date:</b> {new Intl.DateTimeFormat("ar-SA",{dateStyle:"medium",timeZone:"Asia/Riyadh"}).format(issueDate)}</p></div>
    </div>
-   <section className="mt-6 rounded-xl border border-[#E0D3B7] p-4 text-sm leading-8"><h3 className="font-black">بيانات العميل / Customer Details</h3><p>{[customer?.firstName,customer?.lastName].filter(Boolean).join(" ")||"عميل أريس لوب"}</p><p dir="ltr" className="text-right text-xs">{customer?.email||""}</p></section>
+   <section className="mt-6 rounded-xl border border-[#E0D3B7] p-4 text-sm leading-8"><h3 className="font-black">بيانات العميل / Customer Details</h3><p>{[customer?.firstName,customer?.lastName].filter(Boolean).join(" ")||"عميل"}</p><p dir="ltr" className="text-left text-xs">{customer?.email||""}</p></section>
    <table className="mt-6 w-full border-collapse text-right text-xs">
     <thead><tr className="bg-[#F7F1DF]"><th className="border border-[#E4D6B7] p-3"><Dual ar="الخدمة" en="Service"/></th><th className="border border-[#E4D6B7] p-3"><Dual ar="العدد" en="Qty"/></th><th className="border border-[#E4D6B7] p-3"><Dual ar="سعر الوحدة" en="Unit Price"/></th><th className="border border-[#E4D6B7] p-3"><Dual ar="الإجمالي" en="Total"/></th></tr></thead>
     <tbody>{items.map((item,i)=><tr key={i}><td className="border border-[#E4D6B7] p-3">{item.title||"خدمة"}{item.itemType==="DRIVING_LICENSE"&&<p dir="ltr" className="mt-1 text-[10px]">International Driving Permit — 1 Year</p>}</td><td className="border border-[#E4D6B7] p-3">{item.quantity||1}</td><td className="border border-[#E4D6B7] p-3" dir="ltr">{money(item.unitPriceSar)}</td><td className="border border-[#E4D6B7] p-3" dir="ltr">{money((item.quantity||1)*(item.unitPriceSar||0))}</td></tr>)}</tbody>
@@ -69,11 +79,11 @@ export default async function CartOrderDocument({params,searchParams}:Props){
     <div className="flex justify-between gap-6 border-t border-[#D9C38D] pt-3 text-base font-black"><Dual ar="الإجمالي شامل الضريبة عند انطباقها" en="Total Amount (VAT Inclusive Where Applicable)"/><b>{money(data.amountSar)}</b></div>
    </section>
    <div className="mt-6 rounded-xl border border-[#E8DAC1] bg-[#FFFBF2] p-4 text-xs leading-6">
-     {isLicenseOnly?<><b>الرخصة الدولية: السعر المبين أعلاه شامل ضريبة القيمة المضافة بحسب السعر المعتمد وقت إنشاء الطلب.</b><p dir="ltr" className="text-right">International Driving Permit: price includes VAT. No additional VAT is added on top of the displayed total.</p></>:<><p>تُحدد المعالجة الضريبية النهائية لكل تجربة حسب المورد واللوائح السارية؛ لا يُفترض أن جميع خدمات الشركاء خاضعة لنفس النسبة.</p><p dir="ltr" className="text-right">Applicable VAT treatment depends on each service supplier; this document is not a compliant tax e-invoice.</p></>}
+     {isLicenseOnly?<><b>الرخصة الدولية: السعر المبين أعلاه شامل ضريبة القيمة المضافة بحسب السعر المعتمد وقت إنشاء الطلب.</b><p dir="ltr" className="text-left">International Driving Permit: price includes VAT. No additional VAT is added on top of the displayed total.</p></>:<><p>تُحدد المعالجة الضريبية النهائية لكل تجربة حسب المورد واللوائح السارية؛ لا يُفترض أن جميع خدمات الشركاء خاضعة لنفس النسبة.</p><p dir="ltr" className="text-right">Applicable VAT treatment depends on each service supplier; this document is not a compliant tax e-invoice.</p></>}
      <p className="mt-2">{type==="quote"?"العرض ليس إثبات دفع أو حجز مؤكد.":"تم اعتماد استلام المبلغ من الإدارة. يبدأ تنفيذ الخدمة وفق المتطلبات. يُتاح الفاوتشر أو ملف الخدمة عند صدوره."}</p>
      <p dir="ltr" className="text-right">{type==="quote"?"Quotation only; not proof of payment or a confirmed booking.":"Bank transfer receipt verified by AREES administration. Service fulfilment and voucher delivery follow applicable requirements."}</p>
    </div>
-   <footer className="mt-10 border-t border-[#E3D2AC] pt-4 text-center text-[10px]">Arees Loop · www.areesloop.com</footer>
+   <footer className="mt-10 border-t border-[#E3D2AC] pt-4 text-center text-[10px]">www.areesloop.com</footer>
   </article>
  </main>;
 }
