@@ -9,7 +9,7 @@ import SaveExperienceButton from "./components/SaveExperienceButton";
 import PartnerIcon from "./components/PartnerIcon";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
-import { getCurrentLocation } from "../lib/location";
+import { getBrowserCoordinates, reverseGeocode } from "../lib/location";
 import { getTotalLoopPoints, getLoopProgress } from "../lib/loop-progress";
 
 type LiveService = { id:string; nameAr:string; descriptionAr?:string|null; city?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string; latitude?:number|null; longitude?:number|null };
@@ -240,7 +240,7 @@ export default function Home() {
   const isArabic = heroLanguage === "ar";
   const isLastScene = activeScene === heroScenes.length - 1;
   const nearbyDiscoverHref = userCoords
-    ? `/discover?lat=${userCoords.lat.toFixed(6)}&lng=${userCoords.lng.toFixed(6)}&source=location`
+    ? `/discover?lat=${userCoords.lat.toFixed(6)}&lng=${userCoords.lng.toFixed(6)}&source=location${detectedLocationScene?.coords?`&near=${encodeURIComponent(detectedLocationScene.nameAr)}`:""}`
     : "/discover";
 
 
@@ -290,15 +290,15 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
-    let noticeTimer: number | undefined;
 
     const detectLocation = async () => {
       try {
-        const location = await getCurrentLocation();
+        // Do not block the city notice on remote reverse-geocoding.
+        const coordinates = await getBrowserCoordinates({enableHighAccuracy:true,timeout:8000,maximumAge:5*60*1000});
 
         if (cancelled) return;
 
-        const { lat, lng, accuracy } = location.coordinates;
+        const { lat, lng, accuracy } = coordinates;
         // Never infer a city from an imprecise browser location.
         if (accuracy === null || accuracy > 25000) {
           setUserCoords(null);
@@ -309,7 +309,8 @@ export default function Home() {
         }
 
         setUserCoords({ lat, lng });
-        setDetectedAddress(location.address);
+        setDetectedAddress(null);
+        void reverseGeocode(lat,lng).then(result=>{if(!cancelled)setDetectedAddress(result.address);}).catch(()=>{});
 
         let nearestIndex = 0;
         let nearestDistance = Number.POSITIVE_INFINITY;
@@ -333,10 +334,7 @@ export default function Home() {
         if (nearestDistance <= 35) {
           setDetectedLocationScene(heroScenes[nearestIndex]);
           setActiveScene(nearestIndex);
-          noticeTimer = window.setTimeout(
-            () => setShowLocationNotice(true),
-            650,
-          );
+          setShowLocationNotice(true);
         } else {
           setDetectedLocationScene(null);
           setActiveScene(0);
@@ -361,9 +359,6 @@ export default function Home() {
     return () => {
       cancelled = true;
 
-      if (noticeTimer !== undefined) {
-        window.clearTimeout(noticeTimer);
-      }
     };
   }, []);
 
