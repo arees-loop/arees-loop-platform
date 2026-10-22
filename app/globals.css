@@ -757,9 +757,21 @@ a.arees-primary-action[href]:active {
   margin-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
 }
 @media (max-width: 767px) {
-  /* Desktop-only third-party seal must never float over mobile account
-     actions, even after resizing from a larger viewport. */
-  .sbc-verify-seal { display: none !important; }
+  /* The authentic provider widget remains floating and clickable on mobile,
+     but the whole seal sits below the sticky account/header stacking layer. */
+  .sbc-verify-seal[data-position="bottom-left"] {
+    display: block !important;
+    position: fixed !important;
+    left: 8px !important;
+    right: auto !important;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+    top: auto !important;
+    margin: 0 !important;
+    transform: scale(.72) !important;
+    transform-origin: left bottom !important;
+    z-index: 20 !important;
+    max-width: min(220px, 85vw) !important;
+  }
 }
 
 .guide-team-frame{display:grid;grid-template-columns:1fr 1fr;flex:0 0 116px;width:116px;height:94px;overflow:hidden;border:2px solid rgba(255,244,207,.88);border-radius:17px;box-shadow:0 8px 22px rgba(0,0,0,.32);direction:rtl}
