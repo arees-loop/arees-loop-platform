@@ -53,6 +53,14 @@ for(const field of ["PASSPORT","LOCAL_LICENSE","PORTRAIT","الطول","لون �
 assert(licenseForm.includes("/api/transport/requests")&&licenseForm.includes("/api/customer/request-attachments"),"Licence requests and documents must use available production APIs");
 assert(!licenseForm.includes("/api/license-cart-application")&&!licenseForm.includes("/api/license-documents"),"Licence form may not depend on absent legacy endpoints");
 assert(header.includes("goToAirSea")&&home.includes('window.location.hash!=="#travel-bookings"'),"Air/sea navigation must actually scroll for both client and direct visits");
+// Event-ticket commerce stays separate from government/non-profit public events.
+// No unapproved provider checkout, inventory or payment is activated.
+assert(count(header,'href="/event-tickets"')===2,"Event ticket link must appear on desktop and mobile headers");
+const ticketPage=file("app/event-tickets/page.tsx");
+assert(ticketPage.includes("تذاكر الفعاليات")&&ticketPage.includes("الحجز الإلكتروني غير مفعّل حالياً"),"Event ticket landing must clearly communicate actual pre-integration status");
+assert(ticketPage.includes('robots:{index:false,follow:true}')&&!ticketPage.includes("/api/tickets/purchase"),"Pre-integration ticket page must not imply authorized inventory or live checkout");
+const govEvents=file("app/events/page.tsx");
+assert(govEvents.includes("GOVERNMENT_NONPROFIT")&&govEvents.includes("بدون أسعار أو عمليات دفع"),"Preserve separate government event listings and scope");
 const customer=file("app/my-requests/page.tsx");
 assert(customer.includes("CustomerCartOrderDetail")&&customer.includes('"/api/cart/bank-checkout?history=true"'),"Unified My Requests must continue including partner/cart orders");
 // Approved 22 Oct UX: destination selectors must remain compact even with
