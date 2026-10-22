@@ -30,6 +30,7 @@ const requestsNav: NavItem[] = [
 ];
 const bookingsNav: NavItem[] = [
   { href: "/admin/bookings", label: "حجوزات تجارب الشركاء", icon: "▦", permission: "BOOKINGS" },
+  { href: "/admin/cart-bank-payments", label: "تحويلات السلة البنكية", icon: "▣", permission: "BOOKINGS" },
 ];
 const partnersNav: NavItem[] = [
   { href: "/admin/partners", label: "طلبات انضمام الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
