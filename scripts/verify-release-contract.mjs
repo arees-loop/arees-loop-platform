@@ -25,6 +25,7 @@ assert(count(home,bookingsId)===1,"Homepage must have exactly one air-and-sea bo
 assert(home.indexOf(bookingsId)<home.indexOf(discoverId)&&home.indexOf(bookingsId)>=0&&home.indexOf(discoverId)>=0,"Air/sea section must precede discover section");
 assert(home.includes('href="/flights"')&&home.includes('href="/ferries"'),"Air/sea section must link to BOTH flight and ferry request pages");
 assert(count(header,'href="/#travel-bookings"')===2,"Desktop and mobile header must link to the air/sea section");
+assert(count(header,'<Link href="/#travel-bookings" onClick={goToAirSea}')===2&&!header.includes('<a href="/#travel-bookings"'),"Home travel bookings navigation must be client-side: no full-page reloads from Discover");
 assert(!header.includes('href="/flights"')&&!header.includes('href="/ferries"'),"Header travel services must not re-introduce air/sea items");
 for(const href of ["/hotels","/visas","/international-driving-license"]){
  assert(count(header,'href="'+href+'"')>=2,"Desktop and mobile travel services must expose "+href);
@@ -67,8 +68,8 @@ assert(customer.includes("CustomerCartOrderDetail")&&customer.includes('"/api/ca
 // hundreds of cities. Existing search above the list filters the offers.
 const destinations=file("app/discover/DiscoverClient.tsx");
 assert(destinations.includes('id="available-destinations"')&&destinations.includes('<select')&&!destinations.includes("cities.map(x=><button"),"Destinations must be one compact select instead of one button per city");
-assert(destinations.includes("const nearbyOnly=locationMode&&!showAllLocations&&!manualSearch")&&destinations.includes("setShowAllLocations(true)")&&destinations.includes("كل المواقع — عرض جميع البرامج"),"All locations must clear proximity scope and display all applicable published programs");
-assert(destinations.includes('aria-label="مهام اللوب"')&&destinations.includes("/missions")&&existsSync(resolve(root,"app/missions/page.tsx")),"Loop Missions entry must remain visible in discovery without falsely creating missions");
+assert(destinations.includes("const nearbyOnly=locationMode&&!showAllLocations&&!manualSearch")&&destinations.includes("setShowAllLocations(true)")&&destinations.includes("const all=()=>")&&destinations.includes("كل المواقع — جميع البرامج"),"All locations must clear proximity scope and display all applicable published programs");
+assert(destinations.includes('aria-label="مهام اللوب (معاينة غير مفعلة)"')&&destinations.includes("/missions")&&existsSync(resolve(root,"app/missions/page.tsx")),"Loop Missions entry must remain visible in discovery without falsely creating missions");
 // Preserve compact discovery and GPS city fallback; do not require every
 // published city service to have working coordinates in order to appear.
 assert(destinations.includes('aria-label="بحث الوجهات والمهام"')&&destinations.includes("const nearbyCity=")&&destinations.includes("cityKey(s.city)===cityKey(nearbyCity)"),"Compact discovery must retain confirmed-city fallback alongside GPS proximity");
@@ -83,7 +84,14 @@ assert(missions.includes("مهام تجريبية للعرض فقط")&&!missions
 const serviceDetail=file("app/services/[id]/page.tsx");
 assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("service.loyaltyPoints || 150"),"Do not invent a 150-point earning amount when the service has no configured points");
 const sealCss=file("app/globals.css");
-assert(sealCss.includes(".sbc-verify-seal { z-index: 20 !important; }"),"Verification seal must not overlay customer mobile navigation");
+assert(sealCss.includes(".sbc-verify-seal { display: none !important; }"),"Official desktop verification widget must remain non-floating on mobile");
+const layout=file("app/layout.tsx"), verification=file("app/components/SaudiBusinessVerification.tsx");
+assert(layout.includes("<SaudiBusinessVerification />")&&!layout.includes("EAuthSealApi/seal.js"),"Root layout must delegate the verification widget to the responsive controller");
+assert(verification.includes("window.matchMedia(\"(min-width: 768px)\")")&&verification.includes("{desktop&&")&&verification.includes("md:hidden")&&verification.includes("eauthenticate.saudibusiness.gov.sa/inquiry"),"Mobile must show an inline official inquiry link, with official widget script loaded only on desktop");
+const splash=file("app/components/InitialSplash.tsx");
+assert(splash.includes("window.sessionStorage.setItem(SPLASH_SEEN_KEY")&&splash.includes('pathname === "/" && !seen')&&splash.includes('if (!visible || pathname !== "/"'),"Initial splash should appear once on first home entry, not during internal navigation");
+assert(destinations.includes('h-[48px]')&&destinations.includes("w-[106px]")&&!destinations.includes('onClick={all} className="h-10 shrink-0"'),"Mobile discover filters must stay within a compact one-row 48px toolbar");
+assert(home.includes("selectedSceneDiscoverHref")&&count(home,"href={selectedSceneDiscoverHref}")===3,"Homepage Discover CTAs must preserve selected destination instead of resetting to all");
 
 const notifications=file("app/notifications/page.tsx");
 assert(!notifications.includes("cartAlerts")&&!notifications.includes("/api/cart/bank-checkout?history=true"),"Customer cart document requests must not duplicate in standalone Notifications");

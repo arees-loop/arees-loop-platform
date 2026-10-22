@@ -1,30 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 const SPLASH_VISIBLE_MS = 2600;
 const SPLASH_REMOVE_MS = 3200;
+const SPLASH_SEEN_KEY = "arees-loop-intro-seen-v1";
 
 export default function InitialSplash() {
-  const [visible, setVisible] = useState(true);
+  const pathname = usePathname();
+  // Start without an overlay so client navigation and reloads cannot flash it
+  // before the browser checks whether this tab has already seen the intro.
+  const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
+  const firstRoute = useRef<string | null>(null);
 
   useEffect(() => {
-    const closeTimer = window.setTimeout(() => {
-      setClosing(true);
-    }, SPLASH_VISIBLE_MS);
+    // Next.js keeps the root layout mounted during client transitions. On
+    // route changes always dismiss a still-visible intro immediately.
+    if (firstRoute.current !== null) {
+      if (pathname !== firstRoute.current) {
+        setVisible(false);
+        setClosing(true);
+      }
+      return;
+    }
 
-    const removeTimer = window.setTimeout(() => {
-      setVisible(false);
-    }, SPLASH_REMOVE_MS);
+    firstRoute.current = pathname;
+    let seen = false;
+    try {
+      seen = window.sessionStorage.getItem(SPLASH_SEEN_KEY) === "1";
+      // A visitor who enters via an inner page must not see the intro when
+      // subsequently navigating to Home in the same tab.
+      window.sessionStorage.setItem(SPLASH_SEEN_KEY, "1");
+    } catch {
+      // Storage can be disabled in private/restricted browser contexts.
+      // Navigation within the current document is still guarded by firstRoute.
+    }
+    if (pathname === "/" && !seen) setVisible(true);
+  }, [pathname]);
 
+  useEffect(() => {
+    if (!visible || pathname !== "/") return;
+    const closeTimer = window.setTimeout(() => setClosing(true), SPLASH_VISIBLE_MS);
+    const removeTimer = window.setTimeout(() => setVisible(false), SPLASH_REMOVE_MS);
     return () => {
       window.clearTimeout(closeTimer);
       window.clearTimeout(removeTimer);
     };
-  }, []);
+  }, [visible, pathname]);
 
-  if (!visible) return null;
+  if (!visible || pathname !== "/" || firstRoute.current !== "/") return null;
 
   return (
     <>

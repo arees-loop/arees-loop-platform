@@ -242,6 +242,10 @@ export default function Home() {
   const nearbyDiscoverHref = userCoords
     ? `/discover?lat=${userCoords.lat.toFixed(6)}&lng=${userCoords.lng.toFixed(6)}&source=location${detectedLocationScene?.coords?`&near=${encodeURIComponent(detectedLocationScene.nameAr)}`:""}`
     : "/discover";
+  // Every hero Discover CTA must preserve the destination currently selected.
+  const selectedSceneDiscoverHref = currentScene.coords
+    ? `/discover?destination=${encodeURIComponent(currentScene.nameAr)}`
+    : nearbyDiscoverHref;
 
 
   useEffect(() => {
@@ -679,7 +683,7 @@ export default function Home() {
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                href="/discover"
+                href={selectedSceneDiscoverHref}
                 className="rounded-full bg-[#D4AF37] px-7 py-3.5 text-sm font-black text-[#102e27] shadow-[0_15px_40px_rgba(212,175,55,0.20)] transition hover:-translate-y-1 hover:bg-[#e7c760]"
               >
                 {isArabic ? "اكتشف الآن" : "Discover now"}
@@ -865,7 +869,7 @@ export default function Home() {
 
                     <div className="mt-7 grid grid-cols-3 gap-2.5 text-center">
                       <Link
-                        href="/discover"
+                        href={selectedSceneDiscoverHref}
                         className="rounded-2xl border border-white/40 bg-white/[0.055] px-2 py-3 text-xs font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-[1px] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#D4AF37]/90 hover:bg-[#D4AF37] hover:text-[#0D3B34] hover:shadow-[0_0_24px_rgba(212,175,55,0.38),inset_0_1px_0_rgba(255,255,255,0.38)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/80"
                       >
                         {isArabic ? "اكتشف" : "Discover"}
@@ -888,7 +892,7 @@ export default function Home() {
                   </div>
 
                   <Link
-                    href="/discover"
+                    href={selectedSceneDiscoverHref}
                     className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/22 bg-[#07372f]/76 px-5 py-4 font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur-[2px] transition hover:bg-[#0b493e]/86"
                   >
                     <span>{isArabic ? "ادخل التجربة" : "Enter experience"}</span>

@@ -86,7 +86,7 @@ export default function GlobalHeader() {
           </div>}
           {navVisible.guides !== false && (<Link href="/#tour-guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
           {/* Approved navigation: air/sea has its own landing-section anchor. */}
-          {navVisible.flights !== false && <a href="/#travel-bookings" onClick={goToAirSea} className="transition hover:text-[#D4AF37]">الطيران والبواخر</a>}
+          {navVisible.flights !== false && <Link href="/#travel-bookings" onClick={goToAirSea} className="transition hover:text-[#D4AF37]">الطيران والبواخر</Link>}
           <Link href="/event-tickets" className="transition hover:text-[#D4AF37]">تذاكر الفعاليات</Link>
           <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">
@@ -173,7 +173,7 @@ export default function GlobalHeader() {
               </section>
             )}
             {/* Mobile navigation mirrors the approved desktop IA. */}
-            {navVisible.flights !== false && <a href="/#travel-bookings" onClick={goToAirSea} className="col-span-2 rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الطيران والبواخر</a>}
+            {navVisible.flights !== false && <Link href="/#travel-bookings" onClick={goToAirSea} className="col-span-2 rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الطيران والبواخر</Link>}
             <Link href="/event-tickets" onClick={() => setMobileNavOpen(false)} className="col-span-2 rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">🎟️ تذاكر الفعاليات</Link>
             <section className="col-span-2">
               <button type="button" aria-expanded={mobileTravelServicesOpen} aria-controls="arees-mobile-travel-links" onClick={() => setMobileTravelServicesOpen(value => !value)} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-right hover:bg-[#D4AF37]/15">

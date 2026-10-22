@@ -757,15 +757,9 @@ a.arees-primary-action[href]:active {
   margin-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
 }
 @media (max-width: 767px) {
-  /* Place the external verification seal above mobile customer navigation,
-     and below interactive nav layers so it cannot cover Account controls. */
-  .sbc-verify-seal { z-index: 20 !important; }
-  .sbc-verify-seal[data-position="bottom-left"] {
-    margin-left: 8px;
-    margin-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-    transform: scale(.78);
-    transform-origin: left bottom;
-  }
+  /* Desktop-only third-party seal must never float over mobile account
+     actions, even after resizing from a larger viewport. */
+  .sbc-verify-seal { display: none !important; }
 }
 
 .guide-team-frame{display:grid;grid-template-columns:1fr 1fr;flex:0 0 116px;width:116px;height:94px;overflow:hidden;border:2px solid rgba(255,244,207,.88);border-radius:17px;box-shadow:0 8px 22px rgba(0,0,0,.32);direction:rtl}
