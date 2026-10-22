@@ -2111,65 +2111,10 @@ export default function PartnerOnboardingPage() {
                   </div>
                 </div>
               ) : (
-              <div className={`grid gap-3 rounded-[22px] ${
-                validationErrors.partnerType ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
-              } md:grid-cols-3`}>
-                <SelectCard
-                  title="فرد"
-                  description="مقدم خدمة فردي أو مهني"
-                  active={
-                    data.partnerType ===
-                    "individual"
-                  }
-                  onClick={() => {
-                    update(
-                      "partnerType",
-                      "individual"
-                    );
-
-                    update(
-                      "applicantRole",
-                      ""
-                    );
-                  }}
-                />
-
-                <SelectCard
-                  title="مؤسسة أو شركة"
-                  description="منشأة تجارية مسجلة"
-                  active={
-                    data.partnerType ===
-                    "business"
-                  }
-                  onClick={() =>
-                    update(
-                      "partnerType",
-                      "business"
-                    )
-                  }
-                />
-
-                <SelectCard
-                  title="جهة حكومية أو غير ربحية"
-                  description="جهة مؤسسية أو مجتمعية"
-                  active={
-                    data.partnerType ===
-                    "government"
-                  }
-                  onClick={() => {
-                    update(
-                      "partnerType",
-                      "government"
-                    );
-
-                    update(
-                      "applicantRole",
-                      ""
-                    );
-                  }}
-                />
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-[#0D3B34]">
+                اختر نوع الشريك من <Link href="/partner/select-type" className="font-bold underline">صفحة الانضمام</Link>، فلا يجوز تغيير نوع الطلب داخل النموذج.
               </div>
-              )}
+
             </Field>
             <ValidationError message={validationErrors.partnerType} />
             </div>
@@ -2289,6 +2234,14 @@ export default function PartnerOnboardingPage() {
               </div>
             )}
 
+            {data.partnerType==="business" && data.applicantRole==="owner" && <div data-validation="ownerProofFile" className="mb-4 rounded-2xl border border-[#D4AF37]/30 bg-[#FFF9E8] p-4">
+              <Field label="إثبات ملكية المنشأة (إلزامي) *">
+                <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
+                  onChange={e=>{const file=e.target.files?.[0]??null;update("ownerProofFile",file?.name||"");setUploadedFiles(current=>({...current,ownerProof:file}));}}/>
+              </Field>
+              <p className="mt-2 text-xs text-[#0D3B34]/60">ارفع وثيقة رسمية تربط اسم المالك بالمنشأة. لا يكفي اختيار صفة مالك بدون إثبات.</p>
+              <ValidationError message={validationErrors.ownerProofFile}/>
+            </div>}
             <Actions
               onBack={goBack}
               onNext={goNext}
@@ -2326,6 +2279,14 @@ export default function PartnerOnboardingPage() {
                   className={`${inputClass} ${validationErrors.tradeName ? errorInputClass : ""}`}
                 />
               </Field><ValidationError message={validationErrors.tradeName} /></div>
+              {data.partnerType === "individual" && <>
+                <div data-validation="guideSpecialty"><Field label="تخصص الإرشاد السياحي *">
+                  <input value={data.guideSpecialty} onChange={e=>update("guideSpecialty",e.target.value)} placeholder="إرشاد ثقافي، تاريخي، مدن..." className={inputClass}/>
+                </Field><ValidationError message={validationErrors.guideSpecialty}/></div>
+                <div data-validation="guideLanguages"><Field label="لغات الإرشاد *">
+                  <input value={data.guideLanguages} onChange={e=>update("guideLanguages",e.target.value)} placeholder="العربية، الإنجليزية..." className={inputClass}/>
+                </Field><ValidationError message={validationErrors.guideLanguages}/></div>
+              </>}
 
               <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
                 <input
