@@ -2,12 +2,12 @@
 import {useCallback,useEffect,useState} from "react";
 import Link from "next/link";
 import OrderStatusBadge,{RequiredActionButton} from "@/app/components/OrderStatusBadge";
-type Item={reference:string;paymentStatus:string;status:string;amountSar:number;rows:{title:string;quantity:number}[];messages:{id:string;from:unknown;text:unknown;createdAt:string}[];documents:{id:string;from:unknown;name:unknown;createdAt:string}[];timeline:{id:string;action:string;createdAt:string}[]};
+type Item={reference:string;paymentStatus:string;status:string;unreadMessage?:boolean;amountSar:number;rows:{title:string;quantity:number}[];messages:{id:string;from:unknown;text:unknown;createdAt:string}[];documents:{id:string;from:unknown;name:unknown;createdAt:string}[];timeline:{id:string;action:string;createdAt:string}[]};
 const labels:Record<string,string>={CART_BANK_CREATED:"بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"تم رفع الإيصال — قيد المراجعة",CART_BANK_VERIFIED:"تم اعتماد وصول السداد",CART_BANK_REJECTED:"الإيصال مرفوض",PAID:"تم السداد — تحت الإجراء",PROCESSING:"تحت التنفيذ",DOCUMENTS_REQUESTED:"يرجى إرفاق مستندات إضافية",DOCUMENTS_SUBMITTED:"تم إرسال المستندات — تحت المراجعة",COMPLETED:"تم التنفيذ"};
 export default function CustomerCartOrderDetail({reference}:{reference:string}){
  const [uploadOpen,setUploadOpen]=useState(false);const [order,setOrder]=useState<Item|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[notice,setNotice]=useState(""),[message,setMessage]=useState(""),[file,setFile]=useState<File|null>(null),[busy,setBusy]=useState(false);
  const load=useCallback(async()=>{
-  try{const r=await fetch("/api/cart/order-workflow?reference="+encodeURIComponent(reference),{credentials:"include",cache:"no-store"});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر تحميل الطلب.");setOrder(d.order);setError("");}
+  try{const r=await fetch("/api/cart/order-workflow?reference="+encodeURIComponent(reference),{credentials:"include",cache:"no-store"});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر تحميل الطلب.");setOrder(d.order);setError("");if(d.order?.unreadMessage){void fetch("/api/cart/order-workflow",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({reference,action:"VIEWED"})}).catch(()=>{});}}
   catch(e){setError(e instanceof Error?e.message:"تعذر قراءة الطلب.");}finally{setLoading(false);}
  },[reference]);useEffect(()=>{void load()},[load]);
  async function send(){
@@ -29,6 +29,7 @@ export default function CustomerCartOrderDetail({reference}:{reference:string}){
     <p><b>رقم الطلب:</b> <span dir="ltr" className="font-mono">{reference}</span></p>
     {["CART_BANK_CREATED","CART_BANK_REJECTED"].includes(order.paymentStatus)&&<Link href={"/cart?reference="+encodeURIComponent(reference)} className="inline-block rounded-xl border border-[#D4AF37] px-3 py-2 font-bold">استكمال التحويل أو إعادة رفع الإيصال</Link>}
     {order.paymentStatus==="CART_BANK_VERIFIED"&&<a target="_blank" rel="noreferrer" href={"/cart/documents/invoice?reference="+encodeURIComponent(reference)} className="inline-block rounded-xl border border-[#D4AF37] px-3 py-2 font-bold">عرض مستند السداد</a>}
+    {order.unreadMessage&&order.status!=="DOCUMENTS_REQUESTED"&&<div role="alert" className="rounded-xl border-2 border-[#D94A52] bg-[#FFF0F1] p-3 text-sm font-black text-[#951A27]">🔴 رسالة جديدة من إدارة أريس — اضغط على المراسلات أدناه لقراءتها والرد عليها.</div>}
     {order.status==="DOCUMENTS_REQUESTED"&&<div role="alert" className="space-y-3 rounded-2xl border-2 border-[#D94A52] bg-[#FFF3F3] p-4 shadow-sm">
      <p className="text-sm font-black text-[#9A1527]">🔴 لديك طلب جديد من الإدارة لإرفاق مستندات إضافية.</p>
      <p className="text-xs leading-6 text-[#8C343B]">افتح المراسلات أدناه للاطلاع على التفاصيل، وارفع المستند المطلوب من هنا.</p>
