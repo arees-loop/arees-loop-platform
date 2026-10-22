@@ -57,7 +57,7 @@ assert(header.includes("goToAirSea")&&home.includes('window.location.hash!=="#tr
 // No unapproved provider checkout, inventory or payment is activated.
 assert(count(header,'href="/event-tickets"')===2,"Event ticket link must appear on desktop and mobile headers");
 const ticketPage=file("app/event-tickets/page.tsx");
-assert(ticketPage.includes("تذاكر الفعاليات")&&ticketPage.includes("الحجز الإلكتروني غير مفعّل حالياً"),"Event ticket landing must clearly communicate actual pre-integration status");
+assert(ticketPage.includes("تذاكر الفعاليات")&&ticketPage.includes("قريباً")&&ticketPage.includes("لم يُفتح الحجز أو الدفع بعد"),"Event ticket teaser must clearly communicate that booking/payment are not active");
 assert(ticketPage.includes('robots:{index:false,follow:true}')&&!ticketPage.includes("/api/tickets/purchase"),"Pre-integration ticket page must not imply authorized inventory or live checkout");
 const govEvents=file("app/events/page.tsx");
 assert(govEvents.includes("GOVERNMENT_NONPROFIT")&&govEvents.includes("بدون أسعار أو عمليات دفع"),"Preserve separate government event listings and scope");
