@@ -88,7 +88,7 @@ assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("
 const pointsFormula=file("lib/service-loyalty-points.ts");
 const pointsBanner=file("app/components/ServiceLoyaltyBanner.tsx");
 assert(pointsFormula.includes("Math.floor(Math.round(finalPrice * 100) / 100)")&&pointsBanner.includes("احجز واحصل على")&&pointsBanner.includes("نقطة أريس لوب")&&pointsBanner.includes('/Logo/arees-loop-logo.png'),"Always show automatic service-price points with official logo and approved Arabic earning copy");
-assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&count(destinations,"<ServiceLoyaltyBanner finalPrice={s.finalPrice}")===1&&count(serviceDetail,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1,"Approved earning banner must appear at full width in Home, Discover and details; never replace with tiny price-adjacent text");
+assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&count(destinations,"<ServiceLoyaltyBanner finalPrice={s.finalPrice}")===1&&count(serviceDetail,"<ServiceLoyaltyBanner finalPrice={total}")===1,"Approved earning banner must appear at full width in Home, Discover and details; never replace with tiny price-adjacent text");
 assert(!home.includes("نقاط الخدمة:")&&!destinations.includes("نقاط الخدمة:")&&!serviceDetail.includes("نقاط الخدمة:"),"Do not regress the previously approved full earning call-to-action");
 const savedButton=file("app/components/SaveExperienceButton.tsx");
 assert(savedButton.includes("<svg viewBox=")&&!savedButton.includes('saved ? "♥" : "♡"'),"Favorite hearts must use consistent outlined/gold SVG rather than black font/emoji glyphs");
