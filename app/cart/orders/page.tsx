@@ -4,7 +4,7 @@ import Link from "next/link";
 import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 type Order={reference:string;amountSar:number;createdAt:string;status:string;hasVoucher:boolean;rows:{title?:string;itemType?:string}[]};
-const labels:Record<string,string>={CART_BANK_CREATED:"بانتظار تحويل المبلغ",CART_BANK_RECEIPT_SUBMITTED:"إيصال التحويل قيد المراجعة",CART_BANK_VERIFIED:"تم اعتماد السداد",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",DOCUMENTS_SUBMITTED:"المستندات تحت المراجعة",PROCESSING:"تحت التنفيذ",PAID:"تم السداد — تحت الإجراء",COMPLETED:"تم التنفيذ",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة رفعه"};
+const labels:Record<string,string>={CART_BANK_CREATED:"بانتظار تحويل المبلغ",CART_BANK_RECEIPT_SUBMITTED:"إيصال التحويل قيد المراجعة",CART_BANK_VERIFIED:"تم اعتماد السداد",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",DOCUMENTS_SUBMITTED:"تحت مراجعة المستندات المرفقة",PROCESSING:"تحت التنفيذ",PAID:"تم السداد — تحت الإجراء",COMPLETED:"تم التنفيذ",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة رفعه"};
 const paid=(status:string)=>["CART_BANK_VERIFIED","PAID","PROCESSING","DOCUMENTS_REQUESTED","DOCUMENTS_SUBMITTED","COMPLETED"].includes(status);
 export default function CartOrdersPage(){
  const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState("");

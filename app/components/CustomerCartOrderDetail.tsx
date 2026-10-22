@@ -3,7 +3,7 @@ import {useCallback,useEffect,useState} from "react";
 import Link from "next/link";
 import OrderStatusBadge,{RequiredActionButton} from "@/app/components/OrderStatusBadge";
 type Item={reference:string;paymentStatus:string;status:string;unreadMessage?:boolean;amountSar:number;rows:{title:string;quantity:number}[];messages:{id:string;from:unknown;text:unknown;createdAt:string}[];documents:{id:string;from:unknown;name:unknown;createdAt:string}[];timeline:{id:string;action:string;createdAt:string}[]};
-const labels:Record<string,string>={CART_BANK_CREATED:"بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"تم رفع الإيصال — قيد المراجعة",CART_BANK_VERIFIED:"تم اعتماد وصول السداد",CART_BANK_REJECTED:"الإيصال مرفوض",PAID:"تم السداد — تحت الإجراء",PROCESSING:"تحت التنفيذ",DOCUMENTS_REQUESTED:"يرجى إرفاق مستندات إضافية",DOCUMENTS_SUBMITTED:"تم إرسال المستندات — تحت المراجعة",COMPLETED:"تم التنفيذ"};
+const labels:Record<string,string>={CART_BANK_CREATED:"بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"تم رفع الإيصال — قيد المراجعة",CART_BANK_VERIFIED:"تم اعتماد وصول السداد",CART_BANK_REJECTED:"الإيصال مرفوض",PAID:"تم السداد — تحت الإجراء",PROCESSING:"تحت التنفيذ",DOCUMENTS_REQUESTED:"يرجى إرفاق مستندات إضافية",DOCUMENTS_SUBMITTED:"تحت مراجعة المستندات المرفقة",COMPLETED:"تم التنفيذ"};
 export default function CustomerCartOrderDetail({reference}:{reference:string}){
  const [uploadOpen,setUploadOpen]=useState(false);const [order,setOrder]=useState<Item|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[notice,setNotice]=useState(""),[message,setMessage]=useState(""),[file,setFile]=useState<File|null>(null),[busy,setBusy]=useState(false);
  const load=useCallback(async()=>{
@@ -17,7 +17,7 @@ export default function CustomerCartOrderDetail({reference}:{reference:string}){
  }
  async function upload(){
   if(!file||busy)return;setBusy(true);setError("");
-  try{const form=new FormData();form.set("reference",reference);form.set("file",file);const r=await fetch("/api/cart/order-documents",{method:"POST",body:form,credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر الرفع.");setNotice("تم إرفاق المستند في الطلب، وهو الآن بانتظار مراجعة الإدارة.");setFile(null);setUploadOpen(false);await load();}
+  try{const form=new FormData();form.set("reference",reference);form.set("file",file);const r=await fetch("/api/cart/order-documents",{method:"POST",body:form,credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر الرفع.");setNotice("تم إرفاق المستند بنجاح. حالة الطلب: تحت مراجعة المستندات المرفقة.");setFile(null);setUploadOpen(false);await load();window.dispatchEvent(new Event("arees-cart-order-updated"));}
   catch(e){setError(e instanceof Error?e.message:"تعذر الرفع.");}finally{setBusy(false);}
  }
  return <div dir="rtl" className="space-y-3 border-t border-[#D4AF37]/20 p-4 text-xs">
@@ -30,6 +30,7 @@ export default function CustomerCartOrderDetail({reference}:{reference:string}){
     {["CART_BANK_CREATED","CART_BANK_REJECTED"].includes(order.paymentStatus)&&<Link href={"/cart?reference="+encodeURIComponent(reference)} className="inline-block rounded-xl border border-[#D4AF37] px-3 py-2 font-bold">استكمال التحويل أو إعادة رفع الإيصال</Link>}
     {order.paymentStatus==="CART_BANK_VERIFIED"&&<a target="_blank" rel="noreferrer" href={"/cart/documents/invoice?reference="+encodeURIComponent(reference)} className="inline-block rounded-xl border border-[#D4AF37] px-3 py-2 font-bold">عرض مستند السداد</a>}
     {order.unreadMessage&&order.status!=="DOCUMENTS_REQUESTED"&&<div role="alert" className="rounded-xl border-2 border-[#D94A52] bg-[#FFF0F1] p-3 text-sm font-black text-[#951A27]">🔴 رسالة جديدة من إدارة أريس — اضغط على المراسلات أدناه لقراءتها والرد عليها.</div>}
+    {order.status==="DOCUMENTS_SUBMITTED"&&<p role="status" className="rounded-xl border border-[#E8B86D] bg-[#FFF1DB] p-3 text-sm font-black text-[#975518]">📎 تحت مراجعة المستندات المرفقة. تم استلام الملف، ولا يلزم رفعه مرة ثانية إلا إذا طلبت الإدارة ذلك.</p>}
     {order.status==="DOCUMENTS_REQUESTED"&&<div role="alert" className="space-y-3 rounded-2xl border-2 border-[#D94A52] bg-[#FFF3F3] p-4 shadow-sm">
      <p className="text-sm font-black text-[#9A1527]">🔴 لديك طلب جديد من الإدارة لإرفاق مستندات إضافية.</p>
      <p className="text-xs leading-6 text-[#8C343B]">افتح المراسلات أدناه للاطلاع على التفاصيل، وارفع المستند المطلوب من هنا.</p>

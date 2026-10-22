@@ -40,7 +40,7 @@ export function cartStatusLabel(status:string):string {
   PAID:"تم السداد — تحت الإجراء",
   PROCESSING:"تحت التنفيذ",
   DOCUMENTS_REQUESTED:"مطلوب مستندات إضافية",
-  DOCUMENTS_SUBMITTED:"تم رفع المستندات — تنتظر مراجعة الإدارة",
+  DOCUMENTS_SUBMITTED:"تحت مراجعة المستندات المرفقة",
   COMPLETED:"تم التنفيذ"
  } as Record<string,string>)[status]||"طلب جديد";
 }
