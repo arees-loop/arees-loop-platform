@@ -87,11 +87,13 @@ assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("
  // one point per whole riyal of the currently displayed final price.
 const pointsFormula=file("lib/service-loyalty-points.ts");
 const pointsBanner=file("app/components/ServiceLoyaltyBanner.tsx");
-assert(pointsFormula.includes("Math.floor(Math.round(finalPrice * 100) / 100)")&&pointsBanner.includes("احجز واحصل على")&&pointsBanner.includes("نقطة أريس لوب")&&pointsBanner.includes('/Logo/arees-loop-logo.png'),"Always show automatic service-price points with official logo and approved Arabic earning copy");
-assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&count(destinations,"<ServiceLoyaltyBanner finalPrice={s.finalPrice}")===1&&count(serviceDetail,"<ServiceLoyaltyBanner finalPrice={total}")===1,"Approved earning banner must appear at full width in Home, Discover and details; never replace with tiny price-adjacent text");
+assert(pointsFormula.includes("Math.floor(Math.round(finalPrice * 100) / 100)")&&pointsBanner.includes("احصل على")&&pointsBanner.includes("نقطة أريس لوب")&&pointsBanner.includes('/Logo/arees-loop-logo.png'),"Always show automatic service-price points with the official logo and short approved Arabic earning copy");
+assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&count(destinations,"<ServiceLoyaltyBanner finalPrice={s.finalPrice}")===1&&count(serviceDetail,"<ServiceLoyaltyBanner finalPrice={total}")===1,"Compact loyalty chip must remain next to price in Home, Discover and details");
 assert(!home.includes("نقاط الخدمة:")&&!destinations.includes("نقاط الخدمة:")&&!serviceDetail.includes("نقاط الخدمة:"),"Do not regress the previously approved full earning call-to-action");
 const publicCatalog=file("app/services/page.tsx");
-assert(count(publicCatalog,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1,"Public Services listings must also display the full-width approved earning preview");
+assert(count(publicCatalog,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1,"Public Services listings must also display an accurate compact points preview");
+assert(pointsBanner.includes("inline-flex")&&pointsBanner.includes("whitespace-nowrap")&&pointsBanner.includes('text-[10px]')&&!pointsBanner.includes("flex w-full")&&!pointsBanner.includes("text-sm font-extrabold"),"Loyalty badge must be tiny, inline with the price, and must not occupy an oversized full-width block");
+assert(home.includes('flex flex-wrap items-center justify-between gap-2')&&destinations.includes('flex flex-wrap items-center justify-between gap-2')&&serviceDetail.includes('<ServiceLoyaltyBanner finalPrice={total}/>'),"Point chip must share the price row without disturbing price or order CTA");
 const reconcileUi=file("app/admin/services/loyalty-reconcile/page.tsx");
 assert(reconcileUi.includes("السعر النهائي المعروض للعميل")&&!reconcileUi.includes("السعر الأساسي بالريال"),"Admin loyalty reconciliation copy must match final-price policy");
 const savedButton=file("app/components/SaveExperienceButton.tsx");

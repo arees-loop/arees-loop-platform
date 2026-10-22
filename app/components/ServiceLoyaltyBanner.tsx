@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { pointsFromServicePrice } from "@/lib/service-loyalty-points";
 
-/** Reusable full-width earning banner that never competes with the price. */
+/** Compact price-adjacent Loop points badge; no changes to earning calculations. */
 export default function ServiceLoyaltyBanner({
   finalPrice,
   className = "",
@@ -13,11 +13,19 @@ export default function ServiceLoyaltyBanner({
   if (points <= 0) return null;
 
   return (
-    <div dir="rtl" className={`flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-[#D4AF37]/35 bg-[#FFF6DD] px-3 py-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.8)] ${className}`}>
-      <Image src="/Logo/arees-loop-logo.png" alt="" width={40} height={30} className="h-7 w-10 shrink-0 object-contain" aria-hidden="true"/>
-      <span className="text-sm font-extrabold leading-6 text-[#0D3B34] md:text-[15px]">
-        احجز واحصل على <strong className="font-black tabular-nums text-[#926712]">{points.toLocaleString("ar-SA")}</strong> نقطة أريس لوب
-      </span>
-    </div>
+    <span
+      dir="rtl"
+      aria-label={`احصل على ${points.toLocaleString("ar-SA")} نقطة أريس لوب عند الحجز المؤهل`}
+      className={`inline-flex max-w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[#D4AF37]/25 bg-[#FFF8E8] px-2 py-1 text-[10px] font-semibold leading-4 text-[#846117] ${className}`}
+    >
+      <Image
+        src="/Logo/arees-loop-logo.png"
+        alt="أريس لوب"
+        width={28}
+        height={21}
+        className="h-[18px] w-[25px] shrink-0 object-contain"
+      />
+      <span>احصل على <strong className="font-extrabold tabular-nums">{points.toLocaleString("ar-SA")}</strong> نقطة</span>
+    </span>
   );
 }
