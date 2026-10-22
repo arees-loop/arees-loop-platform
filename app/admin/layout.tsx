@@ -79,7 +79,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     if (requestsNav.some((item) => pathname === item.href.split("?")[0])) setRequestsMenuOpen(true);
     if(pathname==="/admin/partners")setPartnersMenuOpen(true);
     if(pathname.startsWith("/admin/settings"))setPlatformMenuOpen(true);
-    if(pathname==="/admin/bookings")setBookingsMenuOpen(true);
+    if(pathname==="/admin/bookings"||pathname.startsWith("/admin/cart-bank-payments"))setBookingsMenuOpen(true);
     if(pathname==="/admin/dashboard"&&["settlements","reports"].includes(searchParams.get("section")||""))setFinanceMenuOpen(true);
   }, [pathname]);
 
