@@ -25,6 +25,7 @@ assert(count(home,bookingsId)===1,"Homepage must have exactly one air-and-sea bo
 assert(home.indexOf(bookingsId)<home.indexOf(discoverId)&&home.indexOf(bookingsId)>=0&&home.indexOf(discoverId)>=0,"Air/sea section must precede discover section");
 assert(home.includes('href="/flights"')&&home.includes('href="/ferries"'),"Air/sea section must link to BOTH flight and ferry request pages");
 assert(count(header,'href="/#travel-bookings"')===2,"Desktop and mobile header must link to the air/sea section");
+assert(count(header,'<Link href="/#travel-bookings" onClick={goToAirSea}')===2&&!header.includes('<a href="/#travel-bookings"'),"Home travel bookings navigation must be client-side: no full-page reloads from Discover");
 assert(!header.includes('href="/flights"')&&!header.includes('href="/ferries"'),"Header travel services must not re-introduce air/sea items");
 for(const href of ["/hotels","/visas","/international-driving-license"]){
  assert(count(header,'href="'+href+'"')>=2,"Desktop and mobile travel services must expose "+href);
