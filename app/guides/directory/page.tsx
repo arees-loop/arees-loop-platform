@@ -31,9 +31,9 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
           ...(specialty ? [{ type: { contains: specialty, mode: "insensitive" as const } }] : []),
         ],
       } },
-      ...(city ? { city: { contains: city, mode: "insensitive" as const } } : {}),
+      ...(city ? { OR: [{city:{contains:city,mode:"insensitive" as const}}, {guideAreas:{some:{isActive:true,city:{contains:city,mode:"insensitive" as const}}}}] } : {}),
     },
-    select: { id: true, publicName: true, legalNameAr: true, descriptionAr: true, city: true, locationName: true, logoUrl: true, latitude: true, longitude: true, licenses: { where: { status: "VERIFIED", expiryDate: { gt: new Date() } }, select: { type: true }, take: 3 } },
+    select: { id: true, publicName: true, legalNameAr: true, descriptionAr: true, city: true, locationName: true, logoUrl: true, latitude: true, longitude: true, licenses: { where: { status: "VERIFIED", expiryDate: { gt: new Date() } }, select: { type: true }, take: 3 }, guideAreas:{where:{isActive:true},select:{label:true,city:true,category:true,latitude:true,longitude:true,radiusKm:true},take:20} },
     orderBy: { activatedAt: "desc" },
     take: nearby ? 500 : 48,
   }).catch((error) => {
@@ -43,7 +43,14 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
   });
 
   const distanceKm = (g: {latitude: unknown; longitude: unknown}) => { const a=Number(g.latitude), b=Number(g.longitude); if(!Number.isFinite(a)||!Number.isFinite(b)||g.latitude==null||g.longitude==null)return Infinity; const dLat=(a-lat)*Math.PI/180,dLng=(b-lng)*Math.PI/180;const h=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(a*Math.PI/180)*Math.sin(dLng/2)**2;return 6371*2*Math.asin(Math.min(1,Math.sqrt(h))); };
-  const visibleGuides = nearby ? guides.filter(g=>distanceKm(g)<=100).sort((a,b)=>distanceKm(a)-distanceKm(b)).slice(0,48) : guides;
+  const coverageDistance=(g:typeof guides[number])=>{
+    if(g.guideAreas.length) return Math.min(...g.guideAreas.map(a=>distanceKm({latitude:a.latitude,longitude:a.longitude})));
+    return distanceKm(g);
+  };
+  const eligible=(g:typeof guides[number])=>!nearby || (g.guideAreas.length?
+    g.guideAreas.some(a=>distanceKm({latitude:a.latitude,longitude:a.longitude})<=a.radiusKm):
+    distanceKm(g)<=50);
+  const visibleGuides = nearby ? guides.filter(eligible).sort((a,b)=>coverageDistance(a)-coverageDistance(b)).slice(0,48) : guides;
   return <main dir="rtl" className="min-h-screen bg-[#F8F5ED] px-5 pb-24 pt-36 text-[#0D3B34]">
     <div className="mx-auto max-w-7xl">
       <div className="mb-9 text-center"><p className="text-xs font-bold tracking-[.15em] text-[#A87917]">AREES LOOP GUIDES</p><h1 className="mt-2 text-4xl font-black md:text-5xl">المرشدون السياحيون</h1><p className="mx-auto mt-4 max-w-2xl leading-8 text-[#0D3B34]/65">اكتشف المرشدين المعتمدين حسب المنطقة والتخصص والمسار السياحي. تظهر هنا الملفات التي اعتمدتها المنصة وتراخيصها سارية فقط.</p></div>
@@ -57,7 +64,8 @@ export default async function GuidesPage({ searchParams }: { searchParams: Promi
       </form>
       {loadFailed ? <div role="alert" className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-12 text-center"><h2 className="text-xl font-black">تعذر تحميل دليل المرشدين حالياً</h2><p className="mt-3 text-sm text-[#0D3B34]/65">الاتصال بالبيانات غير متاح الآن. أعد المحاولة لاحقاً، ولن نعرض مرشدين غير متحقق من اعتمادهم.</p></div> : visibleGuides.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{visibleGuides.map(guide => <article key={guide.id} className="overflow-hidden rounded-[26px] border border-[#D4AF37]/25 bg-white shadow-[0_12px_35px_rgba(13,59,52,.07)] transition hover:-translate-y-1 hover:shadow-xl">
         <div className="flex aspect-[4/3] items-center justify-center bg-[#EDE9DC]">{guide.logoUrl ? <img src={guide.logoUrl} alt={guide.publicName || guide.legalNameAr} className="h-full w-full object-contain"/> : <span className="text-6xl font-bold text-[#0D3B34]/25" aria-label="لا توجد صورة شخصية">◉</span>}</div>
-        <div className="p-5"><p className="mb-2 text-xs font-bold text-[#A87917]">مرشد سياحي معتمد</p><h2 className="text-xl font-black">{guide.publicName || guide.legalNameAr}</h2><p className="mt-2 min-h-12 text-sm leading-6 text-[#0D3B34]/70">{guide.descriptionAr || "مرشد سياحي مرخص"}</p><p className="mt-3 text-sm font-bold">📍 {guide.city || guide.locationName || "المملكة العربية السعودية"}{nearby && Number.isFinite(distanceKm(guide)) ? ` — ${Math.round(distanceKm(guide))} كم تقريباً` : ""}</p><p className="mt-2 text-xs text-[#0D3B34]/55">{guide.licenses.map(l=>l.type).join(" • ")}</p><Link href={`/guides/${guide.id}`} className="mt-5 block rounded-full bg-[#0D3B34] px-5 py-3 text-center text-sm font-bold text-white">عرض ملف المرشد</Link></div>
+        <div className="p-5"><p className="mb-2 text-xs font-bold text-[#A87917]">مرشد سياحي معتمد</p><h2 className="text-xl font-black">{guide.publicName || guide.legalNameAr}</h2><p className="mt-2 min-h-12 text-sm leading-6 text-[#0D3B34]/70">{guide.descriptionAr || "مرشد سياحي مرخص"}</p><p className="mt-3 text-sm font-bold">📍 {guide.guideAreas[0]?.city || guide.city || guide.locationName || "المملكة العربية السعودية"}{nearby && Number.isFinite(coverageDistance(guide)) ? ` — ${Math.round(coverageDistance(guide))} كم تقريباً` : ""}</p><p className="mt-2 text-xs text-[#0D3B34]/55">{guide.licenses.map(l=>l.type).join(" • ")}</p>
+        {guide.guideAreas.length>0 && <p className="mt-2 text-xs leading-6 text-[#0D3B34]/70">المسارات: {guide.guideAreas.slice(0,3).map(a=>a.label+" — "+a.category+" ("+a.city+")").join(" • ")}{guide.guideAreas.length>3?" …":""} · نطاق 50 كم لكل مسار</p>}<Link href={`/guides/${guide.id}`} className="mt-5 block rounded-full bg-[#0D3B34] px-5 py-3 text-center text-sm font-bold text-white">عرض ملف المرشد</Link></div>
       </article>)}</div> : <div className="rounded-[28px] border border-[#D4AF37]/30 bg-white p-12 text-center"><h2 className="text-xl font-black">لا توجد ملفات مرشدين مطابقة حالياً</h2><p className="mt-3 text-sm text-[#0D3B34]/65">ستظهر بطاقات المرشدين بصورهم وتخصصاتهم ومناطقهم فور اعتماد بياناتهم وتراخيصهم.</p></div>}
     </div>
   </main>;
