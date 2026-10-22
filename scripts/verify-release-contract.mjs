@@ -84,10 +84,16 @@ assert(missions.includes("مهام تجريبية للعرض فقط")&&!missions
 const serviceDetail=file("app/services/[id]/page.tsx");
 assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("service.loyaltyPoints || 150"),"Do not invent a 150-point earning amount when the service has no configured points");
 const sealCss=file("app/globals.css");
-assert(sealCss.includes(".sbc-verify-seal { display: none !important; }"),"Official desktop verification widget must remain non-floating on mobile");
+assert(sealCss.includes("transform: scale(.72) !important;")&&sealCss.includes("z-index: 20 !important;")&&!sealCss.includes(".sbc-verify-seal { display: none !important; }"),"Official Saudi Business seal must remain floating, smaller and below account controls on mobile");
 const layout=file("app/layout.tsx"), verification=file("app/components/SaudiBusinessVerification.tsx");
 assert(layout.includes("<SaudiBusinessVerification />")&&!layout.includes("EAuthSealApi/seal.js"),"Root layout must delegate the verification widget to the responsive controller");
-assert(verification.includes("window.matchMedia(\"(min-width: 768px)\")")&&verification.includes("{desktop&&")&&verification.includes("md:hidden")&&verification.includes("eauthenticate.saudibusiness.gov.sa/inquiry"),"Mobile must show an inline official inquiry link, with official widget script loaded only on desktop");
+assert(verification.includes("EAuthSealApi/seal.js")&&verification.includes("sbc-verify-seal")&&!verification.includes("{desktop&&"),"Restore the authentic official floating verification seal for all viewports without replacing its artwork");
+const savedHearts=file("app/components/SaveExperienceButton.tsx");
+assert(savedHearts.includes("pendingSavedRead")&&savedHearts.includes("function fetchSavedIds()")&&savedHearts.includes("if (!available)"),"Save buttons must deduplicate their reads and retry transient failures instead of permanently disabling");
+const prismaClient=file("lib/prisma.ts");
+assert(prismaClient.includes("globalForPrisma.prisma = prisma;")&&prismaClient.includes("max: 1,"),"Warm production instances must share the Prisma Client and cap database pool connections");
+assert(home.includes("inDetectedCity")&&home.includes("servicesLoadError")&&home.includes("service.distance===null"),"Nearby discovery must retain same-city offers even with missing coordinates and show truthful error/distance states");
+assert(!home.includes("service.loyaltyPoints || 150"),"Homepage must not invent loyalty points for unconfigured services");
 const splash=file("app/components/InitialSplash.tsx");
 assert(splash.includes("window.sessionStorage.setItem(SPLASH_SEEN_KEY")&&splash.includes('pathname === "/" && !seen')&&splash.includes('if (!visible || pathname !== "/"'),"Initial splash should appear once on first home entry, not during internal navigation");
 assert(destinations.includes('h-[48px]')&&destinations.includes("w-[106px]")&&!destinations.includes('onClick={all} className="h-10 shrink-0"'),"Mobile discover filters must stay within a compact one-row 48px toolbar");
