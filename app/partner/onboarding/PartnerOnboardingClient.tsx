@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
 import { readImageDimensions } from "@/lib/client-image-dimensions";
+import { SAUDI_CITY_SUGGESTIONS } from "@/lib/guides/reference-data";
 type StepId =
   | "account"
   | "business"
@@ -27,6 +28,28 @@ type DocumentItem = {
   fileName: string;
   coveredCategories: string[];
 };
+
+type GuideArea = {
+  id?: string;
+  key: string;
+  city: string;
+  label: string;
+  category: string;
+  notes: string;
+  latitude: number | null;
+  longitude: number | null;
+  radiusKm: 50;
+};
+type GuideLocationSuggestion = {
+  name: string; address: string; city: string; countryCode: string;
+  location: {lat: number; lng: number};
+};
+const GUIDE_CATEGORIES = ["هايكينق","مغامرات","تاريخ","آثار","ثقافة وتراث","طبيعة","أخرى"];
+const newGuideArea = (): GuideArea => ({
+  key: typeof crypto !== "undefined" ? crypto.randomUUID() : "primary",
+  city: "", label: "", category: "تاريخ", notes: "",
+  latitude: null, longitude: null, radiusKm: 50
+});
 
 type AiReviewClientResult = {
   outcome: "READY" | "NEEDS_COMPLETION" | "MANUAL_REVIEW";
@@ -272,6 +295,40 @@ const initialData: FormData = {
 
 export default function PartnerOnboardingPage() {
   const [logoDimensionsOk, setLogoDimensionsOk] = useState(true);
+  const [guideAreas, setGuideAreas] = useState<GuideArea[]>([newGuideArea()]);
+  const [guideAreaMode, setGuideAreaMode] = useState<"single"|"multiple">("single");
+  const [guideLocationQueries, setGuideLocationQueries] = useState<Record<string,string>>({});
+  const [guideLocationSuggestions, setGuideLocationSuggestions] = useState<Record<string,GuideLocationSuggestion[]>>({});
+  const [guideSearchLoading, setGuideSearchLoading] = useState<string>("");
+  const [guideSearchError, setGuideSearchError] = useState<string>("");
+
+  const updateGuideArea=(key:string,patch:Partial<GuideArea>)=>
+    setGuideAreas(current=>current.map(a=>a.key===key?{...a,...patch}:a));
+  const searchGuideLocation=async(area:GuideArea)=>{
+    const q=(guideLocationQueries[area.key]||area.city).trim();
+    if(!q)return;
+    setGuideSearchLoading(area.key);
+    setGuideSearchError("");
+    try{
+      const response=await fetch(`/api/location/search?query=${encodeURIComponent(q)}`,{cache:"no-store"});
+      const data=await response.json();
+      if(!response.ok)throw new Error("بحث توم توم غير متاح");
+      const items=(Array.isArray(data.suggestions)?data.suggestions:[])
+        .filter((item:GuideLocationSuggestion)=>item.location && Number.isFinite(item.location.lat) &&
+          Number.isFinite(item.location.lng) && item.location.lat>=16 && item.location.lat<=33 &&
+          item.location.lng>=34 && item.location.lng<=56);
+      setGuideLocationSuggestions(current=>({...current,[area.key]:items}));
+      if(!items.length)setGuideSearchError("لا توجد نتائج داخل المملكة؛ جرب اسم الموقع أو الحي.");
+    }catch{setGuideSearchError("تعذر البحث حالياً عبر TomTom. لن يُحفظ مسار بلا موقع جغرافي مؤكد.");}
+    finally{setGuideSearchLoading("");}
+  };
+  const chooseGuideLocation=(key:string,item:GuideLocationSuggestion)=>{
+    const city=item.city||guideAreas.find(a=>a.key===key)?.city||"";
+    updateGuideArea(key,{city,label:item.name||item.address,latitude:item.location.lat,
+      longitude:item.location.lng,radiusKm:50});
+    setGuideLocationSuggestions(current=>({...current,[key]:[]}));
+    if(guideAreas[0]?.key===key)update("city",city);
+  };
   const [currentStep, setCurrentStep] =
     useState<StepId>("account");
 
@@ -349,8 +406,12 @@ export default function PartnerOnboardingPage() {
       partnerType: selectedType,
       ...(selectedType === "government"
         ? { proofType: "وثيقة جهة حكومية أو غير ربحية", categories: ["فعاليات"] }
-        : selectedType === "individual" ? { proofType: "رخصة مرشد سياحي", categories: ["مرشدون"], applicantRole: "owner" } : {}),
+        : selectedType === "individual" ? { proofType: "رخصة مرشد سياحي", categories: ["مرشدون"], applicantRole: "owner", receivesPayments:true } : {}),
     }));
+    if(selectedType==="individual") setDocuments([
+      {id:1,type:"وثيقة العمل الحر",number:"",issuer:"",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]},
+      {id:2,type:"رخصة مرشد سياحي",number:"",issuer:"وزارة السياحة",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]},
+    ]);
   }, []);
 
   useEffect(() => {
@@ -451,7 +512,11 @@ export default function PartnerOnboardingPage() {
           proofType:
             String(application.proofType || ""),
           description:
-            String(application.descriptionAr || ""),
+            String(application.descriptionAr || "")
+              .replace(/^تخصص المرشد:.*\r?\n?/gm,"")
+              .replace(/^اللغات:.*\r?\n?/gm,"").trim(),
+          guideSpecialty: String(application.descriptionAr || "").match(/^تخصص المرشد:\s*(.*)$/m)?.[1] || "",
+          guideLanguages: String(application.descriptionAr || "").match(/^اللغات:\s*(.*)$/m)?.[1] || "",
 
           country:
             String(
@@ -506,7 +571,7 @@ export default function PartnerOnboardingPage() {
 
           publicName:
             String(application.publicName || ""),
-          logoFile: application.logoUrl ? "شعار مرفوع للمراجعة" : "",
+          logoFile: application.logoUrl ? "صورة مرفوعة للمراجعة" : "",
           declaration: false,
           termsAccepted: false,
         }));
@@ -623,7 +688,11 @@ export default function PartnerOnboardingPage() {
     };
   }, []);
 
-  const activeSteps = useMemo(() => (data.partnerType === "individual" || data.partnerType === "government") ? steps.filter(step => step.id !== "categories") : steps, [data.partnerType]);
+  const activeSteps = useMemo(() => data.partnerType === "individual"
+    ? steps.filter(step => ["account","business","review"].includes(step.id))
+    : data.partnerType === "government"
+      ? steps.filter(step => step.id !== "categories")
+      : steps, [data.partnerType]);
   const activeIndex = useMemo(
     () =>
       activeSteps.findIndex(
