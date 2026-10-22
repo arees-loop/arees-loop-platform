@@ -14,7 +14,7 @@ export function getPartnerRequirements(p:PartnerRequirementsSnapshot):string[] {
   if (!p.partnerType || !["BUSINESS","INDIVIDUAL","GOVERNMENT_NONPROFIT"].includes(p.partnerType)) missing.push("نوع الشريك غير محدد.");
   if (!p.tradeNameAr?.trim() || !p.city?.trim()) missing.push("اسم مقدم الخدمة والمدينة مطلوبان.");
   const license = p.licenses.some(l => l.type?.trim() && l.issuer?.trim() && l.licenseNumber?.trim() &&
-    l.expiryDate && l.expiryDate.getTime() >= Date.now());
+    l.expiryDate && l.expiryDate.getTime() + 86_400_000 > Date.now());
   if (!license) missing.push("رخصة سارية برقم وجهة إصدار وتاريخ انتهاء إلزامية.");
   const documents = p.documents.filter(d => Boolean(d.fileUrl&&d.fileName));
   const licenseFile = documents.some(d => /ترخيص|رخصة|license|permit/i.test(d.label||""));
