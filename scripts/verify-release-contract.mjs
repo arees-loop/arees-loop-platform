@@ -29,8 +29,19 @@ assert(!header.includes('href="/flights"')&&!header.includes('href="/ferries"'),
 for(const href of ["/hotels","/visas","/international-driving-license"]){
  assert(count(header,'href="'+href+'"')>=2,"Desktop and mobile travel services must expose "+href);
 }
-assert(count(header,'href="/discover?type=cruise"')>=2,"Cruise must remain accessible in desktop/mobile tourist programs");
-assert(header.includes('href="/partner/government"'),"Do not silently remove government partner registration");
+// Approved public navigation (22 Oct): hide duplicate government registration
+// and cruise links from the public header; preserve their underlying routes.
+assert(!header.includes('href="/discover?type=cruise"'),"Public tourism dropdown must not show Cruise — still available as a dedicated service elsewhere");
+assert(!header.includes('href="/partner/government"'),"Public partner dropdown must not duplicate Government registrations");
+for(const link of ["/partner/select-type","/partner/login","/discover?type=domestic","/discover?type=international"]){
+ assert(count(header,'href="'+link+'"')>=2,"Keep approved desktop/mobile links: "+link);
+}
+// Administration, request flows and existing partner registration remain intact.
+const adminLayout=file("app/admin/layout.tsx");
+for(const required of ['"/admin/partners"','"/admin/bookings"','"/admin/cart-bank-payments"']){
+ assert(adminLayout.includes(required),"Super Admin navigation must preserve "+required);
+}
+assert(existsSync(resolve(root,"app/partner/government/page.tsx")),"Do not delete the existing government registration route");
 // Approved international-driving-licence workflow must never fall back
 // to the generic visa/service request form.
 const licensePage=file("app/international-driving-license/page.tsx");
