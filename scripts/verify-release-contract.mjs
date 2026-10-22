@@ -67,8 +67,8 @@ assert(customer.includes("CustomerCartOrderDetail")&&customer.includes('"/api/ca
 // hundreds of cities. Existing search above the list filters the offers.
 const destinations=file("app/discover/DiscoverClient.tsx");
 assert(destinations.includes('id="available-destinations"')&&destinations.includes('<select')&&!destinations.includes("cities.map(x=><button"),"Destinations must be one compact select instead of one button per city");
-assert(destinations.includes("const nearbyOnly=locationMode&&!showAllLocations&&!manualSearch")&&destinations.includes("setShowAllLocations(true)")&&destinations.includes("كل المواقع — عرض جميع البرامج"),"All locations must clear proximity scope and display all applicable published programs");
-assert(destinations.includes('aria-label="مهام اللوب"')&&destinations.includes("/missions")&&existsSync(resolve(root,"app/missions/page.tsx")),"Loop Missions entry must remain visible in discovery without falsely creating missions");
+assert(destinations.includes("const nearbyOnly=locationMode&&!showAllLocations&&!manualSearch")&&destinations.includes("setShowAllLocations(true)")&&destinations.includes("const all=()=>")&&destinations.includes("كل المواقع — جميع البرامج"),"All locations must clear proximity scope and display all applicable published programs");
+assert(destinations.includes('aria-label="مهام اللوب (معاينة غير مفعلة)"')&&destinations.includes("/missions")&&existsSync(resolve(root,"app/missions/page.tsx")),"Loop Missions entry must remain visible in discovery without falsely creating missions");
 // Preserve compact discovery and GPS city fallback; do not require every
 // published city service to have working coordinates in order to appear.
 assert(destinations.includes('aria-label="بحث الوجهات والمهام"')&&destinations.includes("const nearbyCity=")&&destinations.includes("cityKey(s.city)===cityKey(nearbyCity)"),"Compact discovery must retain confirmed-city fallback alongside GPS proximity");
