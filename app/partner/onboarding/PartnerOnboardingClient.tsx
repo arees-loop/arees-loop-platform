@@ -3317,13 +3317,13 @@ export default function PartnerOnboardingPage() {
           <StepCard
             eyebrow="STEP 06 / 06"
             title="المراجعة والإرسال"
-            description="راجع البيانات. مساعد الامتثال يفحص اكتمال الطلب قبل إرساله إلى فريق أريس للمراجعة النهائية."
+            description="راجع البيانات والمرفقات المطلوبة قبل إرسال طلب الانضمام إلى فريق أريس للمراجعة."
           >
             <div className="rounded-[26px] bg-[#0D3B34] p-5 text-white">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-bold tracking-[0.16em] text-[#E5BE45]">
-                    AI COMPLIANCE CHECK
+                    REQUIRED FIELDS CHECKLIST
                   </p>
 
                   <h3 className="mt-1 text-lg font-bold">
@@ -3332,7 +3332,7 @@ export default function PartnerOnboardingPage() {
                 </div>
 
                 <span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold">
-                  مساعد امتثال
+                  قائمة المتطلبات
                 </span>
               </div>
 
@@ -3378,9 +3378,7 @@ export default function PartnerOnboardingPage() {
               </div>
 
               <p className="mt-4 text-[11px] leading-6 text-white/45">
-                هذا فحص مساعد ولا يمثل
-                اعتماداً نهائياً للشريك
-                أو للمستندات.
+                القائمة تعرض اكتمال الحقول المدخلة فقط؛ ولا تعني التحقق من صحة التراخيص أو اعتماد الطلب.
               </p>
             </div>
 
