@@ -12,8 +12,8 @@ const partnerTypes = [
     href: "/partner/onboarding?type=business",
   },
   {
-    title: "فرد",
-    description: "للمرشدين السياحيين ومقدمي التجارب والخدمات الفردية وفق التراخيص والمتطلبات المعتمدة.",
+    title: "مرشد سياحي",
+    description: "للمرشدين السياحيين المرخصين، مع تقديم رخصة إرشاد سارية وتفاصيل الجولات والخبرة.",
     icon: "individual" as const,
     href: "/partner/onboarding?type=individual",
   },
