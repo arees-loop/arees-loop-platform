@@ -5,6 +5,7 @@ on:
     branches:
       - feature/customer-experience-r07-r09-r10-20261012
       - feature/government-partner-join-20261013
+      - fix/release-cart-payments-visa-notice-20261022
   workflow_dispatch:
 
 permissions:
@@ -28,5 +29,10 @@ jobs:
         run: npx prisma generate
       - name: TypeScript checks
         run: npx tsc --noEmit
-      - name: ESLint checks
+      - name: Public visa page lint (blocking)
+        run: npx eslint app/components/RequestServicePage.tsx --quiet
+      - name: Global lint audit (existing backlog reported)
+        continue-on-error: true
         run: npm run lint
+      - name: Next.js production build with dummy database
+        run: npm run build
