@@ -44,6 +44,8 @@ type Partner = {
 
   logoUrl?: string;
   partnerType?: string;
+  applicantRole: string;
+  descriptionAr: string;
 
   category: string;
 
@@ -110,6 +112,8 @@ type ApiPartner = {
   publicName?: string | null;
   logoUrl?: string | null;
   partnerType?: string | null;
+  applicantRole?: string | null;
+  descriptionAr?: string | null;
   commercialRegister?: string | null;
   unifiedNumber?: string | null;
   vatRegistered?: boolean;
@@ -189,6 +193,8 @@ function mapApiPartner(partner: ApiPartner): Partner {
   return {
     id: partner.id,
     documents: partner.documents ?? [],
+    applicantRole: partner.applicantRole ?? "",
+    descriptionAr: partner.descriptionAr?.trim() || EMPTY_VALUE,
     operationsEmail: partner.mainContactEmail?.trim() || EMPTY_VALUE,
     logoUrl: partner.logoUrl?.trim() || "",
     partnerType: partner.partnerType ?? "",
@@ -625,6 +631,8 @@ function AdminPartnersContent() {
 
       id: nextId,
       documents: [],
+      applicantRole: "",
+      descriptionAr: "غير مدخل",
       operationsEmail: "غير مدخل",
 
       legalName: value(manualPartner.legalName),
@@ -1262,12 +1270,18 @@ function AdminPartnersContent() {
                   ["الرقم الضريبي", selectedPartner.taxNumber],
 
                   ["النشاط", selectedPartner.category],
+                  ["صفة مقدم الطلب", selectedPartner.applicantRole === "OWNER" ? "مالك المنشأة" : selectedPartner.applicantRole === "REPRESENTATIVE" ? "ممثل مفوض" : "غير محدد"],
 
                 ]}
 
               />
 
 
+
+              <section className="rounded-[24px] border border-[#D4AF37]/25 bg-[#FFFDF7] p-5" aria-label="تفاصيل المرشد أو النشاط">
+                <h3 className="text-base font-bold text-[#0D3B34]">{selectedPartner.partnerType === "INDIVIDUAL" ? "تفاصيل وخبرة المرشد السياحي" : "وصف النشاط أو الخدمة"}</h3>
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-8 text-[#0D3B34]/75">{selectedPartner.descriptionAr}</p>
+              </section>
 
               {/* LICENSE */}
 
