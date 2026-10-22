@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
+import SaudiBusinessVerification from "./components/SaudiBusinessVerification";
 import PublicGlobalHeader from "./components/PublicGlobalHeader";
 import "./globals.css";
 
@@ -126,9 +126,8 @@ export default function RootLayout({
         {children}
 
       
-        {/* ختم التوثيق الرسمي — المركز السعودي للأعمال. يُحمّل من المصدر الرسمي فقط. */}
-        <div className="sbc-verify-seal" data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QT09" data-position="bottom-left" />
-        <Script src="https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js" strategy="afterInteractive" />
+        {/* Verification stays accessible without overlaying customer controls on mobile. */}
+        <SaudiBusinessVerification />
 
         {/* Always-visible floating status badge, positioned below the sticky header on every route. */}
         <div className="pointer-events-none fixed left-5 top-[112px] z-[120] md:left-10 md:top-[128px]">
