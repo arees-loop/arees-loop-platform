@@ -51,6 +51,9 @@ type FormData = {
   applicantRole: ApplicantRole;
   jobTitle: string;
   authorizationFile: string;
+  ownerProofFile: string;
+  guideLanguages: string;
+  guideSpecialty: string;
 
   tradeName: string;
   legalName: string;
@@ -219,6 +222,9 @@ const initialData: FormData = {
   applicantRole: "",
   jobTitle: "",
   authorizationFile: "",
+  ownerProofFile: "",
+  guideLanguages: "",
+  guideSpecialty: "",
 
   tradeName: "",
   legalName: "",
@@ -272,6 +278,7 @@ export default function PartnerOnboardingPage() {
 
   const [uploadedFiles, setUploadedFiles] = useState<{
     authorization: File | null;
+    ownerProof: File | null;
     nationalAddress: File | null;
     ibanCertificate: File | null;
     vatCertificate: File | null;
@@ -279,6 +286,7 @@ export default function PartnerOnboardingPage() {
     documents: Record<number, File>;
   }>({
     authorization: null,
+    ownerProof: null,
     nationalAddress: null,
     ibanCertificate: null,
     vatCertificate: null,
@@ -339,7 +347,7 @@ export default function PartnerOnboardingPage() {
       partnerType: selectedType,
       ...(selectedType === "government"
         ? { proofType: "وثيقة جهة حكومية أو غير ربحية", categories: ["فعاليات"] }
-        : {}),
+        : selectedType === "individual" ? { proofType: "رخصة مرشد سياحي", categories: ["مرشدون"], applicantRole: "owner" } : {}),
     }));
   }, []);
 
@@ -428,6 +436,7 @@ export default function PartnerOnboardingPage() {
             String(application.applicantJobTitle || ""),
           authorizationFile:
             existingFileName("AUTHORIZATION"),
+          ownerProofFile: String(existingDocuments.find((item:{type?:string;label?:string;fileName?:string})=>item.type==="BUSINESS_PROOF"&&item.label?.includes("ملكية"))?.fileName||""),
 
           tradeName:
             String(application.tradeNameAr || ""),
@@ -611,12 +620,13 @@ export default function PartnerOnboardingPage() {
     };
   }, []);
 
+  const activeSteps = useMemo(() => (data.partnerType === "individual" || data.partnerType === "government") ? steps.filter(step => step.id !== "categories") : steps, [data.partnerType]);
   const activeIndex = useMemo(
     () =>
-      steps.findIndex(
+      activeSteps.findIndex(
         (step) => step.id === currentStep
       ),
-    [currentStep]
+    [currentStep, activeSteps]
   );
 
   const progress =
@@ -624,7 +634,7 @@ export default function PartnerOnboardingPage() {
       ? 100
       : Math.round(
           ((Math.max(activeIndex, 0) + 1) /
-            steps.length) *
+            activeSteps.length) *
             100
         );
 
@@ -1308,18 +1318,18 @@ export default function PartnerOnboardingPage() {
     if (!validateCurrentStep()) return;
 
     const index =
-      steps.findIndex(
+      activeSteps.findIndex(
         (step) =>
           step.id === currentStep
       );
 
     if (
       index >= 0 &&
-      index < steps.length - 1
+      index < activeSteps.length - 1
     ) {
       setValidationErrors({});
       setCurrentStep(
-        steps[index + 1].id
+        activeSteps[index + 1].id
       );
 
       window.scrollTo({
@@ -1331,14 +1341,14 @@ export default function PartnerOnboardingPage() {
 
   const goBack = () => {
     const index =
-      steps.findIndex(
+      activeSteps.findIndex(
         (step) =>
           step.id === currentStep
       );
 
     if (index > 0) {
       setCurrentStep(
-        steps[index - 1].id
+        activeSteps[index - 1].id
       );
 
       window.scrollTo({
@@ -1885,8 +1895,8 @@ export default function PartnerOnboardingPage() {
           </div>
 
           <div className="relative z-20 hidden border-b border-[#0D3B34]/5 bg-[#F9F6EF]/55 md:block">
-            <div className="mx-auto grid max-w-[1100px] grid-cols-6 gap-2 px-5 py-3">
-              {steps.map(
+            <div className="mx-auto grid max-w-[1100px] grid-cols-5 gap-2 px-5 py-3 md:grid-cols-6">
+              {activeSteps.map(
                 (step, index) => (
                   <div
                     key={step.id}
@@ -2084,16 +2094,12 @@ export default function PartnerOnboardingPage() {
                       <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-[#0D3B34] text-lg font-black text-[#EAD38D]">✓</span>
                       <div>
                         <p className="text-sm font-black text-[#0D3B34]">
-                          {lockedPartnerType === "business" ? "شركة أو مؤسسة" : lockedPartnerType === "individual" ? "فرد" : "جهة حكومية أو غير ربحية"}
+                          {lockedPartnerType === "business" ? "شركة أو مؤسسة" : lockedPartnerType === "individual" ? "مرشد سياحي" : "جهة حكومية أو غير ربحية"}
                         </p>
                         <p className="mt-1 text-xs text-[#0D3B34]/60">نوع الشريك المختار من صفحة الانضمام</p>
                       </div>
                     </div>
-                    {!applicationId && (
-                      <Link href="/partner/select-type" className="rounded-full border border-[#D4AF37]/55 bg-white px-4 py-2 text-xs font-bold text-[#0D3B34] transition hover:bg-[#FFF9E9]">
-                        تغيير النوع
-                      </Link>
-                    )}
+
                   </div>
                 </div>
               ) : (
