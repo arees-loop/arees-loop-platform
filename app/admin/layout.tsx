@@ -29,7 +29,7 @@ const requestsNav: NavItem[] = [
   { href: "/admin/transport/driving-licenses", label: "الرخص الدولية", icon: "🚘", permission: "TRANSPORT_DRIVING_LICENSE" },
 ];
 const bookingsNav: NavItem[] = [
-  { href: "/admin/bookings", label: "حجوزات تجارب الشركاء", icon: "▦", permission: "BOOKINGS" },
+  { href: "/admin/bookings", label: "حجوزات وطلبات تجارب الشركاء", icon: "▦", permission: "BOOKINGS" },
 ];
 const partnersNav: NavItem[] = [
   { href: "/admin/partners", label: "طلبات انضمام الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
