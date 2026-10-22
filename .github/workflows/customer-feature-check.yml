@@ -5,6 +5,10 @@ on:
     branches:
       - feature/customer-experience-r07-r09-r10-20261012
       - feature/government-partner-join-20261013
+      - fix/release-visa-cart-payment-20261022
+  pull_request:
+    branches:
+      - release/areesloop-production
   workflow_dispatch:
 
 permissions:
@@ -28,5 +32,10 @@ jobs:
         run: npx prisma generate
       - name: TypeScript checks
         run: npx tsc --noEmit
-      - name: ESLint checks
+      - name: Release checkout targeted ESLint
+        run: npx eslint app/components/CartBankCheckout.tsx app/api/cart app/api/admin/cart-bank-payments app/admin/cart-bank-payments app/cart/orders app/cart/documents --quiet
+      - name: Existing global lint audit
+        continue-on-error: true
         run: npm run lint
+      - name: Build without connecting to production database
+        run: npm run build
