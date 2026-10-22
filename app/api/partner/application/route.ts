@@ -777,7 +777,7 @@ export async function POST(request: NextRequest) {
         );
       }
       const settlementIban = clean(body.iban);
-      if (!/^SA[0-9]{22}$/.test(settlementIban) || !cleanRequired(body.beneficiaryName)) {
+      if (!settlementIban || !/^SA[0-9]{22}$/.test(settlementIban) || !cleanRequired(body.beneficiaryName)) {
         return NextResponse.json(
           { success: false, message: "أدخل IBAN سعودياً صحيحاً واسم المستفيد لإتمام طلب الشراكة." },
           { status: 400 },
@@ -1176,7 +1176,7 @@ export async function PATCH(request: NextRequest) {
         );
       }
       const settlementIban = clean(body.iban);
-      if (!/^SA[0-9]{22}$/.test(settlementIban) || !cleanRequired(body.beneficiaryName)) {
+      if (!settlementIban || !/^SA[0-9]{22}$/.test(settlementIban) || !cleanRequired(body.beneficiaryName)) {
         return NextResponse.json(
           { success: false, message: "أدخل IBAN سعودياً صحيحاً واسم المستفيد لإتمام طلب الشراكة." },
           { status: 400 },
