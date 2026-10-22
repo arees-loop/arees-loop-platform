@@ -102,11 +102,11 @@ export async function GET(req:NextRequest){
   if(req.nextUrl.searchParams.get("history")==="true"){
    const orders=await prisma.auditLog.findMany({where:{userId:session.user.id,entityType:TYPE,action:CREATED},orderBy:{createdAt:"desc"},take:100,select:{entityId:true,createdAt:true,afterData:true}});
    const references=orders.map(o=>o.entityId).filter((s):s is string=>!!s);
-   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true}}):[];
+   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,"CART_WORKFLOW_STATUS_UPDATED"]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true,afterData:true}}):[];
    const vouchers=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:"CART_SERVICE_VOUCHER_UPLOADED"},select:{entityId:true}}):[];
    const voucherRefs=new Set(vouchers.map(x=>x.entityId));
    const last=new Map<string,string>();
-   for(const event of actions)if(event.entityId&&!last.has(event.entityId))last.set(event.entityId,event.action);
+   for(const event of actions)if(event.entityId&&!last.has(event.entityId))last.set(event.entityId,event.action==="CART_WORKFLOW_STATUS_UPDATED"?(typeof (event.afterData as {status?:unknown}|null)?.status==="string"?(event.afterData as {status:string}).status:"PROCESSING"):event.action);
    return NextResponse.json({success:true,orders:orders.map(o=>{const data=jsonData(o.afterData);return {reference:o.entityId,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,status:last.get(o.entityId||"")||CREATED,hasVoucher:!!o.entityId&&voucherRefs.has(o.entityId)};})},{headers:{"Cache-Control":"private, no-store"}});
   }
   const reference=req.nextUrl.searchParams.get("reference");
