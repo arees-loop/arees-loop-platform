@@ -105,8 +105,10 @@ function Content(){
       <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-[10px] font-bold text-[#B99124]">{s.category}</p><ExperienceDistance latitude={s.latitude} longitude={s.longitude}/></div>
       <h2 className="mt-2 text-xl font-black">{s.nameAr}</h2>
       <p className="mt-2 text-xs text-[#0D3B34]/55">{[s.city,s.locationName].filter(Boolean).join(" · ")}</p>
-      <div className="mt-4 text-base font-black text-[#0D3B34]">{Number(s.finalPrice).toLocaleString("ar-SA")} ر.س</div>
-      <ServiceLoyaltyBanner finalPrice={s.finalPrice} className="mt-3"/>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <strong className="text-base font-black text-[#0D3B34]">{Number(s.finalPrice).toLocaleString("ar-SA")} ر.س</strong>
+        <ServiceLoyaltyBanner finalPrice={s.finalPrice}/>
+      </div>
       <Link href={`/services/${s.id}`} className="mt-5 flex justify-center rounded-xl bg-[#0D3B34] py-3 text-xs font-bold text-white">عرض التفاصيل</Link>
      </div>
     </article>)}
