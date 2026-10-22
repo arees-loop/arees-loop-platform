@@ -614,6 +614,32 @@ export default function PartnerOnboardingPage() {
           );
         }
 
+        if(mappedPartnerType==="individual"){
+          try{
+            const areasResponse=await fetch("/api/partner/guide-profile",{cache:"no-store"});
+            const payload=await areasResponse.json();
+            if(areasResponse.ok && Array.isArray(payload.areas) && payload.areas.length && !cancelled){
+              setGuideAreas(payload.areas.map((a:GuideArea)=>({...a,key:a.id||crypto.randomUUID(),radiusKm:50})));
+              setGuideAreaMode(payload.areas.length>1?"multiple":"single");
+            }
+          }catch{/* Existing licence and application records remain intact. */}
+          const savedLicenses=Array.isArray(application.licenses)?application.licenses:[];
+          if(!savedLicenses.length){
+            setDocuments([
+              {id:1,type:"وثيقة العمل الحر",number:"",issuer:"",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]},
+              {id:2,type:"رخصة مرشد سياحي",number:"",issuer:"وزارة السياحة",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]}
+            ]);
+          } else {
+            const hasWork=savedLicenses.some((item:{type?:string})=>String(item.type||"").includes("عمل حر"));
+            const hasGuide=savedLicenses.some((item:{type?:string})=>/مرشد|إرشاد/.test(String(item.type||"")));
+            setDocuments(current=>[
+              ...current,
+              ...(!hasWork?[{id:current.length+1,type:"وثيقة العمل الحر",number:"",issuer:"",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]}]:[]),
+              ...(!hasGuide?[{id:current.length+2,type:"رخصة مرشد سياحي",number:"",issuer:"وزارة السياحة",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]}]:[]),
+            ]);
+          }
+        }
+
         const normalizedExistingContact =
           normalizeSaudiMobileForCheck(
             String(application.mainContactPhone || "")
@@ -668,8 +694,10 @@ export default function PartnerOnboardingPage() {
           ).get("resume") === "1";
 
         setCurrentStep(
-          application.status === "NEEDS_COMPLETION" &&
-            resumeRequested
+          resumeRequested &&
+            (application.status === "NEEDS_COMPLETION" ||
+             (mappedPartnerType === "individual" &&
+              ["SUBMITTED","UNDER_REVIEW"].includes(application.status)))
             ? "business"
             : "done"
         );
@@ -1307,6 +1335,10 @@ export default function PartnerOnboardingPage() {
 
     if (currentStep === "business") {
       if (data.partnerType === "individual" && !data.guideLanguages.trim()) errors.guideLanguages = "لغات الإرشاد مطلوبة.";
+      if(data.partnerType==="individual" && (!guideAreas.length || guideAreas.some(area=>
+         !area.city.trim() || !area.label.trim() || !GUIDE_CATEGORIES.includes(area.category) ||
+         area.latitude===null || area.longitude===null || area.radiusKm!==50)))
+        errors.guideAreas="يجب تحديد موقع TomTom صالح وتصنيف لكل مسار، ضمن نطاق 50 كم.";
       if (data.partnerType === "individual" && !data.guideSpecialty.trim()) errors.guideSpecialty = "مجال التخصص السياحي مطلوب.";
       if (!data.tradeName.trim()) errors.tradeName = "الاسم التجاري / اسم النشاط مطلوب.";
       if (!data.city.trim()) errors.city = "المدينة مطلوبة.";
@@ -1328,18 +1360,23 @@ export default function PartnerOnboardingPage() {
       }
     }
 
-    if (currentStep === "documents") {
+    if (currentStep === "documents" || (currentStep === "review" && data.partnerType === "individual")) {
       const validLicenses = documents.filter(document =>
         document.type.trim() && document.issuer.trim() && document.number.trim() &&
         document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
         (uploadedFiles.documents[document.id] || document.fileName)
       );
-      if (validLicenses.length === 0) {
-        errors.documents = "الترخيص إلزامي: النوع والجهة والرقم وتاريخ السريان وملف الرخصة مطلوبة.";
+      const requiresBoth = data.partnerType === "individual";
+      if ((requiresBoth && (!validLicenses.some(doc=>doc.type.includes("عمل حر")) ||
+         !validLicenses.some(doc=>/مرشد|إرشاد/.test(doc.type)))) ||
+          (!requiresBoth && validLicenses.length===0)) {
+        errors.documents=requiresBoth
+          ? "أرفق وثيقة العمل الحر ورخصة الإرشاد السياحي الساريتين بكامل بياناتهما."
+          : "الترخيص إلزامي: النوع والجهة والرقم وتاريخ السريان وملف الرخصة مطلوبة.";
       }
     }
 
-    if (currentStep === "operations") {
+    if (currentStep === "operations" || (currentStep === "review" && data.partnerType === "individual")) {
       if (data.partnerType === "government" && !data.logoFile) {
         errors.logoFile = "أرفق الشعار الرسمي للجهة.";
       }
@@ -1457,6 +1494,7 @@ export default function PartnerOnboardingPage() {
     }[] = [];
 
     const accountOk =
+      (data.partnerType === "individual" && Boolean(applicationId)) ||
       applicationStatus === "NEEDS_COMPLETION" ||
       Boolean(
         data.firstName.trim() &&
@@ -1547,11 +1585,15 @@ export default function PartnerOnboardingPage() {
           : "اختر تصنيف خدمة واحداً على الأقل.",
     });
 
-    const documentsOk = documents.some(document =>
+    const validDocuments = documents.filter(document=>
       document.type.trim() && document.issuer.trim() && document.number.trim() &&
       document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
       (uploadedFiles.documents[document.id] || document.fileName)
     );
+    const documentsOk = data.partnerType === "individual" ?
+      validDocuments.some(d=>d.type.includes("عمل حر")) &&
+      validDocuments.some(d=>/مرشد|إرشاد/.test(d.type)) :
+      validDocuments.length>0;
 
     checks.push({
       label: "الوثائق والتراخيص",
@@ -1619,6 +1661,8 @@ export default function PartnerOnboardingPage() {
     data,
     documents,
     uploadedFiles,
+    guideAreas,
+    applicationId,
     emailVerified,
     smsVerificationEnabled,
     contactPhoneVerified,
