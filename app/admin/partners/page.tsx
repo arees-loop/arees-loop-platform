@@ -863,13 +863,13 @@ function AdminPartnersContent() {
 
             ["نشط", stats.active],
 
-          ].map(([label, value]) => (
+          ].map(([label, value], index) => (
 
             <div
 
               key={String(label)}
 
-              className="rounded-2xl border border-[#D4AF37]/20 bg-white/75 px-3 py-2.5 backdrop-blur-xl"
+              className={`rounded-2xl border px-3 py-2.5 backdrop-blur-xl ${["border-[#D4AF37]/30 bg-white/85","border-amber-200 bg-amber-50","border-sky-200 bg-sky-50","border-violet-200 bg-violet-50","border-emerald-200 bg-emerald-50"][index]}`}
 
             >
 
