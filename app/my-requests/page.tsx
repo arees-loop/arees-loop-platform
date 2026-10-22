@@ -6,8 +6,8 @@ import RequestAttachments from "@/app/components/RequestAttachments";
 import RequestPayment from "@/app/components/RequestPayment";
 import CustomerTravelDocuments from "@/app/components/CustomerTravelDocuments";
 import CustomerCartOrderDetail from "@/app/components/CustomerCartOrderDetail";
-import OrderStatusBadge,{RequiredActionButton,orderStatusTone} from "@/app/components/OrderStatusBadge";
-import { useEffect, useMemo, useState } from "react";
+import OrderStatusBadge,{orderStatusTone} from "@/app/components/OrderStatusBadge";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { readCustomerClaims } from "@/lib/customer-request-claims";
 
 type CustomerRequest={
@@ -29,7 +29,7 @@ const statuses:Record<string,string>={
   QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",
   DONE:"تم التنفيذ",COMPLETED:"تم التنفيذ",CANCELED:"تم الإلغاء",CANCELLED:"تم الإلغاء",
   CONTACTED:"تم التواصل",QUOTED:"عرض السعر جاهز",CLOSED:"مغلق",
-  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",DOCUMENTS_SUBMITTED:"تم إرفاق المستندات — بانتظار المراجعة",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
+  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",DOCUMENTS_SUBMITTED:"تحت مراجعة المستندات المرفقة",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
 };
 const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value)):"";
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
@@ -103,7 +103,14 @@ export default function MyRequestsPage(){
   const [query,setQuery]=useState("");
   const [showHistory,setShowHistory]=useState(false);
   const [cartOrders,setCartOrders]=useState<{reference:string;amountSar:number;status:string;createdAt:string;rows:{title?:string;quantity?:number}[];hasVoucher:boolean;needsAttention?:boolean;hasNewMessage?:boolean}[]>([]);
-  useEffect(()=>{fetch("/api/cart/bank-checkout?history=true",{credentials:"include",cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.success&&Array.isArray(d.orders))setCartOrders(d.orders)}).catch(()=>{});},[]);
+  const refreshCartOrders=useCallback(async()=>{try{const r=await fetch("/api/cart/bank-checkout?history=true",{credentials:"include",cache:"no-store"});const d=await r.json();if(r.ok&&d?.success&&Array.isArray(d.orders))setCartOrders(d.orders);}catch{}},[]);
+  useEffect(()=>{
+    void refreshCartOrders();
+    const refresh=()=>{void refreshCartOrders();};
+    window.addEventListener("arees-cart-order-updated",refresh);
+    window.addEventListener("focus",refresh);
+    return()=>{window.removeEventListener("arees-cart-order-updated",refresh);window.removeEventListener("focus",refresh);};
+  },[refreshCartOrders]);
   const [partnerBookings,setPartnerBookings]=useState<{id:string;reference:string;status:string;bookingDate:string;service:{nameAr:string;city:string|null}}[]>([]);
   useEffect(()=>{fetch("/api/customer/bookings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(Array.isArray(d?.bookings))setPartnerBookings(d.bookings)}).catch(()=>{});},[]);
   const allItems=useMemo(()=>[
@@ -135,7 +142,7 @@ export default function MyRequestsPage(){
     {error&&<p role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">{error}</p>}
     {!loading&&<>{openReference&&focusedItem?<div className="mt-6">
       <button type="button" onClick={()=>setOpenReference("")} className="mb-4 rounded-xl border border-[#D4AF37]/50 bg-white px-5 py-3 text-sm font-bold">← العودة إلى جميع الطلبات</button>
-      {focusedItem.kind==="PARTNER"?<PartnerRequestRow item={focusedItem}/>:focusedItem.kind==="CART"?<CartRequestRow item={focusedItem}/>:<RequestCard item={focusedItem} featured={true} expanded={true} onToggle={()=>setOpenReference("")}/>}
+      {focusedItem.kind==="PARTNER"?<PartnerRequestRow item={focusedItem}/>:focusedItem.kind==="CART"?<CartRequestRow item={focusedItem} defaultOpen/>:<RequestCard item={focusedItem} featured={true} expanded={true} onToggle={()=>setOpenReference("")}/>}
       <p className="mt-3 text-center text-xs text-[#0D3B34]/60">أُخفيت الطلبات الأخرى مؤقتاً للتركيز على هذا الطلب.</p>
     </div>:<>
     <div className="mt-6 flex items-center justify-between"><h2 className="text-lg font-black">الطلبات الحالية ({active.length})</h2><Link href="/cart" className="text-xs font-bold underline">سلة الحجوزات</Link></div>
@@ -161,7 +168,6 @@ function CartRequestRow({item,defaultOpen=false}:{item:CustomerRequest;defaultOp
     <span className="text-left text-xs font-bold text-[#8F6A22]">{money(Number(item.quoteAmountSar||0))}<span className="mt-1 block font-normal">{labelDate(item.createdAt)}</span></span>
     <span aria-hidden="true">{details?"⌃":"⌄"}</span>
   </button>
-  {attention&&!details&&<div className="px-4 pb-4"><RequiredActionButton onClick={()=>setDetails(true)}>{item.status==="DOCUMENTS_REQUESTED"?"مستندات إضافية مطلوبة — اضغط هنا":item.hasNewMessage?"رسالة جديدة من الإدارة — اضغط هنا":"طلب يحتاج متابعتك — اضغط هنا"}</RequiredActionButton></div>}
   {details&&<CustomerCartOrderDetail reference={item.reference}/>}
  </article>;
 }
