@@ -9,7 +9,6 @@ export const CART_STATUS = "CART_WORKFLOW_STATUS_UPDATED";
 export const CART_MESSAGE = "CART_WORKFLOW_MESSAGE";
 export const CART_DOCUMENT = "CART_WORKFLOW_DOCUMENT";
 export const CART_VIEWED = "CART_CUSTOMER_VIEWED";
-export const CART_VIEWED = "CART_CUSTOMER_VIEWED";
 export const CART_STATUSES = ["PROCESSING","DOCUMENTS_REQUESTED","COMPLETED"] as const;
 export type CartWorkflowStatus = typeof CART_STATUSES[number];
 export type CartEvent = {id:string;action:string;createdAt:Date;afterData:unknown;userId:string|null};
