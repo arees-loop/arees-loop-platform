@@ -1259,7 +1259,7 @@ export default function PartnerOnboardingPage() {
     if (currentStep === "documents") {
       const validLicenses = documents.filter(document =>
         document.type.trim() && document.issuer.trim() && document.number.trim() &&
-        document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
+        document.expiryDate && new Date(document.expiryDate).getTime() + 86_400_000 > Date.now() &&
         (uploadedFiles.documents[document.id] || document.fileName)
       );
       if (validLicenses.length === 0) {
@@ -1479,7 +1479,7 @@ export default function PartnerOnboardingPage() {
 
     const documentsOk = documents.some(document =>
       document.type.trim() && document.issuer.trim() && document.number.trim() &&
-      document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
+      document.expiryDate && new Date(document.expiryDate).getTime() + 86_400_000 > Date.now() &&
       (uploadedFiles.documents[document.id] || document.fileName)
     );
 
