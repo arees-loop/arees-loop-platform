@@ -2,12 +2,24 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import PartnerIcon from "./PartnerIcon";
 
 type HeaderUser = { firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null };
 
 export default function GlobalHeader() {
+  function goToAirSea(event:ReactMouseEvent<HTMLAnchorElement>) {
+    setMobileNavOpen(false);
+    // Keep a real href for navigation from other pages, and scroll explicitly
+    // for home-page clicks where Next's same-route hash navigation can be inert.
+    if(window.location.pathname!=="/")return;
+    const target=document.getElementById("travel-bookings");
+    if(!target)return;
+    event.preventDefault();
+    document.body.style.overflowY="auto";
+    window.history.replaceState(null,"", "/#travel-bookings");
+    target.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+  }
   const [language, setLanguage] = useState<"ar" | "en">("ar");
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -75,7 +87,7 @@ export default function GlobalHeader() {
           </div>}
           {navVisible.guides !== false && (<Link href="/#tour-guides" className="transition hover:text-[#D4AF37]">المرشدون السياحيون</Link>)}
           {/* Approved navigation: air/sea has its own landing-section anchor. */}
-          {navVisible.flights !== false && <Link href="/#travel-bookings" className="transition hover:text-[#D4AF37]">الطيران والبواخر</Link>}
+          {navVisible.flights !== false && <a href="/#travel-bookings" onClick={goToAirSea} className="transition hover:text-[#D4AF37]">الطيران والبواخر</a>}
           <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">
               خدمات السفر <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span>
@@ -165,7 +177,7 @@ export default function GlobalHeader() {
               </section>
             )}
             {/* Mobile navigation mirrors the approved desktop IA. */}
-            {navVisible.flights !== false && <Link href="/#travel-bookings" onClick={() => setMobileNavOpen(false)} className="col-span-2 rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الطيران والبواخر</Link>}
+            {navVisible.flights !== false && <a href="/#travel-bookings" onClick={goToAirSea} className="col-span-2 rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الطيران والبواخر</a>}
             <section className="col-span-2">
               <button type="button" aria-expanded={mobileTravelServicesOpen} aria-controls="arees-mobile-travel-links" onClick={() => setMobileTravelServicesOpen(value => !value)} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-right hover:bg-[#D4AF37]/15">
                 <span>خدمات السفر</span><span aria-hidden="true">{mobileTravelServicesOpen ? "−" : "+"}</span>

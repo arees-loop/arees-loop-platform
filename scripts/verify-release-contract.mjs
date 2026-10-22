@@ -31,6 +31,17 @@ for(const href of ["/hotels","/visas","/international-driving-license"]){
 }
 assert(count(header,'href="/discover?type=cruise"')>=2,"Cruise must remain accessible in desktop/mobile tourist programs");
 assert(header.includes('href="/partner/government"'),"Do not silently remove government partner registration");
+// Approved international-driving-licence workflow must never fall back
+// to the generic visa/service request form.
+const licensePage=file("app/international-driving-license/page.tsx");
+const licenseForm=file("app/components/InternationalLicenseForm.tsx");
+assert(licensePage.includes("InternationalLicenseForm")&&!licensePage.includes('RequestServicePage kind="DRIVING_LICENSE"'),"Licence route must use the dedicated approved form");
+for(const field of ["PASSPORT","LOCAL_LICENSE","PORTRAIT","الطول","لون العين","عنوان التوصيل","رابط موقع التوصيل"]){
+ assert(licenseForm.includes(field),"Approved licence form missing mandatory field/document "+field);
+}
+assert(licenseForm.includes("/api/transport/requests")&&licenseForm.includes("/api/customer/request-attachments"),"Licence requests and documents must use available production APIs");
+assert(!licenseForm.includes("/api/license-cart-application")&&!licenseForm.includes("/api/license-documents"),"Licence form may not depend on absent legacy endpoints");
+assert(header.includes("goToAirSea")&&home.includes('window.location.hash!=="#travel-bookings"'),"Air/sea navigation must actually scroll for both client and direct visits");
 const customer=file("app/my-requests/page.tsx");
 assert(customer.includes("CustomerCartOrderDetail")&&customer.includes('"/api/cart/bank-checkout?history=true"'),"Unified My Requests must continue including partner/cart orders");
 const admin=file("app/admin/cart-bank-payments/page.tsx");
