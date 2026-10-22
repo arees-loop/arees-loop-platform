@@ -2,6 +2,7 @@
 import Link from "next/link";
 import ExperiencePhoto from "@/app/components/ExperiencePhoto";
 import SaveExperienceButton from "@/app/components/SaveExperienceButton";
+import ServiceLoyaltyBanner from "@/app/components/ServiceLoyaltyBanner";
 import OfferShareButton from "@/app/components/OfferShareButton";
 import ExperienceDistance from "@/app/components/ExperienceDistance";
 import {useParams} from "next/navigation";
@@ -23,7 +24,7 @@ export default function ServiceDetails(){
    <div className="mb-6 text-right"><p className="text-xs font-bold opacity-50">{service.category}{service.subCategory&&` · ${service.subCategory}`}</p><h1 className="mt-2 text-3xl font-bold leading-tight">{service.nameAr}</h1><p className="mt-2 text-sm opacity-55">{service.city}{service.locationName&&` · ${service.locationName}`}</p><div className="mt-3"><ExperienceDistance latitude={service.latitude} longitude={service.longitude}/></div></div>
    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]" dir="ltr">
     <section dir="rtl" className="arees-service-content rounded-[24px] bg-white p-6 shadow-sm md:p-7" style={{fontFamily:"var(--font-ibm-plex-arabic), sans-serif"}}>
-     <div className="mb-5 flex items-center gap-2 rounded-xl border border-[#D4AF37]/25 bg-[#FFF8E5] p-3 text-sm font-bold text-[#B99124]"><span aria-hidden="true">✦</span> {Number(service.loyaltyPoints)>0?`نقاط الخدمة: ${service.loyaltyPoints} نقطة Arees Loop`:"تُحدد نقاط الخدمة عند تأكيد الحجز وفق سياسة الولاء"}</div>
+     
      <h2 className="arees-body flex items-center gap-2 text-xl font-semibold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0D3B34] text-white" aria-hidden="true">☷</span> تفاصيل البرنامج</h2>
      <div className="arees-service-copy arees-body mt-5 text-sm leading-8 text-[#0D3B34]/75 [&_*]:!font-[family-name:var(--font-ibm-plex-arabic)] [&_p]:mb-2 [&_ul]:mr-5 [&_ul]:list-disc [&_ol]:mr-5 [&_ol]:list-decimal [&_strong]:font-bold [&_strong]:text-[#0D3B34]" dangerouslySetInnerHTML={{__html:description||"<p>تفاصيل البرنامج قيد الاستكمال.</p>"}}/>
      {includes&&<div className="mt-7"><h3 className="flex items-center gap-2 font-semibold text-[#0D3B34]"><span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#0D3B34]/20 bg-[#0D3B34]/5 text-xs" aria-hidden="true">✓</span> يشمل البرنامج</h3><ul className="arees-service-copy mt-2 space-y-1 text-sm leading-7 opacity-70">{lines(includes).map((x,i)=><li key={i}>✓ {x}</li>)}</ul></div>}
@@ -44,6 +45,7 @@ export default function ServiceDetails(){
      <aside className="mx-auto mt-4 w-full max-w-[520px] rounded-[24px] border border-[#B99124]/20 bg-white p-5 shadow-sm">
       <div className="border-b border-[#0D3B34]/10 pb-4"><div><p className="text-[11px] opacity-50">السعر يبدأ من</p><p className="mt-1 text-2xl font-bold">{Number(service.finalPrice).toLocaleString("ar-SA")} <span className="text-sm">ر.س</span></p></div></div><div className="mt-4 flex items-center justify-between gap-4"><div><p className="mb-1 text-[11px] opacity-50">الكمية</p><div className="flex items-center rounded-xl border border-[#0D3B34]/15"><button onClick={()=>setQty(q=>Math.max(1,q-1))} className="h-9 w-9 text-lg">−</button><b className="min-w-9 text-center">{qty}</b><button onClick={()=>setQty(q=>q+1)} className="h-9 w-9 text-lg">+</button></div></div></div>
       <div className="mt-4 border-t border-[#0D3B34]/8 pt-3 text-sm"><div className="flex items-center justify-between"><span>الإجمالي</span><b>{total.toLocaleString("ar-SA")} ر.س</b></div></div>
+      <ServiceLoyaltyBanner finalPrice={service.finalPrice} className="mt-3"/>
       <div className="mt-4 grid grid-cols-2 gap-2"><button onClick={()=>void addToCart(false)} className="flex items-center justify-center gap-2 rounded-xl border border-[#0D3B34] py-3 text-xs font-bold"><span className="text-base">🛒</span> ضع في السلة</button><button type="button" onClick={()=>void addToCart(true)} className="flex items-center justify-center gap-2 rounded-xl bg-[#0D3B34] py-3 text-xs font-bold text-white"><span aria-hidden="true">💰</span> احجز الآن</button></div>
       {cartNotice&&<p role="status" className="mt-2 text-xs font-bold text-[#0D3B34]">{cartNotice} <Link href="/cart" className="underline">عرض السلة</Link></p>}
       
