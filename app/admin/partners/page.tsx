@@ -25,6 +25,10 @@ type PartnerStatus =
 
 
 
+type GuideAreaSummary = {
+  id:string;city:string;label:string;category:string;notes?:string|null;
+  latitude:number|string;longitude:number|string;radiusKm:number;
+};
 type PartnerDocumentSummary = {
   id: string;
   type: string;
@@ -97,6 +101,7 @@ type Partner = {
 
   completionRequest?: string;
   documents: PartnerDocumentSummary[];
+  guideAreas: GuideAreaSummary[];
   operationsEmail: string;
 
 };
@@ -135,6 +140,7 @@ type ApiPartner = {
   completionNotes?: string | null;
   categories?: Array<{ name?: string | null }>;
   documents?: PartnerDocumentSummary[];
+  guideAreas?: GuideAreaSummary[];
   licenses?: Array<{
     type?: string | null;
     issuer?: string | null;
@@ -193,6 +199,7 @@ function mapApiPartner(partner: ApiPartner): Partner {
   return {
     id: partner.id,
     documents: partner.documents ?? [],
+    guideAreas: partner.guideAreas ?? [],
     applicantRole: partner.applicantRole ?? "",
     descriptionAr: partner.descriptionAr?.trim() || EMPTY_VALUE,
     operationsEmail: partner.mainContactEmail?.trim() || EMPTY_VALUE,
@@ -631,6 +638,7 @@ function AdminPartnersContent() {
 
       id: nextId,
       documents: [],
+      guideAreas: [],
       applicantRole: "",
       descriptionAr: "غير مدخل",
       operationsEmail: "غير مدخل",
@@ -1282,6 +1290,21 @@ function AdminPartnersContent() {
                 <h3 className="text-base font-bold text-[#0D3B34]">{selectedPartner.partnerType === "INDIVIDUAL" ? "تفاصيل وخبرة المرشد السياحي" : "وصف النشاط أو الخدمة"}</h3>
                 <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-8 text-[#0D3B34]/75">{selectedPartner.descriptionAr}</p>
               </section>
+
+              {selectedPartner.partnerType==="INDIVIDUAL" && (
+                <section className="rounded-[24px] border border-[#D4AF37]/25 bg-[#FBF9F2] p-5">
+                  <h3 className="font-bold">مسارات المرشد ومناطق الخدمة</h3>
+                  {!selectedPartner.guideAreas.length ? <p className="mt-3 text-sm text-amber-800">لم يستكمل المرشد مواقع مساراته بعد.</p> :
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">{selectedPartner.guideAreas.map(area=>(
+                      <div key={area.id} className="rounded-xl bg-white p-3 text-sm">
+                        <strong>{area.label} — {area.category}</strong>
+                        <p>المدينة: {area.city} · نصف القطر: {area.radiusKm} كم</p>
+                        <p className="text-xs text-[#0D3B34]/60">الإحداثيات: {Number(area.latitude).toFixed(5)}, {Number(area.longitude).toFixed(5)}</p>
+                        {area.notes && <p className="mt-2 whitespace-pre-wrap">{area.notes}</p>}
+                      </div>
+                    ))}</div>}
+                </section>
+              )}
 
               {/* LICENSE */}
 
