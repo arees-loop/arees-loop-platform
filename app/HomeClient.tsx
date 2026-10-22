@@ -368,6 +368,21 @@ export default function Home() {
   }, []);
 
 
+  // Resolve hash jumps reliably after client hydration, including from
+  // inner pages and a cold direct load of /#travel-bookings.
+  useEffect(() => {
+    const jump=()=>{
+      if(window.location.hash!=="#travel-bookings")return;
+      const section=document.getElementById("travel-bookings");
+      if(!section)return;
+      document.body.style.overflowY="auto";
+      section.scrollIntoView({behavior:"auto",block:"start"});
+    };
+    const handle=window.setTimeout(jump,180);
+    window.addEventListener("hashchange",jump);
+    return()=>{window.clearTimeout(handle);window.removeEventListener("hashchange",jump);};
+  },[]);
+
   // Keep native page scrolling available at every hero scene.
   // Header anchor links and dismissing the location notice must never trap the visitor.
   useEffect(() => {
