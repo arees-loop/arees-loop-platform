@@ -16,7 +16,7 @@ export default function AdminCartOrderDetails(){
   const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر قراءة الطلب.");
   setOrder(d.order);setError("");
  }catch(e){setError(e instanceof Error?e.message:"تعذر قراءة الطلب.");}finally{setLoading(false)}},[reference]);
- useEffect(()=>{void load()},[load]);
+ useEffect(()=>{void Promise.resolve().then(load)},[load]);
  async function post(url:string,body:Record<string,unknown>,confirm?:string){
   if(confirm&&!window.confirm(confirm))return;
   setBusy(true);setError("");setNotice("");
