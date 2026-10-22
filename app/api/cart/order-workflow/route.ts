@@ -1,7 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
-import {CART_ENTITY,CART_CREATED,CART_MESSAGE,CART_DOCUMENT,CART_STATUS,CART_STATUSES,CART_VERIFIED,CART_SUBMITTED,CART_REJECTED,asRecord,cartPaymentStatus,cartStatus,cartStaff,sendCartAdminMail} from "@/lib/cart-order-workflow";
+import {CART_ENTITY,CART_CREATED,CART_MESSAGE,CART_DOCUMENT,CART_VIEWED,CART_STATUS,CART_STATUSES,CART_VERIFIED,CART_SUBMITTED,CART_REJECTED,asRecord,cartPaymentStatus,cartStatus,cartStaff,sendCartAdminMail} from "@/lib/cart-order-workflow";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store"};
@@ -21,15 +21,18 @@ export async function GET(req:NextRequest) {
   const {order,staff}=await access(reference,session.user);
   if(!order)return fail("الطلب غير موجود أو لا تملك صلاحية الاطلاع عليه.",404);
   const [events,customer]=await Promise.all([
-   prisma.auditLog.findMany({where:{entityType:CART_ENTITY,entityId:reference,action:{in:[CART_SUBMITTED,CART_VERIFIED,CART_REJECTED,CART_STATUS,CART_MESSAGE,CART_DOCUMENT]}},orderBy:[{createdAt:"desc"},{id:"desc"}],take:200,select:{id:true,action:true,createdAt:true,afterData:true,userId:true}}),
+   prisma.auditLog.findMany({where:{entityType:CART_ENTITY,entityId:reference,action:{in:[CART_SUBMITTED,CART_VERIFIED,CART_REJECTED,CART_STATUS,CART_MESSAGE,CART_DOCUMENT,CART_VIEWED]}},orderBy:[{createdAt:"desc"},{id:"desc"}],take:200,select:{id:true,action:true,createdAt:true,afterData:true,userId:true}}),
    staff&&order.userId?prisma.user.findUnique({where:{id:order.userId},select:{firstName:true,lastName:true,email:true,phone:true}}):Promise.resolve(null)
   ]);
   const data=asRecord(order.afterData);
   const payment=cartPaymentStatus(events);
   const status=cartStatus(events);
   const messages=events.filter(x=>x.action===CART_MESSAGE).map(x=>({id:x.id,createdAt:x.createdAt,from:asRecord(x.afterData).from,text:asRecord(x.afterData).text})).reverse();
+  const latestMessage=events.find(x=>x.action===CART_MESSAGE);
+  const lastView=events.find(x=>x.action===CART_VIEWED);
+  const unreadMessage=!staff&&!!latestMessage&&asRecord(latestMessage.afterData).from==="ADMIN"&&(!lastView||lastView.createdAt<latestMessage.createdAt);
   const documents=events.filter(x=>x.action===CART_DOCUMENT).map(x=>({id:x.id,name:asRecord(x.afterData).name,from:asRecord(x.afterData).from,createdAt:x.createdAt})).reverse();
-  return NextResponse.json({success:true,order:{reference,amountSar:data.amountSar,rows:data.rows,createdAt:order.createdAt,paymentStatus:payment,status,hasReceipt:events.some(e=>e.action===CART_SUBMITTED),customer:customer?{name:[customer.firstName,customer.lastName].filter(Boolean).join(" "),email:customer.email,phone:customer.phone}:null,messages,documents,timeline:events.filter(e=>[CART_SUBMITTED,CART_VERIFIED,CART_REJECTED,CART_STATUS].includes(e.action)).map(e=>({id:e.id,action:e.action,createdAt:e.createdAt,status:asRecord(e.afterData).status})).reverse()}},{headers});
+  return NextResponse.json({success:true,order:{reference,amountSar:data.amountSar,rows:data.rows,createdAt:order.createdAt,paymentStatus:payment,status,hasReceipt:events.some(e=>e.action===CART_SUBMITTED),unreadMessage,needsAttention:status==="DOCUMENTS_REQUESTED"||unreadMessage,customer:customer?{name:[customer.firstName,customer.lastName].filter(Boolean).join(" "),email:customer.email,phone:customer.phone}:null,messages,documents,timeline:events.filter(e=>[CART_SUBMITTED,CART_VERIFIED,CART_REJECTED,CART_STATUS].includes(e.action)).map(e=>({id:e.id,action:e.action,createdAt:e.createdAt,status:asRecord(e.afterData).status})).reverse()}},{headers});
  }catch(error){console.error("Cart workflow read failed",error);return fail("تعذر قراءة تفاصيل الطلب.",503);}
 }
 export async function POST(req:NextRequest){
@@ -39,11 +42,20 @@ export async function POST(req:NextRequest){
  const reference=typeof data?.reference==="string"?data.reference:"";
  if(!valid(reference))return fail("مرجع غير صالح.");
  const action=data?.action;
- if(!["MESSAGE","STATUS"].includes(action))return fail("إجراء غير مدعوم.");
+ if(!["MESSAGE","STATUS","VIEWED"].includes(action))return fail("إجراء غير مدعوم.");
  try {
   const {order,staff}=await access(reference,session.user);
   if(!order)return fail("الطلب غير موجود أو لا تملك صلاحية تعديله.",404);
-  const events=await prisma.auditLog.findMany({where:{entityType:CART_ENTITY,entityId:reference,action:{in:[CART_SUBMITTED,CART_VERIFIED,CART_REJECTED,CART_STATUS]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{id:true,action:true,createdAt:true,afterData:true,userId:true}});
+  const events=await prisma.auditLog.findMany({where:{entityType:CART_ENTITY,entityId:reference,action:{in:[CART_SUBMITTED,CART_VERIFIED,CART_REJECTED,CART_STATUS,CART_MESSAGE,CART_VIEWED]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{id:true,action:true,createdAt:true,afterData:true,userId:true}});
+  if(action==="VIEWED"){
+   if(staff)return fail("لا يحتاج المسؤول لتسجيل قراءة العميل.",403);
+   const lastMessage=events.find(e=>e.action===CART_MESSAGE);
+   const lastView=events.find(e=>e.action===CART_VIEWED);
+   if(lastMessage&&asRecord(lastMessage.afterData).from==="ADMIN"&&(!lastView||lastView.createdAt<lastMessage.createdAt)){
+    await prisma.auditLog.create({data:{userId:session.user.id,entityType:CART_ENTITY,entityId:reference,action:CART_VIEWED,afterData:{messageAuditId:lastMessage.id}}});
+   }
+   return NextResponse.json({success:true},{headers});
+  }
   if(action==="STATUS"){
    if(!staff)return fail("تعديل حالة التنفيذ محصور بالإدارة.",403);
    if(cartPaymentStatus(events)!==CART_VERIFIED)return fail("يجب التحقق من وصول التحويل أولاً.",409);
