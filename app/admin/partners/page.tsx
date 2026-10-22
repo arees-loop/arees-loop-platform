@@ -70,7 +70,7 @@ type Partner = {
   operationsContact: string;
 
   operationsPhone: string;
-  operationsEmail: string;
+  operationsEmail?: string;
 
   website: string;
 
