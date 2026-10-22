@@ -83,7 +83,14 @@ assert(missions.includes("مهام تجريبية للعرض فقط")&&!missions
 const serviceDetail=file("app/services/[id]/page.tsx");
 assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("service.loyaltyPoints || 150"),"Do not invent a 150-point earning amount when the service has no configured points");
 const sealCss=file("app/globals.css");
-assert(sealCss.includes(".sbc-verify-seal { z-index: 20 !important; }"),"Verification seal must not overlay customer mobile navigation");
+assert(sealCss.includes(".sbc-verify-seal { display: none !important; }"),"Official desktop verification widget must remain non-floating on mobile");
+const layout=file("app/layout.tsx"), verification=file("app/components/SaudiBusinessVerification.tsx");
+assert(layout.includes("<SaudiBusinessVerification />")&&!layout.includes("EAuthSealApi/seal.js"),"Root layout must delegate the verification widget to the responsive controller");
+assert(verification.includes("window.matchMedia(\"(min-width: 768px)\")")&&verification.includes("{desktop&&")&&verification.includes("md:hidden")&&verification.includes("eauthenticate.saudibusiness.gov.sa/inquiry"),"Mobile must show an inline official inquiry link, with official widget script loaded only on desktop");
+const splash=file("app/components/InitialSplash.tsx");
+assert(splash.includes("window.sessionStorage.setItem(SPLASH_SEEN_KEY")&&splash.includes('pathname === "/" && !seen')&&splash.includes('if (!visible || pathname !== "/"'),"Initial splash should appear once on first home entry, not during internal navigation");
+assert(destinations.includes('h-[48px]')&&destinations.includes("w-[106px]")&&!destinations.includes('onClick={all} className="h-10 shrink-0"'),"Mobile discover filters must stay within a compact one-row 48px toolbar");
+assert(home.includes("selectedSceneDiscoverHref")&&count(home,"href={selectedSceneDiscoverHref}")===3,"Homepage Discover CTAs must preserve selected destination instead of resetting to all");
 
 const notifications=file("app/notifications/page.tsx");
 assert(!notifications.includes("cartAlerts")&&!notifications.includes("/api/cart/bank-checkout?history=true"),"Customer cart document requests must not duplicate in standalone Notifications");
