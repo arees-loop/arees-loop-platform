@@ -1702,7 +1702,9 @@ export default function PartnerOnboardingPage() {
 
         let uploadType = "OTHER";
 
-        if (
+        if (data.partnerType === "government" && /خطاب|الجهة|تفويض جهة/.test(documentLabel)) {
+          uploadType = "GOVERNMENT_LETTER";
+        } else if (
           normalizedLabel.includes("سجل تجاري") ||
           normalizedLabel.includes("السجل التجاري") ||
           normalizedLabel.includes("commercial register") ||
@@ -2638,7 +2640,7 @@ export default function PartnerOnboardingPage() {
               "government" && (
               <Requirement
                 title="إثبات الجهة"
-                text="المستند أو التعريف الرسمي المناسب للجهة الحكومية أو غير الربحية."
+                text="الترخيص أو القرار الرسمي وخطاب إثبات صفة الجهة الحكومية أو غير الربحية مستندان إلزاميان منفصلان. أضف خطاب الجهة كمستند آخر."
               />
             )}
 
