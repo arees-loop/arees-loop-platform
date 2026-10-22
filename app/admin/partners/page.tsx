@@ -886,6 +886,19 @@ function AdminPartnersContent() {
 
 
 
+        <section className="mb-5 flex flex-wrap gap-2" aria-label="تصفية الطلبات بحسب حالة المعالجة">
+          {(["ALL","SUBMITTED","UNDER_REVIEW","NEEDS_INFO","AWAITING_PARTNER_ACCEPTANCE","PARTNER_ACCEPTED","ACTIVE"] as const).map(key => {
+            const count = visiblePartners.filter(p => (partnerTrackFilter === "ALL" || p.partnerType === partnerTrackFilter) && (key === "ALL" || p.status === key)).length;
+            const title = key === "ALL" ? "كل الحالات" : statusConfig[key].label;
+            const colors = key === "ALL" ? "bg-white text-[#0D3B34]" : statusConfig[key].className;
+            return <button type="button" key={key} aria-pressed={statusFilter === key}
+              onClick={() => {setStatusFilter(key);setSelectedId("");setPreviewDocId("");}}
+              className={`inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#D4AF37]/15 px-3 py-2 text-xs font-bold transition focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${colors} ${statusFilter===key?"ring-2 ring-[#B99124]/55 shadow-sm":"hover:brightness-95"}`}>
+              <span>{title}</span><span className="rounded-full bg-white/65 px-2 py-0.5 tabular-nums">{count.toLocaleString("ar-SA")}</span>
+            </button>;
+          })}
+        </section>
+
         <div className={selectedPartner ? "grid gap-6" : "grid gap-6"}>
 
           {/* PARTNERS LIST */}
