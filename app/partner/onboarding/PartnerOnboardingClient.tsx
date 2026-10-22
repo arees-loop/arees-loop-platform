@@ -1615,7 +1615,7 @@ export default function PartnerOnboardingPage() {
         operates24h: data.operates24h,
         operatingHours: data.operatingHours,
 
-        receivesPayments: data.receivesPayments,
+        receivesPayments: data.partnerType === "government" ? false : true,
         iban: data.iban,
         beneficiaryName: data.beneficiaryName,
 
@@ -3105,21 +3105,13 @@ export default function PartnerOnboardingPage() {
             )}
 
             <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
-              <SelectCard
-                title="استقبال المدفوعات والتسويات عبر Arees Loop"
-                description="فعّل هذا الخيار إذا كانت مستحقات الحجوزات ستتم تسويتها للشريك عبر المنصة."
-                active={
-                  data.receivesPayments
-                }
-                onClick={() =>
-                  update(
-                    "receivesPayments",
-                    !data.receivesPayments
-                  )
-                }
-              />
+              {data.partnerType !== "government" && (
+                <p className="rounded-xl border border-[#D4AF37]/20 bg-white/75 p-3 text-xs font-semibold text-[#0D3B34]">
+                  الحجز والتحصيل وتسوية مستحقات الشركاء والمرشدين تتم إلزامياً عبر أريس لوب وفق اتفاقية الشراكة.
+                </p>
+              )}
 
-              {data.receivesPayments && (
+              {data.partnerType !== "government" && (
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <div data-validation="iban"><Field label="IBAN *">
                     <input
