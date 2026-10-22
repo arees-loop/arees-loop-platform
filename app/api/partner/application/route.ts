@@ -768,6 +768,23 @@ export async function POST(request: NextRequest) {
 
 
 
+    // Enforce the agreed payment policy at the API boundary.
+    if (partnerType !== "GOVERNMENT_NONPROFIT") {
+      if (body.receivesPayments !== true) {
+        return NextResponse.json(
+          { success: false, message: "التحصيل والتسوية عبر أريس لوب إلزاميان للشركاء التجاريين والمرشدين." },
+          { status: 400 },
+        );
+      }
+      const settlementIban = clean(body.iban);
+      if (!/^SA[0-9]{22}$/.test(settlementIban) || !cleanRequired(body.beneficiaryName)) {
+        return NextResponse.json(
+          { success: false, message: "أدخل IBAN سعودياً صحيحاً واسم المستفيد لإتمام طلب الشراكة." },
+          { status: 400 },
+        );
+      }
+    }
+
     const categories = Array.from(
 
       new Set(
@@ -894,7 +911,7 @@ export async function POST(request: NextRequest) {
 
 
 
-          receivesPayments: Boolean(body.receivesPayments),
+          receivesPayments: partnerType === "GOVERNMENT_NONPROFIT" ? false : true,
 
           iban: clean(body.iban),
 
@@ -1150,6 +1167,23 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // Enforce the agreed payment policy at the API boundary.
+    if (partnerType !== "GOVERNMENT_NONPROFIT") {
+      if (body.receivesPayments !== true) {
+        return NextResponse.json(
+          { success: false, message: "التحصيل والتسوية عبر أريس لوب إلزاميان للشركاء التجاريين والمرشدين." },
+          { status: 400 },
+        );
+      }
+      const settlementIban = clean(body.iban);
+      if (!/^SA[0-9]{22}$/.test(settlementIban) || !cleanRequired(body.beneficiaryName)) {
+        return NextResponse.json(
+          { success: false, message: "أدخل IBAN سعودياً صحيحاً واسم المستفيد لإتمام طلب الشراكة." },
+          { status: 400 },
+        );
+      }
+    }
+
     const unifiedNumber = clean(body.unifiedNumber);
     const commercialRegister = clean(body.commercialRegister);
 
@@ -1334,7 +1368,7 @@ export async function PATCH(request: NextRequest) {
             operates24h: Boolean(body.operates24h),
             operatingHours: clean(body.operatingHours),
 
-            receivesPayments: Boolean(body.receivesPayments),
+            receivesPayments: partnerType === "GOVERNMENT_NONPROFIT" ? false : true,
             iban: clean(body.iban),
             bankName: clean(body.bankName),
             swiftCode: clean(body.swiftCode),
