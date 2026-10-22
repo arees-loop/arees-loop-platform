@@ -244,6 +244,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 >
                   <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] text-lg ${platformMenuActive ? "bg-[#B68A21] text-white" : "text-[#171717] group-hover:bg-white/65 group-hover:text-[#B68A21]"}`}>⚙</span>
                   <span className="flex-1 text-right">إدارة المنصة</span>
+                  {pendingServiceCount>0&&<span aria-label={pendingServiceCount+" خدمة أو تجربة تنتظر المراجعة"} className="rounded-full bg-[#D39B16] px-2 py-0.5 text-[11px] font-black text-white">{pendingServiceCount>99?"99+":pendingServiceCount}</span>}
                   <span className="text-xs text-[#171717]/55">{platformMenuOpen ? "⌃" : "⌄"}</span>
                 </button>
                 {platformMenuOpen && (
@@ -253,7 +254,8 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                       return (
                         <Link key={item.href} href={item.href} className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold transition ${active ? "bg-[#F3E5BD]/75 text-[#171717]" : "text-[#171717]/70 hover:bg-[#D4AF37]/10 hover:text-[#171717]"}`}>
                           <span className="w-5 text-center text-base">{item.icon}</span>
-                          <span>{item.label}</span>
+                          <span className="flex-1">{item.label}</span>
+                          {item.href==="/admin/services"&&pendingServiceCount>0&&<span aria-label={pendingServiceCount+" خدمة أو تجربة تنتظر المراجعة"} className="rounded-full bg-[#D39B16] px-2 py-0.5 text-[11px] font-black text-white">{pendingServiceCount>99?"99+":pendingServiceCount}</span>}
                         </Link>
                       );
                     })}
