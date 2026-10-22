@@ -1422,13 +1422,7 @@ export default function PartnerOnboardingPage() {
         : "حدد هل مقدم الطلب مالك المنشأة أم ممثلاً مفوضاً.",
     });
 
-    const authorizationOk =
-      data.partnerType !== "business" ||
-      data.applicantRole !==
-        "representative" ||
-      Boolean(
-        data.authorizationFile
-      );
+    const authorizationOk = data.partnerType !== "business" || (data.applicantRole === "owner" ? Boolean(data.ownerProofFile) : data.applicantRole === "representative" ? Boolean(data.authorizationFile) : false);
 
     checks.push({
       label: "صلاحية الممثل",
@@ -1450,7 +1444,8 @@ export default function PartnerOnboardingPage() {
       data.tradeName.trim() &&
         data.country.trim() &&
         data.city.trim() &&
-        (data.partnerType === "government" || (
+        (data.partnerType !== "individual" || (data.guideLanguages.trim() && data.guideSpecialty.trim())) &&
+        (data.partnerType !== "business" || (
           data.district.trim() &&
           data.street.trim() &&
           /^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase()) &&
@@ -1482,12 +1477,11 @@ export default function PartnerOnboardingPage() {
           : "اختر تصنيف خدمة واحداً على الأقل.",
     });
 
-    const documentsOk =
-      documents.some(
-        (document) =>
-          document.fileName ||
-          document.number
-      );
+    const documentsOk = documents.some(document =>
+      document.type.trim() && document.issuer.trim() && document.number.trim() &&
+      document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
+      (uploadedFiles.documents[document.id] || document.fileName)
+    );
 
     checks.push({
       label: "الوثائق والتراخيص",
@@ -1552,6 +1546,7 @@ export default function PartnerOnboardingPage() {
   }, [
     data,
     documents,
+    uploadedFiles,
     emailVerified,
     smsVerificationEnabled,
     contactPhoneVerified,
@@ -1572,6 +1567,7 @@ export default function PartnerOnboardingPage() {
   if (!canSubmit) return;
 
   try {
+    if (data.partnerType === "business" && !data.ownerProofFile && data.applicantRole === "owner") { window.alert("يجب إرفاق إثبات ملكية المنشأة."); return; }
     const response = await fetch("/api/partner/application", {
       method:
         applicationStatus === "NEEDS_COMPLETION"
