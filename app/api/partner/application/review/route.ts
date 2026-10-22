@@ -130,21 +130,12 @@ export async function POST(request: NextRequest) {
           id: partner.id,
           status: workflow.status,
         },
-        review: workflow.aiReview
-          ? {
-              outcome: workflow.aiReview.outcome,
-              summary: workflow.aiReview.summary,
-              partnerMessage: workflow.aiReview.partnerMessage,
-              issues: workflow.aiReview.issues,
-            }
-          : {
-              outcome: "MANUAL_REVIEW",
-              summary:
-                "تم استلام الطلب وتحويله للمراجعة الإدارية.",
-              partnerMessage:
-                "تم استلام طلبكم وتحويله للمراجعة الإدارية.",
-              issues: [],
-            },
+        review: {
+          outcome: "MANUAL_REVIEW",
+          summary: "تم استلام الطلب وتحويله للمراجعة الإدارية.",
+          partnerMessage: "تم استلام طلبكم وتحويله للمراجعة الإدارية.",
+          issues: [],
+        },
       },
       {
         status: 200,
