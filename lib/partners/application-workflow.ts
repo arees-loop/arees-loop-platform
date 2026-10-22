@@ -28,15 +28,22 @@ export async function runPartnerApplicationWorkflow(input:PartnerApplicationWork
       },
     });
   });
-  const notifications=await notifyPartnerApplicationSubmitted({
-    partnerId:input.partnerId,
-    legalNameAr:input.legalNameAr,
-    tradeNameAr:input.tradeNameAr,
-    partnerEmail:input.partnerEmail,
-    status:"UNDER_REVIEW",
-    previousStatus:input.previousStatus,
-    nextAction:"تم استلام الطلب للمراجعة البشرية لدى أريس لوب؛ سنراسلك عند الحاجة إلى استكمال.",
-    aiReview:null,
-  });
+  // An email provider outage must not turn an already-submitted application
+  // into an apparent client failure, prompting duplicate registrations.
+  let notifications = null;
+  try {
+    notifications = await notifyPartnerApplicationSubmitted({
+      partnerId:input.partnerId,
+      legalNameAr:input.legalNameAr,
+      tradeNameAr:input.tradeNameAr,
+      partnerEmail:input.partnerEmail,
+      status:"UNDER_REVIEW",
+      previousStatus:input.previousStatus,
+      nextAction:"تم استلام الطلب للمراجعة البشرية لدى أريس لوب؛ سنراسلك عند الحاجة إلى استكمال.",
+      aiReview:null,
+    });
+  } catch (error) {
+    console.error("Partner application notification failed after successful human-review submission",error);
+  }
   return {status:"UNDER_REVIEW",aiReview:null,notifications};
 }
