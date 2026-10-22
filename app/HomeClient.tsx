@@ -1489,6 +1489,18 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* Payment method badges restored under the app download cards.
+                    Display-only; actual checkout availability remains governed by the payment settings. */}
+                <div className="mt-4 rounded-2xl border border-[#D4AF37]/20 bg-white/75 px-3 py-3 shadow-sm" aria-label="وسائل الدفع">
+                  <p className="mb-2 text-center text-[11px] font-bold text-[#0D3B34]">وسائل الدفع</p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4" dir="ltr">
+                    <span className="flex min-h-9 items-center justify-center rounded-lg border border-[#0D3B34]/10 bg-white px-2 text-[13px] font-black text-[#1266A3]" aria-label="مدى">mada <span className="ml-1 text-[10px] font-semibold text-[#0D3B34]">مدى</span></span>
+                    <span className="flex min-h-9 items-center justify-center rounded-lg border border-[#0D3B34]/10 bg-white px-2 text-[15px] font-black italic text-[#224E99]" aria-label="Visa">VISA</span>
+                    <span className="flex min-h-9 items-center justify-center rounded-lg border border-[#0D3B34]/10 bg-white px-2 text-[11px] font-bold text-[#0D3B34]" aria-label="Mastercard"><span className="mr-1 flex items-center"><span className="h-4 w-4 rounded-full bg-[#EB001B]" /><span className="-ml-2 h-4 w-4 rounded-full bg-[#F79E1B]/90" /></span>Mastercard</span>
+                    <span className="flex min-h-9 items-center justify-center gap-1 rounded-lg border border-[#0D3B34]/10 bg-white px-2 text-[10px] font-bold text-[#0D3B34]" dir="rtl" aria-label="تحويل بنكي"><span aria-hidden="true">▦</span> تحويل بنكي</span>
+                  </div>
+                </div>
+
                 <div className="mt-2 flex items-center justify-center gap-2">
                   <span className="h-px w-8 bg-[#0D3B34]/20" />
                   <p className="text-[11px] font-black text-[#0D3B34]">
