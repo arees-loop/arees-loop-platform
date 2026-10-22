@@ -57,7 +57,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
    const data=new FormData();data.set("reference",order.reference);data.set("bankAccountId",order.bankAccountId);data.set("file",file);
    const r=await fetch("/api/cart/bank-checkout",{method:"POST",body:data,credentials:"include"});
    const d=await r.json();if(!r.ok)throw Error(d.message||"تعذر إرسال الإثبات.");
-   setOrder({...order,status:"PENDING_REVIEW"});setFile(null);setNotice(d.message);
+   setOrder({...order,status:"PENDING_REVIEW"});setFile(null);setNotice(d.message);localStorage.removeItem("arees-loop-cart-bank-reference");const completedIds=new Set(items.map(item=>item.serviceId));try{const current=JSON.parse(localStorage.getItem("arees-loop-cart-v1")||"[]");if(Array.isArray(current)){localStorage.setItem("arees-loop-cart-v1",JSON.stringify(current.filter((item:{serviceId?:string})=>!completedIds.has(item.serviceId||""))));window.dispatchEvent(new Event("arees-cart-updated"));}}catch{}window.location.assign("/my-requests?reference="+encodeURIComponent(order.reference));
   }catch(e){setError(e instanceof Error?e.message:"تعذر رفع الإيصال.");}
   finally{setBusy(false);}
  }
