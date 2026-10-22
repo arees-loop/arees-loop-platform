@@ -717,10 +717,10 @@ export default function PartnerOnboardingPage() {
   }, []);
 
   const activeSteps = useMemo(() => data.partnerType === "individual"
-    ? steps.filter(step => ["account","business","review"].includes(step.id))
+    ? steps.filter(step => (applicationId ? ["business","review"] : ["account","business","review"]).includes(step.id))
     : data.partnerType === "government"
       ? steps.filter(step => step.id !== "categories")
-      : steps, [data.partnerType]);
+      : steps, [data.partnerType,applicationId]);
   const activeIndex = useMemo(
     () =>
       activeSteps.findIndex(
@@ -2797,11 +2797,10 @@ export default function PartnerOnboardingPage() {
           </StepCard>
         )}
 
-        {currentStep ===
-          "documents" && (
+        {(currentStep === "documents" || (currentStep === "review" && data.partnerType==="individual")) && (
           <StepCard
-            eyebrow="STEP 04 / 06"
-            title="التراخيص والوثائق"
+            eyebrow={data.partnerType==="individual"?"المرحلة الأخيرة — التراخيص":"STEP 04 / 06"}
+            title={data.partnerType==="individual"?"وثيقة العمل الحر ورخصة الإرشاد السياحي":"التراخيص والوثائق"}
             description="أرفق الوثائق المناسبة لطبيعة الجهة والخدمات المختارة. المتطلبات تختلف بين المنشآت والأفراد والجهات المؤسسية."
           >
 
@@ -3104,18 +3103,18 @@ export default function PartnerOnboardingPage() {
               + إضافة مستند أو ترخيص آخر
             </button>
 
-            <Actions
+            {data.partnerType !== "individual" && <Actions
               onBack={goBack}
               onNext={goNext}
               onSave={saveDraft}
               saved={draftSaved}
-            />
+            />}
           </StepCard>
         )}
-                {currentStep === "operations" && (
+                {(currentStep === "operations" || (currentStep === "review" && data.partnerType==="individual")) && (
           <StepCard
-            eyebrow="STEP 05 / 06"
-            title="بيانات التشغيل والتسوية"
+            eyebrow={data.partnerType==="individual"?"المرحلة الأخيرة — الحساب البنكي":"STEP 05 / 06"}
+            title={data.partnerType==="individual"?"الحساب البنكي والصورة المهنية":"بيانات التشغيل والتسوية"}
             description="أدخل بيانات التواصل والتشغيل. بيانات التسوية المالية مطلوبة فقط إذا كانت المدفوعات ستتم عبر Arees Loop."
           >
             <div className="grid gap-4 md:grid-cols-2">
@@ -3510,12 +3509,12 @@ export default function PartnerOnboardingPage() {
               </div>
             </div>
 
-            <Actions
+            {data.partnerType !== "individual" && <Actions
               onBack={goBack}
               onNext={goNext}
               onSave={saveDraft}
               saved={draftSaved}
-            />
+            />}
           </StepCard>
         )}
 
