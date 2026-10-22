@@ -63,7 +63,11 @@ export async function POST(request: NextRequest) {
     const active = await getActivePartnerMembership(session.user.id);
     const membership = active ? await prisma.partnerMember.findFirst({
       where: { userId: session.user.id, partnerId: active.partnerId, isActive: true },
-      include: { partner: { include: { documents: { select: { id: true } } } } },
+      include: { partner: { include: {
+        documents: { select: { id: true, label: true, fileName: true, type: true } },
+        licenses: { select: { type: true, issuer: true, licenseNumber: true, expiryDate: true } },
+        guideAreas: { where:{isActive:true}, select:{city:true,label:true,latitude:true,longitude:true,radiusKm:true} }
+      } } },
     }) : null;
 
     if (!membership) {
@@ -105,6 +109,33 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 },
       );
+    }
+
+    if (partner.partnerType === "INDIVIDUAL") {
+      const documents = partner.documents;
+      const licenses = partner.licenses;
+      const validLicences=licenses.filter(l=>l.issuer.trim()&&l.licenseNumber.trim()&&
+        l.expiryDate && l.expiryDate.getTime()>Date.now());
+      const hasWork=validLicences.some(l=>l.type.includes("عمل حر"));
+      const hasGuide=validLicences.some(l=>/مرشد|إرشاد/.test(l.type));
+      const hasDocument=(matcher:(x:string)=>boolean)=>documents.some(d=>
+        matcher(String(d.label||"")) && Boolean(d.fileName));
+      const hasLicenseScans=hasDocument(x=>x.includes("عمل حر")) &&
+        hasDocument(x=>/مرشد|إرشاد/.test(x));
+      const hasPortrait=typeof partner.logoUrl==="string" &&
+        partner.logoUrl.includes(`partners%2F${partner.id}%2Fguide-portraits%2F`);
+      const hasBank=Boolean(partner.bankName?.trim() && partner.beneficiaryName?.trim() &&
+        /^SA\d{22}$/.test(partner.iban||""));
+      const hasCoverage=partner.guideAreas.length>0 && partner.guideAreas.every(a=>
+        Boolean(a.city&&a.label)&&a.radiusKm===50&&
+        Number.isFinite(Number(a.latitude))&&Number.isFinite(Number(a.longitude)));
+      if(!hasWork || !hasGuide || !hasLicenseScans || !hasPortrait || !hasBank || !hasCoverage){
+        return NextResponse.json({success:false,
+          message:"طلب المرشد غير مكتمل. تحقق من رخصة الإرشاد ووثيقة العمل الحر ومرفقيهما، والصورة الشخصية، والحساب البنكي والمسارات المؤكدة بنطاق 50 كم.",
+          missing:{guideLicense:!hasGuide,freelanceLicense:!hasWork,licenseAttachments:!hasLicenseScans,
+            portrait:!hasPortrait,bankAccount:!hasBank,coverage:!hasCoverage}
+        },{status:400});
+      }
     }
 
     const previousStatus = partner.status;
