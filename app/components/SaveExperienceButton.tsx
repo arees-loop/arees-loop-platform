@@ -91,8 +91,10 @@ export default function SaveExperienceButton({ experience }: { experience: Saved
     <button type="button" disabled={busy} onClick={toggle}
       aria-pressed={saved} aria-label={available ? (saved ? "إزالة من الاهتمامات" : "إضافة إلى الاهتمامات") : "إعادة محاولة تحميل الاهتمامات"}
       title={error || (saved ? "إزالة من الاهتمامات" : "إضافة إلى الاهتمامات")}
-      className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-xl text-[#0D3B34] shadow-md transition hover:scale-105 disabled:opacity-60">
-      {saved ? "♥" : "♡"}
+      className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AF37]/25 bg-white/95 text-[#0D3B34] shadow-md transition hover:scale-105 disabled:opacity-60">
+      <svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true" fill={saved ? "#D4AF37" : "none"} stroke={saved ? "#AB802C" : "#0D3B34"} strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" className="transition-colors">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/>
+      </svg>
     </button>
     {error && <span role="status" className="mt-1 block w-32 rounded bg-white p-1 text-center text-[9px] text-red-700 shadow">{error}</span>}
   </div>;
