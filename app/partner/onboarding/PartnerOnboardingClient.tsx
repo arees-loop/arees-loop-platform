@@ -2110,7 +2110,7 @@ export default function PartnerOnboardingPage() {
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-[#0D3B34]">
                 اختر نوع الشريك من <Link href="/partner/select-type" className="font-bold underline">صفحة الانضمام</Link>، فلا يجوز تغيير نوع الطلب داخل النموذج.
               </div>
-
+              )}
             </Field>
             <ValidationError message={validationErrors.partnerType} />
             </div>
