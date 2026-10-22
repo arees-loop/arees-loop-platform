@@ -79,6 +79,7 @@ type FormData = {
   vatCertificate: string;
 
   receivesPayments: boolean;
+  bankName: string;
   iban: string;
   beneficiaryName: string;
   ibanCertificate: string;
@@ -250,6 +251,7 @@ const initialData: FormData = {
   vatCertificate: "",
 
   receivesPayments: false,
+  bankName: "",
   iban: "",
   beneficiaryName: "",
   ibanCertificate: "",
@@ -483,6 +485,7 @@ export default function PartnerOnboardingPage() {
 
           receivesPayments:
             Boolean(application.receivesPayments),
+          bankName: String(application.bankName || ""),
           iban: String(application.iban || ""),
           beneficiaryName:
             String(application.beneficiaryName || ""),
@@ -1291,16 +1294,14 @@ export default function PartnerOnboardingPage() {
         }
       }
 
-      if (data.receivesPayments) {
-        if (!data.iban.trim()) {
-          errors.iban =
-            "رقم IBAN مطلوب لاستقبال التسويات.";
+      const bankRequired = data.partnerType === "individual" ||
+        (data.partnerType === "business" && data.receivesPayments);
+      if (bankRequired) {
+        if (!/^SA\d{22}$/.test(data.iban.trim().toUpperCase())) {
+          errors.iban = "أدخل آيبان سعودي صحيحاً من 24 خانة يبدأ بـ SA.";
         }
-
-        if (!data.beneficiaryName.trim()) {
-          errors.beneficiaryName =
-            "اسم المستفيد مطلوب لاستقبال التسويات.";
-        }
+        if (!data.bankName.trim()) errors.bankName = "اسم البنك مطلوب.";
+        if (!data.beneficiaryName.trim()) errors.beneficiaryName = "اسم صاحب الحساب مطلوب.";
       }
     }
 
@@ -1500,12 +1501,12 @@ export default function PartnerOnboardingPage() {
         data.logoFile ? "سيظهر الشعار بعد تدقيق أريس واعتماد الجهة." : "يلزم إرفاق الشعار الرسمي للجهة.",
     });
 
-    const settlementOk =
-      !data.receivesPayments ||
-      Boolean(
-        data.iban.trim() &&
-          data.beneficiaryName.trim()
-      );
+    const settlementRequired = data.partnerType === "individual" ||
+      (data.partnerType === "business" && data.receivesPayments);
+    const settlementOk = !settlementRequired || Boolean(
+      /^SA\d{22}$/.test(data.iban.trim().toUpperCase()) &&
+      data.bankName.trim() && data.beneficiaryName.trim()
+    );
 
     checks.push({
       label: "بيانات التسوية",
@@ -1513,10 +1514,12 @@ export default function PartnerOnboardingPage() {
         ? "ok"
         : "warn",
       note: settlementOk
-        ? data.receivesPayments
-          ? "بيانات التسوية الأساسية مكتملة."
-          : "التسوية عبر Arees Loop غير مفعلة."
-        : "أكمل IBAN واسم المستفيد.",
+        ? data.partnerType === "government"
+          ? "الجهة الحكومية / غير الربحية مجانية ولا تتطلب بيانات مالية."
+          : settlementRequired
+            ? "بيانات حساب التسوية مكتملة."
+            : "التسوية عبر Arees Loop غير مفعلة."
+        : "أكمل الآيبان واسم البنك واسم صاحب الحساب.",
     });
 
     const contactPhoneOk =
@@ -1607,7 +1610,7 @@ export default function PartnerOnboardingPage() {
         businessPhone: data.businessPhone,
         businessEmail: data.businessEmail,
 
-        mainContactName: data.contactName,
+        mainContactName: data.partnerType === "individual" ? (data.contactName.trim() || [data.firstName, data.lastName].filter(Boolean).join(" ")) : data.contactName,
         mainContactEmail: data.contactEmail,
         mainContactPhone: data.contactPhone,
         mainContactJobTitle: data.jobTitle,
@@ -1615,9 +1618,10 @@ export default function PartnerOnboardingPage() {
         operates24h: data.operates24h,
         operatingHours: data.operatingHours,
 
-        receivesPayments: data.receivesPayments,
-        iban: data.iban,
-        beneficiaryName: data.beneficiaryName,
+        receivesPayments: data.partnerType === "individual" || (data.partnerType === "business" && data.receivesPayments),
+        bankName: data.partnerType === "government" ? "" : data.bankName,
+        iban: data.partnerType === "government" ? "" : data.iban,
+        beneficiaryName: data.partnerType === "government" ? "" : data.beneficiaryName,
 
         publicName: data.publicName,
 
@@ -2931,7 +2935,7 @@ export default function PartnerOnboardingPage() {
             description="أدخل بيانات التواصل والتشغيل. بيانات التسوية المالية مطلوبة فقط إذا كانت المدفوعات ستتم عبر Arees Loop."
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="مسؤول التواصل">
+              <Field label={data.partnerType === "individual" ? "المرشد نفسه — مسؤول التواصل والتسوية" : "مسؤول التواصل"}>
                 <input
                   value={data.contactName}
                   onChange={(e) =>
@@ -3104,8 +3108,13 @@ export default function PartnerOnboardingPage() {
               </Field>
             )}
 
+            {data.partnerType !== "government" && <>
             <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
-              <SelectCard
+              {data.partnerType === "individual" ? (
+                <div className="rounded-xl bg-[#F1F6F3] p-4 text-sm font-bold text-[#0D3B34]">
+                  حساب المرشد البنكي إلزامي لتسوية مستحقاته. المرشد نفسه هو المسؤول المالي، ولا يلزم مسؤول مالي منفصل.
+                </div>
+              ) : <SelectCard
                 title="استقبال المدفوعات والتسويات عبر Arees Loop"
                 description="فعّل هذا الخيار إذا كانت مستحقات الحجوزات ستتم تسويتها للشريك عبر المنصة."
                 active={
@@ -3117,9 +3126,9 @@ export default function PartnerOnboardingPage() {
                     !data.receivesPayments
                   )
                 }
-              />
+              />}
 
-              {data.receivesPayments && (
+              {(data.partnerType === "individual" || data.receivesPayments) && (
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <div data-validation="iban"><Field label="IBAN *">
                     <input
@@ -3142,7 +3151,12 @@ export default function PartnerOnboardingPage() {
                     />
                   </Field><ValidationError message={validationErrors.iban} /></div>
 
-                  <div data-validation="beneficiaryName"><Field label="اسم المستفيد *">
+                  <div data-validation="bankName"><Field label="اسم البنك *">
+                    <input value={data.bankName} onChange={(e) => update("bankName", e.target.value)}
+                      className={`${inputClass} ${validationErrors.bankName ? errorInputClass : ""}`} placeholder="اسم البنك" />
+                  </Field><ValidationError message={validationErrors.bankName} /></div>
+
+                  <div data-validation="beneficiaryName"><Field label="اسم صاحب الحساب / المستفيد *">
                     <input
                       value={
                         data.beneficiaryName
@@ -3237,6 +3251,14 @@ export default function PartnerOnboardingPage() {
                   />
                 </Field>
               </div>
+            )}
+
+            </>}
+
+            {data.partnerType === "government" && (
+              <p className="rounded-2xl border border-[#D4AF37]/25 bg-[#FFF9E8] px-5 py-4 text-sm text-[#0D3B34]">
+                التسجيل للجهات الحكومية وغير الربحية مجاني. لا نطلب بيانات بنك أو مسؤولاً مالياً أو تسوية مالية.
+              </p>
             )}
 
             <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
