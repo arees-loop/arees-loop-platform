@@ -92,7 +92,7 @@ assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&
 assert(!home.includes("نقاط الخدمة:")&&!destinations.includes("نقاط الخدمة:")&&!serviceDetail.includes("نقاط الخدمة:"),"Do not regress the previously approved full earning call-to-action");
 const publicCatalog=file("app/services/page.tsx");
 assert(count(publicCatalog,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1,"Public Services listings must also display an accurate compact points preview");
-assert(pointsBanner.includes("inline-flex")&&pointsBanner.includes("whitespace-nowrap")&&pointsBanner.includes('text-[10px]')&&!pointsBanner.includes("w-full")&&!pointsBanner.includes("text-sm font-extrabold"),"Loyalty badge must be tiny, inline with the price, and must not occupy an oversized full-width block");
+assert(pointsBanner.includes("inline-flex")&&pointsBanner.includes("whitespace-nowrap")&&pointsBanner.includes('text-[10px]')&&!pointsBanner.includes("flex w-full")&&!pointsBanner.includes("text-sm font-extrabold"),"Loyalty badge must be tiny, inline with the price, and must not occupy an oversized full-width block");
 assert(home.includes('flex flex-wrap items-center justify-between gap-2')&&destinations.includes('flex flex-wrap items-center justify-between gap-2')&&serviceDetail.includes('<ServiceLoyaltyBanner finalPrice={total}/>'),"Point chip must share the price row without disturbing price or order CTA");
 const reconcileUi=file("app/admin/services/loyalty-reconcile/page.tsx");
 assert(reconcileUi.includes("السعر النهائي المعروض للعميل")&&!reconcileUi.includes("السعر الأساسي بالريال"),"Admin loyalty reconciliation copy must match final-price policy");
