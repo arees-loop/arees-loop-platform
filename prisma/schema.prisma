@@ -378,6 +378,7 @@ model Partner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  guideAreas GuideServiceArea[]
   documents   PartnerDocument[]
   members     PartnerMember[]
   licenses    License[]
@@ -393,6 +394,28 @@ model Partner {
 
   @@index([status])
   @@index([partnerType])
+  @@index([city])
+}
+
+
+/** Independently reviewable guide coverage points. Existing partner data is unchanged. */
+model GuideServiceArea {
+  id        String   @id @default(cuid())
+  partnerId String
+  city      String
+  label     String
+  category  String
+  notes     String?
+  latitude  Decimal  @db.Decimal(10, 7)
+  longitude Decimal  @db.Decimal(10, 7)
+  radiusKm  Int      @default(50)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId, isActive])
   @@index([city])
 }
 
