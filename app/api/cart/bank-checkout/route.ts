@@ -4,6 +4,7 @@ import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { findBankTransferNotes } from "@/lib/bank-transfer-notes";
+import {validateLicenseCoupon} from "@/lib/license-cart-coupon";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const TYPE = "CART_BANK_CHECKOUT";
@@ -48,6 +49,20 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
   if(!ids.every(v=>typeof v==="string"&&v.length>0))throw Error("أكمل مستندات الرخصة من نموذج الطلب.");
   const docs=await prisma.internationalLicenseDocument.findMany({where:{userId,id:{in:ids as string[]}},select:{id:true,slot:true}});
   if(docs.length!==3||!slots.every(([slot,field])=>docs.some(d=>d.id===app[field]&&d.slot===slot)))throw Error("مستندات الرخصة غير مرتبطة بحسابك.");
+  if(typeof app.requestReference==="string"&&app.requestReference){
+   if(!/^LICC-[0-9a-f-]{36}$/.test(app.requestReference))throw Error("رقم طلب الرخصة غير صحيح.");
+   const original=await prisma.auditLog.findFirst({where:{entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_FORM_ADDED_TO_CART",
+    entityId:app.requestReference,userId},select:{afterData:true}});
+   if(!original)throw Error("رقم طلب الرخصة غير مسجل في حسابك.");
+   const change=await prisma.auditLog.findFirst({where:{entityType:"LICENSE_CART_WORKFLOW",
+    entityId:app.requestReference,action:"STATUS_CHANGED"},orderBy:[{createdAt:"desc"},{id:"desc"}],
+    select:{afterData:true}});
+   if(jsonData(change?.afterData).status==="CANCELED")throw Error("تم إلغاء طلب الرخصة؛ لا يمكن إتمام دفعه.");
+
+   const info=jsonData(original.afterData);
+   if(!Array.isArray(info.documentIds)||!ids.every(id=>info.documentIds instanceof Array&&info.documentIds.includes(id)))
+    throw Error("مستندات الرخصة لا تطابق رقم الطلب المحفوظ.");
+  }
   const now=new Date();
   const offer=await prisma.transportOffer.findFirst({where:{kind:"DRIVING_LICENSE",isVisible:true,deletedAt:null,AND:[{OR:[{startsAt:null},{startsAt:{lte:now}}]},{OR:[{endsAt:null},{endsAt:{gte:now}}]}]},orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],select:{amountSar:true,operationStatus:true}});
   if(offer?.operationStatus==="SOLD_OUT")throw Error("عرض الرخصة غير متاح حالياً.");
@@ -62,7 +77,8 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
     countryCode:String(a.countryCode||"").slice(0,5),height:String(a.height||"").slice(0,8),
     eyeColor:String(a.eyeColor||"").slice(0,80),deliveryAddress:String(a.deliveryAddress||"").slice(0,300),
     deliveryLink:String(a.deliveryLink||"").slice(0,500),
-    passportDocumentId:String(a.passportDocumentId||""),localLicenseDocumentId:String(a.localLicenseDocumentId||""),portraitDocumentId:String(a.portraitDocumentId||"")
+    passportDocumentId:String(a.passportDocumentId||""),localLicenseDocumentId:String(a.localLicenseDocumentId||""),portraitDocumentId:String(a.portraitDocumentId||""),
+    requestReference:typeof a.requestReference==="string"?a.requestReference:""
    }};
   }
   const s=found.find(x=>x.id===r.serviceId)!;
@@ -73,7 +89,11 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
  const code=typeof couponRaw==="string"?couponRaw.trim().toUpperCase():"";
  let discount=0;
  if(code){
-  if(licenses.length||services.length!==1)throw Error("الكوبون في السلة المختلطة أو الرخصة غير متاح حتى اكتمال دعم الخصم.");
+  if(licenses.length){
+   if(services.length)throw Error("الكوبون للسلة المختلطة غير متاح؛ اطلب الرخصة بشكل مستقل.");
+   discount=(await validateLicenseCoupon(code,total,userId)).discount;
+  }else{
+   if(services.length!==1)throw Error("الكوبون متاح حالياً لسلة تحتوي على خدمة واحدة.");
   const c=await prisma.coupon.findUnique({where:{code}});
   const svc=found[0],now=new Date();
   if(!c||!c.isActive||(c.startsAt&&c.startsAt>now)||(c.expiresAt&&c.expiresAt<now)||(c.maxUses!==null&&c.usedCount>=c.maxUses))throw Error("الكوبون غير صالح أو انتهت صلاحيته.");
@@ -86,6 +106,7 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
    if(used>=c.maxUsesPerUser)throw Error("تم استنفاد عدد استخدامات الكوبون لهذا الحساب.");
   }
   discount=round(Math.min(total,c.discountType==="PERCENTAGE"?total*Number(c.discountValue)/100:Number(c.discountValue),c.maxDiscountAmount===null?total:Number(c.maxDiscountAmount)));
+  }
  }
  return {rows:savedRows,total,discount,amountSar:round(total-discount),coupon:code||null};
 }
@@ -102,14 +123,54 @@ export async function GET(req:NextRequest){
    const voucherRefs=new Set(vouchers.map(x=>x.entityId));
    const last=new Map<string,string>();
    for(const event of actions)if(event.entityId&&!last.has(event.entityId))last.set(event.entityId,event.action);
-   return NextResponse.json({success:true,orders:orders.map(o=>{const data=jsonData(o.afterData);return {reference:o.entityId,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,status:last.get(o.entityId||"")||CREATED,hasVoucher:!!o.entityId&&voucherRefs.has(o.entityId)};})},{headers:{"Cache-Control":"private, no-store"}});
+   const licenseRecords=await prisma.auditLog.findMany({where:{
+     userId:session.user.id,entityType:"LICENSE_CART_APPLICATION",action:"LICENSE_FORM_ADDED_TO_CART"
+    },orderBy:[{createdAt:"desc"},{id:"desc"}],take:100,
+    select:{entityId:true,createdAt:true,afterData:true}});
+   const linked=new Map<string,string>();
+   for(const o of orders){
+    if(!o.entityId)continue;
+    const d=jsonData(o.afterData),lines=Array.isArray(d.rows)?d.rows:[];
+    for(const line of lines){
+     const ref=jsonData(jsonData(line).application).requestReference;
+     if(typeof ref==="string"&&ref&&!linked.has(ref))linked.set(ref,o.entityId);
+    }
+   }
+   const licenseRefs=licenseRecords.map(x=>x.entityId).filter((x):x is string=>!!x);
+   const workflowEvents=licenseRefs.length?await prisma.auditLog.findMany({
+    where:{entityType:"LICENSE_CART_WORKFLOW",entityId:{in:licenseRefs},action:"STATUS_CHANGED"},
+    orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,afterData:true}}):[];
+   const workflowStates=new Map<string,string>();
+   for(const event of workflowEvents)if(event.entityId&&!workflowStates.has(event.entityId)){
+    const data=jsonData(event.afterData);
+    workflowStates.set(event.entityId,String(data.status||""));
+   }
+   const licenseApplications=licenseRecords.filter(x=>!!x.entityId).map(x=>{
+    const d=jsonData(x.afterData),bankReference=linked.get(x.entityId||"")||null;
+    const bankStatus=bankReference?last.get(bankReference)||CREATED:"AWAITING_PAYMENT";
+    const paid=bankStatus==="CART_BANK_VERIFIED",custom=workflowStates.get(x.entityId||"");
+    const serviceStatus=custom==="CANCELED"&&!paid?"CANCELED":
+      paid&&["EXECUTING","DONE"].includes(custom||"")?custom:paid?"PAID":"NEW";
+    return {reference:x.entityId,createdAt:x.createdAt,priceSar:Number(d.priceSar||199),
+     bankReference,status:bankStatus,serviceStatus};
+   });
+   return NextResponse.json({success:true,licenseApplications,orders:orders.map(o=>{
+    const data=jsonData(o.afterData);
+    return {reference:o.entityId,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,
+      status:last.get(o.entityId||"")||CREATED,hasVoucher:!!o.entityId&&voucherRefs.has(o.entityId)};
+   })},{headers:{"Cache-Control":"private, no-store"}});
   }
   const reference=req.nextUrl.searchParams.get("reference");
   if(reference){
    const order=await orderFor(reference,session.user.id);
    if(!order)return fail("طلب السداد غير موجود.",404);
    const event=await lastEvent(reference),details=jsonData(order.afterData);
-   return NextResponse.json({success:true,banks,order:{reference,amountSar:details.amountSar,bankAccountId:details.bankAccountId,status:event?.action||CREATED}},{headers:{"Cache-Control":"private, no-store"}});
+   const savedRows=Array.isArray(details.rows)?details.rows:[];
+   const licenseRow=savedRows.find(row=>jsonData(row).itemType==="DRIVING_LICENSE");
+   const licenseRequestReference=jsonData(jsonData(licenseRow).application).requestReference;
+   return NextResponse.json({success:true,banks,order:{reference,amountSar:details.amountSar,bankAccountId:details.bankAccountId,
+    licenseRequestReference:typeof licenseRequestReference==="string"?licenseRequestReference:undefined,
+    status:event?.action||CREATED}},{headers:{"Cache-Control":"private, no-store"}});
   }
   return NextResponse.json({success:true,banks},{headers:{"Cache-Control":"private, no-store"}});
  }catch(error){console.error("Cart bank account read failed",error);return fail("تعذر تحميل الحسابات البنكية مؤقتاً.",503);}

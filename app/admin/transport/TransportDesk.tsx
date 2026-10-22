@@ -2,6 +2,7 @@
 import AdminPaymentReview from "@/app/components/AdminPaymentReview";
 import AdminTicketFulfillment from "@/app/components/AdminTicketFulfillment";
 import AdminConfirmedBooking from "@/app/components/AdminConfirmedBooking";
+import LicenseCartOrderDetail from "@/app/components/LicenseCartOrderDetail";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -41,9 +42,10 @@ const day=(d:string|null)=>d?d.slice(0,10):"";
 const offerDay=(d:string|null)=>d?new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Riyadh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d)):"";
 
 export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOfferKind?:"ALL"|"FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE"}={}) {
-  const [tab,setTab]=useState<"requests"|"offers">(initialOfferKind==="ALL"?"requests":"offers");
+  const [tab,setTab]=useState<"requests"|"offers">(initialOfferKind==="ALL"||initialOfferKind==="DRIVING_LICENSE"?"requests":"offers");
   const [requests,setRequests]=useState<RequestRow[]>([]);
   const [requestStatusFilter,setRequestStatusFilter]=useState("ALL");
+  const [requestSearch,setRequestSearch]=useState("");
   const [offers,setOffers]=useState<Offer[]>([]);
   const [staff,setStaff]=useState<Staff[]>([]);
   const [identity,setIdentity]=useState<{role:string;id:string}|null>(null);
@@ -73,17 +75,32 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const load=useCallback(async()=>{
     setLoading(true);
     try{
-      const [r,o]=await Promise.all([
+      const [r,o,lc]=await Promise.all([
         fetch("/api/admin/transport?mode=requests",{cache:"no-store"}),
         fetch("/api/admin/transport?mode=offers",{cache:"no-store"}),
+        initialOfferKind==="DRIVING_LICENSE"?fetch("/api/admin/license-cart-workflow",{cache:"no-store"}):Promise.resolve(null),
       ]);
-      const [q,p]=await Promise.all([r.json(),o.json()]);
-      if(!r.ok||!q.success||!o.ok||!p.success){setError(q.message||p.message||"تعذر تحميل بيانات إدارة النقل.");return;}
-      setRequests(q.data);setOffers(p.data);setError("");
+      const [q,p,drafts]=await Promise.all([r.json(),o.json(),lc?lc.json():Promise.resolve({success:true,data:[]})]);
+      if(!r.ok||!q.success||!o.ok||!p.success||(lc&&(!lc.ok||!drafts.success))){
+        setError(q.message||p.message||drafts.message||"تعذر تحميل بيانات إدارة النقل.");return;
+      }
+      const licenseRows:RequestRow[]=(drafts.data||[]).map((d:{
+       id:string;reference:string;customerName:string;customerEmail:string|null;phone:string;createdAt:string;
+       priceSar:number;amountSar:number;status:string;bankReference:string|null;bankStatus:string|null;
+      })=>({
+       id:d.id,reference:d.reference,kind:"DRIVING_LICENSE",customerName:d.customerName,customerEmail:d.customerEmail,
+       phone:d.phone.replace(/^\+/, ""),countryCode:"",whatsappCountryCode:null,whatsappPhone:null,
+       origin:"الرخصة الدولية",destination:"سنة واحدة",travelDate:d.createdAt,adults:1,children:0,infants:0,
+       notes:d.bankStatus==="CART_BANK_RECEIPT_SUBMITTED"?"إيصال التحويل يحتاج مراجعة":null,
+       status:d.status,adminNotes:null,customerReply:null,carrierName:null,quoteAmountSar:d.amountSar,
+       quoteNotes:null,quoteValidUntil:null,whatsappStatus:"NOT_SENT",notificationStatus:"PENDING",createdAt:d.createdAt,
+       assignedToId:null,canceledBy:null,cancellationReason:null
+      }));
+      setRequests([...(q.data||[]),...licenseRows]);setOffers(p.data);setError("");
     }catch{setError("تعذر الاتصال بالخادم.");}
     finally{setLoading(false);}
-  },[]);
-  useEffect(()=>{void load();},[load]);
+  },[initialOfferKind]);
+  useEffect(()=>{void Promise.resolve().then(load);},[load]);
   useEffect(()=>{
     void fetch("/api/admin/me",{cache:"no-store"}).then(r=>r.json()).then(d=>{
       if(d.success)setIdentity({role:d.data.role,id:d.data.id});
@@ -93,9 +110,11 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
     }).catch(()=>{});
   },[]);
   useEffect(()=>{
-    if(!bannerFile){setBannerPreview("");return;}
-    const url=URL.createObjectURL(bannerFile);setBannerPreview(url);
-    return()=>URL.revokeObjectURL(url);
+    let active=true;
+    if(!bannerFile){void Promise.resolve().then(()=>{if(active)setBannerPreview("");});return()=>{active=false;};}
+    const url=URL.createObjectURL(bannerFile);
+    void Promise.resolve().then(()=>{if(active)setBannerPreview(url);});
+    return()=>{active=false;URL.revokeObjectURL(url);};
   },[bannerFile]);
   const showSuper=identity?.role==="SUPER_ADMIN";
   const staffName=(id:string|null)=>{
@@ -111,7 +130,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
 
   function choose(q:RequestRow) {
     setSelected(q);setItineraryReady(false);setError("");setStatus("");setPublishConfirmation(null);setReplyDraft(q.customerReply||"");setVisaAvailability("AVAILABLE");
-    void loadHistory(q.id);
+    if(!q.id.startsWith("LICC-"))void loadHistory(q.id);
     setForm({carrierName:q.carrierName||"",
       quoteAmountSar:q.quoteAmountSar===null?"":String(q.quoteAmountSar),
       quoteNotes:q.quoteNotes||"",adminNotes:q.adminNotes||"",
@@ -328,8 +347,11 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   }
   const serviceRequests=requests.filter(q=>initialOfferKind==="ALL"||q.kind===initialOfferKind);
   const requestStatuses=[...new Set(serviceRequests.map(q=>q.status))];
-  const filteredRequests=serviceRequests.filter(q=>requestStatusFilter==="ALL"||q.status===requestStatusFilter).sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
-  const nowMs=Date.now();
+  const filteredRequests=serviceRequests.filter(q=>(requestStatusFilter==="ALL"||q.status===requestStatusFilter)&&
+    (!requestSearch.trim()||[q.reference,q.customerName,q.customerEmail||"",q.phone].some(t=>t.toLowerCase().includes(requestSearch.trim().toLowerCase()))))
+    .sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
+  const [nowMs,setNowMs]=useState(0);
+  useEffect(()=>{const update=()=>setNowMs(Date.now());void Promise.resolve().then(update);const timer=window.setInterval(update,60000);return()=>window.clearInterval(timer);},[]);
   const offerState=(o:Offer)=>{
     if(!o.isVisible)return "PAUSED";
     if(o.startsAt&&new Date(o.startsAt).getTime()>nowMs)return "UPCOMING";
@@ -380,6 +402,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
         <div className={"mt-5 grid items-start gap-5 xl:grid-cols-1"}>
           <section className={selected?"hidden":"min-w-0"}>
             <div className="mb-4 flex flex-wrap items-center gap-2"><span className="text-sm font-bold">تصفية الطلبات:</span><button type="button" onClick={()=>setRequestStatusFilter("ALL")} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter==="ALL"?"bg-[#0D3B34] text-white":"bg-white"}`}>الكل ({serviceRequests.length})</button>{requestStatuses.map(st=><button type="button" key={st} onClick={()=>setRequestStatusFilter(st)} className={`rounded-full border px-3 py-2 text-xs ${requestStatusFilter===st?"bg-[#0D3B34] text-white":"bg-white"}`}>{st} ({serviceRequests.filter(q=>q.status===st).length})</button>)}<span className="text-xs text-[#0D3B34]/60">الأحدث أولاً</span></div>
+            <input aria-label="ابحث برقم الطلب أو اسم العميل أو الهاتف" value={requestSearch} onChange={e=>setRequestSearch(e.target.value)} placeholder="بحث برقم الطلب أو اسم العميل أو الهاتف..." className="mb-4 w-full rounded-xl border border-[#D4AF37]/40 bg-white px-4 py-3 text-sm"/>
             <div className={"grid grid-cols-1 gap-2"}>
             {filteredRequests.length===0&&!loading&&<p className="rounded-2xl border bg-white p-5 text-sm">لا توجد طلبات قابلة للعرض حالياً.</p>}
             {filteredRequests.map(q=>(
@@ -387,13 +410,15 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <div className="min-w-0"><p className="truncate text-sm font-black">{q.customerName}</p><p className="mt-1 truncate text-[11px] text-[#0D3B34]/60">{q.reference} · {q.kind==="FERRY"?"باخرة":q.kind==="VISA"?"تأشيرة":q.kind==="DRIVING_LICENSE"?"رخصة دولية":"طيران"}</p></div>
                 <div className="min-w-0 text-xs"><p className="truncate">{q.origin} ← {q.destination}</p><p className="mt-1 text-[#0D3B34]/60">{day(q.travelDate)}</p></div>
                 <div className="text-xs font-bold">{q.quoteAmountSar==null?"لم يسعّر بعد":Number(q.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</div>
-                <div className="flex items-center justify-between gap-2 sm:justify-end"><span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-[11px] font-bold">{statusNames[q.status]||q.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
+                <div className="flex items-center justify-between gap-2 sm:justify-end"><span className={`rounded-full px-3 py-1 text-[11px] font-bold ${q.status==="DONE"?"bg-emerald-100 text-emerald-900":q.status==="EXECUTING"?"bg-sky-100 text-sky-900":q.status==="PAID"?"bg-amber-100 text-amber-900":q.status==="CANCELED"?"bg-red-100 text-red-800":"bg-[#EDF2EB]"}`}>{statusNames[q.status]||q.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
               </button>
             ))}
             </div>
           </section>
           <section className={`${selected?"":"hidden"} min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6`}>
-            {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
+            {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وإدارته.</p> :
+              selected.id.startsWith("LICC-")?<LicenseCartOrderDetail key={selected.id} reference={selected.reference}
+                onClose={()=>setSelected(null)} onChange={()=>{void load();}}/> : (
               <>
                 {<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
                 <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">طلب {selected.reference}</h2><span className="rounded-full bg-[#E8F2EC] px-4 py-2 text-xs font-black text-[#0D3B34]">{statusNames[selected.status]||selected.status}</span><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يتم التسعير":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>

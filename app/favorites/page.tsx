@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SavedAreesServices from "@/app/components/SavedAreesServices";
 import { useCallback, useEffect, useState } from "react";
 import { savedExperiencesEvent, type SavedExperience } from "@/app/components/SaveExperienceButton";
 
@@ -28,7 +29,7 @@ export default function FavoritesPage() {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    void Promise.resolve().then(refresh);
     window.addEventListener(savedExperiencesEvent, refresh);
     return () => window.removeEventListener(savedExperiencesEvent, refresh);
   }, [refresh]);
@@ -58,9 +59,10 @@ export default function FavoritesPage() {
     <div className="mx-auto max-w-6xl">
       <p className="text-xs font-bold tracking-widest text-[#A87917]">AREES LOOP · INTERESTS</p>
       <h1 className="mt-2 text-4xl font-black">الاهتمامات</h1>
-      <p className="mt-3 max-w-2xl text-sm leading-7 text-[#0D3B34]/70">برامجك المحفوظة في حسابك. إشعارات تغير السعر والتوفر ستُفعّل بعد تجهيز نظام التنبيهات.</p>
+      <p className="mt-3 max-w-2xl text-sm leading-7 text-[#0D3B34]/70">برامجك وتجاربك وخدمات أريس المحفوظة في حسابك. إشعارات تغير السعر والتوفر ستُفعّل بعد تجهيز نظام التنبيهات.</p>
+      <SavedAreesServices />
       {error && <div role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-      {loading ? <p className="mt-10">جارٍ تحميل الاهتمامات…</p> : needsLogin ? <section className="mt-10 rounded-3xl bg-white p-8 text-center"><p>سجّل دخولك لعرض اهتمامات حسابك.</p><Link className="mt-4 inline-flex rounded-full bg-[#0D3B34] px-6 py-3 text-white" href="/login">تسجيل الدخول</Link></section> : error ? null : items.length === 0 ? <section className="mt-10 rounded-3xl bg-white p-10 text-center"><p>ما حفظت أي برنامج حتى الآن.</p><Link className="mt-4 inline-flex rounded-full bg-[#0D3B34] px-6 py-3 text-white" href="/discover">استكشف البرامج</Link></section> :
+      {loading ? <p className="mt-10">جارٍ تحميل الاهتمامات…</p> : needsLogin ? <section className="mt-10 rounded-3xl bg-white p-8 text-center"><p>سجّل دخولك لعرض اهتمامات حسابك.</p><Link className="mt-4 inline-flex rounded-full bg-[#0D3B34] px-6 py-3 text-white" href="/login">تسجيل الدخول</Link></section> : error ? null : items.length === 0 ? <section className="mt-10 rounded-3xl bg-white p-10 text-center"><p>ما حفظت أي تجربة من برامج الشركاء حتى الآن.</p><Link className="mt-4 inline-flex rounded-full bg-[#0D3B34] px-6 py-3 text-white" href="/discover">استكشف البرامج</Link></section> :
         <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{items.map(item => <article key={item.id} className="overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-white shadow-sm">
           <div className="relative aspect-[4/3] bg-[#EDE9DC]">{item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-sm">لا توجد صورة</div>}</div>
           <div className="p-5"><span className="text-xs font-bold text-[#A87917]">{item.category}</span><h2 className="mt-2 text-lg font-black">{item.name}</h2><p className="mt-2 text-sm text-[#0D3B34]/65">📍 {item.city || "الموقع غير محدد"}</p>

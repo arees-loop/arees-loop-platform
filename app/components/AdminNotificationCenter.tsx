@@ -12,7 +12,7 @@ export type AlertPayload={
  snapshotEventId:string|null;emailConfigured:boolean;limited:boolean;updatedAt:string;
 };
 const actionLabels:Record<string,string>={
- NEW_REQUEST:"طلب جديد",CUSTOMER_OFFER_ACCEPTED:"قبول عرض السعر",
+ NEW_REQUEST:"طلب جديد",LICENSE_FORM_ADDED_TO_CART:"نموذج رخصة جديد في السلة",CUSTOMER_OFFER_ACCEPTED:"قبول عرض السعر",
  CUSTOMER_TRANSFER_SUBMITTED:"إشعار سداد من العميل",CUSTOMER_ATTACHMENT_UPLOADED:"مرفق جديد من العميل",
  CUSTOMER_MESSAGE_SENT:"رد جديد من العميل",
 };
@@ -20,7 +20,7 @@ const serviceLabels:Record<string,string>={
  FLIGHT:"الطيران",FERRY:"البواخر",VISA:"التأشيرات",HOTEL:"الفنادق",DRIVING_LICENSE:"الرخص الدولية",
 };
 const empty:RequestCounters={flights:0,ferries:0,hotels:0,visas:0,drivingLicenses:0};
-const soundUrl="/audio/05_AreesLoop_Booking_Confirmed.mp3";
+const soundUrl="/audio/05_AreesLoop_Booking_Confirmed.mp3"; // Branded in-app sound; browser permission required.
 
 export default function AdminNotificationCenter({
  identityKey,onUpdate
@@ -94,8 +94,8 @@ export default function AdminNotificationCenter({
  useEffect(()=>{
    if(!identityKey)return;
    initialized.current=false;baseline.current=null;
-   try{const preference=window.localStorage.getItem(soundPreferenceKey)==="true";enabledRef.current=preference;setEnabled(preference);}catch{}
-   void refresh();
+   try{const preference=window.localStorage.getItem(soundPreferenceKey)==="true";enabledRef.current=preference;void Promise.resolve().then(()=>setEnabled(preference));}catch{}
+   void Promise.resolve().then(refresh);
    const timer=window.setInterval(()=>{void refresh()},45_000);
    const focus=()=>{void refresh()};
    const visible=()=>{if(document.visibilityState==="visible")void refresh()};
@@ -158,7 +158,7 @@ export default function AdminNotificationCenter({
        </Link>):<p className="py-2 text-center text-xs text-[#68776D]">لا توجد طلبات جديدة أو تفاعلات تنتظر المتابعة.</p>}
      </div>
      <Link href="/admin/dashboard" onClick={()=>setPanelOpen(false)} className="block rounded-xl bg-[#F3E7C8] px-3 py-2 text-center text-xs font-black text-[#0D3B34]">الذهاب إلى لوحة الإدارة ←</Link>
-     <p className="text-[10px] leading-5 text-[#70766C]">الصوت والتنبيه المحلي يعملان أثناء نشاط التطبيق. الإشعارات عند إغلاق التطبيق تحتاج اشتراك Push وتخزيناً آمناً في الخادم.</p>
+     <p className="text-[10px] leading-5 text-[#70766C]">لصوت الإشعارات على الجوال اضغط «تشغيل الصوت وإشعارات الجهاز» مرة واحدة ووافق على الأذونات. يعمل الصوت عند بقاء لوحة الإدارة نشطة؛ عند إغلاق المتصفح يلزم Web Push وتسمح المنصة بصوت النظام فقط.</p>
    </div>}
  </div>;
 }

@@ -29,6 +29,7 @@ export default function AdminDashboardPage(){
  const [toDate,setToDate]=useState("");
  useEffect(()=>{let live=true;fetch("/api/admin/customer-count",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(live&&d.success)setCustomerCount(d.count)}).catch(()=>{});return()=>{live=false}},[]);
  const [requestAlerts,setRequestAlerts]=useState<RequestAlerts|null>(null);
+ const [recentLicenseAlerts,setRecentLicenseAlerts]=useState<{reference:string;createdAt:string;href:string}[]>([]);
  const [alertsLoading,setAlertsLoading]=useState(true),[alertsError,setAlertsError]=useState("");
  const [refreshSignal,setRefreshSignal]=useState(0);
  useEffect(()=>{
@@ -38,7 +39,7 @@ export default function AdminDashboardPage(){
        const response=await fetch("/api/admin/request-alerts",{cache:"no-store",credentials:"include"});
        const data=await response.json();
        if(!response.ok||!data.success)throw Error(data.message||"تعذر قراءة الإشعارات.");
-       if(active){setRequestAlerts(data.counts);setAlertsError("");}
+       if(active){setRequestAlerts(data.counts);setRecentLicenseAlerts((Array.isArray(data.recent)?data.recent:[]).filter((x:{kind:string})=>x.kind==="DRIVING_LICENSE").slice(0,5));setAlertsError("");}
      }catch(err){if(active)setAlertsError(err instanceof Error?err.message:"تعذر تحديث الإشعارات.");}
      finally{if(active)setAlertsLoading(false);}
    }
@@ -55,7 +56,7 @@ export default function AdminDashboardPage(){
  const stats=useMemo(()=>({total:partners.length,active:partners.filter(x=>x.status==="ACTIVE").length,review:partners.filter(x=>x.status==="UNDER_REVIEW"||x.status==="SUBMITTED").length,needs:partners.filter(x=>x.status==="NEEDS_COMPLETION"||x.status==="NEEDS_INFO").length}),[partners]);
  const periodRange=useMemo(()=>{const now=new Date();if(period==="custom"){if(!fromDate||!toDate||fromDate>toDate)return null;return {start:new Date(fromDate+"T00:00:00"),end:new Date(toDate+"T23:59:59.999")};}const start=period==="today"?new Date(now.getFullYear(),now.getMonth(),now.getDate()):period==="month"?new Date(now.getFullYear(),now.getMonth(),1):new Date(now.getFullYear(),0,1);return {start,end:now};},[period,fromDate,toDate]);
  const periodPartners=periodRange?partners.filter(p=>p.submittedAt&&new Date(p.submittedAt)>=periodRange.start&&new Date(p.submittedAt)<=periodRange.end):[];
- useEffect(()=>{if(period==="custom"&&!periodRange){setMetrics(null);return;}let active=true;const params=new URLSearchParams({period});if(period==="custom"){params.set("from",fromDate);params.set("to",toDate)}fetch("/api/admin/dashboard-metrics?"+params.toString(),{cache:"no-store"}).then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(({ok,data})=>{if(!active)return;if(!ok||!data.success)throw Error(data.message||"تعذر تحميل المؤشرات");setMetrics(data);setMetricsError("");}).catch(e=>{if(active){setMetrics(null);setMetricsError(e instanceof Error?e.message:"تعذر تحميل المؤشرات");}});return()=>{active=false};},[period,fromDate,toDate,periodRange]);
+ useEffect(()=>{if(period==="custom"&&!periodRange){void Promise.resolve().then(()=>setMetrics(null));return;}let active=true;const params=new URLSearchParams({period});if(period==="custom"){params.set("from",fromDate);params.set("to",toDate)}fetch("/api/admin/dashboard-metrics?"+params.toString(),{cache:"no-store"}).then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(({ok,data})=>{if(!active)return;if(!ok||!data.success)throw Error(data.message||"تعذر تحميل المؤشرات");setMetrics(data);setMetricsError("");}).catch(e=>{if(active){setMetrics(null);setMetricsError(e instanceof Error?e.message:"تعذر تحميل المؤشرات");}});return()=>{active=false};},[period,fromDate,toDate,periodRange]);
  const recent=[...partners].sort((a,b)=>new Date(b.submittedAt||0).getTime()-new Date(a.submittedAt||0).getTime()).slice(0,5);
  return <main dir="rtl" className="min-h-screen bg-[#FBF8F1] px-6 py-10 text-[#171717] md:px-10 xl:px-12"><div className="mx-auto max-w-[1500px]">
   <section><h1 className="text-3xl font-bold md:text-4xl">لوحة إدارة Arees Loop</h1><p className="mt-2 text-sm text-[#171717]/50">بيانات تشغيلية مباشرة من قاعدة بيانات المنصة — بدون بيانات تجريبية.</p></section>
@@ -82,6 +83,14 @@ export default function AdminDashboardPage(){
       })}
     </div>
   </section>
+   {recentLicenseAlerts.length>0&&<section className="mt-4 rounded-xl border border-[#B5D5B7] bg-[#F1F9F2] p-4">
+     <h3 className="text-sm font-black text-[#13552F]">طلبات الرخص الدولية الجديدة</h3>
+     <div className="mt-3 space-y-2">{recentLicenseAlerts.map(item=><Link key={item.reference} href={item.href}
+      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#D0E4D0] bg-white p-3 text-xs font-bold">
+      <span dir="ltr" className="break-all font-mono">{item.reference}</span><span>{new Date(item.createdAt).toLocaleString("ar-SA")}</span>
+      <span className="text-[#1D7549]">فتح الطلب ←</span>
+     </Link>)}</div>
+   </section>}
   {metricsError&&<p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{metricsError}</p>}
   <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Link href="/admin/bookings" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">حجوزات تجارب الشركاء</p><p className="mt-2 text-3xl font-black">{metrics?.bookings??"—"}</p><p className="mt-2 text-xs text-black/45">حجوزات منشأة خلال الفترة المحددة</p></Link><Link href="/admin/dashboard?section=settlements" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">المالية والتسويات</p><p className="mt-2 text-3xl font-black">{metrics?.settlements??"—"}</p><p className="mt-2 text-xs text-black/45">سجلات تسوية منشأة خلال الفترة، لا تعني المدفوعات المحصلة</p></Link><Link href="/admin/partners" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">طلبات انضمام الشركاء</p><p className="mt-2 text-3xl font-black">{loading?"—":periodPartners.length}</p><p className="mt-2 text-xs text-black/45">حسب الفترة المختارة</p></Link><Link href="/admin/customer-reports" className="rounded-2xl border border-[#D4AF37]/30 bg-white p-5 shadow-sm"><p className="font-bold text-[#0D3B34]">العملاء المسجلون</p><p className="mt-2 text-3xl font-black">{customerCount??"—"}</p><p className="mt-2 text-xs text-black/45">الإجمالي الحالي • جميع الفترات</p></Link></section>
   {loading?<div className="mt-8 rounded-3xl bg-white p-8 text-center">جارٍ تحميل البيانات...</div>:<>

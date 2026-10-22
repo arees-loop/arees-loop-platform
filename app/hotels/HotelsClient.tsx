@@ -2,6 +2,7 @@
 import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 
 import Link from "next/link";
+import AreesServiceActions from "@/app/components/AreesServiceActions";
 import { useEffect, useState, type FormEvent } from "react";
 import { storeCustomerClaim } from "@/lib/customer-request-claims";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
@@ -63,6 +64,7 @@ export default function HotelsPage(){
   }
   return <main dir="rtl" className="min-h-screen bg-[#F7F4ED] px-4 pb-12 pt-32 text-[#0D3B34] md:px-8">
     <div className="mx-auto max-w-[1450px]">
+      <AreesServiceActions kind="HOTEL" title="الفنادق" href="/hotels" className="mb-4" />
       <div className="mb-3 overflow-hidden bg-[#F7F4ED]">
         {/* Crop the artwork's white outer margin; preserve its designed banner and current gap below. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
