@@ -1933,8 +1933,8 @@ export default function PartnerOnboardingPage() {
         {currentStep ===
           "account" && (
           <StepCard
-            eyebrow="STEP 01 / 06"
-            title="الحساب وصفة مقدم الخدمة"
+            eyebrow={`STEP ${activeIndex+1} / ${activeSteps.length}`}
+            title={data.partnerType==="individual"?"حساب المرشد السياحي":data.partnerType==="government"?"حساب ممثل الجهة الرسمية":"حساب وصلاحية مقدم الطلب"}
             description="أنشئ حساب الشريك وحدد صفتك والجهة التي تمثلها."
           >
             <div className="grid gap-4 md:grid-cols-2">
@@ -2251,7 +2251,7 @@ export default function PartnerOnboardingPage() {
         )}
                 {currentStep === "business" && (
           <StepCard
-            eyebrow="STEP 02 / 06"
+            eyebrow={`STEP ${activeIndex+1} / ${activeSteps.length}`}
             title={data.partnerType === "government" ? "بيانات الجهة الرسمية" : data.partnerType === "individual" ? "ملف المرشد السياحي" : "بيانات النشاط والمقر"}
             description={data.partnerType === "government"
               ? "اكتب الاسم الرسمي للجهة والمدينة. تتم مراجعة الهوية والمستندات قبل اعتماد شعار الجهة."
@@ -2534,7 +2534,7 @@ export default function PartnerOnboardingPage() {
         {currentStep ===
           "categories" && (
           <StepCard
-            eyebrow="STEP 03 / 06"
+            eyebrow={`STEP ${activeIndex+1} / ${activeSteps.length}`}
             title="ما الخدمات التي ستقدمها؟"
             description="يمكن اختيار أكثر من تصنيف. هذه الاختيارات تحدد أنواع الخدمات التي يمكن إضافتها بعد تفعيل حساب الشريك."
           >
@@ -2614,7 +2614,7 @@ export default function PartnerOnboardingPage() {
         {currentStep ===
           "documents" && (
           <StepCard
-            eyebrow="STEP 04 / 06"
+            eyebrow={`STEP ${activeIndex+1} / ${activeSteps.length}`}
             title="التراخيص والوثائق"
             description="أرفق الوثائق المناسبة لطبيعة الجهة والخدمات المختارة. المتطلبات تختلف بين المنشآت والأفراد والجهات المؤسسية."
           >
@@ -2928,7 +2928,7 @@ export default function PartnerOnboardingPage() {
         )}
                 {currentStep === "operations" && (
           <StepCard
-            eyebrow="STEP 05 / 06"
+            eyebrow={`STEP ${activeIndex+1} / ${activeSteps.length}`}
             title="بيانات التشغيل والتسوية"
             description="أدخل بيانات التواصل والتشغيل. بيانات التسوية المالية مطلوبة فقط إذا كانت المدفوعات ستتم عبر Arees Loop."
           >
@@ -3317,7 +3317,7 @@ export default function PartnerOnboardingPage() {
 
         {currentStep === "review" && (
           <StepCard
-            eyebrow="STEP 06 / 06"
+            eyebrow={`STEP ${activeIndex+1} / ${activeSteps.length}`}
             title="المراجعة والإرسال"
             description="راجع البيانات. مساعد الامتثال يفحص اكتمال الطلب قبل إرساله إلى فريق أريس للمراجعة النهائية."
           >
