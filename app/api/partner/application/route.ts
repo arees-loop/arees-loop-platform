@@ -768,6 +768,14 @@ export async function POST(request: NextRequest) {
 
 
 
+    // Guide is their own finance contact; government/non-profit onboarding is free.
+    if (partnerType === "INDIVIDUAL" &&
+       (!clean(body.bankName) || !clean(body.beneficiaryName) ||
+        !/^SA\d{22}$/.test((clean(body.iban)||"").replace(/\s/g,"").toUpperCase()))) {
+      return NextResponse.json({success:false,
+        message:"المرشد مسؤول عن تسوياته ويلزم اسم البنك وآيبان سعودي صحيح واسم صاحب الحساب."},{status:400});
+    }
+
     const categories = Array.from(
 
       new Set(
@@ -866,11 +874,11 @@ export async function POST(request: NextRequest) {
 
 
 
-          financeContactName: clean(body.financeContactName),
+          financeContactName: partnerType==="BUSINESS" ? clean(body.financeContactName) : null,
 
-          financeContactEmail: clean(body.financeContactEmail),
+          financeContactEmail: partnerType==="BUSINESS" ? clean(body.financeContactEmail) : null,
 
-          financeContactPhone: clean(body.financeContactPhone),
+          financeContactPhone: partnerType==="BUSINESS" ? clean(body.financeContactPhone) : null,
 
 
 
@@ -894,15 +902,15 @@ export async function POST(request: NextRequest) {
 
 
 
-          receivesPayments: Boolean(body.receivesPayments),
+          receivesPayments: partnerType==="INDIVIDUAL" || (partnerType==="BUSINESS" && Boolean(body.receivesPayments)),
 
-          iban: clean(body.iban),
+          iban: partnerType==="GOVERNMENT_NONPROFIT" ? null : clean(body.iban),
 
-          bankName: clean(body.bankName),
+          bankName: partnerType==="GOVERNMENT_NONPROFIT" ? null : clean(body.bankName),
 
-          swiftCode: clean(body.swiftCode),
+          swiftCode: partnerType==="BUSINESS" ? clean(body.swiftCode) : null,
 
-          beneficiaryName: clean(body.beneficiaryName),
+          beneficiaryName: partnerType==="GOVERNMENT_NONPROFIT" ? null : clean(body.beneficiaryName),
 
 
 
@@ -1150,6 +1158,15 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // No accidental reclassification of an existing application.
+    if (membership.partner.partnerType && membership.partner.partnerType!==partnerType) {
+      return NextResponse.json({success:false,message:"لا يمكن تغيير نوع الطلب السابق."},{status:409});
+    }
+    if(partnerType==="INDIVIDUAL"){
+      return NextResponse.json({success:false,
+        message:"استكمل طلب المرشد من المسار المخصص دون تعديل أو حذف التراخيص القديمة."},{status:409});
+    }
+
     const unifiedNumber = clean(body.unifiedNumber);
     const commercialRegister = clean(body.commercialRegister);
 
@@ -1319,9 +1336,9 @@ export async function PATCH(request: NextRequest) {
             businessPhone: clean(body.businessPhone),
             businessEmail: clean(body.businessEmail),
 
-            financeContactName: clean(body.financeContactName),
-            financeContactEmail: clean(body.financeContactEmail),
-            financeContactPhone: clean(body.financeContactPhone),
+            financeContactName: partnerType==="BUSINESS" ? clean(body.financeContactName) : null,
+            financeContactEmail: partnerType==="BUSINESS" ? clean(body.financeContactEmail) : null,
+            financeContactPhone: partnerType==="BUSINESS" ? clean(body.financeContactPhone) : null,
 
             mainContactName: clean(body.mainContactName),
             mainContactEmail: clean(body.mainContactEmail),
@@ -1334,11 +1351,11 @@ export async function PATCH(request: NextRequest) {
             operates24h: Boolean(body.operates24h),
             operatingHours: clean(body.operatingHours),
 
-            receivesPayments: Boolean(body.receivesPayments),
-            iban: clean(body.iban),
-            bankName: clean(body.bankName),
-            swiftCode: clean(body.swiftCode),
-            beneficiaryName: clean(body.beneficiaryName),
+            receivesPayments: partnerType==="BUSINESS" && Boolean(body.receivesPayments),
+            iban: partnerType==="GOVERNMENT_NONPROFIT" ? membership.partner.iban : clean(body.iban),
+            bankName: partnerType==="GOVERNMENT_NONPROFIT" ? membership.partner.bankName : clean(body.bankName),
+            swiftCode: partnerType==="GOVERNMENT_NONPROFIT" ? membership.partner.swiftCode : clean(body.swiftCode),
+            beneficiaryName: partnerType==="GOVERNMENT_NONPROFIT" ? membership.partner.beneficiaryName : clean(body.beneficiaryName),
 
             publicName: clean(body.publicName),
 
