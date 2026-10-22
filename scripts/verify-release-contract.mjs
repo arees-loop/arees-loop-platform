@@ -55,6 +55,17 @@ assert(!licenseForm.includes("/api/license-cart-application")&&!licenseForm.incl
 assert(header.includes("goToAirSea")&&home.includes('window.location.hash!=="#travel-bookings"'),"Air/sea navigation must actually scroll for both client and direct visits");
 const customer=file("app/my-requests/page.tsx");
 assert(customer.includes("CustomerCartOrderDetail")&&customer.includes('"/api/cart/bank-checkout?history=true"'),"Unified My Requests must continue including partner/cart orders");
+// Approved 22 Oct UX: destination selectors must remain compact even with
+// hundreds of cities. Existing search above the list filters the offers.
+const destinations=file("app/discover/DiscoverClient.tsx");
+assert(destinations.includes('id="available-destinations"')&&destinations.includes('<select')&&!destinations.includes("cities.map(x=><button"),"Destinations must be one compact select instead of one button per city");
+const notifications=file("app/notifications/page.tsx");
+assert(!notifications.includes("cartAlerts")&&!notifications.includes("/api/cart/bank-checkout?history=true"),"Customer cart document requests must not duplicate in standalone Notifications");
+assert(customer.includes("arees-cart-order-updated"),"My Requests must refresh when a cart attachment is uploaded");
+const cartDetails=file("app/components/CustomerCartOrderDetail.tsx");
+assert(cartDetails.includes('dispatchEvent(new Event("arees-cart-order-updated"))')&&cartDetails.includes('DOCUMENTS_SUBMITTED'),"Successful customer attachment upload must clear red attention by refreshing the order status");
+const dashboard=file("app/admin/dashboard/page.tsx");
+assert(dashboard.includes("إجمالي الخدمات والتجارب")&&dashboard.includes("servicesLoaded?services.length"),"Super Admin must show total services and experiences from the live service list");
 const admin=file("app/admin/cart-bank-payments/page.tsx");
 assert(admin.includes("/api/admin/cart-bank-payments")&&admin.includes("طلبات السلة"),"Admin cart orders management must remain available");
 const invoice=file("app/cart/documents/[type]/page.tsx");
