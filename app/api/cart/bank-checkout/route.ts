@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import {sendCartAdminMail} from "@/lib/cart-order-workflow";
+import {sendCartAdminMail,cartStatus,cartPaymentStatus,asRecord,CART_DOCUMENT,CART_MESSAGE,CART_STATUS} from "@/lib/cart-order-workflow";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -102,12 +102,19 @@ export async function GET(req:NextRequest){
   if(req.nextUrl.searchParams.get("history")==="true"){
    const orders=await prisma.auditLog.findMany({where:{userId:session.user.id,entityType:TYPE,action:CREATED},orderBy:{createdAt:"desc"},take:100,select:{entityId:true,createdAt:true,afterData:true}});
    const references=orders.map(o=>o.entityId).filter((s):s is string=>!!s);
-   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,"CART_WORKFLOW_STATUS_UPDATED"]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true,afterData:true}}):[];
+   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,CART_STATUS,CART_DOCUMENT,CART_MESSAGE]}},orderBy:[{createdAt:"desc"},{id:"desc"}],take:1200,select:{id:true,entityId:true,action:true,afterData:true,createdAt:true,userId:true}}):[];
    const vouchers=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:"CART_SERVICE_VOUCHER_UPLOADED"},select:{entityId:true}}):[];
    const voucherRefs=new Set(vouchers.map(x=>x.entityId));
-   const last=new Map<string,string>();
-   for(const event of actions)if(event.entityId&&!last.has(event.entityId))last.set(event.entityId,event.action==="CART_WORKFLOW_STATUS_UPDATED"?(typeof (event.afterData as {status?:unknown}|null)?.status==="string"?(event.afterData as {status:string}).status:"PROCESSING"):event.action);
-   return NextResponse.json({success:true,orders:orders.map(o=>{const data=jsonData(o.afterData);return {reference:o.entityId,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,status:last.get(o.entityId||"")||CREATED,hasVoucher:!!o.entityId&&voucherRefs.has(o.entityId)};})},{headers:{"Cache-Control":"private, no-store"}});
+   const eventsByRef=new Map<string,typeof actions>();
+   for(const event of actions)if(event.entityId){const current=eventsByRef.get(event.entityId)||[];current.push(event);eventsByRef.set(event.entityId,current);}
+   const result=orders.map(o=>{
+    const data=jsonData(o.afterData),reference=o.entityId||"",events=eventsByRef.get(reference)||[];
+    const status=cartStatus(events),paymentStatus=cartPaymentStatus(events);
+    const latestMessage=events.find(e=>e.action===CART_MESSAGE);
+    const newMessage=!!latestMessage&&asRecord(latestMessage.afterData).from==="ADMIN";
+    return {reference,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,status,paymentStatus,needsAttention:status==="DOCUMENTS_REQUESTED"||paymentStatus===REJECTED||newMessage,hasNewMessage:newMessage,hasVoucher:voucherRefs.has(reference)};
+   });
+   return NextResponse.json({success:true,orders:result},{headers:{"Cache-Control":"private, no-store"}});
   }
   const reference=req.nextUrl.searchParams.get("reference");
   if(reference){
