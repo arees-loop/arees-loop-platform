@@ -83,6 +83,22 @@ const missions=file("app/missions/page.tsx");
 assert(missions.includes("مهام تجريبية للعرض فقط")&&!missions.includes("claimMissionReward(")&&!missions.includes("onClick={onClaim}"),"Demo missions must never create client-only reward claims");
 const serviceDetail=file("app/services/[id]/page.tsx");
 assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("service.loyaltyPoints || 150"),"Do not invent a 150-point earning amount when the service has no configured points");
+// Branded service loyalty offer is an approved customer-facing contract:
+ // one point per whole riyal of the currently displayed final price.
+const pointsFormula=file("lib/service-loyalty-points.ts");
+const pointsBanner=file("app/components/ServiceLoyaltyBanner.tsx");
+assert(pointsFormula.includes("Math.floor(Math.round(finalPrice * 100) / 100)")&&pointsBanner.includes("احجز واحصل على")&&pointsBanner.includes("نقطة أريس لوب")&&pointsBanner.includes('/Logo/arees-loop-logo.png'),"Always show automatic service-price points with official logo and approved Arabic earning copy");
+assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&count(destinations,"<ServiceLoyaltyBanner finalPrice={s.finalPrice}")===1&&count(serviceDetail,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1,"Approved earning banner must appear at full width in Home, Discover and details; never replace with tiny price-adjacent text");
+assert(!home.includes("نقاط الخدمة:")&&!destinations.includes("نقاط الخدمة:")&&!serviceDetail.includes("نقاط الخدمة:"),"Do not regress the previously approved full earning call-to-action");
+const savedButton=file("app/components/SaveExperienceButton.tsx");
+assert(savedButton.includes("<svg viewBox=")&&!savedButton.includes('saved ? "♥" : "♡"'),"Favorite hearts must use consistent outlined/gold SVG rather than black font/emoji glyphs");
+const serviceApi=file("app/api/services/route.ts");
+const partnerCreate=file("app/api/partner/services/route.ts");
+const partnerUpdate=file("app/api/partner/services/[id]/route.ts");
+const reconcile=file("app/api/admin/services/loyalty-reconcile/route.ts");
+assert(serviceApi.includes("loyaltyPoints: pointsFromServicePrice(Number(service.finalPrice))")&&serviceApi.includes("loyaltyPoints: pointsFromServicePrice(finalPrice)"),"Published and newly created service points must follow the visible final price");
+assert(partnerCreate.includes("pointsFromServicePrice(finalPrice)")&&partnerUpdate.includes("pointsFromServicePrice(finalPrice)")&&reconcile.includes("pointsFromServicePrice(Number(s.finalPrice))"),"Partner writes and optional existing-service reconciliation must follow one price-points rule");
+
 const sealCss=file("app/globals.css");
 assert(sealCss.includes("transform: scale(.72) !important;")&&sealCss.includes("z-index: 20 !important;")&&!sealCss.includes(".sbc-verify-seal { display: none !important; }"),"Official Saudi Business seal must remain floating, smaller and below account controls on mobile");
 const layout=file("app/layout.tsx"), verification=file("app/components/SaudiBusinessVerification.tsx");
