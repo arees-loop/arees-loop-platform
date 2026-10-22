@@ -2370,7 +2370,9 @@ export default function PartnerOnboardingPage() {
             title={data.partnerType === "government" ? "بيانات الجهة الرسمية" : data.partnerType === "individual" ? "ملف المرشد السياحي" : "بيانات النشاط والمقر"}
             description={data.partnerType === "government"
               ? "اكتب الاسم الرسمي للجهة والمدينة. تتم مراجعة الهوية والمستندات قبل اعتماد شعار الجهة."
-              : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
+              : data.partnerType === "individual"
+                ? "أدخل اسم المرشد واللغات، وحدد مساراً واحداً أو عدة مسارات وموقع كل مسار عبر TomTom بنطاق 50 كم."
+                : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
@@ -2399,6 +2401,70 @@ export default function PartnerOnboardingPage() {
                 <div data-validation="guideLanguages"><Field label="لغات الإرشاد *">
                   <input value={data.guideLanguages} onChange={e=>update("guideLanguages",e.target.value)} placeholder="العربية، الإنجليزية..." className={inputClass}/>
                 </Field><ValidationError message={validationErrors.guideLanguages}/></div>
+                <div data-validation="guideAreas" className="md:col-span-2 space-y-4 rounded-[24px] border border-[#D4AF37]/30 bg-[#FBF9F2] p-5">
+                  <h3 className="text-lg font-bold text-[#0D3B34]">المسارات والمناطق التي تقدم فيها الإرشاد</h3>
+                  <p className="text-sm leading-7 text-[#0D3B34]/65">اختر مساراً واحداً أو عدة مسارات، ولكل مسار موقع مستقل عبر بحث TomTom ونطاق خدمة 50 كم حول النقطة المحددة.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button type="button" onClick={()=>{
+                      if(guideAreas.length>1 && !window.confirm("سيتم إلغاء تفعيل المسارات الإضافية عند حفظ التعديل، مع الاحتفاظ بسجلها. هل تريد الاستمرار؟"))return;
+                      setGuideAreaMode("single");
+                      setGuideAreas(current=>current.slice(0,1));
+                    }} className={guideAreaMode==="single"?"rounded-xl bg-[#0D3B34] p-3 font-bold text-white":"rounded-xl border bg-white p-3 font-bold"}>مسار محدد</button>
+                    <button type="button" onClick={()=>setGuideAreaMode("multiple")} className={guideAreaMode==="multiple"?"rounded-xl bg-[#0D3B34] p-3 font-bold text-white":"rounded-xl border bg-white p-3 font-bold"}>مسارات متعددة</button>
+                  </div>
+                  <datalist id="arees-guide-cities">{SAUDI_CITY_SUGGESTIONS.map(city=><option key={city} value={city}/>)}</datalist>
+                  {guideAreas.map((area,index)=>(
+                    <div key={area.key} className="space-y-3 rounded-2xl border border-[#0D3B34]/10 bg-white p-4">
+                      <div className="flex items-center justify-between">
+                        <strong>المسار {index+1}</strong>
+                        {guideAreaMode==="multiple" && guideAreas.length>1 && <button type="button" onClick={()=>setGuideAreas(current=>current.filter(a=>a.key!==area.key))} className="text-xs font-bold text-red-700">إزالة المسار</button>}
+                      </div>
+                      <Field label="المدينة / المنطقة التي تقدم فيها الخدمة *">
+                        <input list="arees-guide-cities" value={area.city}
+                          onChange={e=>{updateGuideArea(area.key,{city:e.target.value});if(index===0)update("city",e.target.value);}}
+                          placeholder="اختر مدينة من مدن المملكة" className={inputClass}/>
+                      </Field>
+                      <Field label="اسم المسار أو الوجهة *">
+                        <input value={area.label} onChange={e=>updateGuideArea(area.key,{label:e.target.value})}
+                          placeholder="مثلاً: مسار جبل أحد / العلا القديمة" className={inputClass}/>
+                      </Field>
+                      <Field label="نوع مسار الإرشاد *">
+                        <select value={area.category} onChange={e=>updateGuideArea(area.key,{category:e.target.value})} className={inputClass}>
+                          {GUIDE_CATEGORIES.map(category=><option key={category} value={category}>{category}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="تحديد الموقع عبر TomTom *">
+                        <div className="flex flex-wrap gap-2">
+                          <input value={guideLocationQueries[area.key]||""}
+                            onChange={e=>setGuideLocationQueries(current=>({...current,[area.key]:e.target.value}))}
+                            placeholder="اكتب اسم المكان أو الحي أو المعلم" className={inputClass+" flex-1 min-w-[180px]"}/>
+                          <button type="button" disabled={guideSearchLoading===area.key} onClick={()=>void searchGuideLocation(area)}
+                            className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">
+                            {guideSearchLoading===area.key?"جاري البحث...":"بحث الموقع"}
+                          </button>
+                        </div>
+                        {(guideLocationSuggestions[area.key]||[]).map((item,i)=>(
+                          <button key={i} type="button" onClick={()=>chooseGuideLocation(area.key,item)}
+                            className="mt-2 block w-full rounded-xl border border-[#D4AF37]/20 bg-[#FFFCF5] p-3 text-right text-sm">
+                            <strong>{item.name}</strong><span className="block text-xs text-[#0D3B34]/60">{item.address}</span>
+                          </button>
+                        ))}
+                      </Field>
+                      {area.latitude!==null && area.longitude!==null
+                        ? <p className="rounded-xl bg-[#EAF1EB] p-3 text-xs font-semibold text-[#0D3B34]">✓ الموقع محدد — دائرة خدمة 50 كم — الإحداثيات: {area.latitude.toFixed(5)}, {area.longitude.toFixed(5)}</p>
+                        : <p className="rounded-xl bg-[#FFF5E1] p-3 text-xs text-[#8B6812]">اختر نتيجة من TomTom لتأكيد الموقع. كتابة اسم المدينة وحدها لا تكفي.</p>}
+                      <Field label="ملاحظات المسار (اختياري)">
+                        <textarea value={area.notes} onChange={e=>updateGuideArea(area.key,{notes:e.target.value})}
+                          placeholder="مغامرات، هايكينق، مواقع تاريخية أو أثرية، متطلبات الجولة..." rows={2} className={inputClass}/>
+                      </Field>
+                    </div>
+                  ))}
+                  {guideAreaMode==="multiple" && guideAreas.length<20 && <button type="button"
+                    onClick={()=>setGuideAreas(current=>[...current,newGuideArea()])}
+                    className="w-full rounded-xl border border-dashed border-[#B99124]/60 bg-[#FFF7E2] px-4 py-3 font-bold text-[#8B6812]">+ إضافة مسار آخر</button>}
+                  <ValidationError message={validationErrors.guideAreas}/>
+                  {guideSearchError&&<p className="text-xs font-bold text-red-700">{guideSearchError}</p>}
+                </div>
               </>}
 
               <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
@@ -2414,6 +2480,7 @@ export default function PartnerOnboardingPage() {
                 />
               </Field>
 
+              {data.partnerType !== "individual" && <>
               <Field label="نوع الإثبات">
                 <select
                   value={data.proofType}
@@ -2465,6 +2532,7 @@ export default function PartnerOnboardingPage() {
                 />
               </Field>
 
+              </>}
               {data.partnerType ===
                 "business" && (
                 <Field label="الرقم الموحد">
@@ -2495,15 +2563,16 @@ export default function PartnerOnboardingPage() {
                 />
               </Field>
 
-              <div data-validation="city"><Field label="المدينة *">
+              {data.partnerType!=="individual" && <div data-validation="city"><Field label="المدينة *">
                 <input
                   value={data.city}
                   onChange={(e) => update("city", e.target.value)}
                   placeholder="مثال: المدينة المنورة"
                   className={`${inputClass} ${validationErrors.city ? errorInputClass : ""}`}
                 />
-              </Field><ValidationError message={validationErrors.city} /></div>
+              </Field><ValidationError message={validationErrors.city} /></div>}
 
+              {data.partnerType==="business" && <>
               <div data-validation="district"><Field label="الحي *">
                 <input
                   value={data.district}
@@ -2561,10 +2630,10 @@ export default function PartnerOnboardingPage() {
                 <p className="mt-2 text-xs leading-6 text-[#0D3B34]/50">
                   أرفق نسخة من إثبات العنوان الوطني الخاص بمقر المنشأة بصيغة PDF أو صورة.
                 </p>
-              </div>
+              </div></>}
             </div>
 
-            <Field label="نبذة عن النشاط">
+            <Field label={data.partnerType==="individual"?"نبذة عن خبرة المرشد":"نبذة عن النشاط"}>
               <textarea
                 value={data.description}
                 onChange={(e) =>
@@ -2579,6 +2648,7 @@ export default function PartnerOnboardingPage() {
               />
             </Field>
 
+            {data.partnerType!=="individual" && <>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="البريد التجاري">
                 <input
@@ -2629,6 +2699,7 @@ export default function PartnerOnboardingPage() {
               />
             </Field>
 
+            </>}
             <InfoBox>
               بيانات التواصل والمعلومات
               الداخلية لا تظهر تلقائياً
