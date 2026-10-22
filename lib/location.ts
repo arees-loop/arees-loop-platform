@@ -44,7 +44,7 @@ const DEFAULT_GEOLOCATION_OPTIONS: PositionOptions = {
   maximumAge: 60 * 1000,
 };
 
-function getBrowserCoordinates(
+export function getBrowserCoordinates(
   options: PositionOptions = DEFAULT_GEOLOCATION_OPTIONS,
 ): Promise<AreesCoordinates> {
   return new Promise((resolve, reject) => {

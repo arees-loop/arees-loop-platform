@@ -69,6 +69,22 @@ const destinations=file("app/discover/DiscoverClient.tsx");
 assert(destinations.includes('id="available-destinations"')&&destinations.includes('<select')&&!destinations.includes("cities.map(x=><button"),"Destinations must be one compact select instead of one button per city");
 assert(destinations.includes("const nearbyOnly=locationMode&&!showAllLocations&&!manualSearch")&&destinations.includes("setShowAllLocations(true)")&&destinations.includes("كل المواقع — عرض جميع البرامج"),"All locations must clear proximity scope and display all applicable published programs");
 assert(destinations.includes('aria-label="مهام اللوب"')&&destinations.includes("/missions")&&existsSync(resolve(root,"app/missions/page.tsx")),"Loop Missions entry must remain visible in discovery without falsely creating missions");
+// Preserve compact discovery and GPS city fallback; do not require every
+// published city service to have working coordinates in order to appear.
+assert(destinations.includes('aria-label="بحث الوجهات والمهام"')&&destinations.includes("const nearbyCity=")&&destinations.includes("cityKey(s.city)===cityKey(nearbyCity)"),"Compact discovery must retain confirmed-city fallback alongside GPS proximity");
+assert(!destinations.includes("سلة الوجهات")&&!destinations.includes('label htmlFor="next-destination" className="mb-2 block'),"Discovery must not regress to oversized multi-panel filters");
+assert(destinations.includes("setLoadError")&&destinations.includes("إعادة المحاولة"),"Discovery must distinguish API load errors from an empty published catalog");
+const geolocation=file("lib/location.ts");
+assert(geolocation.includes("export function getBrowserCoordinates"),"Location coordinates must be available independently of reverse geocoding");
+assert(home.includes("getBrowserCoordinates({enableHighAccuracy:true")&&home.includes("void reverseGeocode(lat,lng).then")&&home.includes("setShowLocationNotice(true)"),"Show city notice on reliable GPS without waiting for the address");
+assert(home.includes('near=')&&home.includes("encodeURIComponent(detectedLocationScene.nameAr)"),"Home must pass its trusted detected city to Discover");
+const missions=file("app/missions/page.tsx");
+assert(missions.includes("مهام تجريبية للعرض فقط")&&!missions.includes("claimMissionReward(")&&!missions.includes("onClick={onClaim}"),"Demo missions must never create client-only reward claims");
+const serviceDetail=file("app/services/[id]/page.tsx");
+assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("service.loyaltyPoints || 150"),"Do not invent a 150-point earning amount when the service has no configured points");
+const sealCss=file("app/globals.css");
+assert(sealCss.includes(".sbc-verify-seal { z-index: 20 !important; }"),"Verification seal must not overlay customer mobile navigation");
+
 const notifications=file("app/notifications/page.tsx");
 assert(!notifications.includes("cartAlerts")&&!notifications.includes("/api/cart/bank-checkout?history=true"),"Customer cart document requests must not duplicate in standalone Notifications");
 assert(customer.includes("arees-cart-order-updated"),"My Requests must refresh when a cart attachment is uploaded");

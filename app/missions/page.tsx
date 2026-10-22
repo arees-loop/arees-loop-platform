@@ -4,12 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  claimMissionReward,
-  getLoopProgress,
-  getMissionRewardPoints,
-  hasClaimedMissionReward,
-} from "@/lib/loop-progress";
+import {getLoopProgress,getMissionRewardPoints} from "@/lib/loop-progress";
 
 type MissionStatus = "active" | "completed" | "locked";
 
@@ -36,7 +31,6 @@ const baseMissions: Mission[] = [
     progress: 0,
     target: 3,
     status: "active",
-    timeLeft: "ينتهي اليوم",
     category: "استكشاف",
     destination: "المدينة المنورة",
   },
@@ -49,7 +43,6 @@ const baseMissions: Mission[] = [
     progress: 0,
     target: 2,
     status: "active",
-    timeLeft: "متبقي 4 أيام",
     category: "ثقافة",
     destination: "المدينة المنورة",
   },
@@ -111,17 +104,7 @@ function MissionsContent() {
   >("all");
   const [startedMissions, setStartedMissions] = useState<number[]>([1, 2]);
   const [verifiedExperienceIds, setVerifiedExperienceIds] = useState<string[]>([]);
-  const [claimedMissionIds, setClaimedMissionIds] = useState<number[]>([]);
   const [missionPoints, setMissionPoints] = useState(0);
-
-  function refreshProgress() {
-    const progress = getLoopProgress();
-    setVerifiedExperienceIds(
-      progress.verifiedVisits.map((visit) => visit.experienceId)
-    );
-    setClaimedMissionIds(progress.missionRewardsClaimed);
-    setMissionPoints(getMissionRewardPoints());
-  }
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -129,7 +112,6 @@ function MissionsContent() {
       setVerifiedExperienceIds(
         progress.verifiedVisits.map((visit) => visit.experienceId)
       );
-      setClaimedMissionIds(progress.missionRewardsClaimed);
       setMissionPoints(getMissionRewardPoints());
     }, 0);
 
@@ -188,15 +170,6 @@ function MissionsContent() {
     }
   }
 
-  function collectMissionReward(id: number) {
-    const mission = missions.find((item) => item.id === id);
-    if (!mission || mission.status !== "completed") return;
-    if (hasClaimedMissionReward(id)) return;
-
-    claimMissionReward(id);
-    refreshProgress();
-  }
-
   const activeCount = missions.filter(
     (mission) => mission.status === "active"
   ).length;
@@ -251,8 +224,7 @@ function MissionsContent() {
             </h1>
 
             <p className="mt-2 max-w-xl text-xs leading-6 text-[#0D3B34]/65">
-              حوّل اكتشافك للوجهة إلى تحديات ممتعة،
-              أكمل الزيارات المؤهلة واكسب نقاط Loop.
+              مهام تجريبية للعرض فقط. التقدم محفوظ على جهازك، ولا تُضاف نقاط فعلية للمحفظة.
             </p>
           </div>
 
@@ -279,7 +251,7 @@ function MissionsContent() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-[#D4AF37] px-3 py-1.5 text-[9px] font-bold text-[#0D3B34]">
-                    مهمة اليوم
+                    نموذج تجريبي
                   </span>
 
                   <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[9px] font-semibold text-white/75">
@@ -352,8 +324,7 @@ function MissionsContent() {
                 </div>
 
                 <p className="mt-3 text-[9px] leading-5 text-white/60">
-                  تضاف النقاط بعد إكمال شروط المهمة
-                  والتحقق من الزيارات المؤهلة.
+                  مكافآت المهام غير مفعلة؛ هذه القيمة مقترحة فقط.
                 </p>
               </div>
             </div>
@@ -388,7 +359,7 @@ function MissionsContent() {
           <SummaryCard
             title="المهام النشطة"
             value={activeCount.toString()}
-            description="يمكنك إكمالها الآن"
+            description="للمعاينة فقط"
             icon={<MissionIcon />}
           />
 
@@ -400,16 +371,16 @@ function MissionsContent() {
           />
 
           <SummaryCard
-            title="نقاط المهام"
+            title="نقاط محلية سابقة"
             value={missionPoints.toString()}
-            description="إجمالي ما كسبته"
+            description="تجريبية وليست رصيداً معتمداً"
             icon={<RewardIcon />}
           />
 
           <SummaryCard
-            title="سلسلة الاستكشاف"
-            value="4"
-            description="أيام متتالية"
+            title="نظام المهام"
+            value="تجريبي"
+            description="لا يُصدر نقاطاً حالياً"
             icon={<FireIcon />}
           />
         </section>
@@ -462,8 +433,6 @@ function MissionsContent() {
                 onStart={() =>
                   startMission(mission.id)
                 }
-                claimed={claimedMissionIds.includes(mission.id)}
-                onClaim={() => collectMissionReward(mission.id)}
               />
             ))}
           </div>
@@ -511,8 +480,8 @@ function MissionsContent() {
 
               <StepCard
                 number="03"
-                title="اكسب المكافأة"
-                description="بعد التحقق، تضاف نقاط Loop إلى حسابك."
+                title="مراجعة المكافأة"
+                description="تفعيل مكافآت المهام يتطلب تحققاً من الخادم، ولا يتم احتسابها الآن."
                 icon={<RewardIcon />}
               />
             </div>
@@ -633,14 +602,10 @@ function MissionCard({
   mission,
   started,
   onStart,
-  claimed,
-  onClaim,
 }: {
   mission: Mission;
   started: boolean;
   onStart: () => void;
-  claimed: boolean;
-  onClaim: () => void;
 }) {
   const percentage = Math.min(
     100,
@@ -730,19 +695,12 @@ function MissionCard({
           </p>
 
           <p className="mt-1 text-[12px] font-semibold text-[#0D3B34]">
-            +{mission.reward} نقطة
+            +{mission.reward} نقطة (غير مفعلة)
           </p>
         </div>
 
         {completed ? (
-          <button
-            type="button"
-            onClick={onClaim}
-            disabled={claimed}
-            className="rounded-[12px] bg-[#D4AF37]/12 px-4 py-2.5 text-[9px] font-semibold text-[#76580F] disabled:cursor-default disabled:opacity-70"
-          >
-            {claimed ? "تم استلام المكافأة" : "استلم المكافأة"}
-          </button>
+          <span className="rounded-[12px] border border-[#D4AF37]/35 bg-[#FFF7E4] px-3 py-2 text-[9px] font-semibold text-[#76580F]">مكتملة في المعاينة — لا نقاط فعلية</span>
         ) : locked ? (
           <span className="rounded-[12px] bg-[#0D3B34]/7 px-4 py-2.5 text-[9px] font-semibold text-[#0D3B34]/55">
             مقفلة
