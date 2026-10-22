@@ -82,12 +82,43 @@ export async function GET(){
     if(counts.services!==null)counts.services!++;
     recent.push({id:service.id,reference:service.nameAr||"خدمة أو تجربة جديدة",kind:"SERVICE",type:"NEW_SERVICE",createdAt:service.updatedAt.toISOString(),href:serviceLink.services});
   }
+  // Cart receipts/messages are a separate audited order flow, not transport requests.
+  // Scan only a bounded window and only for staff permitted to review bookings.
+  let cartPending=0;
+  if(superAdmin||(user.role==="ADMIN"&&Array.isArray(user.adminPermissions)&&user.adminPermissions.includes("BOOKINGS"))){
+    try{
+      const cartEvents=await prisma.auditLog.findMany({
+        where:{entityType:"CART_BANK_CHECKOUT",action:{in:["CART_BANK_RECEIPT_SUBMITTED","CART_BANK_VERIFIED","CART_BANK_REJECTED","CART_WORKFLOW_MESSAGE"]}},
+        orderBy:[{createdAt:"desc"},{id:"desc"}],take:350,
+        select:{id:true,entityId:true,action:true,afterData:true,createdAt:true}
+      });
+      const latestPayment=new Map<string,string>();
+      const messageIds=new Set<string>();
+      for(const event of cartEvents){
+        const ref=event.entityId;
+        if(!ref)continue;
+        if(event.action==="CART_WORKFLOW_MESSAGE"){
+          const v=event.afterData;
+          const details=v&&typeof v==="object"&&!Array.isArray(v)?v as Record<string,unknown>:{};
+          if(details.from==="CUSTOMER"&&!messageIds.has(ref)){
+            messageIds.add(ref);
+            recent.push({id:event.id,reference:ref,kind:"CART",type:"CART_WORKFLOW_MESSAGE",createdAt:event.createdAt.toISOString(),href:"/admin/cart-bank-payments/"+encodeURIComponent(ref)});
+          }
+        } else if(!latestPayment.has(ref))latestPayment.set(ref,event.action);
+      }
+      for(const [ref,action] of latestPayment)if(action==="CART_BANK_RECEIPT_SUBMITTED"){
+        cartPending++;
+        const event=cartEvents.find(e=>e.entityId===ref&&e.action===action);
+        if(event)recent.push({id:event.id,reference:ref,kind:"CART",type:action,createdAt:event.createdAt.toISOString(),href:"/admin/cart-bank-payments/"+encodeURIComponent(ref)});
+      }
+    }catch(cartError){console.error("Cart notifications lookup failed",cartError);}
+  }
   recent.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
   const sum=(v:Counters)=>Object.values(v).reduce<number>((n,x)=>n+(x??0),0);
   const emailConfigured=Boolean(process.env.RESEND_API_KEY&&
     (process.env.EMAIL_FROM||process.env.RESEND_FROM_EMAIL)&&process.env.AREES_ADMIN_EMAILS);
   return NextResponse.json({success:true,counts,inProgress:processing,needsAttention:attention,emailFailed,
-    totals:{new:sum(counts),inProgress:sum(processing),attention:sum(attention),emailFailed:sum(emailFailed)},
+    totals:{new:sum(counts),inProgress:sum(processing),attention:sum(attention)+cartPending,emailFailed:sum(emailFailed)},cartPending,
     recent:recent.slice(0,20),snapshotEventId:recent[0]?.id||null,
     limited:transportRows.length>=1200||hotelRows.length>=1200||serviceRows.length>=1200,
     emailConfigured,updatedAt:new Date().toISOString()}, {headers:h});
