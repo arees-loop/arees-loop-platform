@@ -1,5 +1,5 @@
-import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 "use client";
+import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 import {useCallback,useEffect,useMemo,useState} from "react";
 type Booking={id:string;reference:string;customerName:string;customerPhone:string|null;guests:number;totalAmount:number;status:string;createdAt:string;serviceDate:string|null;service:{nameAr:string};partner:{legalNameAr:string;tradeNameAr:string|null}};
 const states=[["ALL","الكل"],["PENDING","جديد / بانتظار الدفع"],["PAID","مدفوع"],["CONFIRMED","مؤكد"],["IN_PROGRESS","قيد التنفيذ"],["COMPLETED","مكتمل"],["CANCELLED","ملغي"],["REFUNDED","مسترد"]] as const;
