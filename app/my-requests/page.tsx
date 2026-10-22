@@ -6,6 +6,7 @@ import RequestAttachments from "@/app/components/RequestAttachments";
 import RequestPayment from "@/app/components/RequestPayment";
 import CustomerTravelDocuments from "@/app/components/CustomerTravelDocuments";
 import CustomerCartOrderDetail from "@/app/components/CustomerCartOrderDetail";
+import OrderStatusBadge,{RequiredActionButton,orderStatusTone} from "@/app/components/OrderStatusBadge";
 import { useEffect, useMemo, useState } from "react";
 import { readCustomerClaims } from "@/lib/customer-request-claims";
 
@@ -15,7 +16,7 @@ type CustomerRequest={
   guests:number;rooms?:number;status:string;group:string;
   customerReply:string|null;quoteAmountSar:number|null;quoteNotes:string|null;
   carrierName:string|null;quoteValidUntil:string|null;cancellationReason:string|null;
-  createdAt:string;updatedAt:string;
+  createdAt:string;updatedAt:string;needsAttention?:boolean;hasNewMessage?:boolean;
 };
 const stages=[
   {id:"NEW",label:"طلبات جديدة",icon:"✉",detail:"وصلت طلباتك لأريس وجاري استلامها"},
@@ -28,7 +29,7 @@ const statuses:Record<string,string>={
   QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",
   DONE:"تم التنفيذ",COMPLETED:"تم التنفيذ",CANCELED:"تم الإلغاء",CANCELLED:"تم الإلغاء",
   CONTACTED:"تم التواصل",QUOTED:"عرض السعر جاهز",CLOSED:"مغلق",
-  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
+  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",DOCUMENTS_SUBMITTED:"تم إرفاق المستندات — بانتظار المراجعة",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
 };
 const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value)):"";
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
@@ -37,8 +38,8 @@ function RequestCard({item,featured,expanded,onToggle}:{item:CustomerRequest;fea
   return <article id={`request-${item.reference}`} className={`scroll-mt-36 overflow-hidden rounded-xl border bg-white shadow-sm ${featured?"border-[#B69034] ring-2 ring-[#D4AF37]/25":"border-[#D4AF37]/25"}`}>
     <button type="button" onClick={onToggle} aria-expanded={expanded} aria-label={`${expanded?"إغلاق":"فتح"} تفاصيل الطلب ${item.reference}`} className="flex min-h-[58px] w-full items-center gap-3 px-3 py-2 text-right transition-colors hover:bg-[#F7F4EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B99124]">
       <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F7F4EB] text-base">{item.kind==="FLIGHT"?"✈️":item.kind==="FERRY"?"⚓":item.kind==="VISA"?"🛂":item.kind==="DRIVING_LICENSE"?"🚘":"🏨"}</span>
-      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold" title={item.title}>{item.title}</span><span className="mt-0.5 block truncate text-[11px] text-[#0D3B34]/65">{item.reference} · {item.route} · {statuses[item.status]||item.status}</span></span>
-      <span className="shrink-0 text-left"><span className="block text-sm font-bold text-[#99731E]">{item.quoteAmountSar===null?"—":money(item.quoteAmountSar)}</span><span className="mt-0.5 block text-[11px] text-[#0D3B34]/55">{labelDate(item.createdAt)}</span></span>
+      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold" title={item.title}>{item.title}</span><span className="mt-0.5 block truncate text-[11px] text-[#0D3B34]/65">{item.reference} · {item.route}</span></span>
+      <span className="shrink-0 text-left"><OrderStatusBadge status={item.status}>{statuses[item.status]||item.status}</OrderStatusBadge><span className="mt-1 block text-sm font-bold text-[#99731E]">{item.quoteAmountSar===null?"—":money(item.quoteAmountSar)}</span><span className="mt-0.5 block text-[11px] text-[#0D3B34]/55">{labelDate(item.createdAt)}</span></span>
       <span aria-hidden="true" className="shrink-0 text-[#0D3B34]/55">{expanded?"⌃":"⌄"}</span>
     </button>
     {expanded&&<div className="border-t border-[#D4AF37]/20 px-3 pb-3">
@@ -101,19 +102,19 @@ export default function MyRequestsPage(){
   const [period,setPeriod]=useState("3");
   const [query,setQuery]=useState("");
   const [showHistory,setShowHistory]=useState(false);
-  const [cartOrders,setCartOrders]=useState<{reference:string;amountSar:number;status:string;createdAt:string;rows:{title?:string;quantity?:number}[];hasVoucher:boolean}[]>([]);
+  const [cartOrders,setCartOrders]=useState<{reference:string;amountSar:number;status:string;createdAt:string;rows:{title?:string;quantity?:number}[];hasVoucher:boolean;needsAttention?:boolean;hasNewMessage?:boolean}[]>([]);
   useEffect(()=>{fetch("/api/cart/bank-checkout?history=true",{credentials:"include",cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.success&&Array.isArray(d.orders))setCartOrders(d.orders)}).catch(()=>{});},[]);
   const [partnerBookings,setPartnerBookings]=useState<{id:string;reference:string;status:string;bookingDate:string;service:{nameAr:string;city:string|null}}[]>([]);
   useEffect(()=>{fetch("/api/customer/bookings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(Array.isArray(d?.bookings))setPartnerBookings(d.bookings)}).catch(()=>{});},[]);
   const allItems=useMemo(()=>[
     ...requests,
-    ...cartOrders.map(o=>({reference:o.reference,kind:"CART" as const,title:(o.rows||[]).map(r=>r.title||"برنامج سياحي").join("، "),route:"برنامج سياحي / طلب السلة",travelDate:o.createdAt,returnDate:null,guests:(o.rows||[]).reduce((n,r)=>n+Number(r.quantity||1),0),status:o.status,group:o.status==="COMPLETED"?"COMPLETED":"PROCESSING",customerReply:null,quoteAmountSar:Number(o.amountSar),quoteNotes:null,carrierName:null,quoteValidUntil:null,cancellationReason:null,createdAt:o.createdAt,updatedAt:o.createdAt})),
+    ...cartOrders.map(o=>({reference:o.reference,kind:"CART" as const,title:(o.rows||[]).map(r=>r.title||"برنامج سياحي").join("، "),route:"برنامج سياحي / طلب السلة",travelDate:o.createdAt,returnDate:null,guests:(o.rows||[]).reduce((n,r)=>n+Number(r.quantity||1),0),status:o.status,group:o.status==="COMPLETED"?"COMPLETED":"PROCESSING",customerReply:null,quoteAmountSar:Number(o.amountSar),quoteNotes:null,carrierName:null,quoteValidUntil:null,cancellationReason:null,createdAt:o.createdAt,updatedAt:o.createdAt,needsAttention:o.needsAttention,hasNewMessage:o.hasNewMessage})),
     ...partnerBookings.map(b=>({reference:b.reference||b.id,kind:"PARTNER" as const,title:b.service?.nameAr||"طلب خدمة شريك",route:b.service?.city||"خدمة من شركاء أريس",travelDate:b.bookingDate,returnDate:null,guests:0,status:b.status,group:["COMPLETED","CONFIRMED"].includes(b.status)?"COMPLETED":b.status==="CANCELLED"?"CANCELED":"PROCESSING",customerReply:null,quoteAmountSar:null,quoteNotes:null,carrierName:null,quoteValidUntil:null,cancellationReason:null,createdAt:b.bookingDate,updatedAt:b.bookingDate}))
   ].sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime()),[requests,partnerBookings,cartOrders]);
   const visible=useMemo(()=>allItems.filter(x=>{
     const age=period==="ALL"||new Date(x.createdAt).getTime()>=Date.now()-Number(period)*31*86400000;
     const matchKind=filter==="ALL"||x.kind===filter;
-    const matchStage=stageFilter==="ALL"||(stageFilter==="CLOSED"?["CANCELED","CANCELLED","CLOSED"].includes(x.status):stageFilter==="NEW"?["NEW","PENDING","CART_BANK_CREATED"].includes(x.status):stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING","IN_PROGRESS","CART_BANK_RECEIPT_SUBMITTED","CART_BANK_VERIFIED","CART_BANK_REJECTED","PAID","DOCUMENTS_REQUESTED"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED","CONFIRMED"].includes(x.status):false);
+    const matchStage=stageFilter==="ALL"||(stageFilter==="CLOSED"?["CANCELED","CANCELLED","CLOSED"].includes(x.status):stageFilter==="NEW"?["NEW","PENDING","CART_BANK_CREATED"].includes(x.status):stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING","IN_PROGRESS","CART_BANK_RECEIPT_SUBMITTED","CART_BANK_VERIFIED","CART_BANK_REJECTED","PAID","DOCUMENTS_REQUESTED","DOCUMENTS_SUBMITTED"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED","CONFIRMED"].includes(x.status):false);
     return age&&matchKind&&matchStage&&[x.reference,x.title,x.route].join(" ").toLowerCase().includes(query.toLowerCase());
   }),[allItems,period,filter,stageFilter,query]);
   const focusedItem=allItems.find(x=>x.reference===openReference);
@@ -147,18 +148,20 @@ export default function MyRequestsPage(){
   </main></CustomerDashboardShell>;
 }
 function PartnerRequestRow({item}:{item:{reference:string;title:string;route:string;status:string;createdAt:string}}){
- return <article className="rounded-xl border border-[#D4AF37]/25 bg-white p-4"><div className="flex items-center justify-between gap-3"><b>🤝 {item.title}</b><span className="rounded-full bg-[#F4F0E7] px-3 py-1 text-xs">{statuses[item.status]||item.status}</span></div><p className="mt-2 text-xs">{item.route} · {labelDate(item.createdAt)}</p><p className="mt-2 text-xs text-[#0D3B34]/60">رقم الطلب: {item.reference}</p><Link href="/bookings" className="mt-3 inline-block text-xs font-bold underline">عرض تفاصيل الحجز</Link></article>;
+ return <article className="rounded-xl border border-[#D4AF37]/25 bg-white p-4"><div className="flex items-center justify-between gap-3"><b>🤝 {item.title}</b><OrderStatusBadge status={item.status}>{statuses[item.status]||item.status}</OrderStatusBadge></div><p className="mt-2 text-xs">{item.route} · {labelDate(item.createdAt)}</p><p className="mt-2 text-xs text-[#0D3B34]/60">رقم الطلب: {item.reference}</p><Link href="/bookings" className="mt-3 inline-block text-xs font-bold underline">عرض تفاصيل الحجز</Link></article>;
 }
 
-function CartRequestRow({item}:{item:CustomerRequest}){
- const [details,setDetails]=useState(false);
+function CartRequestRow({item,defaultOpen=false}:{item:CustomerRequest;defaultOpen?:boolean}){
+ const [details,setDetails]=useState(defaultOpen);
+ const attention=!!item.needsAttention||orderStatusTone(item.status)==="attention";
  return <article className="overflow-hidden rounded-xl border border-[#D4AF37]/25 bg-white shadow-sm">
   <button type="button" onClick={()=>setDetails(v=>!v)} aria-expanded={details} className="flex w-full items-center gap-3 px-4 py-3 text-right hover:bg-[#FFF9EA]">
     <span className="rounded-full bg-[#F6F1E5] p-2">🎟️</span>
-    <span className="min-w-0 flex-1"><b className="block truncate text-sm">{item.title}</b><span className="block truncate text-[11px] text-[#0D3B34]/65">{item.reference} · {statuses[item.status]||item.status}</span></span>
+    <span className="min-w-0 flex-1"><b className="block truncate text-sm">{item.title}</b><span className="block truncate text-[11px] text-[#0D3B34]/65">{item.reference}</span><span className="mt-1 inline-block"><OrderStatusBadge status={item.status} attention={attention}>{statuses[item.status]||item.status}</OrderStatusBadge></span></span>
     <span className="text-left text-xs font-bold text-[#8F6A22]">{money(Number(item.quoteAmountSar||0))}<span className="mt-1 block font-normal">{labelDate(item.createdAt)}</span></span>
     <span aria-hidden="true">{details?"⌃":"⌄"}</span>
   </button>
+  {attention&&!details&&<div className="px-4 pb-4"><RequiredActionButton onClick={()=>setDetails(true)}>{item.status==="DOCUMENTS_REQUESTED"?"مستندات إضافية مطلوبة — اضغط هنا":item.hasNewMessage?"رسالة جديدة من الإدارة — اضغط هنا":"طلب يحتاج متابعتك — اضغط هنا"}</RequiredActionButton></div>}
   {details&&<CustomerCartOrderDetail reference={item.reference}/>}
  </article>;
 }
