@@ -1,10 +1,10 @@
 import {NextResponse} from "next/server";
+import {pointsFromServicePrice} from "@/lib/service-loyalty-points";
 import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
-const pointsForPrice=(price:number)=>Math.floor(Math.max(0,price));
 async function plan(){
- const services=await prisma.service.findMany({select:{id:true,nameAr:true,basePrice:true,loyaltyPoints:true,_count:{select:{bookings:true}}},orderBy:{createdAt:"asc"}});
- const changes=services.map(s=>({id:s.id,name:s.nameAr,from:s.loyaltyPoints,to:pointsForPrice(Number(s.basePrice)),bookings:s._count.bookings})).filter(s=>s.from!==s.to);
+ const services=await prisma.service.findMany({select:{id:true,nameAr:true,finalPrice:true,loyaltyPoints:true,_count:{select:{bookings:true}}},orderBy:{createdAt:"asc"}});
+ const changes=services.map(s=>({id:s.id,name:s.nameAr,from:s.loyaltyPoints,to:pointsFromServicePrice(Number(s.finalPrice)),bookings:s._count.bookings})).filter(s=>s.from!==s.to);
  return {total:services.length,changes,blocked:changes.filter(x=>x.bookings>0)};
 }
 export async function GET(){
@@ -24,10 +24,10 @@ export async function POST(request:Request){
   const results=[];
   for(const item of preview.changes){
    // Protect against concurrent price changes and new bookings since review.
-   const original=await tx.service.findUnique({where:{id:item.id},select:{basePrice:true,loyaltyPoints:true,_count:{select:{bookings:true}}}});
-   if(!original||original._count.bookings!==0||original.loyaltyPoints!==item.from||pointsForPrice(Number(original.basePrice))!==item.to)throw new Error("STALE_SERVICE");
+   const original=await tx.service.findUnique({where:{id:item.id},select:{finalPrice:true,loyaltyPoints:true,_count:{select:{bookings:true}}}});
+   if(!original||original._count.bookings!==0||original.loyaltyPoints!==item.from||pointsFromServicePrice(Number(original.finalPrice))!==item.to)throw new Error("STALE_SERVICE");
    const updated=await tx.service.update({where:{id:item.id},data:{loyaltyPoints:item.to}});
-   await tx.auditLog.create({data:{userId:session.user.id,action:"SERVICE_LOYALTY_POINTS_RECONCILED",entityType:"Service",entityId:item.id,beforeData:{points:item.from},afterData:{points:item.to,price:String(original.basePrice)}}});
+   await tx.auditLog.create({data:{userId:session.user.id,action:"SERVICE_LOYALTY_POINTS_RECONCILED",entityType:"Service",entityId:item.id,beforeData:{points:item.from},afterData:{points:item.to,price:String(original.finalPrice)}}});
    results.push({id:updated.id,from:item.from,to:item.to});
   }
   return results;

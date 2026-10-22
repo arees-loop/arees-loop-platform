@@ -6,26 +6,21 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 const connectionString = process.env.DATABASE_URL;
-
 if (!connectionString) {
   throw new Error("DATABASE_URL is not defined");
 }
 
-const adapter = new PrismaPg({
-  connectionString,
-  // Vercel may start several serverless workers; bound each worker pool.
-  // PrismaPg uses pg defaults (max: 10) unless explicitly configured.
-  max: 2,
-  connectionTimeoutMillis: 10_000,
-  idleTimeoutMillis: 10_000,
+// Reuse the client whenever this Vercel Node.js isolate is warm, including in
+// production. A pool per render/request leads to resource exhaustion on small
+// databases. One TCP connection per isolate limits bursts, while the actual
+// runtime DATABASE_URL must still point to the provider's pooled endpoint.
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString,
+    max: 1,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 5_000,
+  }),
 });
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter,
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+globalForPrisma.prisma = prisma;

@@ -3,6 +3,7 @@ import Link from "next/link";
 import ExperiencePhoto from "@/app/components/ExperiencePhoto";
 import ExperienceDistance from "@/app/components/ExperienceDistance";
 import SaveExperienceButton from "@/app/components/SaveExperienceButton";
+import ServiceLoyaltyBanner from "@/app/components/ServiceLoyaltyBanner";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
@@ -104,7 +105,8 @@ function Content(){
       <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-[10px] font-bold text-[#B99124]">{s.category}</p><ExperienceDistance latitude={s.latitude} longitude={s.longitude}/></div>
       <h2 className="mt-2 text-xl font-black">{s.nameAr}</h2>
       <p className="mt-2 text-xs text-[#0D3B34]/55">{[s.city,s.locationName].filter(Boolean).join(" · ")}</p>
-      <div className="mt-4 flex items-center justify-between gap-3"><b>{Number(s.finalPrice).toLocaleString("ar-SA")} ر.س</b><span className="flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-3 py-2 text-[10px] font-bold text-[#9A741B]"><img src="/Logo/arees-loop-logo.png" className="h-6 w-auto" alt="Arees Loop"/> {Number(s.loyaltyPoints)>0?`نقاط الخدمة: ${s.loyaltyPoints}`:"نقاط الخدمة حسب شروط الحجز"}</span></div>
+      <div className="mt-4 text-base font-black text-[#0D3B34]">{Number(s.finalPrice).toLocaleString("ar-SA")} ر.س</div>
+      <ServiceLoyaltyBanner finalPrice={s.finalPrice} className="mt-3"/>
       <Link href={`/services/${s.id}`} className="mt-5 flex justify-center rounded-xl bg-[#0D3B34] py-3 text-xs font-bold text-white">عرض التفاصيل</Link>
      </div>
     </article>)}

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { pointsFromServicePrice } from "@/lib/service-loyalty-points";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getActivePartnerMembership, userHasPartnerPermission } from "@/lib/partner-permissions";
@@ -21,7 +22,7 @@ export async function POST(request:Request){
     const vatIncluded=body.vatMode==="included";
     const vatRate=15;
     const finalPrice=vatIncluded?basePrice:basePrice*1.15;
-    const loyaltyPoints=Math.floor(Math.max(0,basePrice));
+    const loyaltyPoints=pointsFromServicePrice(finalPrice);
     if(!body.nameAr?.trim()||!body.category?.trim()||basePrice<=0) return NextResponse.json({success:false,message:"أكمل اسم الخدمة والتصنيف والسعر."},{status:400});
     const latitude=Number(body.latitude);
     const longitude=Number(body.longitude);

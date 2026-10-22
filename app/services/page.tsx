@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ServiceLoyaltyBanner from "@/app/components/ServiceLoyaltyBanner";
 import { useEffect, useState } from "react";
 
 type Service = {
@@ -38,9 +39,10 @@ export default function PublicServicesPage(){
             <p className="text-xs text-[#0D3B34]/55">{service.locationName || service.city || "الموقع غير محدد"}</p>
             <h2 className="mt-2 text-xl font-black">{service.nameAr}</h2>
             <p className="mt-3 line-clamp-2 text-xs leading-6 text-[#0D3B34]/60">{service.descriptionAr ? service.descriptionAr.replace(/<[^>]*>/g," ").replace(/&nbsp;/g," ").trim() : "اكتشف تفاصيل هذه التجربة واحجزها عبر Arees Loop."}</p>
-            <div className="mt-5 flex items-end justify-between border-t border-[#0D3B34]/10 pt-4">
+            <div className="mt-5 border-t border-[#0D3B34]/10 pt-4">
               <div><span className="text-[10px] text-[#0D3B34]/50">ابتداءً من</span><p className="text-lg font-black">{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</p></div>
-              <span className="rounded-full bg-[#0D3B34] px-4 py-2 text-[11px] font-bold text-white">عرض التفاصيل</span>
+              <ServiceLoyaltyBanner finalPrice={service.finalPrice} className="mt-3"/>
+              <span className="mt-3 block w-full rounded-xl bg-[#0D3B34] px-4 py-3 text-center text-[12px] font-bold text-white">عرض التفاصيل</span>
             </div>
           </div>
         </Link>)}
