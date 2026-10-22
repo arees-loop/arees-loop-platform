@@ -40,16 +40,24 @@ async function totals(items:unknown,couponRaw:unknown,userId:string){
  if(found.length!==services.length)throw Error("إحدى الخدمات تغيرت أو لم تعد متاحة؛ حدّث السلة.");
  let licensePrice=0;
  const licenses=rows.filter(r=>r.itemType==="DRIVING_LICENSE");
- let linkedRequest:{reference:string}|null=null;
+ let linkedRequest:{id:string;reference:string}|null=null;
  if(licenses.length){
   if(licenses.length!==1||licenses[0].quantity!==1||licenses[0].serviceId!=="international-driving-license-1")throw Error("طلب الرخصة يجب أن يكون طلباً واحداً لكل سلة.");
   // Production checkout requires an existing completed travel request.
   // The live release has no private IDP document table; never infer upload completion.
   linkedRequest=await prisma.transportRequest.findFirst({
    where:{userId,kind:"DRIVING_LICENSE",createdAt:{gte:new Date(Date.now()-30*24*60*60*1000)}},
-   orderBy:{createdAt:"desc"},select:{reference:true}
+   orderBy:{createdAt:"desc"},select:{id:true,reference:true}
   });
   if(!linkedRequest)throw Error("أكمل وأرسل نموذج الرخصة من صفحة الخدمة قبل الدفع.");
+  const attachments=await prisma.transportRequestEvent.findMany({
+   where:{requestId:linkedRequest.id,action:"CUSTOMER_ATTACHMENT_UPLOADED"},take:30,
+   orderBy:{createdAt:"desc"},select:{details:true}
+  });
+  const labels=attachments.map(x=>jsonData(x.details)).filter(d=>d.purpose==="DOCUMENT")
+   .map(d=>typeof d.label==="string"?d.label:"");
+  if(![/جواز|passport/i,/رخصة|licen[sc]e/i,/شخصية|portrait|personal photo/i].every(p=>labels.some(x=>p.test(x))))
+    throw Error("قبل سداد الرخصة أرفق 3 صور من متابعة الطلب: جواز السفر، الرخصة المحلية، والصورة الشخصية بخلفية بيضاء.");
   const now=new Date();
   const offer=await prisma.transportOffer.findFirst({where:{kind:"DRIVING_LICENSE",isVisible:true,deletedAt:null,AND:[{OR:[{startsAt:null},{startsAt:{lte:now}}]},{OR:[{endsAt:null},{endsAt:{gte:now}}]}]},orderBy:[{sortOrder:"asc"},{createdAt:"desc"}],select:{amountSar:true,operationStatus:true}});
   if(offer?.operationStatus==="SOLD_OUT")throw Error("عرض الرخصة غير متاح حالياً.");
