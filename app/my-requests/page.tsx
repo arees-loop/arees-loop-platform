@@ -5,6 +5,7 @@ import Link from "next/link";
 import RequestAttachments from "@/app/components/RequestAttachments";
 import RequestPayment from "@/app/components/RequestPayment";
 import CustomerTravelDocuments from "@/app/components/CustomerTravelDocuments";
+import CustomerCartOrderDetail from "@/app/components/CustomerCartOrderDetail";
 import { useEffect, useMemo, useState } from "react";
 import { readCustomerClaims } from "@/lib/customer-request-claims";
 
@@ -27,7 +28,7 @@ const statuses:Record<string,string>={
   QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",
   DONE:"تم التنفيذ",COMPLETED:"تم التنفيذ",CANCELED:"تم الإلغاء",CANCELLED:"تم الإلغاء",
   CONTACTED:"تم التواصل",QUOTED:"عرض السعر جاهز",CLOSED:"مغلق",
-  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
+  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",PAID:"تم السداد — تحت الإجراء",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
 };
 const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value)):"";
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
@@ -112,7 +113,7 @@ export default function MyRequestsPage(){
   const visible=useMemo(()=>allItems.filter(x=>{
     const age=period==="ALL"||new Date(x.createdAt).getTime()>=Date.now()-Number(period)*31*86400000;
     const matchKind=filter==="ALL"||x.kind===filter;
-    const matchStage=stageFilter==="ALL"||(stageFilter==="CLOSED"?["CANCELED","CANCELLED","CLOSED"].includes(x.status):stageFilter==="NEW"?["NEW","PENDING","CART_BANK_CREATED"].includes(x.status):stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING","IN_PROGRESS","CART_BANK_RECEIPT_SUBMITTED","CART_BANK_VERIFIED","CART_BANK_REJECTED"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED","CONFIRMED"].includes(x.status):false);
+    const matchStage=stageFilter==="ALL"||(stageFilter==="CLOSED"?["CANCELED","CANCELLED","CLOSED"].includes(x.status):stageFilter==="NEW"?["NEW","PENDING","CART_BANK_CREATED"].includes(x.status):stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING","IN_PROGRESS","CART_BANK_RECEIPT_SUBMITTED","CART_BANK_VERIFIED","CART_BANK_REJECTED","PAID","DOCUMENTS_REQUESTED"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED","CONFIRMED"].includes(x.status):false);
     return age&&matchKind&&matchStage&&[x.reference,x.title,x.route].join(" ").toLowerCase().includes(query.toLowerCase());
   }),[allItems,period,filter,stageFilter,query]);
   const focusedItem=allItems.find(x=>x.reference===openReference);
@@ -158,12 +159,6 @@ function CartRequestRow({item}:{item:CustomerRequest}){
     <span className="text-left text-xs font-bold text-[#8F6A22]">{money(Number(item.quoteAmountSar||0))}<span className="mt-1 block font-normal">{labelDate(item.createdAt)}</span></span>
     <span aria-hidden="true">{details?"⌃":"⌄"}</span>
   </button>
-  {details&&<div className="space-y-3 border-t border-[#D4AF37]/20 p-4 text-xs">
-    <p>الحالة: <strong>{statuses[item.status]||item.status}</strong></p>
-    <p>رقم الطلب: <span dir="ltr">{item.reference}</span></p>
-    {item.status==="CART_BANK_CREATED"||item.status==="CART_BANK_REJECTED"?<Link href={"/cart?reference="+encodeURIComponent(item.reference)} className="inline-block rounded-lg border border-[#B99124] px-3 py-2 font-bold">استكمال تحويل المبلغ / إعادة رفع الإيصال</Link>:null}
-    {item.status==="CART_BANK_VERIFIED"&&<a href={"/cart/documents/invoice?reference="+encodeURIComponent(item.reference)} target="_blank" rel="noreferrer" className="inline-block rounded-lg border border-[#B99124] px-3 py-2 font-bold">الفاتورة بعد اعتماد السداد</a>}
-    <Link href={"/cart/orders?reference="+encodeURIComponent(item.reference)} className="inline-block rounded-lg border border-[#B99124] px-3 py-2 font-bold">مستندات وتفاصيل الطلب</Link>
-  </div>}
+  {details&&<CustomerCartOrderDetail reference={item.reference}/>}
  </article>;
 }
