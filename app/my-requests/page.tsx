@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { readCustomerClaims } from "@/lib/customer-request-claims";
 
 type CustomerRequest={
-  reference:string;kind:"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE";title:string;route:string;
+  reference:string;kind:"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE"|"CART";title:string;route:string;
   travelDate:string;returnDate:string|null;tripType?:string;itinerary?:unknown;
   guests:number;rooms?:number;status:string;group:string;
   customerReply:string|null;quoteAmountSar:number|null;quoteNotes:string|null;
@@ -27,6 +27,7 @@ const statuses:Record<string,string>={
   QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",
   DONE:"تم التنفيذ",COMPLETED:"تم التنفيذ",CANCELED:"تم الإلغاء",CANCELLED:"تم الإلغاء",
   CONTACTED:"تم التواصل",QUOTED:"عرض السعر جاهز",CLOSED:"مغلق",
+  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
 };
 const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value)):"";
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
@@ -73,7 +74,7 @@ export default function MyRequestsPage(){
   const [error,setError]=useState("");
   const [focus,setFocus]=useState("");
   const [openReference,setOpenReference]=useState("");
-  const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE"|"PARTNER">("ALL");
+  const [filter,setFilter]=useState<"ALL"|"FLIGHT"|"FERRY"|"HOTEL"|"VISA"|"DRIVING_LICENSE"|"PARTNER"|"CART">("ALL");
   const [stageFilter,setStageFilter]=useState("ALL");
   useEffect(()=>{
     const abort=new AbortController();
@@ -90,7 +91,7 @@ export default function MyRequestsPage(){
       const data=await r.json();
       if(!r.ok||!data.success)throw new Error(data.message||"تعذر تحميل الطلبات.");
       setRequests(data.data||[]);
-      if(focusRef && !data.data?.some((x:CustomerRequest)=>x.reference===focusRef))
+      if(focusRef && !focusRef.startsWith("CART-") && !data.data?.some((x:CustomerRequest)=>x.reference===focusRef))
         setError("لم نتمكن من الوصول إلى هذا الطلب في حسابك أو على هذا الجهاز. ادخل بنفس الحساب المستخدم عند الطلب.");
     }).catch(e=>{if(!abort.signal.aborted)setError(e instanceof Error?e.message:"تعذر تحميل الطلبات.");})
       .finally(()=>{if(!abort.signal.aborted)setLoading(false);});
@@ -99,16 +100,19 @@ export default function MyRequestsPage(){
   const [period,setPeriod]=useState("3");
   const [query,setQuery]=useState("");
   const [showHistory,setShowHistory]=useState(false);
+  const [cartOrders,setCartOrders]=useState<{reference:string;amountSar:number;status:string;createdAt:string;rows:{title?:string;quantity?:number}[];hasVoucher:boolean}[]>([]);
+  useEffect(()=>{fetch("/api/cart/bank-checkout?history=true",{credentials:"include",cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d?.success&&Array.isArray(d.orders))setCartOrders(d.orders)}).catch(()=>{});},[]);
   const [partnerBookings,setPartnerBookings]=useState<{id:string;reference:string;status:string;bookingDate:string;service:{nameAr:string;city:string|null}}[]>([]);
   useEffect(()=>{fetch("/api/customer/bookings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(Array.isArray(d?.bookings))setPartnerBookings(d.bookings)}).catch(()=>{});},[]);
   const allItems=useMemo(()=>[
     ...requests,
+    ...cartOrders.map(o=>({reference:o.reference,kind:"CART" as const,title:(o.rows||[]).map(r=>r.title||"برنامج سياحي").join("، "),route:"برنامج سياحي / طلب السلة",travelDate:o.createdAt,returnDate:null,guests:(o.rows||[]).reduce((n,r)=>n+Number(r.quantity||1),0),status:o.status,group:o.status==="COMPLETED"?"COMPLETED":"PROCESSING",customerReply:null,quoteAmountSar:Number(o.amountSar),quoteNotes:null,carrierName:null,quoteValidUntil:null,cancellationReason:null,createdAt:o.createdAt,updatedAt:o.createdAt})),
     ...partnerBookings.map(b=>({reference:b.reference||b.id,kind:"PARTNER" as const,title:b.service?.nameAr||"طلب خدمة شريك",route:b.service?.city||"خدمة من شركاء أريس",travelDate:b.bookingDate,returnDate:null,guests:0,status:b.status,group:["COMPLETED","CONFIRMED"].includes(b.status)?"COMPLETED":b.status==="CANCELLED"?"CANCELED":"PROCESSING",customerReply:null,quoteAmountSar:null,quoteNotes:null,carrierName:null,quoteValidUntil:null,cancellationReason:null,createdAt:b.bookingDate,updatedAt:b.bookingDate}))
-  ].sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime()),[requests,partnerBookings]);
+  ].sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime()),[requests,partnerBookings,cartOrders]);
   const visible=useMemo(()=>allItems.filter(x=>{
     const age=period==="ALL"||new Date(x.createdAt).getTime()>=Date.now()-Number(period)*31*86400000;
     const matchKind=filter==="ALL"||x.kind===filter;
-    const matchStage=stageFilter==="ALL"||(stageFilter==="CLOSED"?["CANCELED","CANCELLED","CLOSED"].includes(x.status):stageFilter==="NEW"?["NEW","PENDING"].includes(x.status):stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING","IN_PROGRESS"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED","CONFIRMED"].includes(x.status):false);
+    const matchStage=stageFilter==="ALL"||(stageFilter==="CLOSED"?["CANCELED","CANCELLED","CLOSED"].includes(x.status):stageFilter==="NEW"?["NEW","PENDING","CART_BANK_CREATED"].includes(x.status):stageFilter==="PROCESSING"?["PROCESSING","QUOTE_READY","QUOTE_SENT","CONTACTED","QUOTED","PAID","EXECUTING","IN_PROGRESS","CART_BANK_RECEIPT_SUBMITTED","CART_BANK_VERIFIED","CART_BANK_REJECTED"].includes(x.status):stageFilter==="COMPLETED"?["DONE","COMPLETED","CONFIRMED"].includes(x.status):false);
     return age&&matchKind&&matchStage&&[x.reference,x.title,x.route].join(" ").toLowerCase().includes(query.toLowerCase());
   }),[allItems,period,filter,stageFilter,query]);
   const focusedItem=allItems.find(x=>x.reference===openReference);
@@ -122,20 +126,20 @@ export default function MyRequestsPage(){
     <div className="mt-6 grid gap-3 rounded-2xl border border-[#D4AF37]/25 bg-white p-4 sm:grid-cols-3">
       <label className="text-xs font-bold">الفترة<select aria-label="الفترة الزمنية" value={period} onChange={e=>setPeriod(e.target.value)} className="mt-2 w-full rounded-lg border p-3"><option value="3">آخر 3 أشهر</option><option value="6">آخر 6 أشهر</option><option value="12">آخر سنة</option><option value="ALL">كل الفترات</option></select></label>
       <label className="text-xs font-bold">الحالة<select aria-label="حالة الطلب" value={stageFilter} onChange={e=>setStageFilter(e.target.value)} className="mt-2 w-full rounded-lg border p-3"><option value="ALL">كل الحالات</option><option value="NEW">جديد</option><option value="PROCESSING">تحت الإجراء</option><option value="COMPLETED">مكتمل</option><option value="CLOSED">مغلق / ملغي</option></select></label>
-      <label className="text-xs font-bold">نوع الخدمة<select aria-label="نوع الخدمة" value={filter} onChange={e=>setFilter(e.target.value as typeof filter)} className="mt-2 w-full rounded-lg border p-3"><option value="ALL">كل الخدمات</option><option value="FLIGHT">الطيران</option><option value="FERRY">البواخر</option><option value="VISA">التأشيرات</option><option value="DRIVING_LICENSE">الرخص الدولية</option><option value="HOTEL">الفنادق</option><option value="PARTNER">خدمات الشركاء والسلة</option></select></label>
+      <label className="text-xs font-bold">نوع الخدمة<select aria-label="نوع الخدمة" value={filter} onChange={e=>setFilter(e.target.value as typeof filter)} className="mt-2 w-full rounded-lg border p-3"><option value="ALL">كل الخدمات</option><option value="FLIGHT">الطيران</option><option value="FERRY">البواخر</option><option value="VISA">التأشيرات</option><option value="DRIVING_LICENSE">الرخص الدولية</option><option value="HOTEL">الفنادق</option><option value="PARTNER">حجوزات الشركاء</option><option value="CART">طلبات البرامج عبر السلة</option></select></label>
       <input aria-label="البحث عن طلب" value={query} onChange={e=>setQuery(e.target.value)} placeholder="ابحث برقم الطلب أو اسم الخدمة أو الوجهة..." className="rounded-lg border p-3 text-sm sm:col-span-3"/>
     </div>
     {loading&&<p className="mt-6 rounded-xl bg-white p-5">جاري تحميل الطلبات...</p>}
     {error&&<p role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">{error}</p>}
     {!loading&&<>{openReference&&focusedItem?<div className="mt-6">
       <button type="button" onClick={()=>setOpenReference("")} className="mb-4 rounded-xl border border-[#D4AF37]/50 bg-white px-5 py-3 text-sm font-bold">← العودة إلى جميع الطلبات</button>
-      {focusedItem.kind==="PARTNER"?<PartnerRequestRow item={focusedItem}/>:<RequestCard item={focusedItem} featured={true} expanded={true} onToggle={()=>setOpenReference("")}/>}
+      {focusedItem.kind==="PARTNER"?<PartnerRequestRow item={focusedItem}/>:focusedItem.kind==="CART"?<CartRequestRow item={focusedItem}/>:<RequestCard item={focusedItem} featured={true} expanded={true} onToggle={()=>setOpenReference("")}/>}
       <p className="mt-3 text-center text-xs text-[#0D3B34]/60">أُخفيت الطلبات الأخرى مؤقتاً للتركيز على هذا الطلب.</p>
     </div>:<>
     <div className="mt-6 flex items-center justify-between"><h2 className="text-lg font-black">الطلبات الحالية ({active.length})</h2><Link href="/cart" className="text-xs font-bold underline">سلة الحجوزات</Link></div>
-    <div className="mt-3 space-y-3">{active.length?active.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={false} expanded={false} onToggle={()=>toggleRequest(item.reference)}/>):<p className="rounded-xl bg-white p-5 text-sm text-[#0D3B34]/60">لا توجد طلبات حالية مطابقة للفلاتر.</p>}</div>
+    <div className="mt-3 space-y-3">{active.length?active.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:item.kind==="CART"?<CartRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={false} expanded={false} onToggle={()=>toggleRequest(item.reference)}/>):<p className="rounded-xl bg-white p-5 text-sm text-[#0D3B34]/60">لا توجد طلبات حالية مطابقة للفلاتر.</p>}</div>
     <button type="button" onClick={()=>setShowHistory(x=>!x)} className="mt-7 flex w-full items-center justify-between rounded-xl border border-[#D4AF37]/35 bg-white px-5 py-4 font-bold"><span>سجل الطلبات السابقة ({history.length})</span><span>{showHistory?"إخفاء السجل ▲":"عرض السجل ▼"}</span></button>
-    {showHistory&&<div className="mt-3 space-y-3">{history.length?history.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={false} expanded={false} onToggle={()=>toggleRequest(item.reference)}/>):<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات سابقة مطابقة.</p>}</div>}
+    {showHistory&&<div className="mt-3 space-y-3">{history.length?history.map(item=>item.kind==="PARTNER"?<PartnerRequestRow key={item.reference} item={item}/>:item.kind==="CART"?<CartRequestRow key={item.reference} item={item}/>:<RequestCard key={item.reference} item={item} featured={false} expanded={false} onToggle={()=>toggleRequest(item.reference)}/>):<p className="rounded-xl bg-white p-5 text-sm">لا توجد طلبات سابقة مطابقة.</p>}</div>}
     </>}
     </>}
    </div>
@@ -143,4 +147,23 @@ export default function MyRequestsPage(){
 }
 function PartnerRequestRow({item}:{item:{reference:string;title:string;route:string;status:string;createdAt:string}}){
  return <article className="rounded-xl border border-[#D4AF37]/25 bg-white p-4"><div className="flex items-center justify-between gap-3"><b>🤝 {item.title}</b><span className="rounded-full bg-[#F4F0E7] px-3 py-1 text-xs">{statuses[item.status]||item.status}</span></div><p className="mt-2 text-xs">{item.route} · {labelDate(item.createdAt)}</p><p className="mt-2 text-xs text-[#0D3B34]/60">رقم الطلب: {item.reference}</p><Link href="/bookings" className="mt-3 inline-block text-xs font-bold underline">عرض تفاصيل الحجز</Link></article>;
+}
+
+function CartRequestRow({item}:{item:CustomerRequest}){
+ const [details,setDetails]=useState(false);
+ return <article className="overflow-hidden rounded-xl border border-[#D4AF37]/25 bg-white shadow-sm">
+  <button type="button" onClick={()=>setDetails(v=>!v)} aria-expanded={details} className="flex w-full items-center gap-3 px-4 py-3 text-right hover:bg-[#FFF9EA]">
+    <span className="rounded-full bg-[#F6F1E5] p-2">🎟️</span>
+    <span className="min-w-0 flex-1"><b className="block truncate text-sm">{item.title}</b><span className="block truncate text-[11px] text-[#0D3B34]/65">{item.reference} · {statuses[item.status]||item.status}</span></span>
+    <span className="text-left text-xs font-bold text-[#8F6A22]">{money(Number(item.quoteAmountSar||0))}<span className="mt-1 block font-normal">{labelDate(item.createdAt)}</span></span>
+    <span aria-hidden="true">{details?"⌃":"⌄"}</span>
+  </button>
+  {details&&<div className="space-y-3 border-t border-[#D4AF37]/20 p-4 text-xs">
+    <p>الحالة: <strong>{statuses[item.status]||item.status}</strong></p>
+    <p>رقم الطلب: <span dir="ltr">{item.reference}</span></p>
+    {item.status==="CART_BANK_CREATED"||item.status==="CART_BANK_REJECTED"?<Link href={"/cart?reference="+encodeURIComponent(item.reference)} className="inline-block rounded-lg border border-[#B99124] px-3 py-2 font-bold">استكمال تحويل المبلغ / إعادة رفع الإيصال</Link>:null}
+    {item.status==="CART_BANK_VERIFIED"&&<a href={"/cart/documents/invoice?reference="+encodeURIComponent(item.reference)} target="_blank" rel="noreferrer" className="inline-block rounded-lg border border-[#B99124] px-3 py-2 font-bold">الفاتورة بعد اعتماد السداد</a>}
+    <Link href={"/cart/orders?reference="+encodeURIComponent(item.reference)} className="inline-block rounded-lg border border-[#B99124] px-3 py-2 font-bold">مستندات وتفاصيل الطلب</Link>
+  </div>}
+ </article>;
 }
