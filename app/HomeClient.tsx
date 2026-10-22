@@ -172,6 +172,13 @@ const destinationCountries: Record<string,string> = {
 };
 const saudiCities = new Set(["الشرقية", "جدة", "جزيرة فرسان", "العلا", "الطائف", "المدينة", "مكة", "الرياض"]);
 
+const cityKey = (value?: string | null) => {
+  const normalized = (value || "").trim().toLowerCase().replace(/[أإآ]/g,"ا").replace(/[\u064B-\u065F]/g,"").replace(/\s+/g," ");
+  if (["المدينة","المدينة المنورة","مدينة المدينة المنورة","madinah","medina","al madinah"].includes(normalized)) return "المدينة المنورة";
+  if (["مكة","مكه","مكة المكرمة","makkah","mecca"].includes(normalized)) return "مكة المكرمة";
+  if (["جدة","جده","jeddah"].includes(normalized)) return "جدة";
+  return normalized;
+};
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
 const distanceKm = (
@@ -201,6 +208,7 @@ export default function Home() {
   const [walletPoints, setWalletPoints] = useState<number | null>(null);
   const [lastRewardPoints, setLastRewardPoints] = useState<number | null>(null);
   const [liveServices, setLiveServices] = useState<LiveService[]>([]);
+  const [servicesLoadError, setServicesLoadError] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [activeScene, setActiveScene] = useState(0);
   const [locationReady, setLocationReady] = useState(false);
@@ -216,10 +224,17 @@ export default function Home() {
   const worldDestinationsRef = useRef<HTMLDivElement | null>(null);
 
   const nearbyServices = userCoords ? liveServices.map(service=>{
-    if(typeof service.latitude!=="number"||typeof service.longitude!=="number")return null;
-    const distance=distanceKm(userCoords.lat,userCoords.lng,service.latitude,service.longitude);
-    return {...service,distance};
-  }).filter((s):s is LiveService & {distance:number}=>s!==null&&s.distance<=50).sort((a,b)=>a.distance-b.distance) : [];
+    const hasCoordinates=typeof service.latitude==="number"&&typeof service.longitude==="number"
+      &&Number.isFinite(service.latitude)&&Number.isFinite(service.longitude);
+    const distance=hasCoordinates?distanceKm(userCoords.lat,userCoords.lng,service.latitude!,service.longitude!):null;
+    const inDetectedCity=Boolean(detectedLocationScene?.coords&&service.city
+      &&cityKey(service.city)===cityKey(detectedLocationScene.nameAr));
+    // Keep published city services discoverable even when partner location is
+    // missing or unreliable; never report a fake 50 km distance in that case.
+    if(!inDetectedCity&&(distance===null||distance>50))return null;
+    return {...service,distance:distance!==null&&distance<=50?distance:null};
+  }).filter((s):s is LiveService & {distance:number|null}=>s!==null)
+    .sort((a,b)=>(a.distance??Number.POSITIVE_INFINITY)-(b.distance??Number.POSITIVE_INFINITY)) : [];
   const featuredWorldDestinations = liveServices
     .filter(service => service.category.includes("عالمية") && Boolean(service.city))
     .filter((service, index, all) => all.findIndex(item => item.city === service.city) === index)
@@ -288,7 +303,10 @@ export default function Home() {
 
   useEffect(() => {
     let alive=true;
-    fetch("/api/services",{cache:"no-store"}).then(r=>r.json()).then(j=>{if(alive&&j?.success)setLiveServices(Array.isArray(j.data)?j.data:[]);}).catch(()=>{if(alive)setLiveServices([])});
+    fetch("/api/services",{cache:"no-store"})
+      .then(r=>{if(!r.ok)throw new Error("SERVICES_REQUEST_FAILED");return r.json();})
+      .then(j=>{if(!j?.success||!Array.isArray(j.data))throw new Error("SERVICES_REQUEST_FAILED");if(alive){setLiveServices(j.data);setServicesLoadError(false);}})
+      .catch(()=>{if(alive)setServicesLoadError(true);});
     return()=>{alive=false};
   }, []);
 
@@ -1020,17 +1038,18 @@ export default function Home() {
                 </div>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
                   <span className="text-[#A87917]">{service.category}</span>
-                  <span className="inline-flex items-center gap-1 text-[#0D3B34]/70" aria-label="المسافة التقريبية من موقعك">📍 على بعد {service.distance < 1 ? Math.round(service.distance * 1000) + " متر" : service.distance.toFixed(1) + " كم"}</span>
+                  <span className="inline-flex items-center gap-1 text-[#0D3B34]/70" aria-label="الموقع التقريبي للتجربة">{service.distance===null?("📍 في "+(service.city||"مدينتك")):("📍 على بعد "+(service.distance<1?Math.round(service.distance*1000)+" متر":service.distance.toFixed(1)+" كم"))}</span>
                 </div>
                 <h3 className="text-xl font-black text-[#0D3B34]">{service.nameAr}</h3>
                 <p className="mt-2 text-xs text-[#0D3B34]/50">{[service.city, service.locationName].filter(Boolean).join(" · ")}</p>
-                <div className="mt-4 flex items-center justify-between gap-3"><b>{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</b><span className="flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-3 py-2 text-xs font-bold text-[#9A741B]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-6 w-auto"/> احجز واحصل على {service.loyaltyPoints || 150} نقطة</span></div>
+                <div className="mt-4 flex items-center justify-between gap-3"><b>{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</b><span className="flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-3 py-2 text-xs font-bold text-[#9A741B]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-6 w-auto"/> {Number(service.loyaltyPoints)>0?"نقاط الخدمة: "+service.loyaltyPoints:"نقاط الخدمة وفق سياسة الحجز"}</span></div>
                 <Link href={`/services/${service.id}`} className="mt-6 flex w-full items-center justify-center rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white">عرض البرنامج ←</Link>
               </article>
             ))}
           </div>}
-          {locationReady && !userCoords && <p className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">فعّل إذن الموقع لعرض التجارب القريبة منك والمسافة الفعلية لكل تجربة.</p>}
-          {locationReady && userCoords && nearbyServices.length===0 && <p className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">لا توجد حالياً تجارب منشورة ضمن 50 كم من موقعك. يمكنك استكشاف الوجهات الأخرى من القائمة العلوية.</p>}
+          {servicesLoadError && <p role="alert" className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">تعذر تحميل البرامج مؤقتاً. جرّب إعادة فتح الصفحة، ويمكنك تصفح بقية خدمات أريس لوب.</p>}
+          {!servicesLoadError && locationReady && !userCoords && <p className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">فعّل إذن الموقع لعرض التجارب القريبة منك والمسافة الفعلية لكل تجربة.</p>}
+          {!servicesLoadError && locationReady && userCoords && nearbyServices.length===0 && <p className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">لا توجد برامج مطابقة للموقع المحدد حالياً. يمكنك استكشاف برامج مدن أخرى من القائمة.</p>}
           {/* Discover more */}
           <div className="mt-12 flex justify-center">
             <Link
