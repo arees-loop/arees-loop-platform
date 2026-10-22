@@ -1,5 +1,6 @@
 "use client";
 import AdminPaymentReview from "@/app/components/AdminPaymentReview";
+import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 import AdminTicketFulfillment from "@/app/components/AdminTicketFulfillment";
 import AdminConfirmedBooking from "@/app/components/AdminConfirmedBooking";
 
@@ -350,7 +351,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <div className="min-w-0"><p className="truncate text-sm font-black">{q.customerName}</p><p className="mt-1 truncate text-[11px] text-[#0D3B34]/60">{q.reference} · {q.kind==="FERRY"?"باخرة":q.kind==="VISA"?"تأشيرة":q.kind==="DRIVING_LICENSE"?"رخصة دولية":"طيران"}</p></div>
                 <div className="min-w-0 text-xs"><p className="truncate">{q.origin} ← {q.destination}</p><p className="mt-1 text-[#0D3B34]/60">{day(q.travelDate)}</p></div>
                 <div className="text-xs font-bold">{q.quoteAmountSar==null?"لم يسعّر بعد":Number(q.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</div>
-                <div className="flex items-center justify-between gap-2 sm:justify-end"><span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-[11px] font-bold">{statusNames[q.status]||q.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
+                <div className="flex items-center justify-between gap-2 sm:justify-end"><OrderStatusBadge status={q.status}>{statusNames[q.status]||q.status}</OrderStatusBadge><span className="text-xs text-[#A78332]">فتح ←</span></div>
               </button>
             ))}
             </div>
@@ -359,7 +360,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
               <>
                 {<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
-                <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">طلب {selected.reference}</h2><span className="rounded-full bg-[#E8F2EC] px-4 py-2 text-xs font-black text-[#0D3B34]">{statusNames[selected.status]||selected.status}</span><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يتم التسعير":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
+                <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">طلب {selected.reference}</h2><OrderStatusBadge status={selected.status}>{statusNames[selected.status]||selected.status}</OrderStatusBadge><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يتم التسعير":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
                 <a href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(`السلام عليكم ${selected.customerName}، بخصوص طلبك رقم ${selected.reference} لخدمة ${selected.kind==="FLIGHT"?"الطيران":selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":"الرخصة الدولية"} لدى أريس لوب. نتابع معك تفاصيل طلبك.`)}`} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-[#147D55] px-5 py-3 text-sm font-black text-white">واتساب العميل مباشرة ↗</a>
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F7F4EB] p-4 text-sm">
                   <p>الاسم: <b>{selected.customerName}</b></p>
