@@ -5,7 +5,8 @@ import { getActivePartnerMembership } from "@/lib/partner-permissions";
 
 const ALLOWED_CATEGORIES = new Set(["هايكينق", "مغامرات", "تاريخ", "آثار", "ثقافة وتراث", "طبيعة", "أخرى"]);
 type RawArea = {id?: unknown; city?: unknown; label?: unknown; category?: unknown; notes?: unknown; latitude?: unknown; longitude?: unknown; radiusKm?: unknown};
-type GuideProfileBody = { areas?: RawArea[]; bankName?: unknown; iban?: unknown; beneficiaryName?: unknown; guideSpecialty?: unknown; guideLanguages?: unknown; publicName?: unknown };
+type RawLicense = {type?:unknown; issuer?:unknown; licenseNumber?:unknown; issueDate?:unknown; expiryDate?:unknown};
+type GuideProfileBody = { areas?: RawArea[]; licenses?: RawLicense[]; bankName?: unknown; iban?: unknown; beneficiaryName?: unknown; guideSpecialty?: unknown; guideLanguages?: unknown; publicName?: unknown };
 
 const clean = (x:unknown, max=150) => typeof x === "string" ? x.trim().slice(0,max) : "";
 const invalid = (message:string,status=400) => NextResponse.json({success:false,message},{status});
@@ -54,6 +55,24 @@ export async function POST(request:NextRequest) {
         return invalid("أكمل المدينة والموقع الجغرافي داخل السعودية وتصنيف المسار ونطاق 50 كم لكل مسار.");
       areas.push({id:clean(raw.id,80)||null,city,label,category,notes:notes||null,latitude:lat,longitude:lng,radiusKm:50});
     }
+
+    const licenses=body.licenses;
+    if(!Array.isArray(licenses) || licenses.length<2 || licenses.length>8)
+      return invalid("يجب إدراج وثيقة العمل الحر ورخصة الإرشاد السياحي من وزارة السياحة.");
+    const normalizedLicenses: Array<{type:string;issuer:string;licenseNumber:string;issueDate:Date|null;expiryDate:Date}> = [];
+    for(const item of licenses){
+      const type=clean(item.type,120),issuer=clean(item.issuer,160),licenseNumber=clean(item.licenseNumber,120);
+      const expiryDate=typeof item.expiryDate==="string"?new Date(item.expiryDate):new Date("invalid");
+      const issueDate=typeof item.issueDate==="string"&&item.issueDate.trim()?new Date(item.issueDate):null;
+      if(!type||!issuer||!licenseNumber||!Number.isFinite(expiryDate.getTime())||expiryDate.getTime()<Date.now()||(issueDate&&!Number.isFinite(issueDate.getTime())))
+        return invalid("أكمل رقم الرخصة والجهة المصدرة وتاريخ انتهاء ساري لكل مستند.");
+      normalizedLicenses.push({type,issuer,licenseNumber,issueDate,expiryDate});
+    }
+    if(!normalizedLicenses.some(l=>l.type.includes("عمل حر"))||
+       !normalizedLicenses.some(l=>l.type.includes("مرشد")||l.type.includes("إرشاد")))
+      return invalid("رخصة الإرشاد السياحي ووثيقة العمل الحر مطلوبة لهذا المسار.");
+    if(new Set(normalizedLicenses.map(l=>l.licenseNumber)).size!==normalizedLicenses.length)
+      return invalid("أرقام التراخيص لا يمكن تكرارها.");
     const old = await prisma.guideServiceArea.findMany({where:{partnerId:membership.partnerId},select:{id:true}});
     const oldIds=new Set(old.map(item=>item.id));
     const selectedIds=areas.map(a=>a.id).filter((id):id is string=>Boolean(id));
@@ -73,6 +92,12 @@ export async function POST(request:NextRequest) {
       }
       const removed=old.filter(a=>!selectedIds.includes(a.id)).map(a=>a.id);
       if(removed.length) await tx.guideServiceArea.updateMany({where:{partnerId:membership.partnerId,id:{in:removed}},data:{isActive:false}});
+      // Never delete historical licences or verified licence approvals.
+      for (const license of normalizedLicenses) {
+        const existing = await tx.license.findUnique({where:{partnerId_licenseNumber:{partnerId:membership.partnerId,licenseNumber:license.licenseNumber}}});
+        if(!existing) await tx.license.create({data:{partnerId:membership.partnerId,...license,status:"PENDING"}});
+        else if(existing.status!=="VERIFIED") await tx.license.update({where:{id:existing.id},data:license});
+      }
       await tx.partner.update({where:{id:membership.partnerId},data:{
         bankName,iban,beneficiaryName,receivesPayments:true,
         city:areas[0].city,descriptionAr,publicName:clean(body.publicName,160)||undefined,
