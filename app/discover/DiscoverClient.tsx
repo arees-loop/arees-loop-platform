@@ -61,38 +61,35 @@ function Content(){
   const cityNear=Boolean(nearbyCity)&&Boolean(s.city)&&cityKey(s.city)===cityKey(nearbyCity);
   return (!nearbyOnly||geoNear||cityNear)
    &&(!city||cityKey(s.city)===cityKey(city))
-   &&(!norm(destination)||norm([s.city,s.locationName,s.formattedAddress,s.nameAr,s.nameEn].filter(Boolean).join(" ")).includes(norm(destination)));
+   &&(!norm(destination)||cityKey(s.city)===cityKey(destination)||norm([s.city,s.locationName,s.formattedAddress,s.nameAr,s.nameEn].filter(Boolean).join(" ")).includes(norm(destination)));
  });
  const isMedina=(value?:string|null)=>cityKey(value)==="المدينة المنورة";
  const selectedMedina=isMedina(city)||isMedina(destination)||(!city&&!norm(destination)&&isMedina(nearbyCity));
  const missionDestination=selectedMedina?"المدينة المنورة":city||destination.trim()||nearbyCity;
  const missionHref="/missions"+(missionDestination?"?destination="+encodeURIComponent(missionDestination):"");
  const all=()=>{setCity("");setDestination("");setShowAllLocations(true);};
- const nearby=()=>{setCity("");setDestination("");setShowAllLocations(false);};
- return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-4 pb-24 pt-7 text-[#0D3B34] md:px-8">
+ return <main dir="rtl" className="min-h-screen bg-[#F7F5EF] px-3 pb-24 pt-3 text-[#0D3B34] sm:px-5 md:px-8 md:pt-6">
   <div className="mx-auto max-w-[1380px]">
-   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-    <h1 className="text-xl font-black md:text-2xl">{labels[type]||"البرامج والتجارب"}</h1>
-    <span className="text-[11px] text-[#6C806F]">{loading?"جاري تحميل التجارب":loadError?"البيانات غير متاحة الآن":`${shown.length.toLocaleString("ar-SA")} تجربة متاحة`}</span>
+   <div className="mb-2 flex items-center justify-between gap-2">
+    <h1 className="text-base font-black sm:text-xl md:text-2xl">{labels[type]||"البرامج والتجارب"}</h1>
+    <span className="hidden text-[11px] text-[#6C806F] sm:inline">{loading?"جاري تحميل التجارب":loadError?"البيانات غير متاحة الآن":`${shown.length.toLocaleString("ar-SA")} تجربة متاحة`}</span>
    </div>
-   <section aria-label="بحث الوجهات والمهام" className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#D4AF37]/30 bg-white/90 p-2.5 shadow-sm md:flex-nowrap">
+   <section aria-label="بحث الوجهات والمهام" className="flex h-[48px] min-w-0 items-center gap-1.5 rounded-2xl border border-[#D4AF37]/30 bg-white/90 px-1.5 shadow-sm sm:h-[56px] sm:gap-2 sm:px-2.5">
     <label htmlFor="next-destination" className="sr-only">ابحث عن وجهتك</label>
     <input id="next-destination" type="search" value={destination}
       onChange={e=>{setDestination(e.target.value);setCity("");setShowAllLocations(true);}}
-      placeholder="📍 ابحث عن مدينة أو تجربة..."
-      className="h-10 min-w-0 flex-[1_1_170px] rounded-xl border border-[#0D3B34]/15 bg-[#F7F5EF] px-3 text-xs outline-none focus:border-[#D4AF37]"/>
+      placeholder="ابحث عن تجربة أو مدينة..."
+      className="h-9 w-0 min-w-0 flex-1 rounded-xl border border-[#0D3B34]/15 bg-[#F7F5EF] px-2 text-[11px] outline-none focus:border-[#D4AF37] sm:h-10 sm:px-3 sm:text-xs"/>
     <label htmlFor="available-destinations" className="sr-only">اختر وجهة</label>
     <select id="available-destinations" value={city||(nearbyOnly?"__nearby__":"")}
       onChange={e=>{const value=e.target.value;setCity(value==="__nearby__"?"":value);setDestination("");setShowAllLocations(value!=="__nearby__");}}
       aria-label="اختيار وجهة من القائمة"
-      className="h-10 min-w-0 flex-[1_1_150px] rounded-xl border border-[#0D3B34]/15 bg-[#F7F5EF] px-2 text-xs outline-none focus:border-[#D4AF37] md:max-w-[250px]">
+      className="h-9 w-[106px] min-w-0 shrink-0 truncate rounded-xl border border-[#0D3B34]/15 bg-[#F7F5EF] px-1 text-[10px] outline-none focus:border-[#D4AF37] sm:h-10 sm:w-[180px] sm:px-2 sm:text-xs md:w-[220px]">
       {locationMode&&<option value="__nearby__">📍 القريبة من موقعي</option>}
       <option value="">كل المواقع — جميع البرامج</option>
       {cities.map(x=><option key={x} value={x}>{x}</option>)}
     </select>
-    <button type="button" onClick={all} className="h-10 shrink-0 rounded-xl border border-[#C99C2E] bg-[#FFF5DB] px-3 text-xs font-bold">كل المواقع — عرض جميع البرامج</button>
-    {locationMode&&<button type="button" onClick={nearby} className="h-10 shrink-0 rounded-xl border border-[#0D3B34]/15 px-3 text-xs font-bold">📍 القريبة</button>}
-    <Link href={missionHref} aria-label="مهام اللوب" className="inline-flex h-10 shrink-0 items-center rounded-xl bg-[#0D3B34] px-3 text-xs font-bold text-white">🎯 مهام اللوب <span className="mr-1 text-[10px] opacity-75">(تجريبية)</span></Link>
+    <Link href={missionHref} aria-label="مهام اللوب (معاينة غير مفعلة)" title="مهام اللوب — معاينة" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0D3B34] text-base text-white sm:h-10 sm:w-auto sm:gap-1 sm:px-3 sm:text-xs"><span aria-hidden="true">🎯</span><span className="hidden sm:inline">مهام اللوب (تجريبية)</span></Link>
    </section>
    {loading?<div className="mt-4 rounded-2xl bg-white p-7 text-center text-sm">جاري تحميل البرامج...</div>:
    loadError?<div role="alert" className="mt-4 rounded-2xl border border-amber-300 bg-white p-5 text-center text-sm">تعذر تحميل التجارب حالياً. <button type="button" className="font-bold underline" onClick={()=>{setLoading(true);setRefresh(x=>x+1);}}>إعادة المحاولة</button></div>:
