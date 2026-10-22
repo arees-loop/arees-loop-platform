@@ -6,6 +6,7 @@ import Link from "next/link";
 import ExperiencePhoto from "./components/ExperiencePhoto";
 import GuidesHeroCards from "./guides/GuidesHeroCards";
 import SaveExperienceButton from "./components/SaveExperienceButton";
+import ServiceLoyaltyBanner from "@/app/components/ServiceLoyaltyBanner";
 import PartnerIcon from "./components/PartnerIcon";
 import Script from "next/script";
 import { useEffect, useRef, useState, type MouseEvent, type TouchEvent, type WheelEvent } from "react";
@@ -1042,7 +1043,8 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-black text-[#0D3B34]">{service.nameAr}</h3>
                 <p className="mt-2 text-xs text-[#0D3B34]/50">{[service.city, service.locationName].filter(Boolean).join(" · ")}</p>
-                <div className="mt-4 flex items-center justify-between gap-3"><b>{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</b><span className="flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-3 py-2 text-xs font-bold text-[#9A741B]"><img src="/Logo/arees-loop-logo.png" alt="Arees Loop" className="h-6 w-auto"/> {Number(service.loyaltyPoints)>0?"نقاط الخدمة: "+service.loyaltyPoints:"نقاط الخدمة وفق سياسة الحجز"}</span></div>
+                <div className="mt-4 text-base font-black text-[#0D3B34]">{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</div>
+                <ServiceLoyaltyBanner finalPrice={service.finalPrice} className="mt-3"/>
                 <Link href={`/services/${service.id}`} className="mt-6 flex w-full items-center justify-center rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white">عرض البرنامج ←</Link>
               </article>
             ))}
