@@ -605,7 +605,8 @@ export default function PartnerOnboardingPage() {
                   ? String(license.expiryDate).slice(0, 10)
                   : "",
                 fileName:
-                  existingDocuments.length > 0
+                  existingDocuments.some((item:{label?:string;fileName?:string})=>
+                     String(item.label||"").trim()===String(license.type||"").trim())
                     ? "مرفوع مسبقاً"
                     : "",
                 coveredCategories: [],
@@ -1380,6 +1381,8 @@ export default function PartnerOnboardingPage() {
       if (data.partnerType === "government" && !data.logoFile) {
         errors.logoFile = "أرفق الشعار الرسمي للجهة.";
       }
+      if(data.partnerType==="individual" && !data.logoFile)
+        errors.logoFile="الصورة الشخصية المهنية للمرشد مطلوبة.";
       if (smsVerificationEnabled === true) {
         if (
           !normalizeSaudiMobileForCheck(
@@ -1573,6 +1576,14 @@ export default function PartnerOnboardingPage() {
           : "أكمل اسم النشاط والمدينة والحي والشارع والعنوان الوطني ومرفقه.",
     });
 
+    if (data.partnerType === "individual") {
+      const areasOk=guideAreas.length>0 && guideAreas.every(a=>
+        a.city.trim()&&a.label.trim()&&GUIDE_CATEGORIES.includes(a.category)&&
+        a.latitude!==null&&a.longitude!==null&&a.radiusKm===50);
+      checks.push({label:"مسارات الإرشاد",state:areasOk?"ok":"warn",
+        note:areasOk?`تم تحديد ${guideAreas.length} مساراً بنطاق 50 كم لكل موقع.`:
+          "حدّد المسارات وإحداثيات المواقع عبر TomTom أولاً."});
+    }
     checks.push({
       label: "نوع الخدمات",
       state:
@@ -1606,10 +1617,13 @@ export default function PartnerOnboardingPage() {
     });
 
     checks.push({
-      label: "شعار الجهة الرسمي",
-      state: data.partnerType !== "government" || Boolean(data.logoFile) ? "ok" : "warn",
-      note: data.partnerType !== "government" ? "غير مطلوب لهذا النوع من الشركاء." :
-        data.logoFile ? "سيظهر الشعار بعد تدقيق أريس واعتماد الجهة." : "يلزم إرفاق الشعار الرسمي للجهة.",
+      label: data.partnerType==="individual"?"الصورة المهنية للمرشد":"شعار الجهة الرسمي",
+      state: data.partnerType === "business" || Boolean(data.logoFile) ? "ok" : "warn",
+      note: data.partnerType === "individual"
+        ? data.logoFile?"الصورة مرفقة ولا تظهر للزوار إلا بعد الاعتماد.":"أرفق صورة مهنية شخصية واضحة."
+        : data.partnerType === "government"
+          ? data.logoFile?"سيظهر الشعار بعد اعتماد الجهة.":"يلزم إرفاق الشعار الرسمي للجهة."
+          : "غير مطلوب لهذا النوع من الشركاء.",
     });
 
     const settlementRequired = data.partnerType === "individual" ||
@@ -1684,7 +1698,9 @@ export default function PartnerOnboardingPage() {
 
   try {
     if (data.partnerType === "business" && !data.ownerProofFile && data.applicantRole === "owner") { window.alert("يجب إرفاق إثبات ملكية المنشأة."); return; }
-    const response = await fetch("/api/partner/application", {
+    const existingGuide = data.partnerType === "individual" && Boolean(applicationId);
+    // Existing guides update their own review request; never create a second partner request.
+    const response = existingGuide ? null : await fetch("/api/partner/application", {
       method:
         applicationStatus === "NEEDS_COMPLETION"
           ? "PATCH"
@@ -1750,9 +1766,10 @@ export default function PartnerOnboardingPage() {
       }),
     });
 
-    const result = await response.json();
+    const result = response ? await response.json() :
+      {application:{id:applicationId,status:applicationStatus}};
 
-    if (!response.ok) {
+    if (response && !response.ok) {
       window.alert(
         result.message || "تعذر إرسال طلب الشراكة."
       );
@@ -1769,6 +1786,26 @@ export default function PartnerOnboardingPage() {
       );
     }
 
+    if(data.partnerType==="individual"){
+      const payload={
+        guideSpecialty:data.guideSpecialty,guideLanguages:data.guideLanguages,
+        areas:guideAreas.map(({id,city,label,category,notes,latitude,longitude,radiusKm})=>({
+          id,city,label,category,notes,latitude,longitude,radiusKm
+        })),
+        bankName:data.bankName,iban:data.iban,beneficiaryName:data.beneficiaryName,
+        publicName:data.publicName||data.tradeName,
+        licenses:documents.map(doc=>({type:doc.type,issuer:doc.issuer,licenseNumber:doc.number,
+          issueDate:doc.issueDate||null,expiryDate:doc.expiryDate||null}))
+      };
+      const areaResponse=await fetch("/api/partner/guide-profile",{
+        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)
+      });
+      const areaResult=await areaResponse.json();
+      if(!areaResponse.ok){
+        window.alert(areaResult.message||"تعذر حفظ المسارات والحساب البنكي. بيانات الطلب القديمة محفوظة.");
+        return;
+      }
+    }
     const filesToUpload: Array<{
       file: File;
       type: string;
@@ -1873,7 +1910,7 @@ export default function PartnerOnboardingPage() {
       }
     }
 
-    if (data.partnerType === "government" && uploadedFiles.logo) {
+    if ((data.partnerType === "government" || data.partnerType === "individual") && uploadedFiles.logo) {
       const logoForm = new FormData();
       logoForm.append("file", uploadedFiles.logo);
       const logoResponse = await fetch("/api/partner/logo", {
@@ -3502,7 +3539,7 @@ export default function PartnerOnboardingPage() {
                       className={inputClass}
                     />
                     <p className="mt-2 text-xs text-[#0D3B34]/55">
-                      <span className="font-black text-red-600">{imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo)}</span> PNG أو JPG أو WEBP، بحد أقصى 3 ميجابايت. لا يظهر الشعار للجمهور قبل اعتماد الجهة.
+                      <span className="font-black text-red-600">{imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo)}</span> PNG أو JPG أو WEBP، بحد أقصى 3 ميجابايت. {data.partnerType==="individual"?"لن تظهر الصورة الشخصية إلا بعد اعتماد المرشد.":"لا يظهر الشعار للجمهور قبل اعتماد الجهة."}
                     </p>
                   </Field>
                   <ValidationError message={validationErrors.logoFile} />
