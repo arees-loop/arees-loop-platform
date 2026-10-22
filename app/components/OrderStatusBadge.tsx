@@ -18,7 +18,7 @@ const classes:Record<StatusTone,string>={
  new:"border-[#D1A225] bg-[#FFF2BE] text-[#73520B]",
  working:"border-[#E8A14C] bg-[#FFF0D8] text-[#9A4D06]",
  attention:"border-[#D84B4B] bg-[#FFE8E8] text-[#A51E24]",
- done:"border-[#0F7045] bg-[#E0F3E8] text-[#10563B]",
+ done:"border-[#0B4C33] bg-[#0F593C] text-white",
  neutral:"border-[#B9C7C0] bg-[#F3F5F2] text-[#35534A]"
 };
 export function orderStatusClass(status:string){return classes[orderStatusTone(status)];}
