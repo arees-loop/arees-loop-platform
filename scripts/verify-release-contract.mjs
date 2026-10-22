@@ -132,5 +132,25 @@ const invoice=file("app/cart/documents/[type]/page.tsx");
 assert(invoice.includes("arees-integrated-solutions-logo.png"),"Company invoice logo must remain in invoice");
 assert(invoice.includes('lang="en" className="text-left"'),"Bilingual invoice must keep English company details on the left");
 for(const p of ["app/flights/page.tsx","app/ferries/page.tsx","app/api/cart/order-workflow/route.ts","app/api/cart/bank-checkout/route.ts"]){assert(existsSync(resolve(root,p)),"Existing booking API/page must not disappear: "+p);}
+// Partner onboarding reliability and private-document access contract.
+const partnerTypes=file("app/partner/select-type/page.tsx");
+const guideLanding=file("app/guides/register/page.tsx");
+const partnerOnboarding=file("app/partner/onboarding/PartnerOnboardingClient.tsx");
+const partnerChecks=file("lib/partners/application-requirements.ts");
+const partnerReview=file("app/api/partner/application/review/route.ts");
+const partnerDecision=file("app/api/admin/partners/[id]/decision/route.ts");
+const partnerAdmin=file("app/admin/partners/page.tsx");
+const securePreview=file("app/api/admin/partners/[id]/documents/[documentId]/route.ts");
+const partnerAdminApi=file("app/api/admin/partners/route.ts");
+assert(partnerTypes.includes('title: "مرشد سياحي"')&&guideLanding.includes('/partner/onboarding?type=individual'),"Guide entry routes to the locked licensed-guide application");
+assert(partnerOnboarding.includes("lockedPartnerType")&&!partnerOnboarding.includes("title=\"فرد\"")&&!partnerOnboarding.includes("تغيير النوع"),"Partner type must be locked after landing-page selection");
+assert(partnerOnboarding.includes("activeSteps")&&partnerOnboarding.includes("guideLanguages")&&partnerOnboarding.includes("guideSpecialty"),"Guide and government flows must be distinct and concise");
+assert(partnerOnboarding.includes("ownerProofFile")&&partnerOnboarding.includes("validLicenses"),"Ownership documents and complete licence details must be mandatory before submission");
+assert(partnerChecks.includes("getPartnerRequirements")&&partnerChecks.includes('d.type==="AUTHORIZATION"')&&partnerChecks.includes("رخصة سارية"),"Server must reject missing licence and representative evidence");
+assert(partnerReview.includes("getPartnerRequirements(partner)")&&partnerDecision.includes("getPartnerRequirements(partner)"),"Both submission and approval must validate required documents");
+assert(partnerAdmin.includes("partnerTrackFilter")&&partnerAdmin.includes("documentPreview")&&!partnerAdmin.includes("مساعد المراجعة"),"Admin partner requests must have typed counts and a working document review UI, not mock assistant");
+assert(securePreview.includes('getCurrentSession()')&&securePreview.includes('partnerId:id')&&securePreview.includes('access:"private"')&&securePreview.includes('"Cache-Control":"private, no-store"'),"Private applicant documents must only be streamed through authorized private routes");
+assert(partnerAdminApi.includes("documents: { select:" )&&!partnerAdminApi.includes("fileUrl:true"),"List API must not expose private blob URLs");
+
 if(errors.length){console.error("AREES RELEASE CONTRACT FAILED\n"+errors.map((e,i)=>(i+1)+". "+e).join("\n"));process.exit(1);}
 console.log("AREES release contract: approved nav, home and booking flows verified.");

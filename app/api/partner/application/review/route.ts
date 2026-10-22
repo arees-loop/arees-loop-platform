@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getActivePartnerMembership } from "@/lib/partner-permissions";
 import { runPartnerApplicationWorkflow } from "@/lib/partners/application-workflow";
+import { getPartnerRequirements } from "@/lib/partners/application-requirements";
 import {
   checkRateLimit,
   createIdentityRateLimitKey,
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     const active = await getActivePartnerMembership(session.user.id);
     const membership = active ? await prisma.partnerMember.findFirst({
       where: { userId: session.user.id, partnerId: active.partnerId, isActive: true },
-      include: { partner: { include: { documents: { select: { id: true } } } } },
+      include: { partner: { include: { documents: { select: { type:true,label:true,fileUrl:true,fileName:true } }, licenses:{select:{type:true,issuer:true,licenseNumber:true,expiryDate:true}} } } },
     }) : null;
 
     if (!membership) {
@@ -96,15 +97,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (partner.documents.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "يجب رفع مستند واحد على الأقل قبل إرسال الطلب للمراجعة.",
-        },
-        { status: 400 },
-      );
+    const missing = getPartnerRequirements(partner);
+    if (missing.length) {
+      return NextResponse.json({
+        success:false,
+        message:"الطلب يحتاج استكمال البيانات والمستندات قبل المراجعة: "+missing.join("، "),
+        missing,
+      },{status:422});
     }
 
     const previousStatus = partner.status;
@@ -131,21 +130,12 @@ export async function POST(request: NextRequest) {
           id: partner.id,
           status: workflow.status,
         },
-        review: workflow.aiReview
-          ? {
-              outcome: workflow.aiReview.outcome,
-              summary: workflow.aiReview.summary,
-              partnerMessage: workflow.aiReview.partnerMessage,
-              issues: workflow.aiReview.issues,
-            }
-          : {
-              outcome: "MANUAL_REVIEW",
-              summary:
-                "تم استلام الطلب وتحويله للمراجعة الإدارية.",
-              partnerMessage:
-                "تم استلام طلبكم وتحويله للمراجعة الإدارية.",
-              issues: [],
-            },
+        review: {
+          outcome: "MANUAL_REVIEW",
+          summary: "تم استلام الطلب وتحويله للمراجعة الإدارية.",
+          partnerMessage: "تم استلام طلبكم وتحويله للمراجعة الإدارية.",
+          issues: [],
+        },
       },
       {
         status: 200,

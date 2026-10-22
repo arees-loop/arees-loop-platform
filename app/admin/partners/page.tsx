@@ -25,6 +25,8 @@ type PartnerStatus =
 
 
 
+type PartnerDocumentSummary = {id:string;type:string;label?:string|null;fileName?:string|null;mimeType?:string|null;status?:string|null};
+
 type Partner = {
 
   id: string;
@@ -35,6 +37,9 @@ type Partner = {
 
   logoUrl?: string;
   partnerType?: string;
+  description?:string;
+  applicantRole?:string;
+  documents?: PartnerDocumentSummary[];
 
   category: string;
 
@@ -67,6 +72,7 @@ type Partner = {
   operationsContact: string;
 
   operationsPhone: string;
+  operationsEmail?: string;
 
   website: string;
 
@@ -99,6 +105,9 @@ type ApiPartner = {
   publicName?: string | null;
   logoUrl?: string | null;
   partnerType?: string | null;
+  descriptionAr?:string|null;
+  applicantRole?:string|null;
+  documents?: PartnerDocumentSummary[];
   commercialRegister?: string | null;
   unifiedNumber?: string | null;
   vatRegistered?: boolean;
@@ -178,6 +187,9 @@ function mapApiPartner(partner: ApiPartner): Partner {
     id: partner.id,
     logoUrl: partner.logoUrl?.trim() || "",
     partnerType: partner.partnerType ?? "",
+    description: partner.descriptionAr?.trim() || "",
+    applicantRole: partner.applicantRole || "",
+    documents: partner.documents ?? [],
     legalName:
       partner.legalNameAr?.trim() || partner.legalNameEn?.trim() || EMPTY_VALUE,
     tradeName:
@@ -205,6 +217,7 @@ function mapApiPartner(partner: ApiPartner): Partner {
     financeEmail: partner.financeContactEmail?.trim() || EMPTY_VALUE,
     operationsContact: partner.mainContactName?.trim() || EMPTY_VALUE,
     operationsPhone: partner.mainContactPhone?.trim() || EMPTY_VALUE,
+    operationsEmail: partner.mainContactEmail?.trim() || "",
     website: partner.websiteUrl?.trim() || EMPTY_VALUE,
     submittedAt: formatDate(partner.submittedAt),
     status: normalizeStatus(partner.status),
@@ -324,7 +337,9 @@ function AdminPartnersContent() {
     window.setTimeout(() => setToast(null), 4200);
   };
 
+  const [documentPreview, setDocumentPreview] = useState<{partnerId:string;id:string;name:string;mime:string}|null>(null);
   const [search, setSearch] = useState("");
+  const [partnerTrackFilter, setPartnerTrackFilter] = useState<"ALL"|"BUSINESS"|"INDIVIDUAL"|"GOVERNMENT_NONPROFIT">("ALL");
 
   const [viewMode, setViewMode] = useState<"CARDS" | "LIST">("CARDS");
 
@@ -424,11 +439,12 @@ function AdminPartnersContent() {
 
 
 
-      return matchesSearch && matchesStatus;
+      const matchesTrack = partnerTrackFilter === "ALL" || partner.partnerType === partnerTrackFilter;
+      return matchesSearch && matchesStatus && matchesTrack;
 
     });
 
-  }, [visiblePartners, search, statusFilter]);
+  }, [visiblePartners, search, statusFilter, partnerTrackFilter]);
 
 
 
@@ -818,13 +834,26 @@ function AdminPartnersContent() {
 
 
 
-        {/* STATS */}
+        {/* REAL APPLICATION TYPES — counts filter actual records. */}
+         <section aria-label="تقسيم طلبات الشركاء حسب النوع" className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+           {([
+             {type:"ALL",title:"كل الشركاء",tone:"border-[#D4AF37]/35 bg-white text-[#0D3B34]",n:visiblePartners.length},
+             {type:"BUSINESS",title:"الشركات والمؤسسات",tone:"border-sky-200 bg-sky-50 text-sky-950",n:visiblePartners.filter(p=>p.partnerType==="BUSINESS").length},
+             {type:"INDIVIDUAL",title:"المرشدون السياحيون",tone:"border-emerald-200 bg-emerald-50 text-emerald-950",n:visiblePartners.filter(p=>p.partnerType==="INDIVIDUAL").length},
+             {type:"GOVERNMENT_NONPROFIT",title:"الحكومي وغير الربحي",tone:"border-amber-200 bg-amber-50 text-amber-950",n:visiblePartners.filter(p=>p.partnerType==="GOVERNMENT_NONPROFIT").length}
+           ] as const).map(group=><button key={group.type} type="button" aria-pressed={partnerTrackFilter===group.type}
+               onClick={()=>{setPartnerTrackFilter(group.type);setSelectedId("");}}
+               className={`flex min-h-20 items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-right transition focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${group.tone} ${partnerTrackFilter===group.type?"ring-2 ring-[#D4AF37]/60 shadow-sm":"opacity-80 hover:opacity-100"}`}>
+                <span className="text-xs font-bold">{group.title}</span><strong className="text-xl tabular-nums">{group.n}</strong>
+             </button>)}
+         </section>
+         {/* STATS */}
 
-        <section className="mb-7 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <section className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-5">
 
           {[
 
-            ["إجمالي الطلبات", stats.total],
+            ["إجمالي الطلبات", filteredPartners.length],
 
             ["تحت التدقيق", stats.review],
 
@@ -834,19 +863,19 @@ function AdminPartnersContent() {
 
             ["نشط", stats.active],
 
-          ].map(([label, value]) => (
+          ].map(([label, value], index) => (
 
             <div
 
               key={String(label)}
 
-              className="rounded-[22px] border border-white/80 bg-white/65 p-5 backdrop-blur-xl"
+              className={`rounded-2xl border px-3 py-2.5 backdrop-blur-xl ${["border-[#D4AF37]/30 bg-white/85","border-amber-200 bg-amber-50","border-sky-200 bg-sky-50","border-violet-200 bg-violet-50","border-emerald-200 bg-emerald-50"][index]}`}
 
             >
 
               <p className="text-xs font-medium text-[#0D3B34]/55">{label}</p>
 
-              <p className="mt-3 text-3xl font-bold text-[#0D3B34]">{value}</p>
+              <p className="mt-1 text-xl font-bold text-[#0D3B34] tabular-nums">{value}</p>
 
             </div>
 
@@ -1223,6 +1252,17 @@ function AdminPartnersContent() {
 
 
 
+              {/* TYPE-SPECIFIC PROFESSIONAL PROFILE */}
+              {selectedPartner.partnerType==="INDIVIDUAL"&&<ReviewCard
+                title="بيانات المرشد السياحي"
+                badge="GUIDE"
+                items={[["الاسم المهني",selectedPartner.tradeName],["المدينة",selectedPartner.city],["التخصص واللغات ووصف الخبرة",selectedPartner.description||"مطلوب استكمال بيانات الإرشاد"]]}
+              />}
+              {selectedPartner.partnerType==="BUSINESS"&&<ReviewCard
+                title="صفة مقدم طلب المنشأة"
+                badge="AUTHORITY"
+                items={[["صفة مقدم الطلب",selectedPartner.applicantRole==="OWNER"?"المالك":selectedPartner.applicantRole==="REPRESENTATIVE"?"ممثل مفوض":"غير محدد"],["إثبات الصفة","تراجع المرفقات الرسمية أدناه قبل إرسال الاتفاقية"]]}
+              />}
               {/* LICENSE */}
 
               <ReviewCard
@@ -1247,6 +1287,32 @@ function AdminPartnersContent() {
 
 
 
+              {/* SECURE DOCUMENTS — authenticated private-file preview */}
+              <section className="rounded-[24px] border border-[#D4AF37]/30 bg-[#FFFDF7] p-4 md:p-5">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-bold text-[#0D3B34]">المرفقات والتراخيص</h3>
+                  <span className="rounded-full bg-[#0D3B34]/10 px-3 py-1 text-xs font-semibold">{selectedPartner.documents?.length||0} مرفق</span>
+                </div>
+                {(selectedPartner.documents?.length||0)===0 ? <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-950">لم تُرفع أي مستندات بعد — هذا الطلب يحتاج استكمالاً قبل الموافقة.</p> :
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {selectedPartner.documents?.map(doc=><div key={doc.id} className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-[#D4AF37]/20 bg-white p-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold" title={doc.fileName||""}>{doc.label||doc.fileName||"مستند شريك"}</p>
+                      <p className="mt-1 truncate text-[10px] text-[#0D3B34]/55">{doc.fileName||doc.type}</p>
+                    </div>
+                    <button type="button" onClick={()=>setDocumentPreview({partnerId:selectedPartner.id,id:doc.id,name:doc.fileName||doc.label||"مستند",mime:doc.mimeType||""})}
+                      className="shrink-0 rounded-lg bg-[#0D3B34] px-3 py-2 text-[11px] font-bold text-white">معاينة</button>
+                  </div>)}
+                </div>}
+              </section>
+              {documentPreview?.partnerId===selectedPartner.id&&<div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#081E1A]/80 p-3" role="dialog" aria-modal="true" aria-label="معاينة مستند الشريك">
+                <section className="flex h-[min(90vh,950px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+                  <div className="flex items-center justify-between gap-3 border-b p-3"><h3 className="truncate text-sm font-bold">{documentPreview.name}</h3><button type="button" className="rounded-lg border px-4 py-2 text-xs font-bold" onClick={()=>setDocumentPreview(null)}>إغلاق ✕</button></div>
+                  {documentPreview.mime==="application/pdf"?<iframe title="مستند PDF" className="min-h-0 w-full flex-1" src={`/api/admin/partners/${encodeURIComponent(documentPreview.partnerId)}/documents/${encodeURIComponent(documentPreview.id)}`}/>:
+                  ["image/jpeg","image/png"].includes(documentPreview.mime)? <div className="min-h-0 flex-1 overflow-auto bg-[#F7F4ED] p-4 text-center"><img alt={documentPreview.name} className="mx-auto max-h-full max-w-full object-contain" src={`/api/admin/partners/${encodeURIComponent(documentPreview.partnerId)}/documents/${encodeURIComponent(documentPreview.id)}`}/></div>:
+                  <p className="p-6 text-sm text-[#0D3B34]">نوع الملف غير مدعوم في المعاينة.</p>}
+                </section>
+              </div>}
               {/* BANK */}
 
               <ReviewCard
@@ -1321,7 +1387,7 @@ function AdminPartnersContent() {
 
                     phone={selectedPartner.operationsPhone}
 
-                    email="operations@partner.sa"
+                    email={selectedPartner.operationsEmail||""}
 
                   />
 
@@ -1340,40 +1406,6 @@ function AdminPartnersContent() {
               </div>
 
 
-
-              {/* ADMIN REVIEW ASSISTANT */}
-              <div className="rounded-[26px] border border-[#D4AF37]/25 bg-[#FFFDF8] p-5 shadow-sm md:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">INTERNAL REVIEW ASSISTANT</p>
-                    <h3 className="mt-1 text-xl font-bold text-[#171717]">مساعد المراجعة</h3>
-                    <p className="mt-2 text-xs leading-6 text-[#171717]/55">مساحة داخلية للإدارة فقط. لا تظهر هذه الملاحظات أو نتيجة المراجعة للشريك.</p>
-                  </div>
-                  <span className="w-fit rounded-full bg-[#171717] px-3 py-1.5 text-[10px] font-bold text-[#D4AF37]">داخلي فقط</span>
-                </div>
-
-                <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-2xl border border-[#171717]/8 bg-[#F5F1E8] p-4">
-                    <p className="text-xs font-bold text-[#171717]">ملاحظات المراجعة</p>
-                    <p className="mt-3 text-xs leading-7 text-[#171717]/55">
-                      تظهر هنا نتيجة الفحص الداخلي للمستندات والبيانات، والنواقص أو التعارضات التي تحتاج مراجعة الإدارة.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[#D4AF37]/20 bg-white p-4">
-                    <p className="text-xs font-bold text-[#171717]">الرد المقترح للشريك</p>
-                    <textarea
-                      rows={5}
-                      defaultValue={selectedPartner.completionRequest ?? ""}
-                      placeholder="سيظهر هنا النص المقترح، ويمكن للإدارة تعديله قبل الإرسال..."
-                      className="mt-3 w-full resize-none rounded-xl border border-[#171717]/10 bg-[#FFFDF8] px-3 py-3 text-xs leading-6 text-[#171717] outline-none focus:border-[#D4AF37]/60"
-                    />
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button type="button" className="rounded-xl border border-[#171717]/10 bg-white px-3 py-2 text-[11px] font-bold text-[#171717]">اعتماد النص كما هو</button>
-                      <button type="button" onClick={requestMoreInfo} className="rounded-xl bg-[#171717] px-3 py-2 text-[11px] font-bold text-[#D4AF37]">تعديل وإرسال للشريك</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* COMMERCIAL TERMS */}
 
