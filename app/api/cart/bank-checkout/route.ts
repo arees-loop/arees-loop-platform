@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import {sendCartAdminMail,cartStatus,cartPaymentStatus,asRecord,CART_DOCUMENT,CART_MESSAGE,CART_STATUS} from "@/lib/cart-order-workflow";
+import {sendCartAdminMail,cartStatus,cartPaymentStatus,asRecord,CART_DOCUMENT,CART_MESSAGE,CART_STATUS,CART_VIEWED} from "@/lib/cart-order-workflow";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -102,7 +102,7 @@ export async function GET(req:NextRequest){
   if(req.nextUrl.searchParams.get("history")==="true"){
    const orders=await prisma.auditLog.findMany({where:{userId:session.user.id,entityType:TYPE,action:CREATED},orderBy:{createdAt:"desc"},take:100,select:{entityId:true,createdAt:true,afterData:true}});
    const references=orders.map(o=>o.entityId).filter((s):s is string=>!!s);
-   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,CART_STATUS,CART_DOCUMENT,CART_MESSAGE]}},orderBy:[{createdAt:"desc"},{id:"desc"}],take:1200,select:{id:true,entityId:true,action:true,afterData:true,createdAt:true,userId:true}}):[];
+   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,CART_STATUS,CART_DOCUMENT,CART_MESSAGE,CART_VIEWED]}},orderBy:[{createdAt:"desc"},{id:"desc"}],take:1200,select:{id:true,entityId:true,action:true,afterData:true,createdAt:true,userId:true}}):[];
    const vouchers=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:"CART_SERVICE_VOUCHER_UPLOADED"},select:{entityId:true}}):[];
    const voucherRefs=new Set(vouchers.map(x=>x.entityId));
    const eventsByRef=new Map<string,typeof actions>();
@@ -111,7 +111,9 @@ export async function GET(req:NextRequest){
     const data=jsonData(o.afterData),reference=o.entityId||"",events=eventsByRef.get(reference)||[];
     const status=cartStatus(events),paymentStatus=cartPaymentStatus(events);
     const latestMessage=events.find(e=>e.action===CART_MESSAGE);
-    const newMessage=!!latestMessage&&asRecord(latestMessage.afterData).from==="ADMIN";
+    const lastRead=events.find(e=>e.action===CART_VIEWED);
+    const clientDocument=events.find(e=>e.action===CART_DOCUMENT&&asRecord(e.afterData).from==="CUSTOMER");
+    const newMessage=!!latestMessage&&asRecord(latestMessage.afterData).from==="ADMIN"&&(!lastRead||lastRead.createdAt<latestMessage.createdAt)&&(!clientDocument||clientDocument.createdAt<latestMessage.createdAt);
     return {reference,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,status,paymentStatus,needsAttention:status==="DOCUMENTS_REQUESTED"||paymentStatus===REJECTED||newMessage,hasNewMessage:newMessage,hasVoucher:voucherRefs.has(reference)};
    });
    return NextResponse.json({success:true,orders:result},{headers:{"Cache-Control":"private, no-store"}});
