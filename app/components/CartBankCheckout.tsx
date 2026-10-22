@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
+import Link from "next/link";
 type CartItem={serviceId:string;quantity:number;itemType?:"DRIVING_LICENSE";application?:Record<string,unknown>};
 type Bank={id:string;bankName:string;beneficiaryName:string;iban:string;note:string};
 type Order={reference:string;amountSar:number;bankAccountId:string;status:string};
@@ -12,10 +13,11 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
  const [file,setFile]=useState<File|null>(null);
  const [voucherAvailable,setVoucherAvailable]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const [needsLogin,setNeedsLogin]=useState(false);
  useEffect(()=>{
   let alive=true;
   fetch("/api/cart/bank-checkout",{credentials:"include",cache:"no-store"}).then(async r=>{
-   const d=await r.json();if(!r.ok)throw Error(d.message||"تعذر تحميل الحسابات.");
+   const d=await r.json();if(r.status===401){if(alive)setNeedsLogin(true);return;}if(!r.ok)throw Error(d.message||"تعذر تحميل الحسابات.");
    if(alive){setBanks(d.banks||[]);setBankId((d.banks||[])[0]?.id||"");}
   }).catch(e=>{if(alive)setError(e instanceof Error?e.message:"تعذر تحميل الحسابات.");});
   return()=>{alive=false;};
@@ -62,11 +64,12 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
  return <section aria-label="طرق السداد" className="mt-5 rounded-2xl border border-[#D4AF37]/40 bg-[#FFFDF7] p-5 text-[#0D3B34]">
   <h3 className="text-lg font-black">طرق السداد</h3>
   <p className="mt-1 text-xs text-[#66796F]">اختر وسيلة الدفع المناسبة لسلتك.</p>
+  {needsLogin&&<div className="mt-3 rounded-xl border border-[#D4AF37]/40 bg-white p-4 text-sm"><p>سجّل الدخول لإظهار الحساب البنكي المعتمد وإنشاء مرجع تحويل خاص بك.</p><Link href="/login?next=%2Fcart" className="mt-2 inline-block rounded-lg bg-[#0D3B34] px-4 py-2 font-bold text-white">تسجيل الدخول وإكمال السداد</Link></div>}
   <div className="mt-4 grid gap-2 sm:grid-cols-2">
    <button type="button" disabled={!!order} onClick={()=>setMethod("BANK")} aria-pressed={method==="BANK"} className={`rounded-xl border px-4 py-3 text-right text-sm font-bold transition ${method==="BANK"?"border-[#B9974A] bg-[#FFF2CA]":"border-[#DED5BE] bg-white"}`}>🏦 التحويل البنكي</button>
    <button type="button" disabled={!!order} onClick={()=>setMethod("CARD")} aria-pressed={method==="CARD"} className={`rounded-xl border px-4 py-3 text-right text-sm font-bold transition ${method==="CARD"?"border-[#B9974A] bg-[#FFF2CA]":"border-[#DED5BE] bg-white"}`}>💳 الدفع الإلكتروني <span className="mr-2 rounded-full bg-[#F3E2B0] px-2 py-0.5 text-[10px] text-[#8A6521]">قريباً</span></button>
   </div>
-  {method==="CARD"&&!order&&<p className="mt-4 rounded-xl border bg-white p-4 text-xs leading-7">مدى، Visa، Mastercard، Apple Pay وSTC Pay — قريباً بعد اعتماد وتفعيل بوابة الدفع. لا يمكن الخصم الإلكتروني حالياً.</p>}
+  {method==="CARD"&&!order&&<div className="mt-4 rounded-xl border bg-white p-4 text-xs leading-7"><p>الدفع الإلكتروني سيُفعّل بعد اعتماد بوابة الدفع؛ لا يمكن تحصيل المبالغ إلكترونياً حالياً.</p><div className="mt-3 flex flex-wrap gap-2">{["مدى","Visa","Mastercard","Apple Pay","STC Pay"].map(p=><span key={p} className="rounded-lg border border-[#D4AF37]/30 px-2 py-1 font-bold">{p} · قريباً</span>)}</div></div>}
   {(method==="BANK"||order)&&<div className="mt-4 space-y-3">
    {!order&&banks.length>1&&<label className="block text-sm font-bold">الحساب المعتمد<select className="mt-2 w-full rounded-xl border p-3" value={bankId} onChange={e=>setBankId(e.target.value)}>{banks.map(b=><option key={b.id} value={b.id}>{b.bankName} — {b.iban.slice(-6)}</option>)}</select></label>}
    {bank?<div className="rounded-xl border border-[#D4AF37]/30 bg-white p-4 text-sm leading-8">
@@ -74,7 +77,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
     <p dir="ltr" className="break-all text-left font-mono font-bold">{bank.iban}</p>
     <button type="button" onClick={()=>void navigator.clipboard.writeText(bank.iban)} className="mt-1 rounded-lg border px-3 py-1 text-xs">نسخ الآيبان</button>
     {bank.note&&<p className="mt-2 whitespace-pre-wrap rounded-lg bg-[#FFF8E6] px-3 py-2 text-xs">{bank.note}</p>}
-   </div>:<p className="rounded-xl border border-[#E6C77C] bg-[#FFF8EA] p-3 text-xs">{error||"لا يوجد حساب بنكي معتمد ظاهر حالياً. يرجى المحاولة لاحقاً."}</p>}
+   </div>:<p className="rounded-xl border border-[#E6C77C] bg-[#FFF8EA] p-3 text-xs">{error||(needsLogin?"سجّل الدخول لعرض الحساب البنكي.":"لا توجد حسابات بنكية مفعّلة للسداد حالياً. يُرجى التواصل مع فريق أريس.")}</p>}
    {order?<div className="space-y-3 rounded-xl border border-[#D4AF37]/30 bg-white p-4">
     <p className="text-sm font-bold">مرجع التحويل: <span dir="ltr">{order.reference}</span></p>
     <p className="font-black">المبلغ المطلوب: {money(order.amountSar)}</p>
@@ -90,7 +93,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
    </div>:<div>
     <p className="mb-2 text-sm font-bold">الإجمالي بعد الخصم: {money(total)}</p>
     {pointsDiscount>0&&<p className="mb-2 text-xs text-[#986A19]">استخدام نقاط المكافآت مع التحويل غير مفعل؛ ألغِ خيار النقاط لإكمال السداد البنكي.</p>}
-    <button type="button" disabled={busy||!bank||total<=0||pointsDiscount>0} onClick={()=>void createOrder()} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white disabled:opacity-40">{busy?"جارٍ تسجيل الطلب":"اعتماد الإجمالي وإنشاء مرجع التحويل"}</button>
+    <button type="button" disabled={busy||needsLogin||!bank||total<=0||pointsDiscount>0} onClick={()=>void createOrder()} className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-black text-white disabled:opacity-40">{busy?"جارٍ تسجيل الطلب":"اعتماد الإجمالي وإنشاء مرجع التحويل"}</button>
    </div>}
   </div>}
   {error&&<p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-xs text-red-700">{error}</p>}
