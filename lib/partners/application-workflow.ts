@@ -17,7 +17,7 @@ export async function runPartnerApplicationWorkflow(input:PartnerApplicationWork
   await prisma.$transaction(async tx=>{
     await tx.partner.update({
       where:{id:input.partnerId},
-      data:{status:"UNDER_REVIEW",reviewNotes:null,submittedAt:new Date()},
+      data:{status:"UNDER_REVIEW"},
     });
     await tx.auditLog.create({
       data:{
