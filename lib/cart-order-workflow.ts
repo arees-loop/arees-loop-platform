@@ -8,6 +8,7 @@ export const CART_REJECTED = "CART_BANK_REJECTED";
 export const CART_STATUS = "CART_WORKFLOW_STATUS_UPDATED";
 export const CART_MESSAGE = "CART_WORKFLOW_MESSAGE";
 export const CART_DOCUMENT = "CART_WORKFLOW_DOCUMENT";
+export const CART_VIEWED = "CART_CUSTOMER_VIEWED";
 export const CART_STATUSES = ["PROCESSING","DOCUMENTS_REQUESTED","COMPLETED"] as const;
 export type CartWorkflowStatus = typeof CART_STATUSES[number];
 export type CartEvent = {id:string;action:string;createdAt:Date;afterData:unknown;userId:string|null};
@@ -22,6 +23,12 @@ export function cartStatus(events:CartEvent[]):string {
  if(payment!==CART_VERIFIED)return payment;
  const step = events.find(e=>e.action===CART_STATUS);
  const state=asRecord(step?.afterData).status;
+ if(state==="DOCUMENTS_REQUESTED"){
+   // A submitted customer document satisfies the immediate upload request while
+   // the admin still has to explicitly confirm completion/processing.
+   const response=events.find(e=>e.action===CART_DOCUMENT&&asRecord(e.afterData).from==="CUSTOMER");
+   if(response&&step&&response.createdAt>step.createdAt)return "DOCUMENTS_SUBMITTED";
+ }
  return typeof state==="string" && CART_STATUSES.some(x=>x===state) ? state : "PAID";
 }
 export function cartStatusLabel(status:string):string {
@@ -33,6 +40,7 @@ export function cartStatusLabel(status:string):string {
   PAID:"تم السداد — تحت الإجراء",
   PROCESSING:"تحت التنفيذ",
   DOCUMENTS_REQUESTED:"مطلوب مستندات إضافية",
+  DOCUMENTS_SUBMITTED:"تم رفع المستندات — تنتظر مراجعة الإدارة",
   COMPLETED:"تم التنفيذ"
  } as Record<string,string>)[status]||"طلب جديد";
 }

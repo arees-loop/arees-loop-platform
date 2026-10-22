@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
+import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 import {useCallback,useEffect,useMemo,useState} from "react";
 type Item={title?:string;quantity?:number;unitPriceSar?:number};
 type Order={reference:string;amountSar:number;status:string;workflowStatus:string;createdAt:string;rows:Item[];customer:{name:string;email:string;phone:string|null}|null};
-const labels:Record<string,string>={CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"إيصال للتحقق",CART_BANK_VERIFIED:"تم تأكيد السداد",CART_BANK_REJECTED:"إيصال مرفوض",PAID:"تم السداد — تحت الإجراء",PROCESSING:"تحت التنفيذ",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",COMPLETED:"تم التنفيذ"};
+const labels:Record<string,string>={CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"إيصال للتحقق",CART_BANK_VERIFIED:"تم تأكيد السداد",CART_BANK_REJECTED:"إيصال مرفوض",PAID:"تم السداد — تحت الإجراء",PROCESSING:"تحت التنفيذ",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",DOCUMENTS_SUBMITTED:"وصلت مستندات العميل — للمراجعة",COMPLETED:"تم التنفيذ"};
 const filters=[{id:"ALL",name:"كل الطلبات"},{id:"CART_BANK_CREATED",name:"طلبات جديدة"},{id:"CART_BANK_RECEIPT_SUBMITTED",name:"تحتاج تأكيد السداد"},{id:"PAID",name:"تم السداد"},{id:"PROCESSING",name:"تحت التنفيذ"},{id:"DOCUMENTS_REQUESTED",name:"مطلوب مستندات"},{id:"COMPLETED",name:"تم التنفيذ"},{id:"CART_BANK_REJECTED",name:"إيصال مرفوض"}];
 export default function AdminCartBankPayments(){
  const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[query,setQuery]=useState(""),[filter,setFilter]=useState("ALL");
@@ -22,7 +23,7 @@ export default function AdminCartBankPayments(){
       <td className="px-4 py-4"><b className="block text-sm">{o.customer?.name||"عميل أريس لوب"}</b><span className="mt-1 block" dir="ltr">{o.customer?.phone||o.customer?.email||"—"}</span></td>
       <td className="max-w-[280px] px-4 py-4"><b className="block truncate">{(o.rows||[]).map(x=>x.title||"خدمة").join("، ")}</b><span className="block break-all font-mono text-[10px] text-[#788477]">{o.reference}</span></td>
       <td className="whitespace-nowrap px-4 py-4 font-bold">{amount(o.amountSar)}</td>
-      <td className="px-4 py-4"><span className="rounded-full bg-[#F5F0E5] px-3 py-2 font-bold">{labels[o.workflowStatus||o.status]||o.workflowStatus||o.status}</span></td>
+      <td className="px-4 py-4"><OrderStatusBadge status={o.workflowStatus||o.status}>{labels[o.workflowStatus||o.status]||o.workflowStatus||o.status}</OrderStatusBadge></td>
       <td className="whitespace-nowrap px-4 py-4">{new Date(o.createdAt).toLocaleDateString("ar-SA")}</td>
       <td className="px-4 py-4"><Link href={"/admin/cart-bank-payments/"+encodeURIComponent(o.reference)} className="inline-flex rounded-xl border border-[#B9974A] bg-[#FFF9E8] px-4 py-2 font-bold">فتح الطلب ←</Link></td>
      </tr>)}

@@ -2,6 +2,7 @@
 import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 
 import Link from "next/link";
+import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 import { useEffect, useMemo, useState } from "react";
 
 type Booking = {
@@ -31,7 +32,7 @@ export default function BookingsPage(){
    <section className="mt-5 space-y-4">
     {loading?<div className="rounded-3xl bg-white/70 p-10 text-center">جاري تحميل حجوزاتك...</div>:error?<div role="alert" className="rounded-3xl bg-white/70 p-10 text-center">{error}{error.includes("الدخول")&&<Link href="/login" className="mt-3 block font-bold underline">تسجيل الدخول</Link>}</div>:shown.length===0?<div className="rounded-3xl bg-white/70 p-10 text-center"><h2 className="font-black">لا توجد حجوزات في هذا القسم</h2><Link href="/discover" className="mt-4 inline-flex rounded-xl bg-[#0D3B34] px-5 py-3 text-xs font-bold text-white">اكتشف البرامج والتجارب</Link></div>:shown.map(b=><article key={b.id} className="overflow-hidden rounded-[26px] border border-white bg-white/75 md:grid md:grid-cols-[210px_1fr]">
      <div className="min-h-[170px] bg-[#0D3B34]/10 bg-cover bg-center" style={b.service.images[0]?.url?{backgroundImage:`url("${b.service.images[0].url}")`}:{}} />
-     <div className="p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><span className="rounded-full bg-[#0D3B34]/8 px-3 py-1 text-[10px] font-bold">{statusLabel[b.status]||b.status}</span><h2 className="mt-3 text-xl font-black">{b.service.nameAr}</h2><p className="mt-2 text-xs text-[#0D3B34]/60">{b.service.city||"الموقع حسب تفاصيل الخدمة"} · {b.guests} زائر</p><p className="mt-2 text-[10px] text-[#0D3B34]/50">رقم الحجز: {b.reference}</p></div><div><p className="text-[10px] text-[#0D3B34]/50">الإجمالي</p><p className="mt-1 text-lg font-black">{Number(b.totalAmount).toFixed(2)} ر.س</p></div></div>
+     <div className="p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><OrderStatusBadge status={b.status}>{statusLabel[b.status]||b.status}</OrderStatusBadge><h2 className="mt-3 text-xl font-black">{b.service.nameAr}</h2><p className="mt-2 text-xs text-[#0D3B34]/60">{b.service.city||"الموقع حسب تفاصيل الخدمة"} · {b.guests} زائر</p><p className="mt-2 text-[10px] text-[#0D3B34]/50">رقم الحجز: {b.reference}</p></div><div><p className="text-[10px] text-[#0D3B34]/50">الإجمالي</p><p className="mt-1 text-lg font-black">{Number(b.totalAmount).toFixed(2)} ر.س</p></div></div>
      <div className="mt-5 border-t border-[#0D3B34]/10 pt-4 text-xs">{new Intl.DateTimeFormat("ar-SA",{dateStyle:"medium"}).format(new Date(b.serviceDate||b.bookingDate))}</div>
     </div></article>)}
    </section>

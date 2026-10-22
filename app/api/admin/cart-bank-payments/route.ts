@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {get} from "@vercel/blob";
 import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
-import {cartStatus,cartPaymentStatus,CART_STATUS,CART_MESSAGE} from "@/lib/cart-order-workflow";
+import {cartStatus,cartPaymentStatus,CART_STATUS,CART_MESSAGE,CART_DOCUMENT} from "@/lib/cart-order-workflow";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const TYPE="CART_BANK_CHECKOUT";
@@ -39,7 +39,7 @@ export async function GET(req:NextRequest){
   }
   const orders=await prisma.auditLog.findMany({where:{entityType:TYPE,action:CREATED},orderBy:{createdAt:"desc"},take:100,select:{id:true,entityId:true,userId:true,afterData:true,createdAt:true}});
   const references=orders.map(x=>x.entityId).filter((x):x is string=>!!x);
-  const events=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,CART_STATUS,CART_MESSAGE]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{id:true,entityId:true,action:true,createdAt:true,afterData:true,userId:true}}):[];
+  const events=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,CART_STATUS,CART_MESSAGE,CART_DOCUMENT]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{id:true,entityId:true,action:true,createdAt:true,afterData:true,userId:true}}):[];
   const byReference=new Map<string,typeof events>();
   for(const e of events){if(!e.entityId)continue;const list=byReference.get(e.entityId)||[];list.push(e);byReference.set(e.entityId,list);}
   const users=orders.length?await prisma.user.findMany({where:{id:{in:orders.map(x=>x.userId).filter((v):v is string=>!!v)}},select:{id:true,firstName:true,lastName:true,email:true,phone:true}}):[];
