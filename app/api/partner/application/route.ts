@@ -918,7 +918,8 @@ export async function POST(request: NextRequest) {
 
 
 
-          status: "SUBMITTED",
+          // Keep new guide registration in DRAFT until all private uploads succeed.
+          status: partnerType === "INDIVIDUAL" ? "DRAFT" : "SUBMITTED",
 
           submittedAt: new Date(),
 
