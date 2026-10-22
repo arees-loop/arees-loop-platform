@@ -37,6 +37,8 @@ type Partner = {
 
   logoUrl?: string;
   partnerType?: string;
+  description?:string;
+  applicantRole?:string;
   documents?: PartnerDocumentSummary[];
 
   category: string;
@@ -103,6 +105,8 @@ type ApiPartner = {
   publicName?: string | null;
   logoUrl?: string | null;
   partnerType?: string | null;
+  descriptionAr?:string|null;
+  applicantRole?:string|null;
   documents?: PartnerDocumentSummary[];
   commercialRegister?: string | null;
   unifiedNumber?: string | null;
@@ -183,6 +187,8 @@ function mapApiPartner(partner: ApiPartner): Partner {
     id: partner.id,
     logoUrl: partner.logoUrl?.trim() || "",
     partnerType: partner.partnerType ?? "",
+    description: partner.descriptionAr?.trim() || "",
+    applicantRole: partner.applicantRole || "",
     documents: partner.documents ?? [],
     legalName:
       partner.legalNameAr?.trim() || partner.legalNameEn?.trim() || EMPTY_VALUE,
@@ -1246,6 +1252,17 @@ function AdminPartnersContent() {
 
 
 
+              {/* TYPE-SPECIFIC PROFESSIONAL PROFILE */}
+              {selectedPartner.partnerType==="INDIVIDUAL"&&<ReviewCard
+                title="بيانات المرشد السياحي"
+                badge="GUIDE"
+                items={[["الاسم المهني",selectedPartner.tradeName],["المدينة",selectedPartner.city],["التخصص واللغات ووصف الخبرة",selectedPartner.description||"مطلوب استكمال بيانات الإرشاد"]]}
+              />}
+              {selectedPartner.partnerType==="BUSINESS"&&<ReviewCard
+                title="صفة مقدم طلب المنشأة"
+                badge="AUTHORITY"
+                items={[["صفة مقدم الطلب",selectedPartner.applicantRole==="OWNER"?"المالك":selectedPartner.applicantRole==="REPRESENTATIVE"?"ممثل مفوض":"غير محدد"],["إثبات الصفة","تراجع المرفقات الرسمية أدناه قبل إرسال الاتفاقية"]]}
+              />}
               {/* LICENSE */}
 
               <ReviewCard
