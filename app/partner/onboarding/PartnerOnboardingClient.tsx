@@ -51,6 +51,9 @@ type FormData = {
   applicantRole: ApplicantRole;
   jobTitle: string;
   authorizationFile: string;
+  ownerProofFile: string;
+  guideLanguages: string;
+  guideSpecialty: string;
 
   tradeName: string;
   legalName: string;
@@ -219,6 +222,9 @@ const initialData: FormData = {
   applicantRole: "",
   jobTitle: "",
   authorizationFile: "",
+  ownerProofFile: "",
+  guideLanguages: "",
+  guideSpecialty: "",
 
   tradeName: "",
   legalName: "",
@@ -272,6 +278,7 @@ export default function PartnerOnboardingPage() {
 
   const [uploadedFiles, setUploadedFiles] = useState<{
     authorization: File | null;
+    ownerProof: File | null;
     nationalAddress: File | null;
     ibanCertificate: File | null;
     vatCertificate: File | null;
@@ -279,6 +286,7 @@ export default function PartnerOnboardingPage() {
     documents: Record<number, File>;
   }>({
     authorization: null,
+    ownerProof: null,
     nationalAddress: null,
     ibanCertificate: null,
     vatCertificate: null,
@@ -339,7 +347,7 @@ export default function PartnerOnboardingPage() {
       partnerType: selectedType,
       ...(selectedType === "government"
         ? { proofType: "وثيقة جهة حكومية أو غير ربحية", categories: ["فعاليات"] }
-        : {}),
+        : selectedType === "individual" ? { proofType: "رخصة مرشد سياحي", categories: ["مرشدون"], applicantRole: "owner" } : {}),
     }));
   }, []);
 
@@ -428,6 +436,7 @@ export default function PartnerOnboardingPage() {
             String(application.applicantJobTitle || ""),
           authorizationFile:
             existingFileName("AUTHORIZATION"),
+          ownerProofFile: String(existingDocuments.find((item:{type?:string;label?:string;fileName?:string})=>item.type==="BUSINESS_PROOF"&&item.label?.includes("ملكية"))?.fileName||""),
 
           tradeName:
             String(application.tradeNameAr || ""),
@@ -611,12 +620,13 @@ export default function PartnerOnboardingPage() {
     };
   }, []);
 
+  const activeSteps = useMemo(() => (data.partnerType === "individual" || data.partnerType === "government") ? steps.filter(step => step.id !== "categories") : steps, [data.partnerType]);
   const activeIndex = useMemo(
     () =>
-      steps.findIndex(
+      activeSteps.findIndex(
         (step) => step.id === currentStep
       ),
-    [currentStep]
+    [currentStep, activeSteps]
   );
 
   const progress =
@@ -624,7 +634,7 @@ export default function PartnerOnboardingPage() {
       ? 100
       : Math.round(
           ((Math.max(activeIndex, 0) + 1) /
-            steps.length) *
+            activeSteps.length) *
             100
         );
 
@@ -1212,6 +1222,7 @@ export default function PartnerOnboardingPage() {
         if (!data.applicantRole) {
           errors.applicantRole = "حدد صفتك لدى المنشأة.";
         }
+        if (data.applicantRole === "owner" && !data.ownerProofFile) errors.ownerProofFile = "أرفق إثبات ملكية المنشأة قبل المتابعة.";
         if (data.applicantRole === "representative") {
           if (!data.jobTitle.trim()) errors.jobTitle = "المسمى الوظيفي مطلوب.";
           if (!data.authorizationFile) {
@@ -1223,16 +1234,18 @@ export default function PartnerOnboardingPage() {
     }
 
     if (currentStep === "business") {
+      if (data.partnerType === "individual" && !data.guideLanguages.trim()) errors.guideLanguages = "لغات الإرشاد مطلوبة.";
+      if (data.partnerType === "individual" && !data.guideSpecialty.trim()) errors.guideSpecialty = "مجال التخصص السياحي مطلوب.";
       if (!data.tradeName.trim()) errors.tradeName = "الاسم التجاري / اسم النشاط مطلوب.";
       if (!data.city.trim()) errors.city = "المدينة مطلوبة.";
-      if (data.partnerType !== "government" && !data.district.trim()) errors.district = "الحي مطلوب.";
-      if (data.partnerType !== "government" && !data.street.trim()) errors.street = "الشارع مطلوب.";
-      if (data.partnerType !== "government" && !data.shortNationalAddress.trim()) {
+      if (data.partnerType === "business" && !data.district.trim()) errors.district = "الحي مطلوب.";
+      if (data.partnerType === "business" && !data.street.trim()) errors.street = "الشارع مطلوب.";
+      if (data.partnerType === "business" && !data.shortNationalAddress.trim()) {
         errors.shortNationalAddress = "العنوان الوطني المختصر مطلوب.";
-      } else if (data.partnerType !== "government" && !/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
+      } else if (data.partnerType === "business" && !/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
         errors.shortNationalAddress = "أدخل عنواناً وطنياً مختصراً صحيحاً: 4 أحرف ثم 4 أرقام، مثال ABCD1234.";
       }
-      if (data.partnerType !== "government" && !data.nationalAddressFile) {
+      if (data.partnerType === "business" && !data.nationalAddressFile) {
         errors.nationalAddressFile = "أرفق مستند العنوان الوطني للمنشأة.";
       }
     }
@@ -1244,11 +1257,13 @@ export default function PartnerOnboardingPage() {
     }
 
     if (currentStep === "documents") {
-      const hasDocument = documents.some(
-        (document) => document.fileName || document.number.trim()
+      const validLicenses = documents.filter(document =>
+        document.type.trim() && document.issuer.trim() && document.number.trim() &&
+        document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
+        (uploadedFiles.documents[document.id] || document.fileName)
       );
-      if (!hasDocument) {
-        errors.documents = "أضف مستنداً أو ترخيصاً واحداً على الأقل.";
+      if (validLicenses.length === 0) {
+        errors.documents = "الترخيص إلزامي: النوع والجهة والرقم وتاريخ السريان وملف الرخصة مطلوبة.";
       }
     }
 
@@ -1308,18 +1323,18 @@ export default function PartnerOnboardingPage() {
     if (!validateCurrentStep()) return;
 
     const index =
-      steps.findIndex(
+      activeSteps.findIndex(
         (step) =>
           step.id === currentStep
       );
 
     if (
       index >= 0 &&
-      index < steps.length - 1
+      index < activeSteps.length - 1
     ) {
       setValidationErrors({});
       setCurrentStep(
-        steps[index + 1].id
+        activeSteps[index + 1].id
       );
 
       window.scrollTo({
@@ -1331,14 +1346,14 @@ export default function PartnerOnboardingPage() {
 
   const goBack = () => {
     const index =
-      steps.findIndex(
+      activeSteps.findIndex(
         (step) =>
           step.id === currentStep
       );
 
     if (index > 0) {
       setCurrentStep(
-        steps[index - 1].id
+        activeSteps[index - 1].id
       );
 
       window.scrollTo({
@@ -1407,13 +1422,7 @@ export default function PartnerOnboardingPage() {
         : "حدد هل مقدم الطلب مالك المنشأة أم ممثلاً مفوضاً.",
     });
 
-    const authorizationOk =
-      data.partnerType !== "business" ||
-      data.applicantRole !==
-        "representative" ||
-      Boolean(
-        data.authorizationFile
-      );
+    const authorizationOk = data.partnerType !== "business" || (data.applicantRole === "owner" ? Boolean(data.ownerProofFile) : data.applicantRole === "representative" ? Boolean(data.authorizationFile) : false);
 
     checks.push({
       label: "صلاحية الممثل",
@@ -1435,7 +1444,8 @@ export default function PartnerOnboardingPage() {
       data.tradeName.trim() &&
         data.country.trim() &&
         data.city.trim() &&
-        (data.partnerType === "government" || (
+        (data.partnerType !== "individual" || (data.guideLanguages.trim() && data.guideSpecialty.trim())) &&
+        (data.partnerType !== "business" || (
           data.district.trim() &&
           data.street.trim() &&
           /^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase()) &&
@@ -1467,12 +1477,11 @@ export default function PartnerOnboardingPage() {
           : "اختر تصنيف خدمة واحداً على الأقل.",
     });
 
-    const documentsOk =
-      documents.some(
-        (document) =>
-          document.fileName ||
-          document.number
-      );
+    const documentsOk = documents.some(document =>
+      document.type.trim() && document.issuer.trim() && document.number.trim() &&
+      document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
+      (uploadedFiles.documents[document.id] || document.fileName)
+    );
 
     checks.push({
       label: "الوثائق والتراخيص",
@@ -1537,6 +1546,7 @@ export default function PartnerOnboardingPage() {
   }, [
     data,
     documents,
+    uploadedFiles,
     emailVerified,
     smsVerificationEnabled,
     contactPhoneVerified,
@@ -1557,6 +1567,7 @@ export default function PartnerOnboardingPage() {
   if (!canSubmit) return;
 
   try {
+    if (data.partnerType === "business" && !data.ownerProofFile && data.applicantRole === "owner") { window.alert("يجب إرفاق إثبات ملكية المنشأة."); return; }
     const response = await fetch("/api/partner/application", {
       method:
         applicationStatus === "NEEDS_COMPLETION"
@@ -1576,7 +1587,7 @@ export default function PartnerOnboardingPage() {
         unifiedNumber: data.unifiedNumber,
         commercialRegister: data.registrationNumber,
         proofType: data.proofType,
-        descriptionAr: data.description,
+        descriptionAr: data.partnerType === "individual" ? `تخصص المرشد: ${data.guideSpecialty}\nاللغات: ${data.guideLanguages}\n${data.description}` : data.description,
 
         vatRegistered: data.vatRegistered,
         vatNumber: data.vatNumber,
@@ -1647,6 +1658,9 @@ export default function PartnerOnboardingPage() {
       label: string;
     }> = [];
 
+    if (uploadedFiles.ownerProof) {
+      filesToUpload.push({file:uploadedFiles.ownerProof,type:"BUSINESS_PROOF",label:"إثبات ملكية المنشأة"});
+    }
     if (uploadedFiles.authorization) {
       filesToUpload.push({
         file: uploadedFiles.authorization,
@@ -1885,8 +1899,8 @@ export default function PartnerOnboardingPage() {
           </div>
 
           <div className="relative z-20 hidden border-b border-[#0D3B34]/5 bg-[#F9F6EF]/55 md:block">
-            <div className="mx-auto grid max-w-[1100px] grid-cols-6 gap-2 px-5 py-3">
-              {steps.map(
+            <div className="mx-auto grid max-w-[1100px] grid-cols-5 gap-2 px-5 py-3 md:grid-cols-6">
+              {activeSteps.map(
                 (step, index) => (
                   <div
                     key={step.id}
@@ -2084,76 +2098,17 @@ export default function PartnerOnboardingPage() {
                       <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-[#0D3B34] text-lg font-black text-[#EAD38D]">✓</span>
                       <div>
                         <p className="text-sm font-black text-[#0D3B34]">
-                          {lockedPartnerType === "business" ? "شركة أو مؤسسة" : lockedPartnerType === "individual" ? "فرد" : "جهة حكومية أو غير ربحية"}
+                          {lockedPartnerType === "business" ? "شركة أو مؤسسة" : lockedPartnerType === "individual" ? "مرشد سياحي" : "جهة حكومية أو غير ربحية"}
                         </p>
                         <p className="mt-1 text-xs text-[#0D3B34]/60">نوع الشريك المختار من صفحة الانضمام</p>
                       </div>
                     </div>
-                    {!applicationId && (
-                      <Link href="/partner/select-type" className="rounded-full border border-[#D4AF37]/55 bg-white px-4 py-2 text-xs font-bold text-[#0D3B34] transition hover:bg-[#FFF9E9]">
-                        تغيير النوع
-                      </Link>
-                    )}
+
                   </div>
                 </div>
               ) : (
-              <div className={`grid gap-3 rounded-[22px] ${
-                validationErrors.partnerType ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
-              } md:grid-cols-3`}>
-                <SelectCard
-                  title="فرد"
-                  description="مقدم خدمة فردي أو مهني"
-                  active={
-                    data.partnerType ===
-                    "individual"
-                  }
-                  onClick={() => {
-                    update(
-                      "partnerType",
-                      "individual"
-                    );
-
-                    update(
-                      "applicantRole",
-                      ""
-                    );
-                  }}
-                />
-
-                <SelectCard
-                  title="مؤسسة أو شركة"
-                  description="منشأة تجارية مسجلة"
-                  active={
-                    data.partnerType ===
-                    "business"
-                  }
-                  onClick={() =>
-                    update(
-                      "partnerType",
-                      "business"
-                    )
-                  }
-                />
-
-                <SelectCard
-                  title="جهة حكومية أو غير ربحية"
-                  description="جهة مؤسسية أو مجتمعية"
-                  active={
-                    data.partnerType ===
-                    "government"
-                  }
-                  onClick={() => {
-                    update(
-                      "partnerType",
-                      "government"
-                    );
-
-                    update(
-                      "applicantRole",
-                      ""
-                    );
-                  }}
-                />
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-[#0D3B34]">
+                اختر نوع الشريك من <Link href="/partner/select-type" className="font-bold underline">صفحة الانضمام</Link>، فلا يجوز تغيير نوع الطلب داخل النموذج.
               </div>
               )}
             </Field>
@@ -2275,6 +2230,14 @@ export default function PartnerOnboardingPage() {
               </div>
             )}
 
+            {data.partnerType==="business" && data.applicantRole==="owner" && <div data-validation="ownerProofFile" className="mb-4 rounded-2xl border border-[#D4AF37]/30 bg-[#FFF9E8] p-4">
+              <Field label="إثبات ملكية المنشأة (إلزامي) *">
+                <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
+                  onChange={e=>{const file=e.target.files?.[0]??null;update("ownerProofFile",file?.name||"");setUploadedFiles(current=>({...current,ownerProof:file}));}}/>
+              </Field>
+              <p className="mt-2 text-xs text-[#0D3B34]/60">ارفع وثيقة رسمية تربط اسم المالك بالمنشأة. لا يكفي اختيار صفة مالك بدون إثبات.</p>
+              <ValidationError message={validationErrors.ownerProofFile}/>
+            </div>}
             <Actions
               onBack={goBack}
               onNext={goNext}
@@ -2287,13 +2250,13 @@ export default function PartnerOnboardingPage() {
                 {currentStep === "business" && (
           <StepCard
             eyebrow="STEP 02 / 06"
-            title={data.partnerType === "government" ? "بيانات الجهة الرسمية" : "بيانات النشاط والمقر"}
+            title={data.partnerType === "government" ? "بيانات الجهة الرسمية" : data.partnerType === "individual" ? "ملف المرشد السياحي" : "بيانات النشاط والمقر"}
             description={data.partnerType === "government"
               ? "اكتب الاسم الرسمي للجهة والمدينة. تتم مراجعة الهوية والمستندات قبل اعتماد شعار الجهة."
               : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : "الاسم التجاري / اسم النشاط *"}>
+              <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
                 <input
                   value={data.tradeName}
                   onChange={(e) => {
@@ -2312,8 +2275,16 @@ export default function PartnerOnboardingPage() {
                   className={`${inputClass} ${validationErrors.tradeName ? errorInputClass : ""}`}
                 />
               </Field><ValidationError message={validationErrors.tradeName} /></div>
+              {data.partnerType === "individual" && <>
+                <div data-validation="guideSpecialty"><Field label="تخصص الإرشاد السياحي *">
+                  <input value={data.guideSpecialty} onChange={e=>update("guideSpecialty",e.target.value)} placeholder="إرشاد ثقافي، تاريخي، مدن..." className={inputClass}/>
+                </Field><ValidationError message={validationErrors.guideSpecialty}/></div>
+                <div data-validation="guideLanguages"><Field label="لغات الإرشاد *">
+                  <input value={data.guideLanguages} onChange={e=>update("guideLanguages",e.target.value)} placeholder="العربية، الإنجليزية..." className={inputClass}/>
+                </Field><ValidationError message={validationErrors.guideLanguages}/></div>
+              </>}
 
-              <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : "الاسم القانوني"}>
+              <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
                 <input
                   value={data.legalName}
                   onChange={(e) =>
@@ -2645,10 +2616,7 @@ export default function PartnerOnboardingPage() {
             title="التراخيص والوثائق"
             description="أرفق الوثائق المناسبة لطبيعة الجهة والخدمات المختارة. المتطلبات تختلف بين المنشآت والأفراد والجهات المؤسسية."
           >
-            <AiHint
-              title="مساعد الامتثال الذكي"
-              text="يفحص النظام اكتمال البيانات والمستندات ويعرض الملاحظات قبل الإرسال. التحقق الآلي مساعد، أما اعتماد الشريك والمستندات فيتم بواسطة أريس."
-            />
+
 
             {data.partnerType ===
               "business" && (
@@ -3349,13 +3317,13 @@ export default function PartnerOnboardingPage() {
           <StepCard
             eyebrow="STEP 06 / 06"
             title="المراجعة والإرسال"
-            description="راجع البيانات. مساعد الامتثال يفحص اكتمال الطلب قبل إرساله إلى فريق أريس للمراجعة النهائية."
+            description="راجع البيانات والمرفقات المطلوبة قبل إرسال طلب الانضمام إلى فريق أريس للمراجعة."
           >
             <div className="rounded-[26px] bg-[#0D3B34] p-5 text-white">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-bold tracking-[0.16em] text-[#E5BE45]">
-                    AI COMPLIANCE CHECK
+                    REQUIRED FIELDS CHECKLIST
                   </p>
 
                   <h3 className="mt-1 text-lg font-bold">
@@ -3364,7 +3332,7 @@ export default function PartnerOnboardingPage() {
                 </div>
 
                 <span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold">
-                  مساعد امتثال
+                  قائمة المتطلبات
                 </span>
               </div>
 
@@ -3410,9 +3378,7 @@ export default function PartnerOnboardingPage() {
               </div>
 
               <p className="mt-4 text-[11px] leading-6 text-white/45">
-                هذا فحص مساعد ولا يمثل
-                اعتماداً نهائياً للشريك
-                أو للمستندات.
+                القائمة تعرض اكتمال الحقول المدخلة فقط؛ ولا تعني التحقق من صحة التراخيص أو اعتماد الطلب.
               </p>
             </div>
 

@@ -25,6 +25,15 @@ type PartnerStatus =
 
 
 
+type PartnerDocumentSummary = {
+  id: string;
+  type: string;
+  label?: string | null;
+  fileName?: string | null;
+  mimeType?: string | null;
+  status?: string | null;
+};
+
 type Partner = {
 
   id: string;
@@ -35,6 +44,8 @@ type Partner = {
 
   logoUrl?: string;
   partnerType?: string;
+  applicantRole: string;
+  descriptionAr: string;
 
   category: string;
 
@@ -85,6 +96,8 @@ type Partner = {
   agreementVersion: string;
 
   completionRequest?: string;
+  documents: PartnerDocumentSummary[];
+  operationsEmail: string;
 
 };
 
@@ -99,6 +112,8 @@ type ApiPartner = {
   publicName?: string | null;
   logoUrl?: string | null;
   partnerType?: string | null;
+  applicantRole?: string | null;
+  descriptionAr?: string | null;
   commercialRegister?: string | null;
   unifiedNumber?: string | null;
   vatRegistered?: boolean;
@@ -119,6 +134,7 @@ type ApiPartner = {
   transferFee?: string | number | null;
   completionNotes?: string | null;
   categories?: Array<{ name?: string | null }>;
+  documents?: PartnerDocumentSummary[];
   licenses?: Array<{
     type?: string | null;
     issuer?: string | null;
@@ -176,6 +192,10 @@ function mapApiPartner(partner: ApiPartner): Partner {
 
   return {
     id: partner.id,
+    documents: partner.documents ?? [],
+    applicantRole: partner.applicantRole ?? "",
+    descriptionAr: partner.descriptionAr?.trim() || EMPTY_VALUE,
+    operationsEmail: partner.mainContactEmail?.trim() || EMPTY_VALUE,
     logoUrl: partner.logoUrl?.trim() || "",
     partnerType: partner.partnerType ?? "",
     legalName:
@@ -314,6 +334,7 @@ function AdminPartnersContent() {
   const [partners, setPartners] = useState<Partner[]>([]);
 
   const [selectedId, setSelectedId] = useState<string>("");
+  const [previewDocId, setPreviewDocId] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [adminActionLoading, setAdminActionLoading] = useState(false);
@@ -325,6 +346,7 @@ function AdminPartnersContent() {
   };
 
   const [search, setSearch] = useState("");
+  const [partnerTrackFilter, setPartnerTrackFilter] = useState<"ALL"|"BUSINESS"|"INDIVIDUAL"|"GOVERNMENT_NONPROFIT">("ALL");
 
   const [viewMode, setViewMode] = useState<"CARDS" | "LIST">("CARDS");
 
@@ -424,11 +446,12 @@ function AdminPartnersContent() {
 
 
 
-      return matchesSearch && matchesStatus;
+      const matchesTrack = partnerTrackFilter === "ALL" || partner.partnerType === partnerTrackFilter;
+      return matchesSearch && matchesStatus && matchesTrack;
 
     });
 
-  }, [visiblePartners, search, statusFilter]);
+  }, [visiblePartners, search, statusFilter, partnerTrackFilter]);
 
 
 
@@ -607,6 +630,10 @@ function AdminPartnersContent() {
     const newPartner: Partner = {
 
       id: nextId,
+      documents: [],
+      applicantRole: "",
+      descriptionAr: "غير مدخل",
+      operationsEmail: "غير مدخل",
 
       legalName: value(manualPartner.legalName),
 
@@ -804,13 +831,13 @@ function AdminPartnersContent() {
 
             type="button"
 
-            onClick={() => setShowManualPartnerModal(true)}
-
-            className="rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+            disabled
+            title="متوقفة مؤقتاً؛ الإضافة الحالية لا تحفظ سجلاً في قاعدة البيانات."
+            className="cursor-not-allowed rounded-2xl bg-[#0D3B34]/45 px-5 py-3 text-sm font-semibold text-white"
 
           >
 
-            + إضافة شريك يدويًا
+            الإضافة اليدوية غير متاحة حالياً
 
           </button>
 
@@ -818,13 +845,26 @@ function AdminPartnersContent() {
 
 
 
-        {/* STATS */}
+        {/* REAL APPLICATION TYPES — counts filter actual records. */}
+         <section aria-label="تقسيم طلبات الشركاء حسب النوع" className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+           {([
+             {type:"ALL",title:"كل الشركاء",tone:"border-[#D4AF37]/35 bg-white text-[#0D3B34]",n:visiblePartners.length},
+             {type:"BUSINESS",title:"الشركات والمؤسسات",tone:"border-sky-200 bg-sky-50 text-sky-950",n:visiblePartners.filter(p=>p.partnerType==="BUSINESS").length},
+             {type:"INDIVIDUAL",title:"المرشدون السياحيون",tone:"border-emerald-200 bg-emerald-50 text-emerald-950",n:visiblePartners.filter(p=>p.partnerType==="INDIVIDUAL").length},
+             {type:"GOVERNMENT_NONPROFIT",title:"الحكومي وغير الربحي",tone:"border-amber-200 bg-amber-50 text-amber-950",n:visiblePartners.filter(p=>p.partnerType==="GOVERNMENT_NONPROFIT").length}
+           ] as const).map(group=><button key={group.type} type="button" aria-pressed={partnerTrackFilter===group.type}
+               onClick={()=>{setPartnerTrackFilter(group.type);setSelectedId("");}}
+               className={`flex min-h-20 items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-right transition focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${group.tone} ${partnerTrackFilter===group.type?"ring-2 ring-[#D4AF37]/60 shadow-sm":"opacity-80 hover:opacity-100"}`}>
+                <span className="text-xs font-bold">{group.title}</span><strong className="text-xl tabular-nums">{group.n}</strong>
+             </button>)}
+         </section>
+         {/* STATS */}
 
-        <section className="mb-7 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <section className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-5">
 
           {[
 
-            ["إجمالي الطلبات", stats.total],
+            ["إجمالي الطلبات", filteredPartners.length],
 
             ["تحت التدقيق", stats.review],
 
@@ -840,13 +880,13 @@ function AdminPartnersContent() {
 
               key={String(label)}
 
-              className="rounded-[22px] border border-white/80 bg-white/65 p-5 backdrop-blur-xl"
+              className="rounded-2xl border border-[#D4AF37]/20 bg-white/75 px-3 py-2.5 backdrop-blur-xl"
 
             >
 
               <p className="text-xs font-medium text-[#0D3B34]/55">{label}</p>
 
-              <p className="mt-3 text-3xl font-bold text-[#0D3B34]">{value}</p>
+              <p className="mt-1 text-xl font-bold text-[#0D3B34] tabular-nums">{value}</p>
 
             </div>
 
@@ -855,6 +895,19 @@ function AdminPartnersContent() {
         </section>
 
 
+
+        <section className="mb-5 flex flex-wrap gap-2" aria-label="تصفية الطلبات بحسب حالة المعالجة">
+          {(["ALL","SUBMITTED","UNDER_REVIEW","NEEDS_INFO","AWAITING_PARTNER_ACCEPTANCE","PARTNER_ACCEPTED","ACTIVE"] as const).map(key => {
+            const count = visiblePartners.filter(p => (partnerTrackFilter === "ALL" || p.partnerType === partnerTrackFilter) && (key === "ALL" || p.status === key)).length;
+            const title = key === "ALL" ? "كل الحالات" : statusConfig[key].label;
+            const colors = key === "ALL" ? "bg-white text-[#0D3B34]" : statusConfig[key].className;
+            return <button type="button" key={key} aria-pressed={statusFilter === key}
+              onClick={() => {setStatusFilter(key);setSelectedId("");setPreviewDocId("");}}
+              className={`inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#D4AF37]/15 px-3 py-2 text-xs font-bold transition focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${colors} ${statusFilter===key?"ring-2 ring-[#B99124]/55 shadow-sm":"hover:brightness-95"}`}>
+              <span>{title}</span><span className="rounded-full bg-white/65 px-2 py-0.5 tabular-nums">{count.toLocaleString("ar-SA")}</span>
+            </button>;
+          })}
+        </section>
 
         <div className={selectedPartner ? "grid gap-6" : "grid gap-6"}>
 
@@ -977,7 +1030,7 @@ function AdminPartnersContent() {
 
                     type="button"
 
-                    onClick={() => setSelectedId(partner.id)}
+                    onClick={() => {setSelectedId(partner.id);setPreviewDocId("");}}
 
                     className={`w-full rounded-[22px] border p-4 text-right transition ${
 
@@ -1054,6 +1107,7 @@ function AdminPartnersContent() {
                     >
 
                       <span>{partner.category}</span>
+                      <span title={partner.id} className="font-semibold" dir="ltr">#{partner.id.slice(0, 10)}</span>
 
                       <span>{partner.city}</span>
 
@@ -1123,7 +1177,7 @@ function AdminPartnersContent() {
 
                     <span className="rounded-full bg-[#0D3B34]/6 px-3 py-1 text-[11px] font-medium text-[#0D3B34]/65">
 
-                      طلب #{String(selectedPartner.id).padStart(5, "0")}
+                      معرّف الطلب: {selectedPartner.id}
 
                     </span>
 
@@ -1216,12 +1270,18 @@ function AdminPartnersContent() {
                   ["الرقم الضريبي", selectedPartner.taxNumber],
 
                   ["النشاط", selectedPartner.category],
+                  ["صفة مقدم الطلب", selectedPartner.applicantRole === "OWNER" ? "مالك المنشأة" : selectedPartner.applicantRole === "REPRESENTATIVE" ? "ممثل مفوض" : "غير محدد"],
 
                 ]}
 
               />
 
 
+
+              <section className="rounded-[24px] border border-[#D4AF37]/25 bg-[#FFFDF7] p-5" aria-label="تفاصيل المرشد أو النشاط">
+                <h3 className="text-base font-bold text-[#0D3B34]">{selectedPartner.partnerType === "INDIVIDUAL" ? "تفاصيل وخبرة المرشد السياحي" : "وصف النشاط أو الخدمة"}</h3>
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-8 text-[#0D3B34]/75">{selectedPartner.descriptionAr}</p>
+              </section>
 
               {/* LICENSE */}
 
@@ -1246,6 +1306,45 @@ function AdminPartnersContent() {
               />
 
 
+
+              {/* PRIVATE DOCUMENTS — admin-authorized preview, no public Blob links */}
+              <section className="rounded-[24px] border border-[#BDA36A]/35 bg-[#FBF7EC] p-5" aria-label="مرفقات طلب الشريك">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold tracking-[0.16em] text-[#A18037]">DOCUMENTS</p>
+                    <h3 className="mt-1 text-base font-bold">مرفقات ومستندات الشريك</h3>
+                    <p className="mt-1 text-xs text-[#0D3B34]/60">المعاينة داخل لوحة الإدارة، وتقتصر على الملفات المرفوعة والمصرح بعرضها.</p>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold">{selectedPartner.documents.length} مرفق</span>
+                </div>
+                {selectedPartner.documents.length === 0 ? (
+                  <p className="rounded-xl bg-white p-4 text-sm text-amber-900">لا توجد مرفقات محفوظة لهذا الطلب. يلزم استكمال المستندات قبل الاعتماد.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedPartner.documents.map((doc) => {
+                      const isPreviewable = doc.mimeType === "application/pdf" || doc.mimeType === "image/jpeg" || doc.mimeType === "image/png";
+                      const open = previewDocId === doc.id;
+                      return <div key={doc.id} className="rounded-2xl border border-[#D4AF37]/20 bg-white p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="break-words text-sm font-bold">{doc.label || doc.fileName || doc.type}</p>
+                            <p className="mt-1 text-xs text-[#0D3B34]/55">{doc.type} · {doc.status || "قيد التدقيق"}</p>
+                          </div>
+                          <button type="button" disabled={!isPreviewable}
+                            onClick={() => setPreviewDocId(open ? "" : doc.id)}
+                            aria-expanded={open} aria-label={`معاينة ${doc.fileName || doc.label || doc.type}`}
+                            className="rounded-xl border border-[#C5A052]/40 bg-[#FFF8E8] px-4 py-2 text-xs font-bold text-[#0D3B34] disabled:cursor-not-allowed disabled:opacity-40">
+                            {open ? "إغلاق المعاينة" : isPreviewable ? "معاينة داخل الصفحة" : "صيغة غير مدعومة"}
+                          </button>
+                        </div>
+                        {open && isPreviewable && <iframe loading="lazy" title={doc.fileName || doc.label || "مرفق الشريك"}
+                          src={`/api/admin/partners/${encodeURIComponent(selectedPartner.id)}/documents/${encodeURIComponent(doc.id)}`}
+                          className="mt-3 h-[520px] w-full rounded-xl border border-[#D4AF37]/20 bg-white" />}
+                      </div>;
+                    })}
+                  </div>
+                )}
+              </section>
 
               {/* BANK */}
 
@@ -1321,7 +1420,7 @@ function AdminPartnersContent() {
 
                     phone={selectedPartner.operationsPhone}
 
-                    email="operations@partner.sa"
+                    email={selectedPartner.operationsEmail}
 
                   />
 
@@ -1340,40 +1439,6 @@ function AdminPartnersContent() {
               </div>
 
 
-
-              {/* ADMIN REVIEW ASSISTANT */}
-              <div className="rounded-[26px] border border-[#D4AF37]/25 bg-[#FFFDF8] p-5 shadow-sm md:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">INTERNAL REVIEW ASSISTANT</p>
-                    <h3 className="mt-1 text-xl font-bold text-[#171717]">مساعد المراجعة</h3>
-                    <p className="mt-2 text-xs leading-6 text-[#171717]/55">مساحة داخلية للإدارة فقط. لا تظهر هذه الملاحظات أو نتيجة المراجعة للشريك.</p>
-                  </div>
-                  <span className="w-fit rounded-full bg-[#171717] px-3 py-1.5 text-[10px] font-bold text-[#D4AF37]">داخلي فقط</span>
-                </div>
-
-                <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-2xl border border-[#171717]/8 bg-[#F5F1E8] p-4">
-                    <p className="text-xs font-bold text-[#171717]">ملاحظات المراجعة</p>
-                    <p className="mt-3 text-xs leading-7 text-[#171717]/55">
-                      تظهر هنا نتيجة الفحص الداخلي للمستندات والبيانات، والنواقص أو التعارضات التي تحتاج مراجعة الإدارة.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[#D4AF37]/20 bg-white p-4">
-                    <p className="text-xs font-bold text-[#171717]">الرد المقترح للشريك</p>
-                    <textarea
-                      rows={5}
-                      defaultValue={selectedPartner.completionRequest ?? ""}
-                      placeholder="سيظهر هنا النص المقترح، ويمكن للإدارة تعديله قبل الإرسال..."
-                      className="mt-3 w-full resize-none rounded-xl border border-[#171717]/10 bg-[#FFFDF8] px-3 py-3 text-xs leading-6 text-[#171717] outline-none focus:border-[#D4AF37]/60"
-                    />
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button type="button" className="rounded-xl border border-[#171717]/10 bg-white px-3 py-2 text-[11px] font-bold text-[#171717]">اعتماد النص كما هو</button>
-                      <button type="button" onClick={requestMoreInfo} className="rounded-xl bg-[#171717] px-3 py-2 text-[11px] font-bold text-[#D4AF37]">تعديل وإرسال للشريك</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* COMMERCIAL TERMS */}
 

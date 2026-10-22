@@ -15,8 +15,8 @@ export default function GuideRegisterPage() {
         <div>
           <h2 className="text-xl font-black">الخطوة الأولى: التحقق من البريد</h2>
           <p className="mt-3 text-sm leading-8 text-[#0D3B34]/70">لمنع إنشاء نموذج منفصل لا يحفظ الطلبات، نستخدم مسار تسجيل الشركاء الموجود بالفعل، وهو يتضمن إرسال رمز تحقق للبريد وإثبات التراخيص والموافقة على الإقرارات.</p>
-          <Link href="/partner/onboarding" className="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-[#0D3B34] px-8 py-3 text-sm font-bold text-white">ابدأ التسجيل والتحقق من البريد ←</Link>
-          <p className="mt-4 text-xs leading-6 text-[#0D3B34]/55">اختر صفة مقدم الخدمة «فرد» وفئة النشاط «مرشدون» في خطوات التسجيل. لن يظهر ملفك في الدليل إلا بعد الاعتماد والتحقق من سريان الترخيص.</p>
+          <Link href="/partner/onboarding?type=individual" className="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-[#0D3B34] px-8 py-3 text-sm font-bold text-white">ابدأ التسجيل والتحقق من البريد ←</Link>
+          <p className="mt-4 text-xs leading-6 text-[#0D3B34]/55">تدخل مباشرة في نموذج المرشد السياحي، دون خيارات الشركات والجهات الحكومية. لن يظهر ملفك في الدليل إلا بعد الاعتماد والتحقق من سريان الترخيص.</p>
         </div>
         <aside className="rounded-3xl bg-[#F8F5ED] p-6">
           <h2 className="text-lg font-black">جهّز هذه المعلومات</h2>
