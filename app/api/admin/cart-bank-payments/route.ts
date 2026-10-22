@@ -2,6 +2,7 @@ import {NextRequest,NextResponse} from "next/server";
 import {get} from "@vercel/blob";
 import {prisma} from "@/lib/prisma";
 import {getCurrentSession} from "@/lib/session";
+import {cartStatus,cartPaymentStatus,CART_STATUS,CART_MESSAGE} from "@/lib/cart-order-workflow";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const TYPE="CART_BANK_CHECKOUT";
@@ -21,6 +22,7 @@ export async function GET(req:NextRequest){
  const session=await staff();if(!session)return fail("غير مصرح.",403);
  const reference=req.nextUrl.searchParams.get("reference");
  const download=req.nextUrl.searchParams.get("receipt")==="true";
+ const preview=req.nextUrl.searchParams.get("inline")==="true";
  try{
   if(download){
    if(!reference)return fail("مرجع غير موجود.");
@@ -32,15 +34,16 @@ export async function GET(req:NextRequest){
    const blob=await get(pathname,{access:"private"});
    if(!blob||blob.statusCode!==200)return fail("الإيصال غير موجود.",404);
    const type=typeof data.contentType==="string"&&["application/pdf","image/jpeg","image/png","image/webp"].includes(data.contentType)?data.contentType:"application/octet-stream";
-   return new Response(blob.stream,{headers:{"Content-Type":type,"Content-Disposition":"attachment; filename=\"arees-bank-receipt\"","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox"}});
+   const ext=type==="application/pdf"?"pdf":type==="image/png"?"png":type==="image/jpeg"?"jpg":type==="image/webp"?"webp":"bin";
+   return new Response(blob.stream,{headers:{"Content-Type":type,"Content-Disposition":(preview?"inline":"attachment")+"; filename=\"arees-bank-receipt."+ext+"\"","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","X-Frame-Options":"SAMEORIGIN","Content-Security-Policy":"default-src 'none'; sandbox"}});
   }
   const orders=await prisma.auditLog.findMany({where:{entityType:TYPE,action:CREATED},orderBy:{createdAt:"desc"},take:100,select:{id:true,entityId:true,userId:true,afterData:true,createdAt:true}});
   const references=orders.map(x=>x.entityId).filter((x):x is string=>!!x);
-  const events=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true,createdAt:true}}):[];
-  const latest=new Map<string,{action:string,createdAt:Date}>();
-  for(const e of events)if(e.entityId&&!latest.has(e.entityId))latest.set(e.entityId,e);
+  const events=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,CART_STATUS,CART_MESSAGE]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{id:true,entityId:true,action:true,createdAt:true,afterData:true,userId:true}}):[];
+  const byReference=new Map<string,typeof events>();
+  for(const e of events){if(!e.entityId)continue;const list=byReference.get(e.entityId)||[];list.push(e);byReference.set(e.entityId,list);}
   const users=orders.length?await prisma.user.findMany({where:{id:{in:orders.map(x=>x.userId).filter((v):v is string=>!!v)}},select:{id:true,firstName:true,lastName:true,email:true,phone:true}}):[];
-  return NextResponse.json({success:true,orders:orders.map(o=>{const d=obj(o.afterData),u=users.find(x=>x.id===o.userId);return {reference:o.entityId,amountSar:d.amountSar,bankAccountId:d.bankAccountId,rows:d.rows,status:latest.get(o.entityId||"")?.action||CREATED,createdAt:o.createdAt,customer:u?{name:[u.firstName,u.lastName].filter(Boolean).join(" "),email:u.email,phone:u.phone}:null};})},{headers:{"Cache-Control":"private, no-store"}});
+  return NextResponse.json({success:true,orders:orders.map(o=>{const d=obj(o.afterData),u=users.find(x=>x.id===o.userId);return {reference:o.entityId,amountSar:d.amountSar,bankAccountId:d.bankAccountId,rows:d.rows,status:cartPaymentStatus(byReference.get(o.entityId||"")||[]),workflowStatus:cartStatus(byReference.get(o.entityId||"")||[]),createdAt:o.createdAt,customer:u?{name:[u.firstName,u.lastName].filter(Boolean).join(" "),email:u.email,phone:u.phone}:null};})},{headers:{"Cache-Control":"private, no-store"}});
  }catch(error){console.error("Admin cart payment list error",error);return fail("تعذر تحميل طلبات التحويل.",503);}
 }
 export async function POST(req:NextRequest){
