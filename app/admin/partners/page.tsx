@@ -624,6 +624,8 @@ function AdminPartnersContent() {
     const newPartner: Partner = {
 
       id: nextId,
+      documents: [],
+      operationsEmail: "غير مدخل",
 
       legalName: value(manualPartner.legalName),
 
@@ -821,13 +823,13 @@ function AdminPartnersContent() {
 
             type="button"
 
-            onClick={() => setShowManualPartnerModal(true)}
-
-            className="rounded-2xl bg-[#0D3B34] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+            disabled
+            title="متوقفة مؤقتاً؛ الإضافة الحالية لا تحفظ سجلاً في قاعدة البيانات."
+            className="cursor-not-allowed rounded-2xl bg-[#0D3B34]/45 px-5 py-3 text-sm font-semibold text-white"
 
           >
 
-            + إضافة شريك يدويًا
+            الإضافة اليدوية غير متاحة حالياً
 
           </button>
 
