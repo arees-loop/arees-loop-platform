@@ -30,7 +30,7 @@ export async function GET(
   try {
     const blobUrl = new URL(document.fileUrl);
     if (blobUrl.protocol !== "https:") return new Response("Not found", { status: 404 });
-    const pathname = decodeURIComponent(blobUrl.pathname.replace(/^\\/+/, ""));
+    const pathname = decodeURIComponent(blobUrl.pathname.replace(/^\/+/, ""));
     if (!pathname.startsWith(`partners/${document.partnerId}/`) || pathname.includes("..")) {
       return new Response("Not found", { status: 404 });
     }
