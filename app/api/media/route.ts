@@ -9,14 +9,15 @@ export async function GET(request: NextRequest) {
   const pathname = request.nextUrl.searchParams.get("pathname");
   if (!pathname) return new Response("Not found", { status: 404 });
   const logoMatch = new RegExp("^partners/([^/]+)/logos/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
+  const guidePortraitMatch = /^partners\/([^/]+)\/guide-portraits\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
   const successMatch = new RegExp("^success-partners/([a-zA-Z0-9_-]+)/[a-f0-9-]+[.](png|jpg|webp)$").exec(pathname);
   const transportMatch = /^transport-offers\/(FLIGHT|FERRY|VISA|DRIVING_LICENSE)\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
   const hotelMatch = /^transport-offers\/HOTEL\/[a-f0-9-]+\.(png|jpg|webp)$/.exec(pathname);
-  if (!pathname.startsWith("services/") && !logoMatch && !successMatch && !transportMatch && !hotelMatch) {
+  if (!pathname.startsWith("services/") && !logoMatch && !guidePortraitMatch && !successMatch && !transportMatch && !hotelMatch) {
     return new Response("Not found", { status: 404 });
   }
 
-  let publicAsset = !logoMatch && !successMatch && !transportMatch && !hotelMatch;
+  let publicAsset = !logoMatch && !guidePortraitMatch && !successMatch && !transportMatch && !hotelMatch;
   if(hotelMatch){
     const offer=await prisma.hotelOffer.findFirst({
       where:{deletedAt:null,OR:[{bannerUrl:`/api/media?pathname=${encodeURIComponent(pathname)}`},{imageUrls:{array_contains:[`/api/media?pathname=${encodeURIComponent(pathname)}`]}}]},
@@ -59,12 +60,13 @@ export async function GET(request: NextRequest) {
       }
     }
   }
-  if (logoMatch) {
+  if (logoMatch || guidePortraitMatch) {
     const partner = await prisma.partner.findUnique({
-      where:{id:logoMatch[1]},
-      select:{id:true,status:true,logoUrl:true},
+      where:{id:(guidePortraitMatch||logoMatch)![1]},
+      select:{id:true,status:true,partnerType:true,logoUrl:true},
     });
-    if (!partner || partner.logoUrl !== `/api/media?pathname=${encodeURIComponent(pathname)}`) {
+    if (!partner || partner.logoUrl !== `/api/media?pathname=${encodeURIComponent(pathname)}` ||
+        (guidePortraitMatch && partner.partnerType!=="INDIVIDUAL")) {
       return new Response("Not found", { status:404 });
     }
     publicAsset = partner.status === "ACTIVE";
