@@ -40,8 +40,10 @@ export default function PublicServicesPage(){
             <h2 className="mt-2 text-xl font-black">{service.nameAr}</h2>
             <p className="mt-3 line-clamp-2 text-xs leading-6 text-[#0D3B34]/60">{service.descriptionAr ? service.descriptionAr.replace(/<[^>]*>/g," ").replace(/&nbsp;/g," ").trim() : "اكتشف تفاصيل هذه التجربة واحجزها عبر Arees Loop."}</p>
             <div className="mt-5 border-t border-[#0D3B34]/10 pt-4">
-              <div><span className="text-[10px] text-[#0D3B34]/50">ابتداءً من</span><p className="text-lg font-black">{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</p></div>
-              <ServiceLoyaltyBanner finalPrice={service.finalPrice} className="mt-3"/>
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <div><span className="text-[10px] text-[#0D3B34]/50">ابتداءً من</span><p className="text-lg font-black">{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</p></div>
+                <ServiceLoyaltyBanner finalPrice={service.finalPrice}/>
+              </div>
               <span className="mt-3 block w-full rounded-xl bg-[#0D3B34] px-4 py-3 text-center text-[12px] font-bold text-white">عرض التفاصيل</span>
             </div>
           </div>
