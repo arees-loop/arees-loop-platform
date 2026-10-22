@@ -30,7 +30,7 @@ const requestsNav: NavItem[] = [
 ];
 const bookingsNav: NavItem[] = [
   { href: "/admin/bookings", label: "حجوزات تجارب الشركاء", icon: "▦", permission: "BOOKINGS" },
-  { href: "/admin/cart-bank-payments", label: "تحويلات السلة البنكية", icon: "▣", permission: "BOOKINGS" },
+  { href: "/admin/cart-bank-payments", label: "طلبات السلة", icon: "▣", permission: "BOOKINGS" },
 ];
 const partnersNav: NavItem[] = [
   { href: "/admin/partners", label: "طلبات انضمام الشركاء", icon: "▣", permission: "PARTNER_REQUESTS" },
@@ -79,7 +79,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     if (requestsNav.some((item) => pathname === item.href.split("?")[0])) setRequestsMenuOpen(true);
     if(pathname==="/admin/partners")setPartnersMenuOpen(true);
     if(pathname.startsWith("/admin/settings"))setPlatformMenuOpen(true);
-    if(pathname==="/admin/bookings")setBookingsMenuOpen(true);
+    if(pathname==="/admin/bookings"||pathname.startsWith("/admin/cart-bank-payments"))setBookingsMenuOpen(true);
     if(pathname==="/admin/dashboard"&&["settlements","reports"].includes(searchParams.get("section")||""))setFinanceMenuOpen(true);
   }, [pathname]);
 

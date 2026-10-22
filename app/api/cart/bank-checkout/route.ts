@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
+import {sendCartAdminMail} from "@/lib/cart-order-workflow";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -101,11 +102,11 @@ export async function GET(req:NextRequest){
   if(req.nextUrl.searchParams.get("history")==="true"){
    const orders=await prisma.auditLog.findMany({where:{userId:session.user.id,entityType:TYPE,action:CREATED},orderBy:{createdAt:"desc"},take:100,select:{entityId:true,createdAt:true,afterData:true}});
    const references=orders.map(o=>o.entityId).filter((s):s is string=>!!s);
-   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true}}):[];
+   const actions=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:{in:[SUBMITTED,VERIFIED,REJECTED,"CART_WORKFLOW_STATUS_UPDATED"]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{entityId:true,action:true,afterData:true}}):[];
    const vouchers=references.length?await prisma.auditLog.findMany({where:{entityType:TYPE,entityId:{in:references},action:"CART_SERVICE_VOUCHER_UPLOADED"},select:{entityId:true}}):[];
    const voucherRefs=new Set(vouchers.map(x=>x.entityId));
    const last=new Map<string,string>();
-   for(const event of actions)if(event.entityId&&!last.has(event.entityId))last.set(event.entityId,event.action);
+   for(const event of actions)if(event.entityId&&!last.has(event.entityId))last.set(event.entityId,event.action==="CART_WORKFLOW_STATUS_UPDATED"?(typeof (event.afterData as {status?:unknown}|null)?.status==="string"?(event.afterData as {status:string}).status:"PROCESSING"):event.action);
    return NextResponse.json({success:true,orders:orders.map(o=>{const data=jsonData(o.afterData);return {reference:o.entityId,amountSar:data.amountSar,rows:data.rows,createdAt:o.createdAt,status:last.get(o.entityId||"")||CREATED,hasVoucher:!!o.entityId&&voucherRefs.has(o.entityId)};})},{headers:{"Cache-Control":"private, no-store"}});
   }
   const reference=req.nextUrl.searchParams.get("reference");
@@ -148,6 +149,18 @@ export async function POST(req:NextRequest){
    pathname=`cart-receipts/${session.user.id}/${reference}/${randomUUID()}.${ext}`;
    await put(pathname,Buffer.from(bytes),{access:"private",contentType:file.type,addRandomSuffix:false});
    await prisma.auditLog.create({data:{userId:session.user.id,entityType:TYPE,entityId:reference,action:SUBMITTED,afterData:{pathname,contentType:file.type,size:file.size,bankAccountId:bankId}}});
+   // Receipt is saved before any external email attempt. Never undo a valid payment claim on mail failure.
+   try{
+    const user=await prisma.user.findUnique({where:{id:session.user.id},select:{firstName:true,lastName:true}});
+    const savedRows=Array.isArray(orderDetails.rows)?orderDetails.rows:[];
+    const title=savedRows.map(r=>String(jsonData(r).title||"خدمة")).join("، ");
+    await sendCartAdminMail({reference,name:[user?.firstName,user?.lastName].filter(Boolean).join(" ")||"عميل أريس لوب",title,amountSar:Number(orderDetails.amountSar||0),type:"RECEIPT"});
+    await prisma.auditLog.create({data:{entityType:TYPE,entityId:reference,action:"CART_RECEIPT_EMAIL_SENT",afterData:{receiptPath:pathname}}});
+   }catch(emailError){
+    console.error("Cart receipt administrator email failed",emailError);
+    await prisma.auditLog.create({data:{entityType:TYPE,entityId:reference,action:"CART_RECEIPT_EMAIL_FAILED",afterData:{receiptPath:pathname}}}).catch(()=>{});
+   }
+
    return NextResponse.json({success:true,reference,status:"PENDING_REVIEW",message:"تم تسجيل إثبات التحويل؛ ستراجعه الإدارة قبل تأكيد استلام المبلغ."},{headers:{"Cache-Control":"private, no-store"}});
   }catch(error){console.error("Cart bank receipt submission failed",error);if(pathname){const {del}=await import("@vercel/blob");await del(pathname).catch(()=>{});}return fail("تعذر حفظ إثبات التحويل بأمان. حاول مرة أخرى.",503);}
  }

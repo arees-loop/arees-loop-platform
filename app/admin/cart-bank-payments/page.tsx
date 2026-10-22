@@ -1,45 +1,31 @@
 "use client";
 import Link from "next/link";
-import {useCallback,useEffect,useState} from "react";
-type Item={title?:string;quantity?:number;unitPriceSar?:number;itemType?:string};
-type Order={reference:string;amountSar:number;status:string;createdAt:string;rows:Item[];customer:{name:string;email:string;phone:string|null}|null};
+import {useCallback,useEffect,useMemo,useState} from "react";
+type Item={title?:string;quantity?:number;unitPriceSar?:number};
+type Order={reference:string;amountSar:number;status:string;workflowStatus:string;createdAt:string;rows:Item[];customer:{name:string;email:string;phone:string|null}|null};
+const labels:Record<string,string>={CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"إيصال للتحقق",CART_BANK_VERIFIED:"تم تأكيد السداد",CART_BANK_REJECTED:"إيصال مرفوض",PAID:"تم السداد — تحت الإجراء",PROCESSING:"تحت التنفيذ",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",COMPLETED:"تم التنفيذ"};
+const filters=[{id:"ALL",name:"كل الطلبات"},{id:"CART_BANK_CREATED",name:"طلبات جديدة"},{id:"CART_BANK_RECEIPT_SUBMITTED",name:"تحتاج تأكيد السداد"},{id:"PAID",name:"تم السداد"},{id:"PROCESSING",name:"تحت التنفيذ"},{id:"DOCUMENTS_REQUESTED",name:"مطلوب مستندات"},{id:"COMPLETED",name:"تم التنفيذ"},{id:"CART_BANK_REJECTED",name:"إيصال مرفوض"}];
 export default function AdminCartBankPayments(){
- const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[busy,setBusy]=useState("");
- const [files,setFiles]=useState<Record<string,File|null>>({});
- const load=useCallback(async()=>{setLoading(true);try{const r=await fetch("/api/admin/cart-bank-payments",{cache:"no-store"});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر التحميل");setOrders(d.orders||[]);setError("");}catch(e){setError(e instanceof Error?e.message:"تعذر التحميل")}finally{setLoading(false)}},[]);
+ const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[query,setQuery]=useState(""),[filter,setFilter]=useState("ALL");
+ const load=useCallback(async()=>{setLoading(true);try{const r=await fetch("/api/admin/cart-bank-payments",{cache:"no-store",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر التحميل");setOrders(d.orders||[]);setError("");}catch(e){setError(e instanceof Error?e.message:"تعذر التحميل")}finally{setLoading(false)}},[]);
  useEffect(()=>{void Promise.resolve().then(load)},[load]);
- async function decide(reference:string,decision:"VERIFY"|"REJECT"){
-  if(!window.confirm(decision==="VERIFY"?"هل تحققت من وصول المبلغ للحساب البنكي رسمياً؟":"هل تريد رفض الإيصال والسماح بإعادة إرساله؟"))return;
-  setBusy(reference);setError("");
-  try{const r=await fetch("/api/admin/cart-bank-payments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reference,decision})});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر التنفيذ");await load();}catch(e){setError(e instanceof Error?e.message:"تعذر التنفيذ")}finally{setBusy("")}
- }
- async function uploadVoucher(reference:string){
-  const file=files[reference];if(!file)return;
-  setBusy(reference);setError("");
-  try{
-   const form=new FormData();form.set("reference",reference);form.set("file",file);
-   const r=await fetch("/api/cart/service-voucher",{method:"POST",body:form,credentials:"include"});
-   const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر رفع الملف.");
-   setFiles(prev=>({...prev,[reference]:null}));
-   window.alert("تم حفظ ملف الخدمة وإتاحته للعميل.");
-  }catch(e){setError(e instanceof Error?e.message:"تعذر رفع ملف الخدمة.");}finally{setBusy("")}
- }
- const label=(s:string)=>s==="CART_BANK_CREATED"?"بانتظار التحويل":s==="CART_BANK_RECEIPT_SUBMITTED"?"إيصال بانتظار المراجعة":s==="CART_BANK_VERIFIED"?"تم التحقق من التحويل":"إيصال مرفوض";
- return <main dir="rtl" className="mx-auto max-w-6xl px-4 py-8 text-[#0D3B34]">
-  <header className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold text-[#B38A25]">AREES LOOP • BANK PAYMENTS</p><h1 className="mt-2 text-2xl font-black">تحويلات السلة البنكية</h1><p className="mt-2 text-sm opacity-75">طلبات الرخص الدولية والتجارب المسجلة عبر السلة. راجع الإيصال والحساب البنكي قبل اعتماد أي مبلغ.</p></div><div className="flex gap-2"><Link href="/admin/bookings" className="rounded-xl border px-4 py-2 text-sm">الحجوزات</Link><button onClick={()=>void load()} className="rounded-xl border border-[#B9974A] px-4 py-2 text-sm">تحديث</button></div></header>
-  {error&&<p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-red-700">{error}</p>}
-  {loading?<p className="mt-6">جارٍ تحميل الطلبات...</p>:orders.length===0?<p className="mt-6 rounded-xl bg-white p-6">لا توجد تحويلات في السلة.</p>:<div className="mt-6 space-y-3">{orders.map(order=><article key={order.reference} className="rounded-2xl border border-[#E0D2B1] bg-white p-5 shadow-sm">
-   <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="font-mono text-xs">{order.reference}</p><p className="mt-1 font-bold">{order.customer?.name||order.customer?.email||"عميل"}</p><p className="text-xs opacity-75">{order.customer?.email} {order.customer?.phone}</p></div><div className="text-left"><strong className="text-lg">{Number(order.amountSar).toLocaleString("ar-SA")} ر.س</strong><p className="text-xs text-[#926A1F]">{label(order.status)}</p></div></div>
-   <p className="mt-2 text-xs">{new Date(order.createdAt).toLocaleString("ar-SA")}</p>
-   <ul className="mt-3 list-inside list-disc space-y-1 text-xs">{(order.rows||[]).map((x,i)=><li key={i}>{x.title||"خدمة"} × {x.quantity||1}</li>)}</ul>
-   <div className="mt-3 flex flex-wrap gap-2">
-    {order.status==="CART_BANK_VERIFIED"&&<a target="_blank" rel="noreferrer" href={"/cart/documents/invoice?reference="+encodeURIComponent(order.reference)} className="rounded-lg border border-[#E0CB91] px-3 py-2 text-xs font-bold">الفاتورة</a>}
-   </div>
-   {order.status==="CART_BANK_VERIFIED"&&<div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-[#E0CB91] bg-[#FFF9ED] p-3">
-    <label className="text-xs font-bold">إرسال الفاوتشر أو مستند تنفيذ الخدمة إلى العميل<input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="mt-1 block max-w-full text-xs" onChange={e=>setFiles(prev=>({...prev,[order.reference]:e.target.files?.[0]||null}))}/></label>
-    <button type="button" disabled={!files[order.reference]||!!busy} onClick={()=>void uploadVoucher(order.reference)} className="rounded-lg bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white disabled:opacity-40">رفع ملف الخدمة</button>
-   </div>}
-   {order.status==="CART_BANK_RECEIPT_SUBMITTED"&&<div className="mt-4 flex flex-wrap gap-2"><a href={"/api/admin/cart-bank-payments?receipt=true&reference="+encodeURIComponent(order.reference)} className="rounded-xl border border-[#A88B4C] px-4 py-2 text-xs font-bold">تنزيل إثبات التحويل</a><button disabled={!!busy} onClick={()=>void decide(order.reference,"VERIFY")} className="rounded-xl bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">تأكيد وصول المبلغ</button><button disabled={!!busy} onClick={()=>void decide(order.reference,"REJECT")} className="rounded-xl border border-red-300 px-4 py-2 text-xs text-red-800 disabled:opacity-50">رفض الإيصال</button></div>}
-  </article>)}</div>}
+ const visible=useMemo(()=>orders.filter(o=>{const s=o.workflowStatus||o.status;return (filter==="ALL"||s===filter||(filter==="PAID"&&s==="CART_BANK_VERIFIED"))&&[o.reference,o.customer?.name||"",o.customer?.phone||"",o.customer?.email||"",(o.rows||[]).map(x=>x.title||"").join(" ")].join(" ").toLowerCase().includes(query.toLowerCase());}),[orders,filter,query]);
+ const amount=(n:number)=>Number(n||0).toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
+ return <main dir="rtl" className="mx-auto max-w-7xl px-4 py-7 text-[#0D3B34]">
+   <header className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold text-[#B38A25]">AREES LOOP · CART ORDERS</p><h1 className="mt-2 text-2xl font-black">طلبات السلة</h1><p className="mt-2 text-sm opacity-70">إدارة طلبات البرامج والخدمات عبر السلة — السداد، المرفقات، العميل، والتنفيذ في مكان واحد.</p></div><div className="flex gap-2"><Link href="/admin/bookings" className="rounded-xl border px-4 py-2 text-sm">حجوزات الشركاء</Link><button onClick={()=>void load()} className="rounded-xl border border-[#B9974A] px-4 py-2 text-sm">تحديث</button></div></header>
+   <div className="mt-5 grid gap-3 rounded-2xl border border-[#DFD3B7] bg-white p-4 md:grid-cols-[1fr_auto]"><input aria-label="ابحث عن الطلب أو العميل" value={query} onChange={e=>setQuery(e.target.value)} placeholder="اسم العميل أو الخدمة أو رقم الطلب أو الجوال..." className="w-full rounded-xl border border-[#D4AF37]/40 p-3 text-sm"/><select aria-label="تصفية حالة الطلب" value={filter} onChange={e=>setFilter(e.target.value)} className="rounded-xl border border-[#D4AF37]/40 p-3 text-sm">{filters.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></div>
+   <p className="my-3 text-xs text-[#758176]">{visible.length} طلب من أصل {orders.length}</p>
+   {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-red-700">{error}</p>}
+   {loading?<p className="mt-6">جارٍ تحميل الطلبات...</p>:visible.length===0?<p className="rounded-2xl bg-white p-6">لا توجد طلبات مطابقة.</p>:<div className="overflow-x-auto rounded-2xl border border-[#E0D2B1] bg-white">
+    <table className="w-full min-w-[780px] border-collapse text-right text-xs"><thead className="bg-[#F8F4E9] text-[#34564A]"><tr>{["العميل","الخدمة / رقم الطلب","المبلغ","حالة الطلب","التاريخ","الإجراء"].map(x=><th key={x} className="px-4 py-4">{x}</th>)}</tr></thead><tbody>
+     {visible.map(o=><tr key={o.reference} className="border-t border-[#EADFC9] hover:bg-[#FFFDF7]">
+      <td className="px-4 py-4"><b className="block text-sm">{o.customer?.name||"عميل أريس لوب"}</b><span className="mt-1 block" dir="ltr">{o.customer?.phone||o.customer?.email||"—"}</span></td>
+      <td className="max-w-[280px] px-4 py-4"><b className="block truncate">{(o.rows||[]).map(x=>x.title||"خدمة").join("، ")}</b><span className="block break-all font-mono text-[10px] text-[#788477]">{o.reference}</span></td>
+      <td className="whitespace-nowrap px-4 py-4 font-bold">{amount(o.amountSar)}</td>
+      <td className="px-4 py-4"><span className="rounded-full bg-[#F5F0E5] px-3 py-2 font-bold">{labels[o.workflowStatus||o.status]||o.workflowStatus||o.status}</span></td>
+      <td className="whitespace-nowrap px-4 py-4">{new Date(o.createdAt).toLocaleDateString("ar-SA")}</td>
+      <td className="px-4 py-4"><Link href={"/admin/cart-bank-payments/"+encodeURIComponent(o.reference)} className="inline-flex rounded-xl border border-[#B9974A] bg-[#FFF9E8] px-4 py-2 font-bold">فتح الطلب ←</Link></td>
+     </tr>)}
+    </tbody></table></div>}
  </main>;
 }
