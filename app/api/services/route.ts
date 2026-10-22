@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { pointsFromServicePrice } from "@/lib/service-loyalty-points";
 
 function databaseNotConfigured() {
   return NextResponse.json(
@@ -66,7 +67,9 @@ export async function GET(request: NextRequest) {
         basePrice: Number(service.basePrice),
         vatRate: Number(service.vatRate),
         finalPrice: Number(service.finalPrice),
-        loyaltyPoints: service.loyaltyPoints,
+        // Compute the approved earn preview from the current customer-facing price,
+        // not stale stored points on previously published services.
+        loyaltyPoints: pointsFromServicePrice(Number(service.finalPrice)),
         latitude: service.latitude == null ? null : Number(service.latitude),
         longitude: service.longitude == null ? null : Number(service.longitude),
         capacity: service.capacity,
@@ -274,6 +277,7 @@ export async function POST(request: NextRequest) {
         basePrice,
         vatRate,
         finalPrice,
+        loyaltyPoints: pointsFromServicePrice(finalPrice),
 
         capacity,
         cancellationPolicy,
