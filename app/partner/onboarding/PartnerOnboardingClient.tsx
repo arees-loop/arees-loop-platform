@@ -1222,6 +1222,7 @@ export default function PartnerOnboardingPage() {
         if (!data.applicantRole) {
           errors.applicantRole = "حدد صفتك لدى المنشأة.";
         }
+        if (data.applicantRole === "owner" && !data.ownerProofFile) errors.ownerProofFile = "أرفق إثبات ملكية المنشأة قبل المتابعة.";
         if (data.applicantRole === "representative") {
           if (!data.jobTitle.trim()) errors.jobTitle = "المسمى الوظيفي مطلوب.";
           if (!data.authorizationFile) {
@@ -1233,16 +1234,18 @@ export default function PartnerOnboardingPage() {
     }
 
     if (currentStep === "business") {
+      if (data.partnerType === "individual" && !data.guideLanguages.trim()) errors.guideLanguages = "لغات الإرشاد مطلوبة.";
+      if (data.partnerType === "individual" && !data.guideSpecialty.trim()) errors.guideSpecialty = "مجال التخصص السياحي مطلوب.";
       if (!data.tradeName.trim()) errors.tradeName = "الاسم التجاري / اسم النشاط مطلوب.";
       if (!data.city.trim()) errors.city = "المدينة مطلوبة.";
-      if (data.partnerType !== "government" && !data.district.trim()) errors.district = "الحي مطلوب.";
-      if (data.partnerType !== "government" && !data.street.trim()) errors.street = "الشارع مطلوب.";
-      if (data.partnerType !== "government" && !data.shortNationalAddress.trim()) {
+      if (data.partnerType === "business" && !data.district.trim()) errors.district = "الحي مطلوب.";
+      if (data.partnerType === "business" && !data.street.trim()) errors.street = "الشارع مطلوب.";
+      if (data.partnerType === "business" && !data.shortNationalAddress.trim()) {
         errors.shortNationalAddress = "العنوان الوطني المختصر مطلوب.";
-      } else if (data.partnerType !== "government" && !/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
+      } else if (data.partnerType === "business" && !/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
         errors.shortNationalAddress = "أدخل عنواناً وطنياً مختصراً صحيحاً: 4 أحرف ثم 4 أرقام، مثال ABCD1234.";
       }
-      if (data.partnerType !== "government" && !data.nationalAddressFile) {
+      if (data.partnerType === "business" && !data.nationalAddressFile) {
         errors.nationalAddressFile = "أرفق مستند العنوان الوطني للمنشأة.";
       }
     }
@@ -1254,11 +1257,13 @@ export default function PartnerOnboardingPage() {
     }
 
     if (currentStep === "documents") {
-      const hasDocument = documents.some(
-        (document) => document.fileName || document.number.trim()
+      const validLicenses = documents.filter(document =>
+        document.type.trim() && document.issuer.trim() && document.number.trim() &&
+        document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
+        (uploadedFiles.documents[document.id] || document.fileName)
       );
-      if (!hasDocument) {
-        errors.documents = "أضف مستنداً أو ترخيصاً واحداً على الأقل.";
+      if (validLicenses.length === 0) {
+        errors.documents = "الترخيص إلزامي: النوع والجهة والرقم وتاريخ السريان وملف الرخصة مطلوبة.";
       }
     }
 
@@ -1586,7 +1591,7 @@ export default function PartnerOnboardingPage() {
         unifiedNumber: data.unifiedNumber,
         commercialRegister: data.registrationNumber,
         proofType: data.proofType,
-        descriptionAr: data.description,
+        descriptionAr: data.partnerType === "individual" ? `تخصص المرشد: ${data.guideSpecialty}\nاللغات: ${data.guideLanguages}\n${data.description}` : data.description,
 
         vatRegistered: data.vatRegistered,
         vatNumber: data.vatNumber,
@@ -1657,6 +1662,9 @@ export default function PartnerOnboardingPage() {
       label: string;
     }> = [];
 
+    if (uploadedFiles.ownerProof) {
+      filesToUpload.push({file:uploadedFiles.ownerProof,type:"BUSINESS_PROOF",label:"إثبات ملكية المنشأة"});
+    }
     if (uploadedFiles.authorization) {
       filesToUpload.push({
         file: uploadedFiles.authorization,
@@ -2293,13 +2301,13 @@ export default function PartnerOnboardingPage() {
                 {currentStep === "business" && (
           <StepCard
             eyebrow="STEP 02 / 06"
-            title={data.partnerType === "government" ? "بيانات الجهة الرسمية" : "بيانات النشاط والمقر"}
+            title={data.partnerType === "government" ? "بيانات الجهة الرسمية" : data.partnerType === "individual" ? "ملف المرشد السياحي" : "بيانات النشاط والمقر"}
             description={data.partnerType === "government"
               ? "اكتب الاسم الرسمي للجهة والمدينة. تتم مراجعة الهوية والمستندات قبل اعتماد شعار الجهة."
               : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : "الاسم التجاري / اسم النشاط *"}>
+              <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
                 <input
                   value={data.tradeName}
                   onChange={(e) => {
@@ -2319,7 +2327,7 @@ export default function PartnerOnboardingPage() {
                 />
               </Field><ValidationError message={validationErrors.tradeName} /></div>
 
-              <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : "الاسم القانوني"}>
+              <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
                 <input
                   value={data.legalName}
                   onChange={(e) =>
@@ -2651,10 +2659,7 @@ export default function PartnerOnboardingPage() {
             title="التراخيص والوثائق"
             description="أرفق الوثائق المناسبة لطبيعة الجهة والخدمات المختارة. المتطلبات تختلف بين المنشآت والأفراد والجهات المؤسسية."
           >
-            <AiHint
-              title="مساعد الامتثال الذكي"
-              text="يفحص النظام اكتمال البيانات والمستندات ويعرض الملاحظات قبل الإرسال. التحقق الآلي مساعد، أما اعتماد الشريك والمستندات فيتم بواسطة أريس."
-            />
+
 
             {data.partnerType ===
               "business" && (
