@@ -83,7 +83,7 @@ export default async function CartOrderDocument({params,searchParams}:Props){
      <p className="mt-2">{type==="quote"?"العرض ليس إثبات دفع أو حجز مؤكد.":"تم اعتماد استلام المبلغ من الإدارة. يبدأ تنفيذ الخدمة وفق المتطلبات. يُتاح الفاوتشر أو ملف الخدمة عند صدوره."}</p>
      <p dir="ltr" className="text-right">{type==="quote"?"Quotation only; not proof of payment or a confirmed booking.":"Bank transfer receipt verified by AREES administration. Service fulfilment and voucher delivery follow applicable requirements."}</p>
    </div>
-   <footer className="mt-10 border-t border-[#E3D2AC] pt-4 text-center text-[10px]">www.areesloop.com</footer>
+   <footer className="mt-10 border-t border-[#E3D2AC] pt-4 text-center text-[10px]">شركة أريس الحلول المتكاملة المحدودة</footer>
   </article>
  </main>;
 }
