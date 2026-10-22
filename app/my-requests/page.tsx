@@ -28,7 +28,7 @@ const statuses:Record<string,string>={
   QUOTE_SENT:"تم إرسال عرض السعر",PAID:"تم السداد",EXECUTING:"تحت التنفيذ",
   DONE:"تم التنفيذ",COMPLETED:"تم التنفيذ",CANCELED:"تم الإلغاء",CANCELLED:"تم الإلغاء",
   CONTACTED:"تم التواصل",QUOTED:"عرض السعر جاهز",CLOSED:"مغلق",
-  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",PAID:"تم السداد — تحت الإجراء",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
+  CART_BANK_CREATED:"طلب جديد — بانتظار التحويل",CART_BANK_RECEIPT_SUBMITTED:"الإيصال قيد المراجعة",CART_BANK_VERIFIED:"تم تأكيد السداد — تحت الإجراء",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة إرساله",
 };
 const labelDate=(value:string|null)=>value?new Intl.DateTimeFormat("ar-SA",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value)):"";
 const money=(amount:number)=>amount.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
