@@ -66,7 +66,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
   <p className="mt-1 text-xs text-[#66796F]">اختر وسيلة الدفع المناسبة لسلتك.</p>
   <div className="mt-4 space-y-3">
    <div className="rounded-xl border border-[#B9974A] bg-[#FFF2CA] p-4 text-sm">
-    <div className="flex flex-wrap items-center gap-2 font-black"><span aria-hidden="true">🏦</span> التحويل البنكي <span className="rounded-full bg-[#0D3B34] px-2 py-0.5 text-[10px] text-white">متاح</span></div>
+    <div className="flex flex-wrap items-center gap-2 font-black"><span aria-hidden="true">🏦</span> التحويل البنكي <span className="rounded-full bg-[#0D3B34] px-2 py-0.5 text-[10px] text-white">{bank?"متاح":"بانتظار حساب بنكي معتمد"}</span></div>
     <p className="mt-2 text-xs leading-6 text-[#53695C]">أنشئ مرجع الطلب، وحوّل إلى الحساب المعتمد، ثم ارفع الإيصال. لا يُعد المبلغ مستلماً حتى تراجعه الإدارة.</p>
    </div>
    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="طرق دفع إلكترونية قريباً">
