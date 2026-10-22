@@ -8,7 +8,7 @@ const filters=[{id:"ALL",name:"كل الطلبات"},{id:"CART_BANK_CREATED",nam
 export default function AdminCartBankPayments(){
  const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[query,setQuery]=useState(""),[filter,setFilter]=useState("ALL");
  const load=useCallback(async()=>{setLoading(true);try{const r=await fetch("/api/admin/cart-bank-payments",{cache:"no-store",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"تعذر التحميل");setOrders(d.orders||[]);setError("");}catch(e){setError(e instanceof Error?e.message:"تعذر التحميل")}finally{setLoading(false)}},[]);
- useEffect(()=>{void load()},[load]);
+ useEffect(()=>{void Promise.resolve().then(load)},[load]);
  const visible=useMemo(()=>orders.filter(o=>{const s=o.workflowStatus||o.status;return (filter==="ALL"||s===filter||(filter==="PAID"&&s==="CART_BANK_VERIFIED"))&&[o.reference,o.customer?.name||"",o.customer?.phone||"",o.customer?.email||"",(o.rows||[]).map(x=>x.title||"").join(" ")].join(" ").toLowerCase().includes(query.toLowerCase());}),[orders,filter,query]);
  const amount=(n:number)=>Number(n||0).toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2})+" ر.س";
  return <main dir="rtl" className="mx-auto max-w-7xl px-4 py-7 text-[#0D3B34]">
