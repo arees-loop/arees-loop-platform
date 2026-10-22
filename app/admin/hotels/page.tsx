@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 import { useCallback,useEffect,useState,type FormEvent } from "react";
 import ImageSizeGuidance from "@/app/components/ImageSizeGuidance";
 import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
@@ -172,14 +173,14 @@ export default function HotelAdminPage(){
          <div className="min-w-0"><p className="truncate text-sm font-black">{item.customerName}</p><p className="mt-1 truncate text-[11px] text-[#0D3B34]/60">{item.reference} · فندق</p></div>
          <div className="min-w-0 text-xs"><p className="truncate">{item.destination} · {item.hotelName||"لم يحدد الفندق"}</p><p className="mt-1 text-[#0D3B34]/60">دخول {day(item.checkInDate)} · خروج {day(item.checkOutDate)}</p></div>
          <div className="text-xs font-bold">{item.quoteAmountSar==null?"لم يسعّر بعد":Number(item.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</div>
-         <div className="flex items-center justify-between gap-2 sm:justify-end"><span className="rounded-full bg-[#EDF2EB] px-3 py-1 text-[11px] font-bold">{stages[item.status]||item.status}</span><span className="text-xs text-[#A78332]">فتح ←</span></div>
+         <div className="flex items-center justify-between gap-2 sm:justify-end"><OrderStatusBadge status={item.status}>{stages[item.status]||item.status}</OrderStatusBadge><span className="text-xs text-[#A78332]">فتح ←</span></div>
          {item.notificationStatus==="FAILED"&&<p className="text-xs text-amber-800 sm:col-span-4">الطلب محفوظ لكن تعذر إرسال بريد التنبيه.</p>}
        </button>)}
      </section>
      <section className={`rounded-[24px] border border-[#D4AF37]/35 bg-white p-6 shadow-sm ${!selected?"hidden":""}`}>
        {selected&&<button type="button" onClick={()=>setSelected(null)} className="mb-5 rounded-full border border-[#D4AF37]/60 px-5 py-2 text-sm font-bold">→ العودة إلى جميع طلبات الفنادق</button>}
        {!selected?<p className="text-sm">اختر طلباً لمراجعة التفاصيل والرد عليه.</p>:<>
-         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">{selected.customerName} · {selected.reference}</h2><span className="rounded-full bg-[#E8F2EC] px-4 py-2 text-xs font-black">{stages[selected.status]||selected.status}</span><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يسعّر بعد":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
+         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">{selected.customerName} · {selected.reference}</h2><OrderStatusBadge status={selected.status}>{stages[selected.status]||selected.status}</OrderStatusBadge><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يسعّر بعد":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
          <a target="_blank" rel="noopener noreferrer" href={`https://wa.me/${(selected.countryCode+selected.phone).replace(/\\D/g,"")}?text=${encodeURIComponent(`السلام عليكم ${selected.customerName}، بخصوص طلبك رقم ${selected.reference} لخدمة الفنادق لدى أريس لوب. نتابع معك تفاصيل طلبك.`)}`} className="mt-4 inline-flex rounded-xl bg-[#147D55] px-5 py-3 text-sm font-black text-white">واتساب العميل مباشرة ↗</a>
          <p className="mt-3 text-sm leading-7">{selected.customerName} · {selected.destination} · {selected.hotelName||"فندق حسب الطلب"}</p>
          <p className="mt-1 text-sm leading-7">دخول {day(selected.checkInDate)} · خروج {day(selected.checkOutDate)}</p>
