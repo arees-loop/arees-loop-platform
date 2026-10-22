@@ -4,7 +4,8 @@ import Link from "next/link";
 import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 import CustomerDashboardShell from "@/app/components/CustomerDashboardShell";
 type Order={reference:string;amountSar:number;createdAt:string;status:string;hasVoucher:boolean;rows:{title?:string;itemType?:string}[]};
-const labels:Record<string,string>={CART_BANK_CREATED:"بانتظار تحويل المبلغ",CART_BANK_RECEIPT_SUBMITTED:"إيصال التحويل قيد المراجعة",CART_BANK_VERIFIED:"تم اعتماد السداد",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",DOCUMENTS_SUBMITTED:"المستندات تحت المراجعة",PROCESSING:"تحت التنفيذ",COMPLETED:"تم التنفيذ",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة رفعه"};
+const labels:Record<string,string>={CART_BANK_CREATED:"بانتظار تحويل المبلغ",CART_BANK_RECEIPT_SUBMITTED:"إيصال التحويل قيد المراجعة",CART_BANK_VERIFIED:"تم اعتماد السداد",DOCUMENTS_REQUESTED:"مستندات إضافية مطلوبة",DOCUMENTS_SUBMITTED:"المستندات تحت المراجعة",PROCESSING:"تحت التنفيذ",PAID:"تم السداد — تحت الإجراء",COMPLETED:"تم التنفيذ",CART_BANK_REJECTED:"الإيصال مرفوض — يرجى إعادة رفعه"};
+const paid=(status:string)=>["CART_BANK_VERIFIED","PAID","PROCESSING","DOCUMENTS_REQUESTED","DOCUMENTS_SUBMITTED","COMPLETED"].includes(status);
 export default function CartOrdersPage(){
  const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState("");
  useEffect(()=>{fetch("/api/cart/bank-checkout?history=true",{credentials:"include",cache:"no-store"}).then(async r=>{
@@ -18,9 +19,9 @@ export default function CartOrdersPage(){
   <p className="mt-2 text-xs">{new Date(o.createdAt).toLocaleString("ar-SA")} · <OrderStatusBadge status={o.status}>{labels[o.status]||o.status}</OrderStatusBadge></p>
   <p className="mt-2 text-xs">{(o.rows||[]).map(x=>x.title||"خدمة").join("، ")}</p>
   <div className="mt-4 flex flex-wrap gap-2">
-   {o.status==="CART_BANK_VERIFIED"&&<a target="_blank" rel="noreferrer" href={"/cart/documents/invoice?reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">فاتورة السداد PDF</a>}
+   {paid(o.status)&&<a target="_blank" rel="noreferrer" href={"/cart/documents/invoice?reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">فاتورة السداد PDF</a>}
    {o.status==="CART_BANK_VERIFIED"&&o.hasVoucher&&<a href={"/api/cart/service-voucher?download=true&reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">ملف الخدمة (إن توفر)</a>}
-   {o.status!=="CART_BANK_VERIFIED"&&<Link href={"/cart?reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">استكمال التحويل / رفع الإيصال</Link>}
+   {["CART_BANK_CREATED","CART_BANK_REJECTED"].includes(o.status)&&<Link href={"/cart?reference="+encodeURIComponent(o.reference)} className="rounded-xl border border-[#B9974A] px-4 py-2 text-xs font-bold">استكمال التحويل / رفع الإيصال</Link>}
   </div>
  </article>)}</div>}
  </div></main></CustomerDashboardShell>;
