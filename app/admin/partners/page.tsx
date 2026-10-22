@@ -325,6 +325,7 @@ function AdminPartnersContent() {
   };
 
   const [search, setSearch] = useState("");
+  const [partnerTrackFilter, setPartnerTrackFilter] = useState<"ALL"|"BUSINESS"|"INDIVIDUAL"|"GOVERNMENT_NONPROFIT">("ALL");
 
   const [viewMode, setViewMode] = useState<"CARDS" | "LIST">("CARDS");
 
@@ -424,11 +425,12 @@ function AdminPartnersContent() {
 
 
 
-      return matchesSearch && matchesStatus;
+      const matchesTrack = partnerTrackFilter === "ALL" || partner.partnerType === partnerTrackFilter;
+      return matchesSearch && matchesStatus && matchesTrack;
 
     });
 
-  }, [visiblePartners, search, statusFilter]);
+  }, [visiblePartners, search, statusFilter, partnerTrackFilter]);
 
 
 
@@ -818,13 +820,26 @@ function AdminPartnersContent() {
 
 
 
-        {/* STATS */}
+        {/* REAL APPLICATION TYPES — counts filter actual records. */}
+         <section aria-label="تقسيم طلبات الشركاء حسب النوع" className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+           {([
+             {type:"ALL",title:"كل الشركاء",tone:"border-[#D4AF37]/35 bg-white text-[#0D3B34]",n:visiblePartners.length},
+             {type:"BUSINESS",title:"الشركات والمؤسسات",tone:"border-sky-200 bg-sky-50 text-sky-950",n:visiblePartners.filter(p=>p.partnerType==="BUSINESS").length},
+             {type:"INDIVIDUAL",title:"المرشدون السياحيون",tone:"border-emerald-200 bg-emerald-50 text-emerald-950",n:visiblePartners.filter(p=>p.partnerType==="INDIVIDUAL").length},
+             {type:"GOVERNMENT_NONPROFIT",title:"الحكومي وغير الربحي",tone:"border-amber-200 bg-amber-50 text-amber-950",n:visiblePartners.filter(p=>p.partnerType==="GOVERNMENT_NONPROFIT").length}
+           ] as const).map(group=><button key={group.type} type="button" aria-pressed={partnerTrackFilter===group.type}
+               onClick={()=>{setPartnerTrackFilter(group.type);setSelectedId("");}}
+               className={`flex min-h-20 items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-right transition focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${group.tone} ${partnerTrackFilter===group.type?"ring-2 ring-[#D4AF37]/60 shadow-sm":"opacity-80 hover:opacity-100"}`}>
+                <span className="text-xs font-bold">{group.title}</span><strong className="text-xl tabular-nums">{group.n}</strong>
+             </button>)}
+         </section>
+         {/* STATS */}
 
-        <section className="mb-7 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <section className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-5">
 
           {[
 
-            ["إجمالي الطلبات", stats.total],
+            ["إجمالي الطلبات", filteredPartners.length],
 
             ["تحت التدقيق", stats.review],
 
@@ -840,13 +855,13 @@ function AdminPartnersContent() {
 
               key={String(label)}
 
-              className="rounded-[22px] border border-white/80 bg-white/65 p-5 backdrop-blur-xl"
+              className="rounded-2xl border border-[#D4AF37]/20 bg-white/75 px-3 py-2.5 backdrop-blur-xl"
 
             >
 
               <p className="text-xs font-medium text-[#0D3B34]/55">{label}</p>
 
-              <p className="mt-3 text-3xl font-bold text-[#0D3B34]">{value}</p>
+              <p className="mt-1 text-xl font-bold text-[#0D3B34] tabular-nums">{value}</p>
 
             </div>
 
