@@ -2977,7 +2977,7 @@ export default function PartnerOnboardingPage() {
                         />
                       </Field>
 
-                      <Field label="تاريخ الانتهاء — إن وجد">
+                      <Field label={data.partnerType==="individual"?"تاريخ انتهاء الترخيص *":"تاريخ الانتهاء — إن وجد"}>
                         <input
                           type="date"
                           value={
@@ -3038,7 +3038,7 @@ export default function PartnerOnboardingPage() {
                       </Field>
                     </div>
 
-                    {data.categories
+                    {data.partnerType !== "individual" && data.categories
                       .length >
                       0 && (
                       <div className="mt-5">
@@ -3095,13 +3095,13 @@ export default function PartnerOnboardingPage() {
             </div>
             </div>
 
-            <button
+            {data.partnerType !== "individual" && <button
               type="button"
               onClick={addDocument}
               className="w-full rounded-2xl border border-dashed border-[#B99124]/45 bg-[#FFF9EA]/70 py-4 text-sm font-bold text-[#8B6812]"
             >
               + إضافة مستند أو ترخيص آخر
-            </button>
+            </button>}
 
             {data.partnerType !== "individual" && <Actions
               onBack={goBack}
@@ -3377,6 +3377,7 @@ export default function PartnerOnboardingPage() {
               )}
             </div>
 
+            {data.partnerType === "business" && <>
             <SelectCard
               title="مسجل في ضريبة القيمة المضافة"
               description="فعّل الخيار إذا كان مقدم الخدمة مسجلاً في ضريبة القيمة المضافة."
@@ -3437,6 +3438,7 @@ export default function PartnerOnboardingPage() {
             )}
 
             </>}
+            </>}
 
             {data.partnerType === "government" && (
               <p className="rounded-2xl border border-[#D4AF37]/25 bg-[#FFF9E8] px-5 py-4 text-sm text-[#0D3B34]">
@@ -3451,10 +3453,9 @@ export default function PartnerOnboardingPage() {
                 </h3>
 
                 <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">
-                  الاسم والشعار اللذان
-                  سيظهران للزوار بعد
-                  اعتماد وتفعيل حساب
-                  الشريك.
+                  {data.partnerType==="individual"
+                    ? "الاسم والصورة المهنية اللذان سيظهران للزوار بعد اعتماد المرشد وتفعيل حسابه."
+                    : "الاسم والشعار اللذان سيظهران للزوار بعد اعتماد وتفعيل حساب الشريك."}
                 </p>
               </div>
 
@@ -3477,7 +3478,7 @@ export default function PartnerOnboardingPage() {
                 </Field>
 
                 <div data-validation="logoFile">
-                  <Field label={data.partnerType === "government" ? "الشعار الرسمي المعتمد *" : "شعار الجهة"}>
+                  <Field label={data.partnerType === "government" ? "الشعار الرسمي المعتمد *" : data.partnerType==="individual"?"الصورة المهنية الشخصية للمرشد *":"شعار الجهة"}>
                     <input
                       type="file"
                       accept=".png,.jpg,.jpeg,.webp"
