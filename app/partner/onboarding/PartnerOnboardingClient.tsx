@@ -1291,7 +1291,7 @@ export default function PartnerOnboardingPage() {
         }
       }
 
-      if (data.receivesPayments) {
+      if (data.partnerType !== "government") {
         if (!data.iban.trim()) {
           errors.iban =
             "رقم IBAN مطلوب لاستقبال التسويات.";
@@ -1501,9 +1501,9 @@ export default function PartnerOnboardingPage() {
     });
 
     const settlementOk =
-      !data.receivesPayments ||
+      data.partnerType === "government" ||
       Boolean(
-        data.iban.trim() &&
+        /^SA[0-9]{22}$/.test(data.iban.trim()) &&
           data.beneficiaryName.trim()
       );
 
