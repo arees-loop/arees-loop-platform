@@ -59,6 +59,8 @@ assert(customer.includes("CustomerCartOrderDetail")&&customer.includes('"/api/ca
 // hundreds of cities. Existing search above the list filters the offers.
 const destinations=file("app/discover/DiscoverClient.tsx");
 assert(destinations.includes('id="available-destinations"')&&destinations.includes('<select')&&!destinations.includes("cities.map(x=><button"),"Destinations must be one compact select instead of one button per city");
+assert(destinations.includes("const nearbyOnly=locationMode&&!showAllLocations&&!manualSearch")&&destinations.includes("setShowAllLocations(true)")&&destinations.includes("كل المواقع — عرض جميع البرامج"),"All locations must clear proximity scope and display all applicable published programs");
+assert(destinations.includes('aria-label="مهام اللوب"')&&destinations.includes("/missions")&&existsSync(resolve(root,"app/missions/page.tsx")),"Loop Missions entry must remain visible in discovery without falsely creating missions");
 const notifications=file("app/notifications/page.tsx");
 assert(!notifications.includes("cartAlerts")&&!notifications.includes("/api/cart/bank-checkout?history=true"),"Customer cart document requests must not duplicate in standalone Notifications");
 assert(customer.includes("arees-cart-order-updated"),"My Requests must refresh when a cart attachment is uploaded");
