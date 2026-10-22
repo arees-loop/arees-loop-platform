@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
+import {sendCartAdminMail} from "@/lib/cart-order-workflow";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -148,6 +149,18 @@ export async function POST(req:NextRequest){
    pathname=`cart-receipts/${session.user.id}/${reference}/${randomUUID()}.${ext}`;
    await put(pathname,Buffer.from(bytes),{access:"private",contentType:file.type,addRandomSuffix:false});
    await prisma.auditLog.create({data:{userId:session.user.id,entityType:TYPE,entityId:reference,action:SUBMITTED,afterData:{pathname,contentType:file.type,size:file.size,bankAccountId:bankId}}});
+   // Receipt is saved before any external email attempt. Never undo a valid payment claim on mail failure.
+   try{
+    const user=await prisma.user.findUnique({where:{id:session.user.id},select:{firstName:true,lastName:true}});
+    const savedRows=Array.isArray(orderDetails.rows)?orderDetails.rows:[];
+    const title=savedRows.map(r=>String(jsonData(r).title||"خدمة")).join("، ");
+    await sendCartAdminMail({reference,name:[user?.firstName,user?.lastName].filter(Boolean).join(" ")||"عميل أريس لوب",title,amountSar:Number(orderDetails.amountSar||0),type:"RECEIPT"});
+    await prisma.auditLog.create({data:{entityType:TYPE,entityId:reference,action:"CART_RECEIPT_EMAIL_SENT",afterData:{receiptPath:pathname}}});
+   }catch(emailError){
+    console.error("Cart receipt administrator email failed",emailError);
+    await prisma.auditLog.create({data:{entityType:TYPE,entityId:reference,action:"CART_RECEIPT_EMAIL_FAILED",afterData:{receiptPath:pathname}}}).catch(()=>{});
+   }
+
    return NextResponse.json({success:true,reference,status:"PENDING_REVIEW",message:"تم تسجيل إثبات التحويل؛ ستراجعه الإدارة قبل تأكيد استلام المبلغ."},{headers:{"Cache-Control":"private, no-store"}});
   }catch(error){console.error("Cart bank receipt submission failed",error);if(pathname){const {del}=await import("@vercel/blob");await del(pathname).catch(()=>{});}return fail("تعذر حفظ إثبات التحويل بأمان. حاول مرة أخرى.",503);}
  }
