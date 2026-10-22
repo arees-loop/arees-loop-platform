@@ -64,6 +64,7 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
  return <section aria-label="طرق السداد" className="mt-5 rounded-2xl border border-[#D4AF37]/40 bg-[#FFFDF7] p-5 text-[#0D3B34]">
   <h3 className="text-lg font-black">طرق السداد</h3>
   <p className="mt-1 text-xs text-[#66796F]">اختر وسيلة الدفع المناسبة لسلتك.</p>
+  {items.some(x=>x.itemType==="DRIVING_LICENSE")&&<p className="mt-2 rounded-lg bg-[#FFF7DF] p-3 text-xs leading-6">لسداد الرخصة الدولية يلزم أولاً إرسال نموذج الرخصة ورفع الجواز والرخصة المحلية والصورة الشخصية من <Link href="/my-requests" className="font-black underline">متابعة الطلبات</Link>. يتم التحقق من المرفقات في الخادم قبل إنشاء مرجع التحويل.</p>}
   {needsLogin&&<div className="mt-3 rounded-xl border border-[#D4AF37]/40 bg-white p-4 text-sm"><p>سجّل الدخول لإظهار الحساب البنكي المعتمد وإنشاء مرجع تحويل خاص بك.</p><Link href="/login?next=%2Fcart" className="mt-2 inline-block rounded-lg bg-[#0D3B34] px-4 py-2 font-bold text-white">تسجيل الدخول وإكمال السداد</Link></div>}
   <div className="mt-4 grid gap-2 sm:grid-cols-2">
    <button type="button" disabled={!!order} onClick={()=>setMethod("BANK")} aria-pressed={method==="BANK"} className={`rounded-xl border px-4 py-3 text-right text-sm font-bold transition ${method==="BANK"?"border-[#B9974A] bg-[#FFF2CA]":"border-[#DED5BE] bg-white"}`}>🏦 التحويل البنكي</button>
