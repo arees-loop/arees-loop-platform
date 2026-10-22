@@ -6,6 +6,7 @@ on:
       - feature/customer-experience-r07-r09-r10-20261012
       - feature/government-partner-join-20261013
       - fix/release-visa-cart-payment-20261022
+      - release/areesloop-production
   pull_request:
     branches:
       - release/areesloop-production
@@ -26,6 +27,8 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+      - name: Protect approved release UI and booking contracts
+        run: node scripts/verify-release-contract.mjs
       - name: Install pinned dependencies
         run: npm ci
       - name: Generate Prisma client only (no database connection or migration)
