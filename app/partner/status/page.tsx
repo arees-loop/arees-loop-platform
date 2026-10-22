@@ -339,27 +339,27 @@ export default function PartnerStatusPage() {
           </div>
         </section>
 
-        {application.partnerType === "GOVERNMENT_NONPROFIT" &&
+        {["GOVERNMENT_NONPROFIT","INDIVIDUAL"].includes(application.partnerType||"") &&
           ["DRAFT","SUBMITTED","UNDER_REVIEW","NEEDS_COMPLETION"].includes(application.status) && (
             <section className="mb-7 rounded-[28px] border border-[#D4AF37]/25 bg-white p-6">
-              <h3 className="text-xl font-bold">الشعار الرسمي للجهة</h3>
-              <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">ارفع الشعار المعتمد، أو استبدله قبل الموافقة النهائية. لا يظهر للزوار قبل الاعتماد.</p>
+              <h3 className="text-xl font-bold">{application.partnerType==="INDIVIDUAL"?"الصورة الشخصية المهنية للمرشد":"الشعار الرسمي للجهة"}</h3>
+              <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">{application.partnerType==="INDIVIDUAL"?"ارفع الصورة المهنية الواضحة؛ لا تظهر للزوار حتى اعتماد المرشد.":"ارفع الشعار المعتمد، أو استبدله قبل الموافقة النهائية. لا يظهر للزوار قبل الاعتماد."}</p>
               {application.logoUrl && (
                 <div className="mt-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={application.logoUrl} alt="شعار الجهة للمراجعة" className="h-24 w-24 rounded-xl border bg-white object-contain p-2"/>
+                  <img src={application.logoUrl} alt={application.partnerType==="INDIVIDUAL"?"صورة المرشد للمراجعة":"شعار الجهة للمراجعة"} className="h-24 w-24 rounded-xl border bg-white object-contain p-2"/>
                 </div>
               )}
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <div className="w-full"><ImageSizeGuidance requirement={IMAGE_REQUIREMENTS.squareLogo} actual={officialLogoFile?officialLogoDimensions:null}/></div>
                 <input type="file" accept=".png,.jpg,.jpeg,.webp"
-                  aria-label="اختيار شعار الجهة الرسمي"
+                  aria-label={application.partnerType==="INDIVIDUAL"?"اختيار الصورة المهنية للمرشد":"اختيار شعار الجهة الرسمي"}
                   onChange={async e=>{const file=e.target.files?.[0]??null;setOfficialLogoFile(file);setOfficialLogoDimensions(null);if(file){try{setOfficialLogoDimensions(await readImageDimensions(file));}catch{setLogoFeedback("تعذر قراءة أبعاد الصورة.");}}}}
                   className="max-w-full rounded-xl border bg-[#FAF8F1] p-3 text-sm" />
                 <button type="button" onClick={uploadOfficialLogo}
                   disabled={!officialLogoFile || logoUploading || officialLogoDimensions?.width!==IMAGE_REQUIREMENTS.squareLogo.width || officialLogoDimensions?.height!==IMAGE_REQUIREMENTS.squareLogo.height}
                   className="rounded-xl bg-[#0D3B34] px-6 py-3 text-sm font-bold text-white disabled:opacity-40">
-                  {logoUploading ? "جاري رفع الشعار..." : "رفع الشعار للمراجعة"}
+                  {logoUploading ? "جاري رفع الصورة..." : application.partnerType==="INDIVIDUAL"?"رفع الصورة للمراجعة":"رفع الشعار للمراجعة"}
                 </button>
               </div>
               {logoFeedback && <p role="status" className="mt-3 text-sm font-semibold">{logoFeedback}</p>}
@@ -456,12 +456,13 @@ export default function PartnerStatusPage() {
                   : "سيظهر هنا أي مستند ناقص أو إجراء يحتاج إلى استكماله."}
               </p>
 
-              {application.status === "NEEDS_COMPLETION" && (
+              {(application.status === "NEEDS_COMPLETION" ||
+                  (application.partnerType === "INDIVIDUAL" && ["SUBMITTED","UNDER_REVIEW"].includes(application.status))) && (
                 <Link
-                  href="/partner/onboarding?resume=1"
+                  href={application.partnerType==="INDIVIDUAL"?"/partner/onboarding?type=individual&resume=1":"/partner/onboarding?resume=1"}
                   className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-[#0D463D] px-4 py-3 text-sm font-bold text-white"
                 >
-                  استكمال الطلب الآن
+                  {application.partnerType==="INDIVIDUAL"?"استكمال بيانات المرشد والمسارات على نفس الطلب":"استكمال الطلب الآن"}
                 </Link>
               )}
             </section>

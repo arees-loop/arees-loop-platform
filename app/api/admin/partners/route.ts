@@ -36,6 +36,8 @@ export async function GET() {
       },
 
       include: {
+        guideAreas:{where:{isActive:true},orderBy:{createdAt:"asc"},
+          select:{id:true,label:true,city:true,category:true,notes:true,latitude:true,longitude:true,radiusKm:true}},
         categories: {
           orderBy: {
             createdAt: "asc",

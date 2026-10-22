@@ -39,9 +39,10 @@ export async function POST(request: NextRequest) {
     }
 
     const membership = await getActivePartnerMembership(session.user.id);
-    if (!membership || membership.partner.partnerType !== "GOVERNMENT_NONPROFIT") {
-      return NextResponse.json({success:false,message:"رفع شعار الجهة متاح لطلبات الجهات الحكومية وغير الربحية فقط."}, {status:403});
+    if (!membership || !["GOVERNMENT_NONPROFIT","INDIVIDUAL"].includes(membership.partner.partnerType||"")) {
+      return NextResponse.json({success:false,message:"رفع الصورة متاح للمرشد السياحي أو الجهة الحكومية من حساب مقدم الطلب فقط."}, {status:403});
     }
+    const isGuide=membership.partner.partnerType==="INDIVIDUAL";
     if (!["DRAFT","SUBMITTED","UNDER_REVIEW","NEEDS_COMPLETION"].includes(membership.partner.status)) {
       return NextResponse.json({success:false,message:"لا يمكن تعديل الشعار بعد اعتماد الطلب أو إغلاقه. تواصل مع إدارة المنصة."},{status:409});
     }
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
     const dimensions = await checkServerImageDimensions(file, IMAGE_REQUIREMENTS.squareLogo);
     if (!dimensions.matches) return NextResponse.json({success:false,message:`${imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo)} أبعاد الصورة الحالية ${dimensions.width} × ${dimensions.height}. لم تُحفظ.`},{status:400});
 
-    const pathname = `partners/${membership.partnerId}/logos/${crypto.randomUUID()}.${extension}`;
+    const pathname = `partners/${membership.partnerId}/${isGuide?"guide-portraits":"logos"}/${crypto.randomUUID()}.${extension}`;
     const blob = await put(pathname, file, {
       access:"private",
       addRandomSuffix:false,
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
       prisma.auditLog.create({
         data:{
           userId:session.user.id,
-          action:"GOVERNMENT_PARTNER_LOGO_UPLOADED",
+          action:isGuide?"GUIDE_PORTRAIT_UPLOADED":"GOVERNMENT_PARTNER_LOGO_UPLOADED",
           entityType:"Partner",
           entityId:membership.partnerId,
           afterData:{blobPath:blob.pathname,verificationStatus:"PENDING_ADMIN_REVIEW"},
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    return NextResponse.json({success:true,message:"رُفع الشعار وأُرسل لمراجعة أريس.",logoUrl});
+    return NextResponse.json({success:true,message:isGuide?"رُفعت الصورة المهنية للمرشد للمراجعة.":"رُفع الشعار وأُرسل لمراجعة أريس.",logoUrl});
   } catch (error) {
     console.error("POST /api/partner/logo failed:",error);
     return NextResponse.json({success:false,message:"تعذر حفظ الشعار حالياً."},{status:500});

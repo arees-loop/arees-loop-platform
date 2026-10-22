@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { IMAGE_REQUIREMENTS, imageDimensionMessage } from "@/lib/image-requirements";
 import { readImageDimensions } from "@/lib/client-image-dimensions";
+import { SAUDI_CITY_SUGGESTIONS } from "@/lib/guides/reference-data";
 type StepId =
   | "account"
   | "business"
@@ -27,6 +28,28 @@ type DocumentItem = {
   fileName: string;
   coveredCategories: string[];
 };
+
+type GuideArea = {
+  id?: string;
+  key: string;
+  city: string;
+  label: string;
+  category: string;
+  notes: string;
+  latitude: number | null;
+  longitude: number | null;
+  radiusKm: 50;
+};
+type GuideLocationSuggestion = {
+  name: string; address: string; city: string; countryCode: string;
+  location: {lat: number; lng: number};
+};
+const GUIDE_CATEGORIES = ["هايكينق","مغامرات","تاريخ","آثار","ثقافة وتراث","طبيعة","أخرى"];
+const newGuideArea = (): GuideArea => ({
+  key: typeof crypto !== "undefined" ? crypto.randomUUID() : "primary",
+  city: "", label: "", category: "تاريخ", notes: "",
+  latitude: null, longitude: null, radiusKm: 50
+});
 
 type AiReviewClientResult = {
   outcome: "READY" | "NEEDS_COMPLETION" | "MANUAL_REVIEW";
@@ -79,6 +102,7 @@ type FormData = {
   vatCertificate: string;
 
   receivesPayments: boolean;
+  bankName: string;
   iban: string;
   beneficiaryName: string;
   ibanCertificate: string;
@@ -250,6 +274,7 @@ const initialData: FormData = {
   vatCertificate: "",
 
   receivesPayments: false,
+  bankName: "",
   iban: "",
   beneficiaryName: "",
   ibanCertificate: "",
@@ -270,6 +295,40 @@ const initialData: FormData = {
 
 export default function PartnerOnboardingPage() {
   const [logoDimensionsOk, setLogoDimensionsOk] = useState(true);
+  const [guideAreas, setGuideAreas] = useState<GuideArea[]>([newGuideArea()]);
+  const [guideAreaMode, setGuideAreaMode] = useState<"single"|"multiple">("single");
+  const [guideLocationQueries, setGuideLocationQueries] = useState<Record<string,string>>({});
+  const [guideLocationSuggestions, setGuideLocationSuggestions] = useState<Record<string,GuideLocationSuggestion[]>>({});
+  const [guideSearchLoading, setGuideSearchLoading] = useState<string>("");
+  const [guideSearchError, setGuideSearchError] = useState<string>("");
+
+  const updateGuideArea=(key:string,patch:Partial<GuideArea>)=>
+    setGuideAreas(current=>current.map(a=>a.key===key?{...a,...patch}:a));
+  const searchGuideLocation=async(area:GuideArea)=>{
+    const q=(guideLocationQueries[area.key]||area.city).trim();
+    if(!q)return;
+    setGuideSearchLoading(area.key);
+    setGuideSearchError("");
+    try{
+      const response=await fetch(`/api/location/search?query=${encodeURIComponent(q)}`,{cache:"no-store"});
+      const data=await response.json();
+      if(!response.ok)throw new Error("بحث توم توم غير متاح");
+      const items=(Array.isArray(data.suggestions)?data.suggestions:[])
+        .filter((item:GuideLocationSuggestion)=>item.location && Number.isFinite(item.location.lat) &&
+          Number.isFinite(item.location.lng) && item.location.lat>=16 && item.location.lat<=33 &&
+          item.location.lng>=34 && item.location.lng<=56);
+      setGuideLocationSuggestions(current=>({...current,[area.key]:items}));
+      if(!items.length)setGuideSearchError("لا توجد نتائج داخل المملكة؛ جرب اسم الموقع أو الحي.");
+    }catch{setGuideSearchError("تعذر البحث حالياً عبر TomTom. لن يُحفظ مسار بلا موقع جغرافي مؤكد.");}
+    finally{setGuideSearchLoading("");}
+  };
+  const chooseGuideLocation=(key:string,item:GuideLocationSuggestion)=>{
+    const city=item.city||guideAreas.find(a=>a.key===key)?.city||"";
+    updateGuideArea(key,{city,label:item.name||item.address,latitude:item.location.lat,
+      longitude:item.location.lng,radiusKm:50});
+    setGuideLocationSuggestions(current=>({...current,[key]:[]}));
+    if(guideAreas[0]?.key===key)update("city",city);
+  };
   const [currentStep, setCurrentStep] =
     useState<StepId>("account");
 
@@ -347,8 +406,12 @@ export default function PartnerOnboardingPage() {
       partnerType: selectedType,
       ...(selectedType === "government"
         ? { proofType: "وثيقة جهة حكومية أو غير ربحية", categories: ["فعاليات"] }
-        : selectedType === "individual" ? { proofType: "رخصة مرشد سياحي", categories: ["مرشدون"], applicantRole: "owner" } : {}),
+        : selectedType === "individual" ? { proofType: "رخصة مرشد سياحي", categories: ["مرشدون"], applicantRole: "owner", receivesPayments:true } : {}),
     }));
+    if(selectedType==="individual") setDocuments([
+      {id:1,type:"وثيقة العمل الحر",number:"",issuer:"",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]},
+      {id:2,type:"رخصة مرشد سياحي",number:"",issuer:"وزارة السياحة",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]},
+    ]);
   }, []);
 
   useEffect(() => {
@@ -449,7 +512,11 @@ export default function PartnerOnboardingPage() {
           proofType:
             String(application.proofType || ""),
           description:
-            String(application.descriptionAr || ""),
+            String(application.descriptionAr || "")
+              .replace(/^تخصص المرشد:.*\r?\n?/gm,"")
+              .replace(/^اللغات:.*\r?\n?/gm,"").trim(),
+          guideSpecialty: String(application.descriptionAr || "").match(/^تخصص المرشد:\s*(.*)$/m)?.[1] || "",
+          guideLanguages: String(application.descriptionAr || "").match(/^اللغات:\s*(.*)$/m)?.[1] || "",
 
           country:
             String(
@@ -483,6 +550,7 @@ export default function PartnerOnboardingPage() {
 
           receivesPayments:
             Boolean(application.receivesPayments),
+          bankName: String(application.bankName || ""),
           iban: String(application.iban || ""),
           beneficiaryName:
             String(application.beneficiaryName || ""),
@@ -503,7 +571,7 @@ export default function PartnerOnboardingPage() {
 
           publicName:
             String(application.publicName || ""),
-          logoFile: application.logoUrl ? "شعار مرفوع للمراجعة" : "",
+          logoFile: application.logoUrl ? "صورة مرفوعة للمراجعة" : "",
           declaration: false,
           termsAccepted: false,
         }));
@@ -537,13 +605,40 @@ export default function PartnerOnboardingPage() {
                   ? String(license.expiryDate).slice(0, 10)
                   : "",
                 fileName:
-                  existingDocuments.length > 0
+                  existingDocuments.some((item:{label?:string;fileName?:string})=>
+                     String(item.label||"").trim()===String(license.type||"").trim())
                     ? "مرفوع مسبقاً"
                     : "",
                 coveredCategories: [],
               })
             )
           );
+        }
+
+        if(mappedPartnerType==="individual"){
+          try{
+            const areasResponse=await fetch("/api/partner/guide-profile",{cache:"no-store"});
+            const payload=await areasResponse.json();
+            if(areasResponse.ok && Array.isArray(payload.areas) && payload.areas.length && !cancelled){
+              setGuideAreas(payload.areas.map((a:GuideArea)=>({...a,key:a.id||crypto.randomUUID(),radiusKm:50})));
+              setGuideAreaMode(payload.areas.length>1?"multiple":"single");
+            }
+          }catch{/* Existing licence and application records remain intact. */}
+          const savedLicenses=Array.isArray(application.licenses)?application.licenses:[];
+          if(!savedLicenses.length){
+            setDocuments([
+              {id:1,type:"وثيقة العمل الحر",number:"",issuer:"",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]},
+              {id:2,type:"رخصة مرشد سياحي",number:"",issuer:"وزارة السياحة",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]}
+            ]);
+          } else {
+            const hasWork=savedLicenses.some((item:{type?:string})=>String(item.type||"").includes("عمل حر"));
+            const hasGuide=savedLicenses.some((item:{type?:string})=>/مرشد|إرشاد/.test(String(item.type||"")));
+            setDocuments(current=>[
+              ...current,
+              ...(!hasWork?[{id:current.length+1,type:"وثيقة العمل الحر",number:"",issuer:"",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]}]:[]),
+              ...(!hasGuide?[{id:current.length+2,type:"رخصة مرشد سياحي",number:"",issuer:"وزارة السياحة",issueDate:"",expiryDate:"",fileName:"",coveredCategories:[]}]:[]),
+            ]);
+          }
         }
 
         const normalizedExistingContact =
@@ -600,8 +695,10 @@ export default function PartnerOnboardingPage() {
           ).get("resume") === "1";
 
         setCurrentStep(
-          application.status === "NEEDS_COMPLETION" &&
-            resumeRequested
+          resumeRequested &&
+            (application.status === "NEEDS_COMPLETION" ||
+             (mappedPartnerType === "individual" &&
+              ["SUBMITTED","UNDER_REVIEW"].includes(application.status)))
             ? "business"
             : "done"
         );
@@ -620,7 +717,11 @@ export default function PartnerOnboardingPage() {
     };
   }, []);
 
-  const activeSteps = useMemo(() => (data.partnerType === "individual" || data.partnerType === "government") ? steps.filter(step => step.id !== "categories") : steps, [data.partnerType]);
+  const activeSteps = useMemo(() => data.partnerType === "individual"
+    ? steps.filter(step => (applicationId ? ["business","review"] : ["account","business","review"]).includes(step.id))
+    : data.partnerType === "government"
+      ? steps.filter(step => step.id !== "categories")
+      : steps, [data.partnerType,applicationId]);
   const activeIndex = useMemo(
     () =>
       activeSteps.findIndex(
@@ -1235,6 +1336,10 @@ export default function PartnerOnboardingPage() {
 
     if (currentStep === "business") {
       if (data.partnerType === "individual" && !data.guideLanguages.trim()) errors.guideLanguages = "لغات الإرشاد مطلوبة.";
+      if(data.partnerType==="individual" && (!guideAreas.length || guideAreas.some(area=>
+         !area.city.trim() || !area.label.trim() || !GUIDE_CATEGORIES.includes(area.category) ||
+         area.latitude===null || area.longitude===null || area.radiusKm!==50)))
+        errors.guideAreas="يجب تحديد موقع TomTom صالح وتصنيف لكل مسار، ضمن نطاق 50 كم.";
       if (data.partnerType === "individual" && !data.guideSpecialty.trim()) errors.guideSpecialty = "مجال التخصص السياحي مطلوب.";
       if (!data.tradeName.trim()) errors.tradeName = "الاسم التجاري / اسم النشاط مطلوب.";
       if (!data.city.trim()) errors.city = "المدينة مطلوبة.";
@@ -1256,21 +1361,28 @@ export default function PartnerOnboardingPage() {
       }
     }
 
-    if (currentStep === "documents") {
+    if (currentStep === "documents" || (currentStep === "review" && data.partnerType === "individual")) {
       const validLicenses = documents.filter(document =>
         document.type.trim() && document.issuer.trim() && document.number.trim() &&
         document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
         (uploadedFiles.documents[document.id] || document.fileName)
       );
-      if (validLicenses.length === 0) {
-        errors.documents = "الترخيص إلزامي: النوع والجهة والرقم وتاريخ السريان وملف الرخصة مطلوبة.";
+      const requiresBoth = data.partnerType === "individual";
+      if ((requiresBoth && (!validLicenses.some(doc=>doc.type.includes("عمل حر")) ||
+         !validLicenses.some(doc=>/مرشد|إرشاد/.test(doc.type)))) ||
+          (!requiresBoth && validLicenses.length===0)) {
+        errors.documents=requiresBoth
+          ? "أرفق وثيقة العمل الحر ورخصة الإرشاد السياحي الساريتين بكامل بياناتهما."
+          : "الترخيص إلزامي: النوع والجهة والرقم وتاريخ السريان وملف الرخصة مطلوبة.";
       }
     }
 
-    if (currentStep === "operations") {
+    if (currentStep === "operations" || (currentStep === "review" && data.partnerType === "individual")) {
       if (data.partnerType === "government" && !data.logoFile) {
         errors.logoFile = "أرفق الشعار الرسمي للجهة.";
       }
+      if(data.partnerType==="individual" && !data.logoFile)
+        errors.logoFile="الصورة الشخصية المهنية للمرشد مطلوبة.";
       if (smsVerificationEnabled === true) {
         if (
           !normalizeSaudiMobileForCheck(
@@ -1291,16 +1403,14 @@ export default function PartnerOnboardingPage() {
         }
       }
 
-      if (data.receivesPayments) {
-        if (!data.iban.trim()) {
-          errors.iban =
-            "رقم IBAN مطلوب لاستقبال التسويات.";
+      const bankRequired = data.partnerType === "individual" ||
+        (data.partnerType === "business" && data.receivesPayments);
+      if (bankRequired) {
+        if (!/^SA\d{22}$/.test(data.iban.trim().toUpperCase())) {
+          errors.iban = "أدخل آيبان سعودي صحيحاً من 24 خانة يبدأ بـ SA.";
         }
-
-        if (!data.beneficiaryName.trim()) {
-          errors.beneficiaryName =
-            "اسم المستفيد مطلوب لاستقبال التسويات.";
-        }
+        if (!data.bankName.trim()) errors.bankName = "اسم البنك مطلوب.";
+        if (!data.beneficiaryName.trim()) errors.beneficiaryName = "اسم صاحب الحساب مطلوب.";
       }
     }
 
@@ -1387,6 +1497,7 @@ export default function PartnerOnboardingPage() {
     }[] = [];
 
     const accountOk =
+      (data.partnerType === "individual" && Boolean(applicationId)) ||
       applicationStatus === "NEEDS_COMPLETION" ||
       Boolean(
         data.firstName.trim() &&
@@ -1465,6 +1576,14 @@ export default function PartnerOnboardingPage() {
           : "أكمل اسم النشاط والمدينة والحي والشارع والعنوان الوطني ومرفقه.",
     });
 
+    if (data.partnerType === "individual") {
+      const areasOk=guideAreas.length>0 && guideAreas.every(a=>
+        a.city.trim()&&a.label.trim()&&GUIDE_CATEGORIES.includes(a.category)&&
+        a.latitude!==null&&a.longitude!==null&&a.radiusKm===50);
+      checks.push({label:"مسارات الإرشاد",state:areasOk?"ok":"warn",
+        note:areasOk?`تم تحديد ${guideAreas.length} مساراً بنطاق 50 كم لكل موقع.`:
+          "حدّد المسارات وإحداثيات المواقع عبر TomTom أولاً."});
+    }
     checks.push({
       label: "نوع الخدمات",
       state:
@@ -1477,11 +1596,15 @@ export default function PartnerOnboardingPage() {
           : "اختر تصنيف خدمة واحداً على الأقل.",
     });
 
-    const documentsOk = documents.some(document =>
+    const validDocuments = documents.filter(document=>
       document.type.trim() && document.issuer.trim() && document.number.trim() &&
       document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
       (uploadedFiles.documents[document.id] || document.fileName)
     );
+    const documentsOk = data.partnerType === "individual" ?
+      validDocuments.some(d=>d.type.includes("عمل حر")) &&
+      validDocuments.some(d=>/مرشد|إرشاد/.test(d.type)) :
+      validDocuments.length>0;
 
     checks.push({
       label: "الوثائق والتراخيص",
@@ -1494,18 +1617,21 @@ export default function PartnerOnboardingPage() {
     });
 
     checks.push({
-      label: "شعار الجهة الرسمي",
-      state: data.partnerType !== "government" || Boolean(data.logoFile) ? "ok" : "warn",
-      note: data.partnerType !== "government" ? "غير مطلوب لهذا النوع من الشركاء." :
-        data.logoFile ? "سيظهر الشعار بعد تدقيق أريس واعتماد الجهة." : "يلزم إرفاق الشعار الرسمي للجهة.",
+      label: data.partnerType==="individual"?"الصورة المهنية للمرشد":"شعار الجهة الرسمي",
+      state: data.partnerType === "business" || Boolean(data.logoFile) ? "ok" : "warn",
+      note: data.partnerType === "individual"
+        ? data.logoFile?"الصورة مرفقة ولا تظهر للزوار إلا بعد الاعتماد.":"أرفق صورة مهنية شخصية واضحة."
+        : data.partnerType === "government"
+          ? data.logoFile?"سيظهر الشعار بعد اعتماد الجهة.":"يلزم إرفاق الشعار الرسمي للجهة."
+          : "غير مطلوب لهذا النوع من الشركاء.",
     });
 
-    const settlementOk =
-      !data.receivesPayments ||
-      Boolean(
-        data.iban.trim() &&
-          data.beneficiaryName.trim()
-      );
+    const settlementRequired = data.partnerType === "individual" ||
+      (data.partnerType === "business" && data.receivesPayments);
+    const settlementOk = !settlementRequired || Boolean(
+      /^SA\d{22}$/.test(data.iban.trim().toUpperCase()) &&
+      data.bankName.trim() && data.beneficiaryName.trim()
+    );
 
     checks.push({
       label: "بيانات التسوية",
@@ -1513,10 +1639,12 @@ export default function PartnerOnboardingPage() {
         ? "ok"
         : "warn",
       note: settlementOk
-        ? data.receivesPayments
-          ? "بيانات التسوية الأساسية مكتملة."
-          : "التسوية عبر Arees Loop غير مفعلة."
-        : "أكمل IBAN واسم المستفيد.",
+        ? data.partnerType === "government"
+          ? "الجهة الحكومية / غير الربحية مجانية ولا تتطلب بيانات مالية."
+          : settlementRequired
+            ? "بيانات حساب التسوية مكتملة."
+            : "التسوية عبر Arees Loop غير مفعلة."
+        : "أكمل الآيبان واسم البنك واسم صاحب الحساب.",
     });
 
     const contactPhoneOk =
@@ -1547,6 +1675,8 @@ export default function PartnerOnboardingPage() {
     data,
     documents,
     uploadedFiles,
+    guideAreas,
+    applicationId,
     emailVerified,
     smsVerificationEnabled,
     contactPhoneVerified,
@@ -1568,7 +1698,9 @@ export default function PartnerOnboardingPage() {
 
   try {
     if (data.partnerType === "business" && !data.ownerProofFile && data.applicantRole === "owner") { window.alert("يجب إرفاق إثبات ملكية المنشأة."); return; }
-    const response = await fetch("/api/partner/application", {
+    const existingGuide = data.partnerType === "individual" && Boolean(applicationId);
+    // Existing guides update their own review request; never create a second partner request.
+    const response = existingGuide ? null : await fetch("/api/partner/application", {
       method:
         applicationStatus === "NEEDS_COMPLETION"
           ? "PATCH"
@@ -1607,7 +1739,7 @@ export default function PartnerOnboardingPage() {
         businessPhone: data.businessPhone,
         businessEmail: data.businessEmail,
 
-        mainContactName: data.contactName,
+        mainContactName: data.partnerType === "individual" ? (data.contactName.trim() || [data.firstName, data.lastName].filter(Boolean).join(" ")) : data.contactName,
         mainContactEmail: data.contactEmail,
         mainContactPhone: data.contactPhone,
         mainContactJobTitle: data.jobTitle,
@@ -1615,9 +1747,10 @@ export default function PartnerOnboardingPage() {
         operates24h: data.operates24h,
         operatingHours: data.operatingHours,
 
-        receivesPayments: data.receivesPayments,
-        iban: data.iban,
-        beneficiaryName: data.beneficiaryName,
+        receivesPayments: data.partnerType === "individual" || (data.partnerType === "business" && data.receivesPayments),
+        bankName: data.partnerType === "government" ? "" : data.bankName,
+        iban: data.partnerType === "government" ? "" : data.iban,
+        beneficiaryName: data.partnerType === "government" ? "" : data.beneficiaryName,
 
         publicName: data.publicName,
 
@@ -1633,9 +1766,10 @@ export default function PartnerOnboardingPage() {
       }),
     });
 
-    const result = await response.json();
+    const result = response ? await response.json() :
+      {application:{id:applicationId,status:applicationStatus}};
 
-    if (!response.ok) {
+    if (response && !response.ok) {
       window.alert(
         result.message || "تعذر إرسال طلب الشراكة."
       );
@@ -1652,6 +1786,26 @@ export default function PartnerOnboardingPage() {
       );
     }
 
+    if(data.partnerType==="individual"){
+      const payload={
+        guideSpecialty:data.guideSpecialty,guideLanguages:data.guideLanguages,
+        areas:guideAreas.map(({id,city,label,category,notes,latitude,longitude,radiusKm})=>({
+          id,city,label,category,notes,latitude,longitude,radiusKm
+        })),
+        bankName:data.bankName,iban:data.iban,beneficiaryName:data.beneficiaryName,
+        publicName:data.publicName||data.tradeName,
+        licenses:documents.map(doc=>({type:doc.type,issuer:doc.issuer,licenseNumber:doc.number,
+          issueDate:doc.issueDate||null,expiryDate:doc.expiryDate||null}))
+      };
+      const areaResponse=await fetch("/api/partner/guide-profile",{
+        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)
+      });
+      const areaResult=await areaResponse.json();
+      if(!areaResponse.ok){
+        window.alert(areaResult.message||"تعذر حفظ المسارات والحساب البنكي. بيانات الطلب القديمة محفوظة.");
+        return;
+      }
+    }
     const filesToUpload: Array<{
       file: File;
       type: string;
@@ -1756,7 +1910,7 @@ export default function PartnerOnboardingPage() {
       }
     }
 
-    if (data.partnerType === "government" && uploadedFiles.logo) {
+    if ((data.partnerType === "government" || data.partnerType === "individual") && uploadedFiles.logo) {
       const logoForm = new FormData();
       logoForm.append("file", uploadedFiles.logo);
       const logoResponse = await fetch("/api/partner/logo", {
@@ -2253,7 +2407,9 @@ export default function PartnerOnboardingPage() {
             title={data.partnerType === "government" ? "بيانات الجهة الرسمية" : data.partnerType === "individual" ? "ملف المرشد السياحي" : "بيانات النشاط والمقر"}
             description={data.partnerType === "government"
               ? "اكتب الاسم الرسمي للجهة والمدينة. تتم مراجعة الهوية والمستندات قبل اعتماد شعار الجهة."
-              : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
+              : data.partnerType === "individual"
+                ? "أدخل اسم المرشد واللغات، وحدد مساراً واحداً أو عدة مسارات وموقع كل مسار عبر TomTom بنطاق 50 كم."
+                : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
@@ -2282,6 +2438,70 @@ export default function PartnerOnboardingPage() {
                 <div data-validation="guideLanguages"><Field label="لغات الإرشاد *">
                   <input value={data.guideLanguages} onChange={e=>update("guideLanguages",e.target.value)} placeholder="العربية، الإنجليزية..." className={inputClass}/>
                 </Field><ValidationError message={validationErrors.guideLanguages}/></div>
+                <div data-validation="guideAreas" className="md:col-span-2 space-y-4 rounded-[24px] border border-[#D4AF37]/30 bg-[#FBF9F2] p-5">
+                  <h3 className="text-lg font-bold text-[#0D3B34]">المسارات والمناطق التي تقدم فيها الإرشاد</h3>
+                  <p className="text-sm leading-7 text-[#0D3B34]/65">اختر مساراً واحداً أو عدة مسارات، ولكل مسار موقع مستقل عبر بحث TomTom ونطاق خدمة 50 كم حول النقطة المحددة.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button type="button" onClick={()=>{
+                      if(guideAreas.length>1 && !window.confirm("سيتم إلغاء تفعيل المسارات الإضافية عند حفظ التعديل، مع الاحتفاظ بسجلها. هل تريد الاستمرار؟"))return;
+                      setGuideAreaMode("single");
+                      setGuideAreas(current=>current.slice(0,1));
+                    }} className={guideAreaMode==="single"?"rounded-xl bg-[#0D3B34] p-3 font-bold text-white":"rounded-xl border bg-white p-3 font-bold"}>مسار محدد</button>
+                    <button type="button" onClick={()=>setGuideAreaMode("multiple")} className={guideAreaMode==="multiple"?"rounded-xl bg-[#0D3B34] p-3 font-bold text-white":"rounded-xl border bg-white p-3 font-bold"}>مسارات متعددة</button>
+                  </div>
+                  <datalist id="arees-guide-cities">{SAUDI_CITY_SUGGESTIONS.map(city=><option key={city} value={city}/>)}</datalist>
+                  {guideAreas.map((area,index)=>(
+                    <div key={area.key} className="space-y-3 rounded-2xl border border-[#0D3B34]/10 bg-white p-4">
+                      <div className="flex items-center justify-between">
+                        <strong>المسار {index+1}</strong>
+                        {guideAreaMode==="multiple" && guideAreas.length>1 && <button type="button" onClick={()=>setGuideAreas(current=>current.filter(a=>a.key!==area.key))} className="text-xs font-bold text-red-700">إزالة المسار</button>}
+                      </div>
+                      <Field label="المدينة / المنطقة التي تقدم فيها الخدمة *">
+                        <input list="arees-guide-cities" value={area.city}
+                          onChange={e=>{updateGuideArea(area.key,{city:e.target.value});if(index===0)update("city",e.target.value);}}
+                          placeholder="اختر مدينة من مدن المملكة" className={inputClass}/>
+                      </Field>
+                      <Field label="اسم المسار أو الوجهة *">
+                        <input value={area.label} onChange={e=>updateGuideArea(area.key,{label:e.target.value})}
+                          placeholder="مثلاً: مسار جبل أحد / العلا القديمة" className={inputClass}/>
+                      </Field>
+                      <Field label="نوع مسار الإرشاد *">
+                        <select value={area.category} onChange={e=>updateGuideArea(area.key,{category:e.target.value})} className={inputClass}>
+                          {GUIDE_CATEGORIES.map(category=><option key={category} value={category}>{category}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="تحديد الموقع عبر TomTom *">
+                        <div className="flex flex-wrap gap-2">
+                          <input value={guideLocationQueries[area.key]||""}
+                            onChange={e=>setGuideLocationQueries(current=>({...current,[area.key]:e.target.value}))}
+                            placeholder="اكتب اسم المكان أو الحي أو المعلم" className={inputClass+" flex-1 min-w-[180px]"}/>
+                          <button type="button" disabled={guideSearchLoading===area.key} onClick={()=>void searchGuideLocation(area)}
+                            className="rounded-xl bg-[#0D3B34] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">
+                            {guideSearchLoading===area.key?"جاري البحث...":"بحث الموقع"}
+                          </button>
+                        </div>
+                        {(guideLocationSuggestions[area.key]||[]).map((item,i)=>(
+                          <button key={i} type="button" onClick={()=>chooseGuideLocation(area.key,item)}
+                            className="mt-2 block w-full rounded-xl border border-[#D4AF37]/20 bg-[#FFFCF5] p-3 text-right text-sm">
+                            <strong>{item.name}</strong><span className="block text-xs text-[#0D3B34]/60">{item.address}</span>
+                          </button>
+                        ))}
+                      </Field>
+                      {area.latitude!==null && area.longitude!==null
+                        ? <p className="rounded-xl bg-[#EAF1EB] p-3 text-xs font-semibold text-[#0D3B34]">✓ الموقع محدد — دائرة خدمة 50 كم — الإحداثيات: {area.latitude.toFixed(5)}, {area.longitude.toFixed(5)}</p>
+                        : <p className="rounded-xl bg-[#FFF5E1] p-3 text-xs text-[#8B6812]">اختر نتيجة من TomTom لتأكيد الموقع. كتابة اسم المدينة وحدها لا تكفي.</p>}
+                      <Field label="ملاحظات المسار (اختياري)">
+                        <textarea value={area.notes} onChange={e=>updateGuideArea(area.key,{notes:e.target.value})}
+                          placeholder="مغامرات، هايكينق، مواقع تاريخية أو أثرية، متطلبات الجولة..." rows={2} className={inputClass}/>
+                      </Field>
+                    </div>
+                  ))}
+                  {guideAreaMode==="multiple" && guideAreas.length<20 && <button type="button"
+                    onClick={()=>setGuideAreas(current=>[...current,newGuideArea()])}
+                    className="w-full rounded-xl border border-dashed border-[#B99124]/60 bg-[#FFF7E2] px-4 py-3 font-bold text-[#8B6812]">+ إضافة مسار آخر</button>}
+                  <ValidationError message={validationErrors.guideAreas}/>
+                  {guideSearchError&&<p className="text-xs font-bold text-red-700">{guideSearchError}</p>}
+                </div>
               </>}
 
               <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
@@ -2297,6 +2517,7 @@ export default function PartnerOnboardingPage() {
                 />
               </Field>
 
+              {data.partnerType !== "individual" && <>
               <Field label="نوع الإثبات">
                 <select
                   value={data.proofType}
@@ -2348,6 +2569,7 @@ export default function PartnerOnboardingPage() {
                 />
               </Field>
 
+              </>}
               {data.partnerType ===
                 "business" && (
                 <Field label="الرقم الموحد">
@@ -2378,15 +2600,16 @@ export default function PartnerOnboardingPage() {
                 />
               </Field>
 
-              <div data-validation="city"><Field label="المدينة *">
+              {data.partnerType!=="individual" && <div data-validation="city"><Field label="المدينة *">
                 <input
                   value={data.city}
                   onChange={(e) => update("city", e.target.value)}
                   placeholder="مثال: المدينة المنورة"
                   className={`${inputClass} ${validationErrors.city ? errorInputClass : ""}`}
                 />
-              </Field><ValidationError message={validationErrors.city} /></div>
+              </Field><ValidationError message={validationErrors.city} /></div>}
 
+              {data.partnerType==="business" && <>
               <div data-validation="district"><Field label="الحي *">
                 <input
                   value={data.district}
@@ -2444,10 +2667,10 @@ export default function PartnerOnboardingPage() {
                 <p className="mt-2 text-xs leading-6 text-[#0D3B34]/50">
                   أرفق نسخة من إثبات العنوان الوطني الخاص بمقر المنشأة بصيغة PDF أو صورة.
                 </p>
-              </div>
+              </div></>}
             </div>
 
-            <Field label="نبذة عن النشاط">
+            <Field label={data.partnerType==="individual"?"نبذة عن خبرة المرشد":"نبذة عن النشاط"}>
               <textarea
                 value={data.description}
                 onChange={(e) =>
@@ -2462,6 +2685,7 @@ export default function PartnerOnboardingPage() {
               />
             </Field>
 
+            {data.partnerType!=="individual" && <>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="البريد التجاري">
                 <input
@@ -2512,6 +2736,7 @@ export default function PartnerOnboardingPage() {
               />
             </Field>
 
+            </>}
             <InfoBox>
               بيانات التواصل والمعلومات
               الداخلية لا تظهر تلقائياً
@@ -2609,11 +2834,10 @@ export default function PartnerOnboardingPage() {
           </StepCard>
         )}
 
-        {currentStep ===
-          "documents" && (
+        {(currentStep === "documents" || (currentStep === "review" && data.partnerType==="individual")) && (
           <StepCard
-            eyebrow="STEP 04 / 06"
-            title="التراخيص والوثائق"
+            eyebrow={data.partnerType==="individual"?"المرحلة الأخيرة — التراخيص":"STEP 04 / 06"}
+            title={data.partnerType==="individual"?"وثيقة العمل الحر ورخصة الإرشاد السياحي":"التراخيص والوثائق"}
             description="أرفق الوثائق المناسبة لطبيعة الجهة والخدمات المختارة. المتطلبات تختلف بين المنشآت والأفراد والجهات المؤسسية."
           >
 
@@ -2790,7 +3014,7 @@ export default function PartnerOnboardingPage() {
                         />
                       </Field>
 
-                      <Field label="تاريخ الانتهاء — إن وجد">
+                      <Field label={data.partnerType==="individual"?"تاريخ انتهاء الترخيص *":"تاريخ الانتهاء — إن وجد"}>
                         <input
                           type="date"
                           value={
@@ -2851,7 +3075,7 @@ export default function PartnerOnboardingPage() {
                       </Field>
                     </div>
 
-                    {data.categories
+                    {data.partnerType !== "individual" && data.categories
                       .length >
                       0 && (
                       <div className="mt-5">
@@ -2908,30 +3132,30 @@ export default function PartnerOnboardingPage() {
             </div>
             </div>
 
-            <button
+            {data.partnerType !== "individual" && <button
               type="button"
               onClick={addDocument}
               className="w-full rounded-2xl border border-dashed border-[#B99124]/45 bg-[#FFF9EA]/70 py-4 text-sm font-bold text-[#8B6812]"
             >
               + إضافة مستند أو ترخيص آخر
-            </button>
+            </button>}
 
-            <Actions
+            {data.partnerType !== "individual" && <Actions
               onBack={goBack}
               onNext={goNext}
               onSave={saveDraft}
               saved={draftSaved}
-            />
+            />}
           </StepCard>
         )}
-                {currentStep === "operations" && (
+                {(currentStep === "operations" || (currentStep === "review" && data.partnerType==="individual")) && (
           <StepCard
-            eyebrow="STEP 05 / 06"
-            title="بيانات التشغيل والتسوية"
+            eyebrow={data.partnerType==="individual"?"المرحلة الأخيرة — الحساب البنكي":"STEP 05 / 06"}
+            title={data.partnerType==="individual"?"الحساب البنكي والصورة المهنية":"بيانات التشغيل والتسوية"}
             description="أدخل بيانات التواصل والتشغيل. بيانات التسوية المالية مطلوبة فقط إذا كانت المدفوعات ستتم عبر Arees Loop."
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="مسؤول التواصل">
+              <Field label={data.partnerType === "individual" ? "المرشد نفسه — مسؤول التواصل والتسوية" : "مسؤول التواصل"}>
                 <input
                   value={data.contactName}
                   onChange={(e) =>
@@ -3104,8 +3328,13 @@ export default function PartnerOnboardingPage() {
               </Field>
             )}
 
+            {data.partnerType !== "government" && <>
             <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
-              <SelectCard
+              {data.partnerType === "individual" ? (
+                <div className="rounded-xl bg-[#F1F6F3] p-4 text-sm font-bold text-[#0D3B34]">
+                  حساب المرشد البنكي إلزامي لتسوية مستحقاته. المرشد نفسه هو المسؤول المالي، ولا يلزم مسؤول مالي منفصل.
+                </div>
+              ) : <SelectCard
                 title="استقبال المدفوعات والتسويات عبر Arees Loop"
                 description="فعّل هذا الخيار إذا كانت مستحقات الحجوزات ستتم تسويتها للشريك عبر المنصة."
                 active={
@@ -3117,9 +3346,9 @@ export default function PartnerOnboardingPage() {
                     !data.receivesPayments
                   )
                 }
-              />
+              />}
 
-              {data.receivesPayments && (
+              {(data.partnerType === "individual" || data.receivesPayments) && (
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <div data-validation="iban"><Field label="IBAN *">
                     <input
@@ -3142,7 +3371,12 @@ export default function PartnerOnboardingPage() {
                     />
                   </Field><ValidationError message={validationErrors.iban} /></div>
 
-                  <div data-validation="beneficiaryName"><Field label="اسم المستفيد *">
+                  <div data-validation="bankName"><Field label="اسم البنك *">
+                    <input value={data.bankName} onChange={(e) => update("bankName", e.target.value)}
+                      className={`${inputClass} ${validationErrors.bankName ? errorInputClass : ""}`} placeholder="اسم البنك" />
+                  </Field><ValidationError message={validationErrors.bankName} /></div>
+
+                  <div data-validation="beneficiaryName"><Field label="اسم صاحب الحساب / المستفيد *">
                     <input
                       value={
                         data.beneficiaryName
@@ -3180,6 +3414,7 @@ export default function PartnerOnboardingPage() {
               )}
             </div>
 
+            {data.partnerType === "business" && <>
             <SelectCard
               title="مسجل في ضريبة القيمة المضافة"
               description="فعّل الخيار إذا كان مقدم الخدمة مسجلاً في ضريبة القيمة المضافة."
@@ -3239,6 +3474,15 @@ export default function PartnerOnboardingPage() {
               </div>
             )}
 
+            </>}
+            </>}
+
+            {data.partnerType === "government" && (
+              <p className="rounded-2xl border border-[#D4AF37]/25 bg-[#FFF9E8] px-5 py-4 text-sm text-[#0D3B34]">
+                التسجيل للجهات الحكومية وغير الربحية مجاني. لا نطلب بيانات بنك أو مسؤولاً مالياً أو تسوية مالية.
+              </p>
+            )}
+
             <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
               <div className="mb-5">
                 <h3 className="font-bold">
@@ -3246,10 +3490,9 @@ export default function PartnerOnboardingPage() {
                 </h3>
 
                 <p className="mt-1 text-xs leading-6 text-[#0D3B34]/50">
-                  الاسم والشعار اللذان
-                  سيظهران للزوار بعد
-                  اعتماد وتفعيل حساب
-                  الشريك.
+                  {data.partnerType==="individual"
+                    ? "الاسم والصورة المهنية اللذان سيظهران للزوار بعد اعتماد المرشد وتفعيل حسابه."
+                    : "الاسم والشعار اللذان سيظهران للزوار بعد اعتماد وتفعيل حساب الشريك."}
                 </p>
               </div>
 
@@ -3272,7 +3515,7 @@ export default function PartnerOnboardingPage() {
                 </Field>
 
                 <div data-validation="logoFile">
-                  <Field label={data.partnerType === "government" ? "الشعار الرسمي المعتمد *" : "شعار الجهة"}>
+                  <Field label={data.partnerType === "government" ? "الشعار الرسمي المعتمد *" : data.partnerType==="individual"?"الصورة المهنية الشخصية للمرشد *":"شعار الجهة"}>
                     <input
                       type="file"
                       accept=".png,.jpg,.jpeg,.webp"
@@ -3296,7 +3539,7 @@ export default function PartnerOnboardingPage() {
                       className={inputClass}
                     />
                     <p className="mt-2 text-xs text-[#0D3B34]/55">
-                      <span className="font-black text-red-600">{imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo)}</span> PNG أو JPG أو WEBP، بحد أقصى 3 ميجابايت. لا يظهر الشعار للجمهور قبل اعتماد الجهة.
+                      <span className="font-black text-red-600">{imageDimensionMessage(IMAGE_REQUIREMENTS.squareLogo)}</span> PNG أو JPG أو WEBP، بحد أقصى 3 ميجابايت. {data.partnerType==="individual"?"لن تظهر الصورة الشخصية إلا بعد اعتماد المرشد.":"لا يظهر الشعار للجمهور قبل اعتماد الجهة."}
                     </p>
                   </Field>
                   <ValidationError message={validationErrors.logoFile} />
@@ -3304,12 +3547,12 @@ export default function PartnerOnboardingPage() {
               </div>
             </div>
 
-            <Actions
+            {data.partnerType !== "individual" && <Actions
               onBack={goBack}
               onNext={goNext}
               onSave={saveDraft}
               saved={draftSaved}
-            />
+            />}
           </StepCard>
         )}
 
