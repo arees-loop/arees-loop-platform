@@ -1,0 +1,54 @@
+name: Arees Loop release preflight
+
+on:
+  push:
+    branches:
+      - hotfix/customer-quote-claim-payment-20261019
+  pull_request:
+    branches:
+      - release/payment-confirmation-alerts-20261019
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-preflight-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-and-build:
+    name: TypeScript, ESLint, and production build (no database writes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: postgresql://unused:unused@127.0.0.1:5432/unused
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install lockfile-pinned dependencies
+        run: npm ci
+      - name: Generate Prisma client (no DB connection)
+        run: npx prisma generate
+      - name: TypeScript check
+        run: npx tsc --noEmit
+      - name: ESLint check
+        id: lint_check
+        continue-on-error: true
+        run: npm run lint
+      - name: Production build using disconnected dummy DB
+        id: build_check
+        continue-on-error: true
+        run: npm run build
+      - name: Enforce both quality gates
+        if: always()
+        env:
+          LINT_RESULT: ${{ steps.lint_check.outcome }}
+          BUILD_RESULT: ${{ steps.build_check.outcome }}
+        run: |
+          echo "ESLint: ${LINT_RESULT}; Production build: ${BUILD_RESULT}"
+          test "${LINT_RESULT}" = "success" && test "${BUILD_RESULT}" = "success"

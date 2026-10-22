@@ -1,4 +1,4 @@
-import { randomBytes,createHash } from "node:crypto";
+import { randomBytes,createHash,randomInt } from "node:crypto";
 import { NextRequest,NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -40,15 +40,25 @@ export async function POST(request:NextRequest){
     const session=requiredSession;
     const token=randomBytes(32).toString("base64url");
     const trackingTokenHash=createHash("sha256").update(token).digest("hex");
-    const reference="AR-HOT-"+randomBytes(5).toString("hex").toUpperCase();
-    const created=await prisma.hotelInquiry.create({data:{
-      reference,userId:session?.user.id||null,trackingTokenHash,customerName:name,customerEmail:email,
-      countryCode,phone,whatsappCountryCode:whatsappPhone?whatsappCountryCode:null,
-      whatsappPhone:whatsappPhone||null,destination,hotelName,
-      checkInDate:new Date(checkInDate+"T12:00:00.000Z"),
-      checkOutDate:new Date(checkOutDate+"T12:00:00.000Z"),
-      rooms,adults,children,notes,
-    }});
+    let reference="",created:{id:string}|null=null;
+    for(let attempt=0;attempt<5;attempt++){
+      reference="HOT-"+randomInt(0,100_000_000).toString().padStart(8,"0");
+      try{
+        created=await prisma.hotelInquiry.create({data:{
+          reference,userId:session?.user.id||null,trackingTokenHash,customerName:name,customerEmail:email,
+          countryCode,phone,whatsappCountryCode:whatsappPhone?whatsappCountryCode:null,
+          whatsappPhone:whatsappPhone||null,destination,hotelName,
+          checkInDate:new Date(checkInDate+"T12:00:00.000Z"),
+          checkOutDate:new Date(checkOutDate+"T12:00:00.000Z"),
+          rooms,adults,children,notes,
+        },select:{id:true}});
+        break;
+      }catch(error){
+        if(error&&typeof error==="object"&&"code" in error&&error.code==="P2002")continue;
+        throw error;
+      }
+    }
+    if(!created)throw new Error("REFERENCE_COLLISION");
     await prisma.hotelInquiryEvent.create({data:{
       requestId:created.id,actorName:"العميل",action:"REQUEST_CREATED",toStatus:"NEW",
       details:{rooms,adults,children},

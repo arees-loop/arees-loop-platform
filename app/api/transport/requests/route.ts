@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomBytes, createHash } from "node:crypto";
+import { randomBytes, createHash, randomInt } from "node:crypto";
 import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { sendTransportInquiryNotification } from "@/lib/transport-email";
@@ -76,14 +76,25 @@ export async function POST(request: NextRequest) {
     // Low-volume per phone safeguard for an anonymous public form.
     const recent = await prisma.transportRequest.count({where:{countryCode,phone,createdAt:{gte:new Date(Date.now()-24*60*60*1000)}}});
     if (recent>=5) return msg("تم استقبال طلبات متعددة لهذا الرقم اليوم؛ تواصل مع خدمة العملاء.",429);
-    const prefix=kind==="FERRY"?"SEA":kind==="VISA"?"VISA":kind==="DRIVING_LICENSE"?"IDL":"AIR";
-    const reference="AR-"+prefix+"-"+crypto.randomUUID().replaceAll("-","").slice(0,10).toUpperCase();
-    const created = await prisma.transportRequest.create({data:{
-      reference,kind,customerName:name,customerEmail:email,countryCode,phone,
-      userId:session?.user.id||null,trackingTokenHash,
-      whatsappCountryCode:waPhone?waCountryCode:null,whatsappPhone:waPhone||null,
-      origin,destination,travelDate,tripType,returnDate,itinerary,adults,children,infants,notes,
-    }});
+    const prefix=kind==="FERRY"?"SEA":kind==="VISA"?"VIS":kind==="DRIVING_LICENSE"?"LIC":"AIR";
+    // Eight numeric digits replace long mixed strings; secret claim remains independent.
+    let reference="",created:{id:string}|null=null;
+    for(let attempt=0;attempt<5;attempt++){
+      reference=prefix+"-"+randomInt(0,100_000_000).toString().padStart(8,"0");
+      try{
+        created=await prisma.transportRequest.create({data:{
+          reference,kind,customerName:name,customerEmail:email,countryCode,phone,
+          userId:session?.user.id||null,trackingTokenHash,
+          whatsappCountryCode:waPhone?waCountryCode:null,whatsappPhone:waPhone||null,
+          origin,destination,travelDate,tripType,returnDate,itinerary,adults,children,infants,notes,
+        },select:{id:true}});
+        break;
+      }catch(error){
+        if(error&&typeof error==="object"&&"code" in error&&error.code==="P2002")continue;
+        throw error;
+      }
+    }
+    if(!created)throw new Error("REFERENCE_COLLISION");
     await prisma.transportRequestEvent.create({data:{
       requestId:created.id,actorName:"العميل",action:"REQUEST_CREATED",toStatus:"NEW",
       details:{tripType,returnDate:returnDay||null,legs:itinerary.length||1},

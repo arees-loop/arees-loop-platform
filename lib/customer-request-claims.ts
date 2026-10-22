@@ -1,4 +1,5 @@
 "use client";
+import {REQUEST_REFERENCE_PATTERN} from "@/lib/request-reference";
 export const REQUEST_CLAIMS_KEY="arees-loop-private-request-claims-v1";
 export type CustomerClaim={reference:string;token:string};
 export function readCustomerClaims():CustomerClaim[]{
@@ -7,7 +8,7 @@ export function readCustomerClaims():CustomerClaim[]{
     if(!Array.isArray(data))return [];
     return data.filter((item):item is CustomerClaim=>
       !!item&&typeof item==="object"&&
-      typeof item.reference==="string"&&/^AR-(AIR|SEA|HOT|VISA|LIC)-[A-F0-9]{10}$/.test(item.reference)&&
+      typeof item.reference==="string"&&REQUEST_REFERENCE_PATTERN.test(item.reference)&&
       typeof item.token==="string"&&/^[A-Za-z0-9_-]{43}$/.test(item.token)).slice(-40);
   }catch{return [];}
 }

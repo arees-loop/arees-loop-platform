@@ -71,7 +71,7 @@ const TRANSITIONS:Record<string,string[]> = {
   PROCESSING:["QUOTE_READY","CANCELED"],
   QUOTE_READY:["QUOTE_SENT","PROCESSING","CANCELED"],
   QUOTE_SENT:["PAID","PROCESSING","CANCELED"],
-  PAID:["EXECUTING","CANCELED"],
+  PAID:["EXECUTING","DONE","CANCELED"],
   EXECUTING:["DONE","CANCELED"],
   DONE:[],
   CANCELED:[],
@@ -245,17 +245,46 @@ export async function PATCH(request:NextRequest) {
       const reason=cleanText(body.cancellationReason,1500);
       const by=cleanText(body.canceledBy,30);
       if(status==="CANCELED" && (reason.length<5||!["PARTNER","STAFF","CUSTOMER"].includes(by)))return fail("حدد جهة الإلغاء والسبب (5 حروف على الأقل).");
-      if(status==="PAID" && current.whatsappStatus!=="MANUALLY_MARKED_SENT")return fail("لا يمكن تسجيل السداد قبل تأكيد إرسال عرض السعر.",409);
-      const [updated]=await prisma.$transaction([
-        prisma.transportRequest.update({where:{id},data:{
+      if(status==="PAID")return fail("لا يجوز تأكيد السداد من تغيير الحالة. اعتمد التحويل من قسم مراجعة الإيصالات بعد مطابقته مع كشف الحساب البنكي.",409);
+      if(status==="DONE"&&["FLIGHT","FERRY"].includes(current.kind)){
+        const payment=await prisma.transportRequestEvent.findFirst({where:{requestId:id,action:"ADMIN_PAYMENT_VERIFIED"},select:{id:true}});
+        if(!payment)return fail("لا يمكن تنفيذ الطلب قبل تأكيد وصول السداد عبر مراجعة الإيصال البنكي.",409);
+        const ticket=await prisma.transportRequestEvent.findFirst({where:{requestId:id,action:"TICKET_PDF_DELIVERED"},select:{id:true}});
+        if(!ticket)return fail("ارفع تذكرة PDF للعميل أولاً قبل اختيار «تم التنفيذ».",409);
+        if(current.kind==="FLIGHT"){
+          const itinerary=await prisma.transportRequestEvent.findFirst({where:{requestId:id,action:"BOOKING_CONFIRMATION_DETAILS_SAVED"},select:{id:true}});
+          if(!itinerary)return fail("أكمل تفاصيل حجز الطيران المؤكد أولاً قبل اختيار «تم التنفيذ».",409);
+        }
+      }
+      const updated=await prisma.$transaction(async tx=>{
+        await tx.$queryRaw`SELECT id FROM "TransportRequest" WHERE id = ${id} FOR UPDATE`;
+        const fresh=await tx.transportRequest.findUniqueOrThrow({where:{id},select:{status:true,kind:true}});
+        if(fresh.status!==current.status||!TRANSITIONS[fresh.status]?.includes(status))throw new Error("STALE_STATUS");
+        if(status==="DONE"&&["FLIGHT","FERRY"].includes(fresh.kind)){
+          const [payment,ticket]=await Promise.all([
+            tx.transportRequestEvent.findFirst({where:{requestId:id,action:"ADMIN_PAYMENT_VERIFIED"},select:{id:true}}),
+            tx.transportRequestEvent.findFirst({where:{requestId:id,action:"TICKET_PDF_DELIVERED"},select:{id:true}})
+          ]);
+          if(!payment||!ticket)throw new Error("DELIVERY_REQUIRED");
+          if(fresh.kind==="FLIGHT"){
+            const itinerary=await tx.transportRequestEvent.findFirst({where:{requestId:id,action:"BOOKING_CONFIRMATION_DETAILS_SAVED"},select:{id:true}});
+            if(!itinerary)throw new Error("DELIVERY_REQUIRED");
+          }
+        }
+        const updatedRow=await tx.transportRequest.update({where:{id},data:{
           status,canceledBy:status==="CANCELED"?by:null,cancellationReason:status==="CANCELED"?reason:null,
-        }}),
-        prisma.transportRequestEvent.create({data:{
-          requestId:id,actorId,actorName,action:status==="CANCELED"?"CANCELED":"STATUS_CHANGED",
-          fromStatus:current.status,toStatus:status,
-          details:status==="CANCELED"?{initiatedBy:by,reason}:undefined,
-        }}),
-      ]);
+        }});
+        await tx.transportRequestEvent.create({data:{
+          requestId:id,actorId,actorName,action:status==="CANCELED"?"CANCELED":status==="DONE"?"TICKET_FULFILLED":"STATUS_CHANGED",
+          fromStatus:fresh.status,toStatus:status,
+          details:status==="CANCELED"?{initiatedBy:by,reason}:status==="DONE"?{ticketDelivered:true,markedBy:actorId}:undefined,
+        }});
+        return updatedRow;
+      }).catch((error:unknown)=>{
+        if(error instanceof Error&&["STALE_STATUS","DELIVERY_REQUIRED"].includes(error.message))return null;
+        throw error;
+      });
+      if(!updated)return fail("تغيرت حالة الطلب أو تعذر التحقق من استلام المبلغ والتذكرة. حدّث الطلب وأعد المحاولة.",409);
       return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
     }
     return fail("الإجراء غير معروف.");

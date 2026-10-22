@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {prisma} from "@/lib/prisma";
 import {findBankTransferNotes} from "@/lib/bank-transfer-notes";
+import {customerTransportOwnership} from "@/lib/customer-transport-claim";
  import {getCurrentSession} from "@/lib/session";
 export const runtime="nodejs";
 const bad=(message:string,status=400)=>NextResponse.json({success:false,message},{status,headers:{"Cache-Control":"private, no-store"}});
@@ -20,12 +21,14 @@ function quoteExpired(validUntil:Date|null){
 
 
 export async function GET(req:NextRequest){
- const session=await getCurrentSession();if(!session)return bad("سجل الدخول",401);
+ const session=await getCurrentSession();
  const reference=req.nextUrl.searchParams.get("reference")||"";
- const staff=["ADMIN","SUPER_ADMIN"].includes(session.user.role);
- const request=await prisma.transportRequest.findFirst({where:{reference,...(staff?{}:{userId:session.user.id})},select:{id:true,status:true,quoteAmountSar:true,quoteValidUntil:true,assignedToId:true}});
+ const staff=!!session&&["ADMIN","SUPER_ADMIN"].includes(session.user.role);
+ const owner=staff?null:customerTransportOwnership(req,session?.user.id);
+ if(!staff&&!owner)return bad("يلزم تسجيل الدخول أو فتح الطلب من الجهاز الذي أُنشئ عليه.",401);
+ const request=await prisma.transportRequest.findFirst({where:{reference,...(staff?{}:owner||{})},select:{id:true,status:true,quoteAmountSar:true,quoteValidUntil:true,assignedToId:true}});
  if(!request)return bad("الطلب غير موجود",404);
- if(staff&&session.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session.user.id)return bad("غير مصرح",403);
+ if(staff&&session?.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session?.user.id)return bad("غير مصرح",403);
  const events=await prisma.transportRequestEvent.findMany({where:{requestId:request.id,action:{in:[...acceptedActions]}},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{action:true,createdAt:true,details:true}});
  const recentEvents=latestOfferEvents(events);
  const accepted=recentEvents.some(e=>e.action==="CUSTOMER_OFFER_ACCEPTED");
@@ -35,18 +38,20 @@ export async function GET(req:NextRequest){
  let noteMap:Record<string,string>={};
  if(banks.length){try{noteMap=await findBankTransferNotes(banks.map(bank=>bank.id));}catch(error){console.error("Bank transfer notes lookup failed",error);return bad("تعذر تحميل تعليمات التحويل البنكي مؤقتاً.",503);}}
  const customerBanks=banks.map(bank=>({...bank,note:noteMap[bank.id]||""}));
- return NextResponse.json({success:true,events:recentEvents.filter(e=>acceptedActions.slice(0,4).includes(e.action as typeof acceptedActions[number])),banks:customerBanks,bank:customerBanks[0]||null,amountSar:accepted&&published?Number(request.quoteAmountSar):null,canAccept:!staff&&published&&request.quoteAmountSar!==null&&!accepted&&!quoteExpired(request.quoteValidUntil)},{headers:{"Cache-Control":"private, no-store"}});
+ return NextResponse.json({success:true,events:recentEvents.filter(e=>acceptedActions.slice(0,4).includes(e.action as typeof acceptedActions[number])),banks:customerBanks,bank:customerBanks[0]||null,amountSar:accepted&&published?Number(request.quoteAmountSar):null,canAccept:!staff&&published&&request.quoteAmountSar!==null&&!accepted&&!quoteExpired(request.quoteValidUntil),quotePublished:published,quoteExpired:quoteExpired(request.quoteValidUntil)},{headers:{"Cache-Control":"private, no-store"}});
 }
 export async function POST(req:NextRequest){
- const session=await getCurrentSession();if(!session)return bad("سجل الدخول",401);
+ const session=await getCurrentSession();
  const body=await req.json().catch(()=>null);
  const reference=typeof body?.reference==="string"?body.reference:"";
  const action=typeof body?.action==="string"?body.action:"";
  if(!["ACCEPT_OFFER","SUBMIT_TRANSFER","VERIFY_TRANSFER","REJECT_TRANSFER"].includes(action))return bad("إجراء غير معروف");
- const staff=["ADMIN","SUPER_ADMIN"].includes(session.user.role);
- const request=await prisma.transportRequest.findFirst({where:{reference,...(staff?{}:{userId:session.user.id})},select:{id:true,status:true,quoteAmountSar:true,quoteValidUntil:true,assignedToId:true}});
+ const staff=!!session&&["ADMIN","SUPER_ADMIN"].includes(session.user.role);
+ const owner=staff?null:customerTransportOwnership(req,session?.user.id);
+ if(!staff&&!owner)return bad("يلزم تسجيل الدخول أو فتح الطلب من الجهاز الذي أُنشئ عليه.",401);
+ const request=await prisma.transportRequest.findFirst({where:{reference,...(staff?{}:owner||{})},select:{id:true,status:true,quoteAmountSar:true,quoteValidUntil:true,assignedToId:true}});
  if(!request)return bad("الطلب غير موجود",404);
- if(staff&&session.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session.user.id)return bad("غير مصرح",403);
+ if(staff&&session?.user.role!=="SUPER_ADMIN"&&request.assignedToId!==session?.user.id)return bad("غير مصرح",403);
  if((action==="ACCEPT_OFFER"||action==="SUBMIT_TRANSFER")&&staff)return bad("هذا الإجراء للعميل",403);
  if((action==="VERIFY_TRANSFER"||action==="REJECT_TRANSFER")&&!staff)return bad("هذا الإجراء للإدارة",403);
  if(request.quoteAmountSar===null)return bad("لا يوجد عرض سعر صالح للسداد",409);
@@ -95,7 +100,7 @@ export async function POST(req:NextRequest){
   if(action!=="ACCEPT_OFFER"&&!hasAccepted)throw new Error("STALE_REQUEST");
   if(action==="SUBMIT_TRANSFER"&&["CUSTOMER_TRANSFER_SUBMITTED","ADMIN_PAYMENT_VERIFIED"].includes(lastPayment||""))throw new Error("DUPLICATE_ACTION");
   if(["VERIFY_TRANSFER","REJECT_TRANSFER"].includes(action)&&lastPayment!=="CUSTOMER_TRANSFER_SUBMITTED")throw new Error("STALE_REQUEST");
-  const event=await tx.transportRequestEvent.create({data:{requestId:request.id,actorId:session.user.id,actorName:staff?"الإدارة":"العميل",action:names[action],fromStatus:fresh.status,toStatus:action==="VERIFY_TRANSFER"?"PAID":fresh.status,details}});
+  const event=await tx.transportRequestEvent.create({data:{requestId:request.id,actorId:session?.user.id||null,actorName:staff?"الإدارة":"العميل",action:names[action],fromStatus:fresh.status,toStatus:action==="VERIFY_TRANSFER"?"PAID":fresh.status,details}});
   if(action==="VERIFY_TRANSFER")await tx.transportRequest.update({where:{id:request.id},data:{status:"PAID"}});
   return event;
  }).catch((error:unknown)=>{if(error instanceof Error&&["STALE_REQUEST","DUPLICATE_ACTION"].includes(error.message))return null;throw error;});
