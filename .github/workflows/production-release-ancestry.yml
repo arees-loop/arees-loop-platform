@@ -1,0 +1,53 @@
+name: Production release ancestry guard
+
+on:
+  pull_request:
+    branches:
+      - release/areesloop-production
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+jobs:
+  release-ancestry:
+    name: Release ancestry (no stale branch)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release candidate with complete history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Block branches not based on current production release tip
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "merge_group" ]]; then
+            echo "Merge queue candidate; merge ancestry is enforced by the protected queue."
+            exit 0
+          fi
+          if [[ "$BASE_REF" != "release/areesloop-production" ]]; then
+            echo "::error::Unexpected base branch: $BASE_REF"
+            exit 1
+          fi
+          git fetch --no-tags origin "$HEAD_SHA"
+          # Look up the current remote branch tip, not only the PR's potentially stale merge snapshot.
+          CURRENT_BASE="$(git rev-parse FETCH_HEAD)"
+          git fetch --no-tags origin "$BASE_REF"
+          CURRENT_BASE="$(git rev-parse FETCH_HEAD)"
+          MERGE_BASE="$(git merge-base "$HEAD_SHA" "$CURRENT_BASE")"
+          echo "HEAD=$HEAD_SHA BASE=$CURRENT_BASE MERGE_BASE=$MERGE_BASE"
+          if [[ "$MERGE_BASE" != "$CURRENT_BASE" ]]; then
+            echo "::error::This change branch does not contain the latest production release tip. Create a fresh branch from release/areesloop-production or merge the current release branch and resolve changes. Never replace the newer release with an old branch snapshot."
+            exit 1
+          fi
+          echo "Candidate includes latest production release history."
