@@ -1,5 +1,6 @@
 "use client";
 import AdminPaymentReview from "@/app/components/AdminPaymentReview";
+import WhatsappReviewButton from "@/app/components/WhatsappReviewButton";
 import OrderStatusBadge from "@/app/components/OrderStatusBadge";
 import AdminTicketFulfillment from "@/app/components/AdminTicketFulfillment";
 import AdminConfirmedBooking from "@/app/components/AdminConfirmedBooking";
@@ -67,6 +68,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [form,setForm]=useState({carrierName:"",quoteAmountSar:"",quoteNotes:"",adminNotes:"",quoteValidUntil:""});
   const [offerForm,setOfferForm]=useState<OfferForm>({...blankOffer,kind:initialOfferKind==="ALL"?"FERRY":initialOfferKind,origin:initialOfferKind==="FERRY"?blankOffer.origin:"",destination:initialOfferKind==="FERRY"?blankOffer.destination:""});
   const [status,setStatus]=useState("");
+  const closeAfterAction=(message:string)=>{setSelected(null);setStatus(message+" — تم إغلاق تفاصيل الطلب والعودة للقائمة.");};
   const [error,setError]=useState("");
   const [busy,setBusy]=useState(false);
   const [loading,setLoading]=useState(true);
@@ -127,9 +129,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
         body:JSON.stringify({id:selected.id,action:"SAVE_QUOTE",...form})});
       const result=await r.json();
       if(!r.ok||!result.success){setError(result.message||"تعذر حفظ العرض.");return;}
-      setSelected(result.data);
+      closeAfterAction("تم حفظ تفاصيل عرض السعر. يمكن إعادة فتح الطلب لإرساله للعميل");
       void loadHistory(selected.id);
-      setStatus(initialOfferKind==="VISA"?"تم حفظ سعر التأشيرة. انشر الرد للعميل ليظهر في طلباتي.":"حُفظ عرض السعر. يمكن فتحه وطباعة PDF، ثم إرساله يدوياً من واتساب الشركة.");
       await load();
     }catch{setError("تعذر حفظ العرض.");}
     finally{setBusy(false);}
@@ -143,8 +144,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action:"PUBLISH_QUOTE_TO_CUSTOMER"})});
       const result=await r.json();
       if(!r.ok||!result.success){setError(result.message||"تعذر نشر العرض للعميل.");return;}
-      setSelected(result.data);
-      setStatus("تم نشر عرض السعر داخل «طلباتي». يستطيع العميل الآن قبوله ثم اختيار حساب التحويل البنكي المفعّل. الإرسال إلى واتساب إجراء منفصل.");
+      closeAfterAction("تم نشر عرض السعر للعميل داخل «طلباتي»");
       void loadHistory(selected.id);await load();
     }catch{setError("تعذر نشر العرض للعميل.");}
     finally{setBusy(false);}
@@ -157,7 +157,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action:"PUBLISH_SERVICE_DECISION",availability:visaAvailability,quoteAmountSar:form.quoteAmountSar,quoteNotes:form.quoteNotes,reason:cancelReason})});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر إرسال قرار الخدمة.");return;}
-      setSelected(d.data);setReplyDraft(d.data.customerReply||"");setStatus(visaAvailability==="AVAILABLE"?"تم إرسال السعر والتعليق للعميل، والطلب تحت الإجراء.":"تم إرسال الاعتذار للعميل وإغلاق الطلب.");
+      setReplyDraft(d.data.customerReply||"");closeAfterAction(visaAvailability==="AVAILABLE"?"تم إرسال عرض التأشيرة للعميل، والطلب تحت المعالجة":"تم إرسال الاعتذار وإغلاق الطلب");
       void loadHistory(selected.id);await load();
     }catch{setError("تعذر الاتصال بالخادم.");}
     finally{setBusy(false);}
@@ -170,8 +170,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selected.id,action,...payload})});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر تنفيذ الإجراء.");return;}
-      setSelected(d.data);
-      setStatus(action==="ASSIGN"?"تم إسناد الطلب للموظف المختار.":"تم تحديث حالة الطلب وتسجيل الإجراء في السجل.");
+      closeAfterAction(action==="ASSIGN"?"تم إسناد الطلب للموظف المختار":`تم تغيير حالة الطلب إلى ${statusNames[d.data.status]||d.data.status}`);
       setCancelReason("");
       void loadHistory(selected.id);
       await load();
@@ -190,8 +189,8 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       })});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر تأكيد وصول التحويل.");return;}
-      setSelected(d.data);setExternalTransfer({bankReference:"",amountSar:"",bankNote:"",confirmed:false});
-      setStatus("تم توثيق الحوالة الخارجية ومطابقتها مع كشف البنك. الآن يمكنك إرفاق التذكرة النهائية ثم إكمال الطلب.");
+      setExternalTransfer({bankReference:"",amountSar:"",bankNote:"",confirmed:false});
+      closeAfterAction("تم اعتماد السداد البنكي الخارجي. حالة الطلب: تم السداد");
       void loadHistory(selected.id);await load();
     }catch{setError("تعذر الاتصال لحفظ مطابقة الحوالة.");}
     finally{setBusy(false);}
@@ -205,7 +204,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
         body:JSON.stringify({id:selected.id,action:"REPLY_CUSTOMER",customerReply:replyDraft})});
       const d=await r.json();
       if(!r.ok||!d.success){setError(d.message||"تعذر نشر الرد.");return;}
-      setSelected(d.data);setStatus("تم نشر الرد ليظهر للعميل داخل صفحة «طلباتي».");
+      closeAfterAction("تم نشر الرد للعميل داخل «طلباتي»");
       void loadHistory(selected.id);await load();
     }catch{setError("تعذر نشر الرد.");}
     finally{setBusy(false);}
@@ -378,6 +377,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
           <section className={`${selected?"":"hidden"} min-w-0 rounded-[25px] border border-[#D4AF37]/35 bg-white p-5 shadow-md lg:p-6`}>
             {!selected? <p className="text-sm">اختر طلباً من القائمة لفتح تفاصيله وتجهيز عرض السعر.</p> : (
               <>
+                {selected.status==="DONE"&&<div className="mb-4 rounded-xl border border-[#D4AF37]/30 bg-[#FAF8F2] p-3"><WhatsappReviewButton phone={customerWhatsApp} reference={selected.reference}/></div>}
                 {<button type="button" onClick={()=>setSelected(null)} className="mb-4 rounded-xl border border-[#B99124] px-4 py-2 text-sm font-bold">← إغلاق الطلب والعودة للقائمة</button>}
                 <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">طلب {selected.reference}</h2><OrderStatusBadge status={selected.status}>{statusNames[selected.status]||selected.status}</OrderStatusBadge><span className="rounded-xl bg-[#FFF8E4] px-4 py-2 text-sm font-black">{selected.quoteAmountSar==null?"لم يتم التسعير":Number(selected.quoteAmountSar).toLocaleString("ar-SA")+" ر.س"}</span></div>
                 <a href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(`السلام عليكم ${selected.customerName}، بخصوص طلبك رقم ${selected.reference} لخدمة ${selected.kind==="FLIGHT"?"الطيران":selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":"الرخصة الدولية"} لدى أريس لوب. نتابع معك تفاصيل طلبك.`)}`} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-[#147D55] px-5 py-3 text-sm font-black text-white">واتساب العميل مباشرة ↗</a>
@@ -454,11 +454,11 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                 <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F3F8F6] p-4"><h3 className="text-sm font-black text-[#0D3B34]">التواصل مع العميل</h3><p className="mt-2 text-xs text-[#0D3B34]/65">يمكنك مراجعة الرد والملاحظات وإرسال الرسائل من أقسام الطلب.</p><a className="mt-3 inline-flex rounded-lg bg-[#147D55] px-3 py-2 text-xs font-bold text-white" href={`https://wa.me/${customerWhatsApp}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">واتساب العميل ↗</a></div>
                 <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 bg-[#F9F6EC] p-4"><h3 className="text-sm font-black">المرفقات والسداد</h3>
                 <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">📎 المرفقات وطلب مستندات إضافية</summary><AdminRequestAttachments reference={selected.reference}/></details>
-                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference} onReviewed={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}/></details>
+                <details className="mt-3 rounded-2xl border border-[#D4AF37]/30 bg-white p-4"><summary className="cursor-pointer text-sm font-black">💳 مراجعة السداد والمرفقات المالية</summary><AdminPaymentReview reference={selected.reference} onReviewed={next=>{closeAfterAction("تمت مراجعة السداد؛ حالة الطلب: "+(statusNames[next]||next));void loadHistory(selected.id);void load();}}/></details>
                 {["FLIGHT","FERRY"].includes(selected.kind)&&<AdminTicketFulfillment
                    reference={selected.reference} id={selected.id} status={selected.status}
                    kind={selected.kind==="FERRY"?"FERRY":"FLIGHT"} itineraryReady={itineraryReady} whatsappPhone={customerWhatsApp}
-                   onStatusChange={next=>{setSelected(current=>current?{...current,status:next}:current);void loadHistory(selected.id);void load();}}
+                   onStatusChange={next=>{closeAfterAction("تم تغيير حالة الطلب إلى "+(statusNames[next]||next));void loadHistory(selected.id);void load();}}
                 />}
                 {["FLIGHT","FERRY"].includes(selected.kind)&&<AdminConfirmedBooking id={selected.id} onReadyChange={setItineraryReady}/>}
                 </div>
