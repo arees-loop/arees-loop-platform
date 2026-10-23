@@ -1043,8 +1043,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-black text-[#0D3B34]">{service.nameAr}</h3>
                 <p className="mt-2 text-xs text-[#0D3B34]/50">{[service.city, service.locationName].filter(Boolean).join(" · ")}</p>
-                <div className="mt-4 text-base font-black text-[#0D3B34]">{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</div>
-                <ServiceLoyaltyBanner finalPrice={service.finalPrice} className="mt-3"/>
+                <div className="mt-4 flex flex-wrap items-center gap-2"><span className="text-base font-black text-[#0D3B34]">{Number(service.finalPrice).toLocaleString("ar-SA")} ر.س</span><ServiceLoyaltyBanner finalPrice={service.finalPrice}/></div>
                 <Link href={`/services/${service.id}`} className="mt-6 flex w-full items-center justify-center rounded-2xl bg-[#0D3B34] py-3.5 font-bold text-white">عرض البرنامج ←</Link>
               </article>
             ))}
