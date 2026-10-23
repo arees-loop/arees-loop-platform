@@ -118,14 +118,14 @@ const steps: {
     short: "الخدمات",
   },
   {
-    id: "documents",
-    title: "التراخيص والوثائق",
-    short: "الوثائق",
-  },
-  {
     id: "operations",
     title: "التشغيل والتسوية",
     short: "التشغيل",
+  },
+  {
+    id: "documents",
+    title: "المرفقات والمراجعة",
+    short: "المرفقات",
   },
   {
     id: "review",
@@ -279,20 +279,25 @@ export default function PartnerOnboardingPage() {
   const [uploadedFiles, setUploadedFiles] = useState<{
     authorization: File | null;
     ownerProof: File | null;
+    commercialRegister: File | null;
     nationalAddress: File | null;
     ibanCertificate: File | null;
     vatCertificate: File | null;
     logo: File | null;
     documents: Record<number, File>;
+    additional: File[];
   }>({
     authorization: null,
     ownerProof: null,
+    commercialRegister: null,
     nationalAddress: null,
     ibanCertificate: null,
     vatCertificate: null,
     logo: null,
     documents: {},
+    additional: [],
   });
+  const [additionalNote, setAdditionalNote] = useState("");
 
   const [documents, setDocuments] =
     useState<DocumentItem[]>([
@@ -620,7 +625,11 @@ export default function PartnerOnboardingPage() {
     };
   }, []);
 
-  const activeSteps = useMemo(() => (data.partnerType === "individual" || data.partnerType === "government") ? steps.filter(step => step.id !== "categories") : steps, [data.partnerType]);
+  const activeSteps = useMemo(() => data.partnerType === "government"
+    ? steps.filter(step => ["account", "business", "documents", "review"].includes(step.id))
+    : data.partnerType === "individual"
+      ? steps.filter(step => step.id !== "categories")
+      : steps, [data.partnerType]);
   const activeIndex = useMemo(
     () =>
       activeSteps.findIndex(
@@ -1222,13 +1231,10 @@ export default function PartnerOnboardingPage() {
         if (!data.applicantRole) {
           errors.applicantRole = "حدد صفتك لدى المنشأة.";
         }
-        if (data.applicantRole === "owner" && !data.ownerProofFile) errors.ownerProofFile = "أرفق إثبات ملكية المنشأة قبل المتابعة.";
+
         if (data.applicantRole === "representative") {
           if (!data.jobTitle.trim()) errors.jobTitle = "المسمى الوظيفي مطلوب.";
-          if (!data.authorizationFile) {
-            errors.authorizationFile =
-              "يلزم إرفاق تفويض ساري ومصدّق من الغرفة التجارية.";
-          }
+
         }
       }
     }
@@ -1237,7 +1243,7 @@ export default function PartnerOnboardingPage() {
       if (data.partnerType === "individual" && !data.guideLanguages.trim()) errors.guideLanguages = "لغات الإرشاد مطلوبة.";
       if (data.partnerType === "individual" && !data.guideSpecialty.trim()) errors.guideSpecialty = "مجال التخصص السياحي مطلوب.";
       if (!data.tradeName.trim()) errors.tradeName = "الاسم التجاري / اسم النشاط مطلوب.";
-      if (!data.city.trim()) errors.city = "المدينة مطلوبة.";
+      if (data.partnerType !== "government" && !data.city.trim()) errors.city = "المدينة مطلوبة.";
       if (data.partnerType === "business" && !data.district.trim()) errors.district = "الحي مطلوب.";
       if (data.partnerType === "business" && !data.street.trim()) errors.street = "الشارع مطلوب.";
       if (data.partnerType === "business" && !data.shortNationalAddress.trim()) {
@@ -1245,9 +1251,7 @@ export default function PartnerOnboardingPage() {
       } else if (data.partnerType === "business" && !/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
         errors.shortNationalAddress = "أدخل عنواناً وطنياً مختصراً صحيحاً: 4 أحرف ثم 4 أرقام، مثال ABCD1234.";
       }
-      if (data.partnerType === "business" && !data.nationalAddressFile) {
-        errors.nationalAddressFile = "أرفق مستند العنوان الوطني للمنشأة.";
-      }
+
     }
 
     if (currentStep === "categories") {
@@ -1257,6 +1261,13 @@ export default function PartnerOnboardingPage() {
     }
 
     if (currentStep === "documents") {
+      if (data.partnerType === "government") {
+        if (!data.authorizationFile) errors.authorizationFile = "خطاب تفويض رسمي من الجهة مطلوب.";
+      } else {
+        if (data.partnerType === "business" && !uploadedFiles.commercialRegister) errors.commercialRegisterFile = "أرفق نسخة السجل التجاري.";
+        if (data.partnerType === "business" && !data.nationalAddressFile) errors.nationalAddressFile = "أرفق نسخة من إثبات العنوان الوطني للمنشأة.";
+        if (data.partnerType === "business" && data.applicantRole === "owner" && !data.ownerProofFile) errors.ownerProofFile = "أرفق عقد التأسيس أو مستخرجاً رسمياً يثبت ملكية الشركة.";
+        if (data.partnerType === "business" && data.applicantRole === "representative" && !data.authorizationFile) errors.authorizationFile = "خطاب تفويض الممثل مطلوب.";
       const validLicenses = documents.filter(document =>
         document.type.trim() && document.issuer.trim() && document.number.trim() &&
         document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
@@ -1264,6 +1275,7 @@ export default function PartnerOnboardingPage() {
       );
       if (validLicenses.length === 0) {
         errors.documents = "الترخيص إلزامي: النوع والجهة والرقم وتاريخ السريان وملف الرخصة مطلوبة.";
+      }
       }
     }
 
@@ -1291,7 +1303,7 @@ export default function PartnerOnboardingPage() {
         }
       }
 
-      if (data.receivesPayments) {
+      if (data.partnerType !== "government") {
         if (!data.iban.trim()) {
           errors.iban =
             "رقم IBAN مطلوب لاستقبال التسويات.";
@@ -1443,7 +1455,7 @@ export default function PartnerOnboardingPage() {
     const businessOk = Boolean(
       data.tradeName.trim() &&
         data.country.trim() &&
-        data.city.trim() &&
+        (data.partnerType === "government" || data.city.trim()) &&
         (data.partnerType !== "individual" || (data.guideLanguages.trim() && data.guideSpecialty.trim())) &&
         (data.partnerType !== "business" || (
           data.district.trim() &&
@@ -1477,7 +1489,9 @@ export default function PartnerOnboardingPage() {
           : "اختر تصنيف خدمة واحداً على الأقل.",
     });
 
-    const documentsOk = documents.some(document =>
+    const documentsOk = data.partnerType === "government"
+      ? Boolean(data.authorizationFile)
+      : documents.some(document =>
       document.type.trim() && document.issuer.trim() && document.number.trim() &&
       document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
       (uploadedFiles.documents[document.id] || document.fileName)
@@ -1495,15 +1509,15 @@ export default function PartnerOnboardingPage() {
 
     checks.push({
       label: "شعار الجهة الرسمي",
-      state: data.partnerType !== "government" || Boolean(data.logoFile) ? "ok" : "warn",
+      state: "ok",
       note: data.partnerType !== "government" ? "غير مطلوب لهذا النوع من الشركاء." :
         data.logoFile ? "سيظهر الشعار بعد تدقيق أريس واعتماد الجهة." : "يلزم إرفاق الشعار الرسمي للجهة.",
     });
 
     const settlementOk =
-      !data.receivesPayments ||
+      data.partnerType === "government" ||
       Boolean(
-        data.iban.trim() &&
+        /^SA[0-9]{22}$/.test(data.iban.trim()) &&
           data.beneficiaryName.trim()
       );
 
@@ -1568,6 +1582,7 @@ export default function PartnerOnboardingPage() {
 
   try {
     if (data.partnerType === "business" && !data.ownerProofFile && data.applicantRole === "owner") { window.alert("يجب إرفاق إثبات ملكية المنشأة."); return; }
+    if (data.partnerType === "government" && !data.authorizationFile) { window.alert("يجب إرفاق خطاب تفويض رسمي من الجهة."); return; }
     const response = await fetch("/api/partner/application", {
       method:
         applicationStatus === "NEEDS_COMPLETION"
@@ -1607,15 +1622,15 @@ export default function PartnerOnboardingPage() {
         businessPhone: data.businessPhone,
         businessEmail: data.businessEmail,
 
-        mainContactName: data.contactName,
-        mainContactEmail: data.contactEmail,
-        mainContactPhone: data.contactPhone,
+        mainContactName: data.partnerType === "government" ? `${data.firstName} ${data.lastName}` : data.contactName,
+        mainContactEmail: data.partnerType === "government" ? data.email : data.contactEmail,
+        mainContactPhone: data.partnerType === "government" ? data.phone : data.contactPhone,
         mainContactJobTitle: data.jobTitle,
 
         operates24h: data.operates24h,
         operatingHours: data.operatingHours,
 
-        receivesPayments: data.receivesPayments,
+        receivesPayments: data.partnerType === "government" ? false : true,
         iban: data.iban,
         beneficiaryName: data.beneficiaryName,
 
@@ -1623,7 +1638,7 @@ export default function PartnerOnboardingPage() {
 
         categories: data.categories,
 
-        licenses: documents.map((document) => ({
+        licenses: (data.partnerType === "government" ? [] : documents).map((document) => ({
           type: document.type,
           issuer: document.issuer,
           licenseNumber: document.number,
@@ -1661,11 +1676,14 @@ export default function PartnerOnboardingPage() {
     if (uploadedFiles.ownerProof) {
       filesToUpload.push({file:uploadedFiles.ownerProof,type:"BUSINESS_PROOF",label:"إثبات ملكية المنشأة"});
     }
+    if (uploadedFiles.commercialRegister) {
+      filesToUpload.push({file:uploadedFiles.commercialRegister,type:"COMMERCIAL_REGISTER",label:"السجل التجاري"});
+    }
     if (uploadedFiles.authorization) {
       filesToUpload.push({
         file: uploadedFiles.authorization,
         type: "AUTHORIZATION",
-        label: "تفويض ممثل المنشأة",
+        label: data.partnerType === "government" ? "خطاب تفويض رسمي من الجهة" : "تفويض ممثل المنشأة",
       });
     }
 
@@ -1722,6 +1740,16 @@ export default function PartnerOnboardingPage() {
           label: documentLabel || "مستند / ترخيص",
         });
       }
+    }
+
+    for (const file of uploadedFiles.additional) {
+      filesToUpload.push({
+        file,
+        type: "OTHER",
+        label: additionalNote.trim()
+          ? `مرفق إضافي: ${additionalNote.trim().slice(0, 120)}`
+          : "مرفق إضافي للمراجعة",
+      });
     }
 
     for (const item of filesToUpload) {
@@ -2058,20 +2086,41 @@ export default function PartnerOnboardingPage() {
               <div data-validation="phone"><Field label="رقم الجوال *">
                 <input
                   value={data.phone}
-                  onChange={(e) =>
-                    update(
-                      "phone",
-                      e.target.value.replace(
-                        /[^\d+]/g,
-                        ""
-                      )
-                    )
-                  }
+                  onChange={e => {
+                    const value = e.target.value.replace(/[^\d+]/g,"");
+                    update("phone",value);
+                    if (data.partnerType === "government") update("contactPhone",value);
+                  }}
                   placeholder="+966 5XXXXXXXX"
                   className={`${inputClass} ${validationErrors.phone ? errorInputClass : ""}`}
                   dir="ltr"
                 />
               </Field><ValidationError message={validationErrors.phone} /></div>
+              {data.partnerType === "government" && smsVerificationEnabled === true && (
+                <div className="md:col-span-2 rounded-xl border border-[#D4AF37]/25 bg-white/75 p-3">
+                  <p className="mb-2 text-xs font-semibold">توثيق جوال مدير حساب الجهة</p>
+                  {contactPhoneVerified ? <p className="text-xs text-emerald-700">✓ تم توثيق الرقم</p> :
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" disabled={contactPhoneOtpLoading}
+                        onClick={requestPartnerContactPhoneOtp}
+                        className="rounded-lg bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white">
+                        {contactPhoneOtpLoading ? "جارٍ الإرسال..." : "إرسال رمز التحقق"}
+                      </button>
+                      {contactPhoneOtpSent && <>
+                        <input value={contactPhoneOtp}
+                          onChange={e=>setContactPhoneOtp(e.target.value.replace(/\D/g,"").slice(0,6))}
+                          className={inputClass} placeholder="رمز التحقق" inputMode="numeric" dir="ltr"/>
+                        <button type="button" disabled={contactPhoneOtpLoading}
+                          onClick={confirmPartnerContactPhoneOtp}
+                          className="rounded-lg border border-[#0D3B34]/20 px-4 py-2 text-xs font-semibold">
+                          تأكيد الرمز
+                        </button>
+                      </>}
+                    </div>}
+                  {contactPhoneOtpError && <p className="mt-2 text-xs text-red-600">{contactPhoneOtpError}</p>}
+                  <ValidationError message={validationErrors.contactPhoneVerification}/>
+                </div>
+              )}
             </div>
 
             <div data-validation="password"><Field label="كلمة المرور *">
@@ -2201,25 +2250,7 @@ export default function PartnerOnboardingPage() {
                       </p>
                     </div>
 
-                    <div data-validation="authorizationFile"><Field label="التفويض المصدق من الغرفة التجارية *">
-                      <input
-                        type="file"
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        onChange={(
-                          e
-                        ) =>
-                          {
-                            const file = e.target.files?.[0] ?? null;
-                            update("authorizationFile", file?.name || "");
-                            setUploadedFiles((current) => ({
-                              ...current,
-                              authorization: file,
-                            }));
-                          }
-                        }
-                        className={`${inputClass} ${validationErrors.authorizationFile ? errorInputClass : ""}`}
-                      />
-                    </Field><ValidationError message={validationErrors.authorizationFile} /></div>
+
 
                     <AiHint
                       title="فحص المستند"
@@ -2230,14 +2261,7 @@ export default function PartnerOnboardingPage() {
               </div>
             )}
 
-            {data.partnerType==="business" && data.applicantRole==="owner" && <div data-validation="ownerProofFile" className="mb-4 rounded-2xl border border-[#D4AF37]/30 bg-[#FFF9E8] p-4">
-              <Field label="إثبات ملكية المنشأة (إلزامي) *">
-                <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
-                  onChange={e=>{const file=e.target.files?.[0]??null;update("ownerProofFile",file?.name||"");setUploadedFiles(current=>({...current,ownerProof:file}));}}/>
-              </Field>
-              <p className="mt-2 text-xs text-[#0D3B34]/60">ارفع وثيقة رسمية تربط اسم المالك بالمنشأة. لا يكفي اختيار صفة مالك بدون إثبات.</p>
-              <ValidationError message={validationErrors.ownerProofFile}/>
-            </div>}
+
             <Actions
               onBack={goBack}
               onNext={goNext}
@@ -2255,8 +2279,19 @@ export default function PartnerOnboardingPage() {
               ? "اكتب الاسم الرسمي للجهة والمدينة. تتم مراجعة الهوية والمستندات قبل اعتماد شعار الجهة."
               : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
           >
+            {data.partnerType === "government" ? (
+              <div className="space-y-4">
+                <div data-validation="tradeName">
+                  <Field label="اسم الجهة الحكومية *">
+                    <input value={data.tradeName} onChange={e => {update("tradeName",e.target.value); update("publicName",e.target.value);}} className={inputClass} placeholder="اسم الجهة الرسمي"/>
+                  </Field>
+                  <ValidationError message={validationErrors.tradeName}/>
+                </div>
+                <p className="text-xs text-[#0D3B34]/60">مدير الحساب وبيانات تواصله من الحساب السابق، ولا يلزم سجل تجاري أو بيانات مصرفية.</p>
+              </div>
+            ) : <>
             <div className="grid gap-4 md:grid-cols-2">
-              <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
+              <div data-validation="tradeName"><Field label={data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
                 <input
                   value={data.tradeName}
                   onChange={(e) => {
@@ -2284,7 +2319,7 @@ export default function PartnerOnboardingPage() {
                 </Field><ValidationError message={validationErrors.guideLanguages}/></div>
               </>}
 
-              <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
+              <Field label={data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
                 <input
                   value={data.legalName}
                   onChange={(e) =>
@@ -2424,27 +2459,6 @@ export default function PartnerOnboardingPage() {
                 <ValidationError message={validationErrors.shortNationalAddress} />
               </div>
 
-              <div data-validation="nationalAddressFile" className="md:col-span-2">
-                <Field label="مرفق العنوان الوطني للمنشأة *">
-                  <input
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] ?? null;
-                      update("nationalAddressFile", file?.name || "");
-                      setUploadedFiles((current) => ({
-                        ...current,
-                        nationalAddress: file,
-                      }));
-                    }}
-                    className={`${inputClass} ${validationErrors.nationalAddressFile ? errorInputClass : ""}`}
-                  />
-                </Field>
-                <ValidationError message={validationErrors.nationalAddressFile} />
-                <p className="mt-2 text-xs leading-6 text-[#0D3B34]/50">
-                  أرفق نسخة من إثبات العنوان الوطني الخاص بمقر المنشأة بصيغة PDF أو صورة.
-                </p>
-              </div>
             </div>
 
             <Field label="نبذة عن النشاط">
@@ -2519,6 +2533,7 @@ export default function PartnerOnboardingPage() {
               العامة يتم التحكم فيها بعد
               تفعيل الحساب.
             </InfoBox>
+            </>}
 
             <Actions
               onBack={goBack}
@@ -2634,12 +2649,124 @@ export default function PartnerOnboardingPage() {
               />
             )}
 
-            {data.partnerType ===
-              "government" && (
-              <Requirement
-                title="إثبات الجهة"
-                text="المستند أو التعريف الرسمي المناسب للجهة الحكومية أو غير الربحية."
-              />
+            {data.partnerType === "business" && (
+              <div className="mb-4 rounded-2xl bg-white/70 p-3">
+                <div data-validation="nationalAddressFile" className="md:col-span-2">
+                <Field label="مرفق العنوان الوطني للمنشأة *">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      update("nationalAddressFile", file?.name || "");
+                      setUploadedFiles((current) => ({
+                        ...current,
+                        nationalAddress: file,
+                      }));
+                    }}
+                    className={`${inputClass} ${validationErrors.nationalAddressFile ? errorInputClass : ""}`}
+                  />
+                </Field>
+                <ValidationError message={validationErrors.nationalAddressFile} />
+                <p className="mt-2 text-xs leading-6 text-[#0D3B34]/50">
+                  أرفق نسخة من إثبات العنوان الوطني الخاص بمقر المنشأة بصيغة PDF أو صورة.
+                </p>
+              </div>
+              </div>
+            )}
+            {data.partnerType !== "government" && (
+              <div className="mb-4 grid gap-3 md:grid-cols-2">
+                <Field label="شهادة IBAN / خطاب البنك">
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) =>
+                        {
+                          const file = e.target.files?.[0] ?? null;
+                          update("ibanCertificate", file?.name || "");
+                          setUploadedFiles((current) => ({
+                            ...current,
+                            ibanCertificate: file,
+                          }));
+                        }
+                      }
+                      className={
+                        inputClass
+                      }
+                    />
+                  </Field>
+                {data.vatRegistered && <Field label="شهادة التسجيل الضريبي">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) =>
+                      {
+                        const file = e.target.files?.[0] ?? null;
+                        update("vatCertificate", file?.name || "");
+                        setUploadedFiles((current) => ({
+                          ...current,
+                          vatCertificate: file,
+                        }));
+                      }
+                    }
+                    className={
+                      inputClass
+                    }
+                  />
+                </Field>}
+              </div>
+            )}
+            {data.partnerType === "business" && (
+              <div data-validation="commercialRegisterFile" className="mb-4 rounded-2xl border border-[#D4AF37]/20 bg-white/75 p-4">
+                <Field label="السجل التجاري *">
+                  <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
+                    onChange={e => {const file=e.target.files?.[0] ?? null;setUploadedFiles(current=>({...current,commercialRegister:file}));}}/>
+                </Field>
+                <ValidationError message={validationErrors.commercialRegisterFile}/>
+              </div>
+            )}
+            {data.partnerType==="business" && data.applicantRole==="owner" && <div data-validation="ownerProofFile" className="mb-4 rounded-2xl border border-[#D4AF37]/30 bg-[#FFF9E8] p-4">
+              <Field label="عقد التأسيس أو مستخرج رسمي لإثبات الملكية *">
+                <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
+                  onChange={e=>{const file=e.target.files?.[0]??null;update("ownerProofFile",file?.name||"");setUploadedFiles(current=>({...current,ownerProof:file}));}}/>
+              </Field>
+              <p className="mt-2 text-xs text-[#0D3B34]/60">يجب أن يربط المستند اسم المالك بالمنشأة. تُراجع صلاحية التوقيع والتعاقد عند الاعتماد.</p>
+              <ValidationError message={validationErrors.ownerProofFile}/>
+            </div>}
+            {data.partnerType === "business" && data.applicantRole === "representative" && (
+              <div data-validation="authorizationFile"><Field label="خطاب تفويض رسمي من المنشأة *">
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        onChange={(
+                          e
+                        ) =>
+                          {
+                            const file = e.target.files?.[0] ?? null;
+                            update("authorizationFile", file?.name || "");
+                            setUploadedFiles((current) => ({
+                              ...current,
+                              authorization: file,
+                            }));
+                          }
+                        }
+                        className={`${inputClass} ${validationErrors.authorizationFile ? errorInputClass : ""}`}
+                      />
+                    </Field><ValidationError message={validationErrors.authorizationFile} /></div>
+            )}
+
+            {data.partnerType === "government" && (
+              <div data-validation="authorizationFile" className="rounded-2xl border border-[#D4AF37]/20 bg-[#FFF9EA] p-4">
+                <Field label="خطاب تفويض رسمي من الجهة *">
+                  <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
+                    onChange={e => { const file = e.target.files?.[0] ?? null;
+                      update("authorizationFile", file?.name || "");
+                      setUploadedFiles(current => ({ ...current, authorization: file }));
+                    }} />
+                </Field>
+                <ValidationError message={validationErrors.authorizationFile}/>
+                <p className="mt-2 text-xs text-[#0D3B34]/55">يكفي خطاب التفويض الرسمي لتسجيل مدير الحساب ونشر الفعاليات بعد الاعتماد.</p>
+              </div>
             )}
 
             {data.applicantRole ===
@@ -2651,7 +2778,7 @@ export default function PartnerOnboardingPage() {
               />
             )}
 
-            <div data-validation="documents">
+            {data.partnerType !== "government" && <div data-validation="documents">
               <ValidationError message={validationErrors.documents} />
             <div className={`space-y-4 rounded-[22px] ${
               validationErrors.documents ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
@@ -2703,26 +2830,27 @@ export default function PartnerOnboardingPage() {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      <Field label="نوع المستند / الترخيص">
-                        <input
-                          value={
-                            document.type
-                          }
-                          onChange={(
-                            e
-                          ) =>
-                            updateDocument(
-                              document.id,
-                              "type",
-                              e.target
-                                .value
-                            )
-                          }
-                          placeholder="مثال: ترخيص مرشد سياحي"
-                          className={
-                            inputClass
-                          }
-                        />
+                      <Field label={data.partnerType === "business" ? "نوع ترخيص السياحة *" : "نوع المستند / الترخيص"}>
+                        {data.partnerType === "business" ? (
+                          <div className="space-y-2">
+                            <select value={document.type.startsWith("أخرى:") ? "أخرى" : document.type}
+                              className={inputClass}
+                              onChange={e => updateDocument(document.id, "type", e.target.value === "أخرى" ? "أخرى: " : e.target.value)}>
+                              <option value="">اختر نوع الترخيص</option>
+                              <option value="خدمات السفر والسياحة">خدمات السفر والسياحة</option>
+                              <option value="أخرى">أخرى — حسب الترخيص</option>
+                            </select>
+                            {document.type.startsWith("أخرى:") && (
+                              <input value={document.type.slice(5)} className={inputClass}
+                                onChange={e => updateDocument(document.id,"type",`أخرى: ${e.target.value}`)}
+                                placeholder="حدد نوع الترخيص كما هو في المستند" />
+                            )}
+                          </div>
+                        ) : (
+                          <input value={document.type} className={inputClass}
+                            onChange={e => updateDocument(document.id,"type",e.target.value)}
+                            placeholder="مثال: رخصة مرشد سياحي" />
+                        )}
                       </Field>
 
                       <Field label="جهة الإصدار">
@@ -2906,15 +3034,42 @@ export default function PartnerOnboardingPage() {
                 )
               )}
             </div>
-            </div>
+            </div>}
 
-            <button
+            {data.partnerType !== "government" && <button
               type="button"
               onClick={addDocument}
               className="w-full rounded-2xl border border-dashed border-[#B99124]/45 bg-[#FFF9EA]/70 py-4 text-sm font-bold text-[#8B6812]"
             >
               + إضافة مستند أو ترخيص آخر
-            </button>
+            </button>}
+
+            <div className="mt-5 rounded-2xl border border-[#0D3B34]/10 bg-white/75 p-4">
+              <Field label="مرفقات أخرى لدعم الطلب (اختياري)">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  className={inputClass}
+                  onChange={e => setUploadedFiles(current => ({
+                    ...current,
+                    additional: Array.from(e.target.files || []),
+                  }))}
+                />
+              </Field>
+              <Field label="ملاحظة للمرفقات الإضافية (اختياري)">
+                <textarea
+                  value={additionalNote}
+                  onChange={e => setAdditionalNote(e.target.value)}
+                  maxLength={120}
+                  className={inputClass}
+                  rows={2}
+                />
+              </Field>
+              <p className="mt-2 text-[11px] leading-5 text-[#0D3B34]/45">
+                يمكنك إرفاق مستندات إضافية تساعد فريق أريس في مراجعة طلبك. يُفضّل دمج المستندات المرتبطة في ملف PDF واحد لتسهيل الاعتماد.
+              </p>
+            </div>
 
             <Actions
               onBack={goBack}
@@ -3105,21 +3260,13 @@ export default function PartnerOnboardingPage() {
             )}
 
             <div className="rounded-[26px] border border-[#0D3B34]/8 bg-[#FAF9F5] p-5">
-              <SelectCard
-                title="استقبال المدفوعات والتسويات عبر Arees Loop"
-                description="فعّل هذا الخيار إذا كانت مستحقات الحجوزات ستتم تسويتها للشريك عبر المنصة."
-                active={
-                  data.receivesPayments
-                }
-                onClick={() =>
-                  update(
-                    "receivesPayments",
-                    !data.receivesPayments
-                  )
-                }
-              />
+              {data.partnerType !== "government" && (
+                <p className="rounded-xl border border-[#D4AF37]/20 bg-white/75 p-3 text-xs font-semibold text-[#0D3B34]">
+                  الحجز والتحصيل وتسوية مستحقات الشركاء والمرشدين تتم إلزامياً عبر أريس لوب وفق اتفاقية الشراكة.
+                </p>
+              )}
 
-              {data.receivesPayments && (
+              {data.partnerType !== "government" && (
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <div data-validation="iban"><Field label="IBAN *">
                     <input
@@ -3157,25 +3304,6 @@ export default function PartnerOnboardingPage() {
                     />
                   </Field><ValidationError message={validationErrors.beneficiaryName} /></div>
 
-                  <Field label="شهادة IBAN / خطاب البنك">
-                    <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) =>
-                        {
-                          const file = e.target.files?.[0] ?? null;
-                          update("ibanCertificate", file?.name || "");
-                          setUploadedFiles((current) => ({
-                            ...current,
-                            ibanCertificate: file,
-                          }));
-                        }
-                      }
-                      className={
-                        inputClass
-                      }
-                    />
-                  </Field>
                 </div>
               )}
             </div>
@@ -3217,25 +3345,6 @@ export default function PartnerOnboardingPage() {
                   />
                 </Field>
 
-                <Field label="شهادة التسجيل الضريبي">
-                  <input
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) =>
-                      {
-                        const file = e.target.files?.[0] ?? null;
-                        update("vatCertificate", file?.name || "");
-                        setUploadedFiles((current) => ({
-                          ...current,
-                          vatCertificate: file,
-                        }));
-                      }
-                    }
-                    className={
-                      inputClass
-                    }
-                  />
-                </Field>
               </div>
             )}
 

@@ -1489,6 +1489,24 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* Payment marks are local vector images; actual payment availability is determined at checkout. */}
+                <section className="mt-4 rounded-2xl border border-[#D4AF37]/25 bg-white/75 p-3" aria-label="وسائل الدفع">
+                  <p className="mb-2 text-center text-[11px] font-bold text-[#0D3B34]">وسائل الدفع</p>
+                  <div className="grid grid-cols-4 gap-2" dir="rtl">
+                    {([
+                      { src: "/payment-icons/mada.svg", alt: "مدى" },
+                      { src: "/payment-icons/visa.svg", alt: "Visa" },
+                      { src: "/payment-icons/mastercard.svg", alt: "Mastercard" },
+                      { src: "/payment-icons/bank-transfer.svg", alt: "تحويل بنكي" },
+                    ] as const).map(method => (
+                      <div key={method.src} className="flex min-h-12 items-center justify-center rounded-lg border border-[#0D3B34]/10 bg-white p-1.5">
+                        <Image src={method.src} alt={method.alt} width={96} height={50} className="h-9 w-full object-contain" />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-center text-[9px] text-[#0D3B34]/45">تظهر خيارات الدفع المتاحة فعلياً عند إتمام الطلب.</p>
+                </section>
+
                 <div className="mt-2 flex items-center justify-center gap-2">
                   <span className="h-px w-8 bg-[#0D3B34]/20" />
                   <p className="text-[11px] font-black text-[#0D3B34]">
