@@ -284,6 +284,7 @@ export default function PartnerOnboardingPage() {
     vatCertificate: File | null;
     logo: File | null;
     documents: Record<number, File>;
+    additional: File[];
   }>({
     authorization: null,
     ownerProof: null,
@@ -292,7 +293,9 @@ export default function PartnerOnboardingPage() {
     vatCertificate: null,
     logo: null,
     documents: {},
+    additional: [],
   });
+  const [additionalNote, setAdditionalNote] = useState("");
 
   const [documents, setDocuments] =
     useState<DocumentItem[]>([
@@ -1734,6 +1737,16 @@ export default function PartnerOnboardingPage() {
       }
     }
 
+    for (const file of uploadedFiles.additional) {
+      filesToUpload.push({
+        file,
+        type: "OTHER",
+        label: additionalNote.trim()
+          ? `مرفق إضافي: ${additionalNote.trim().slice(0, 120)}`
+          : "مرفق إضافي للمراجعة",
+      });
+    }
+
     for (const item of filesToUpload) {
       const uploadData = new FormData();
 
@@ -2948,6 +2961,33 @@ export default function PartnerOnboardingPage() {
             >
               + إضافة مستند أو ترخيص آخر
             </button>}
+
+            <div className="mt-5 rounded-2xl border border-[#0D3B34]/10 bg-white/75 p-4">
+              <Field label="مرفقات أخرى لدعم الطلب (اختياري)">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  className={inputClass}
+                  onChange={e => setUploadedFiles(current => ({
+                    ...current,
+                    additional: Array.from(e.target.files || []),
+                  }))}
+                />
+              </Field>
+              <Field label="ملاحظة للمرفقات الإضافية (اختياري)">
+                <textarea
+                  value={additionalNote}
+                  onChange={e => setAdditionalNote(e.target.value)}
+                  maxLength={120}
+                  className={inputClass}
+                  rows={2}
+                />
+              </Field>
+              <p className="mt-2 text-[11px] leading-5 text-[#0D3B34]/45">
+                يمكنك إرفاق مستندات إضافية تساعد فريق أريس في مراجعة طلبك. يُفضّل دمج المستندات المرتبطة في ملف PDF واحد لتسهيل الاعتماد.
+              </p>
+            </div>
 
             <Actions
               onBack={goBack}
