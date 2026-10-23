@@ -1241,7 +1241,7 @@ export default function PartnerOnboardingPage() {
       if (data.partnerType === "individual" && !data.guideLanguages.trim()) errors.guideLanguages = "لغات الإرشاد مطلوبة.";
       if (data.partnerType === "individual" && !data.guideSpecialty.trim()) errors.guideSpecialty = "مجال التخصص السياحي مطلوب.";
       if (!data.tradeName.trim()) errors.tradeName = "الاسم التجاري / اسم النشاط مطلوب.";
-      if (!data.city.trim()) errors.city = "المدينة مطلوبة.";
+      if (data.partnerType !== "government" && !data.city.trim()) errors.city = "المدينة مطلوبة.";
       if (data.partnerType === "business" && !data.district.trim()) errors.district = "الحي مطلوب.";
       if (data.partnerType === "business" && !data.street.trim()) errors.street = "الشارع مطلوب.";
       if (data.partnerType === "business" && !data.shortNationalAddress.trim()) {
@@ -1451,7 +1451,7 @@ export default function PartnerOnboardingPage() {
     const businessOk = Boolean(
       data.tradeName.trim() &&
         data.country.trim() &&
-        data.city.trim() &&
+        (data.partnerType === "government" || data.city.trim()) &&
         (data.partnerType !== "individual" || (data.guideLanguages.trim() && data.guideSpecialty.trim())) &&
         (data.partnerType !== "business" || (
           data.district.trim() &&
@@ -2266,6 +2266,17 @@ export default function PartnerOnboardingPage() {
               ? "اكتب الاسم الرسمي للجهة والمدينة. تتم مراجعة الهوية والمستندات قبل اعتماد شعار الجهة."
               : "أدخل بيانات النشاط ومقره الرئيسي باستخدام العنوان الوطني المختصر. موقع كل خدمة أو فعالية يحدد بصورة مستقلة عند إضافتها لاحقاً."}
           >
+            {data.partnerType === "government" ? (
+              <div className="space-y-4">
+                <div data-validation="tradeName">
+                  <Field label="اسم الجهة الحكومية *">
+                    <input value={data.tradeName} onChange={e => {update("tradeName",e.target.value); update("publicName",e.target.value);}} className={inputClass} placeholder="اسم الجهة الرسمي"/>
+                  </Field>
+                  <ValidationError message={validationErrors.tradeName}/>
+                </div>
+                <p className="text-xs text-[#0D3B34]/60">مدير الحساب وبيانات تواصله من الحساب السابق، ولا يلزم سجل تجاري أو بيانات مصرفية.</p>
+              </div>
+            ) : <>
             <div className="grid gap-4 md:grid-cols-2">
               <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
                 <input
@@ -2530,6 +2541,7 @@ export default function PartnerOnboardingPage() {
               العامة يتم التحكم فيها بعد
               تفعيل الحساب.
             </InfoBox>
+            </>}
 
             <Actions
               onBack={goBack}
