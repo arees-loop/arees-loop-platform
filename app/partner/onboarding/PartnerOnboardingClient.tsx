@@ -118,14 +118,14 @@ const steps: {
     short: "الخدمات",
   },
   {
-    id: "documents",
-    title: "التراخيص والوثائق",
-    short: "الوثائق",
-  },
-  {
     id: "operations",
     title: "التشغيل والتسوية",
     short: "التشغيل",
+  },
+  {
+    id: "documents",
+    title: "المرفقات والمراجعة",
+    short: "المرفقات",
   },
   {
     id: "review",
@@ -1226,13 +1226,10 @@ export default function PartnerOnboardingPage() {
         if (!data.applicantRole) {
           errors.applicantRole = "حدد صفتك لدى المنشأة.";
         }
-        if (data.applicantRole === "owner" && !data.ownerProofFile) errors.ownerProofFile = "أرفق إثبات ملكية المنشأة قبل المتابعة.";
+
         if (data.applicantRole === "representative") {
           if (!data.jobTitle.trim()) errors.jobTitle = "المسمى الوظيفي مطلوب.";
-          if (!data.authorizationFile) {
-            errors.authorizationFile =
-              "يلزم إرفاق تفويض ساري ومصدّق من الغرفة التجارية.";
-          }
+
         }
       }
     }
@@ -1264,6 +1261,8 @@ export default function PartnerOnboardingPage() {
       if (data.partnerType === "government") {
         if (!data.authorizationFile) errors.authorizationFile = "خطاب تفويض رسمي من الجهة مطلوب.";
       } else {
+        if (data.partnerType === "business" && data.applicantRole === "owner" && !data.ownerProofFile) errors.ownerProofFile = "أرفق عقد التأسيس أو مستخرجاً رسمياً يثبت ملكية الشركة.";
+        if (data.partnerType === "business" && data.applicantRole === "representative" && !data.authorizationFile) errors.authorizationFile = "خطاب تفويض الممثل مطلوب.";
       const validLicenses = documents.filter(document =>
         document.type.trim() && document.issuer.trim() && document.number.trim() &&
         document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
@@ -2212,25 +2211,7 @@ export default function PartnerOnboardingPage() {
                       </p>
                     </div>
 
-                    <div data-validation="authorizationFile"><Field label="التفويض المصدق من الغرفة التجارية *">
-                      <input
-                        type="file"
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        onChange={(
-                          e
-                        ) =>
-                          {
-                            const file = e.target.files?.[0] ?? null;
-                            update("authorizationFile", file?.name || "");
-                            setUploadedFiles((current) => ({
-                              ...current,
-                              authorization: file,
-                            }));
-                          }
-                        }
-                        className={`${inputClass} ${validationErrors.authorizationFile ? errorInputClass : ""}`}
-                      />
-                    </Field><ValidationError message={validationErrors.authorizationFile} /></div>
+
 
                     <AiHint
                       title="فحص المستند"
@@ -2241,14 +2222,7 @@ export default function PartnerOnboardingPage() {
               </div>
             )}
 
-            {data.partnerType==="business" && data.applicantRole==="owner" && <div data-validation="ownerProofFile" className="mb-4 rounded-2xl border border-[#D4AF37]/30 bg-[#FFF9E8] p-4">
-              <Field label="إثبات ملكية المنشأة (إلزامي) *">
-                <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
-                  onChange={e=>{const file=e.target.files?.[0]??null;update("ownerProofFile",file?.name||"");setUploadedFiles(current=>({...current,ownerProof:file}));}}/>
-              </Field>
-              <p className="mt-2 text-xs text-[#0D3B34]/60">ارفع وثيقة رسمية تربط اسم المالك بالمنشأة. لا يكفي اختيار صفة مالك بدون إثبات.</p>
-              <ValidationError message={validationErrors.ownerProofFile}/>
-            </div>}
+
             <Actions
               onBack={goBack}
               onNext={goNext}
@@ -2655,6 +2629,36 @@ export default function PartnerOnboardingPage() {
                 title="إثبات مقدم الخدمة"
                 text="الوثيقة المهنية أو الترخيص أو الإثبات المناسب لطبيعة الخدمة."
               />
+            )}
+
+            {data.partnerType==="business" && data.applicantRole==="owner" && <div data-validation="ownerProofFile" className="mb-4 rounded-2xl border border-[#D4AF37]/30 bg-[#FFF9E8] p-4">
+              <Field label="عقد التأسيس أو مستخرج رسمي لإثبات الملكية *">
+                <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
+                  onChange={e=>{const file=e.target.files?.[0]??null;update("ownerProofFile",file?.name||"");setUploadedFiles(current=>({...current,ownerProof:file}));}}/>
+              </Field>
+              <p className="mt-2 text-xs text-[#0D3B34]/60">يجب أن يربط المستند اسم المالك بالمنشأة. تُراجع صلاحية التوقيع والتعاقد عند الاعتماد.</p>
+              <ValidationError message={validationErrors.ownerProofFile}/>
+            </div>}
+            {data.partnerType === "business" && data.applicantRole === "representative" && (
+              <div data-validation="authorizationFile"><Field label="خطاب تفويض رسمي من المنشأة *">
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        onChange={(
+                          e
+                        ) =>
+                          {
+                            const file = e.target.files?.[0] ?? null;
+                            update("authorizationFile", file?.name || "");
+                            setUploadedFiles((current) => ({
+                              ...current,
+                              authorization: file,
+                            }));
+                          }
+                        }
+                        className={`${inputClass} ${validationErrors.authorizationFile ? errorInputClass : ""}`}
+                      />
+                    </Field><ValidationError message={validationErrors.authorizationFile} /></div>
             )}
 
             {data.partnerType === "government" && (
