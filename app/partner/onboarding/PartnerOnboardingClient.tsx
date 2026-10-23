@@ -279,6 +279,7 @@ export default function PartnerOnboardingPage() {
   const [uploadedFiles, setUploadedFiles] = useState<{
     authorization: File | null;
     ownerProof: File | null;
+    commercialRegister: File | null;
     nationalAddress: File | null;
     ibanCertificate: File | null;
     vatCertificate: File | null;
@@ -288,6 +289,7 @@ export default function PartnerOnboardingPage() {
   }>({
     authorization: null,
     ownerProof: null,
+    commercialRegister: null,
     nationalAddress: null,
     ibanCertificate: null,
     vatCertificate: null,
@@ -1264,6 +1266,7 @@ export default function PartnerOnboardingPage() {
       if (data.partnerType === "government") {
         if (!data.authorizationFile) errors.authorizationFile = "خطاب تفويض رسمي من الجهة مطلوب.";
       } else {
+        if (data.partnerType === "business" && !uploadedFiles.commercialRegister) errors.commercialRegisterFile = "أرفق نسخة السجل التجاري.";
         if (data.partnerType === "business" && data.applicantRole === "owner" && !data.ownerProofFile) errors.ownerProofFile = "أرفق عقد التأسيس أو مستخرجاً رسمياً يثبت ملكية الشركة.";
         if (data.partnerType === "business" && data.applicantRole === "representative" && !data.authorizationFile) errors.authorizationFile = "خطاب تفويض الممثل مطلوب.";
       const validLicenses = documents.filter(document =>
@@ -1673,6 +1676,9 @@ export default function PartnerOnboardingPage() {
 
     if (uploadedFiles.ownerProof) {
       filesToUpload.push({file:uploadedFiles.ownerProof,type:"BUSINESS_PROOF",label:"إثبات ملكية المنشأة"});
+    }
+    if (uploadedFiles.commercialRegister) {
+      filesToUpload.push({file:uploadedFiles.commercialRegister,type:"COMMERCIAL_REGISTER",label:"السجل التجاري"});
     }
     if (uploadedFiles.authorization) {
       filesToUpload.push({
@@ -2665,6 +2671,15 @@ export default function PartnerOnboardingPage() {
               />
             )}
 
+            {data.partnerType === "business" && (
+              <div data-validation="commercialRegisterFile" className="mb-4 rounded-2xl border border-[#D4AF37]/20 bg-white/75 p-4">
+                <Field label="السجل التجاري *">
+                  <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
+                    onChange={e => {const file=e.target.files?.[0] ?? null;setUploadedFiles(current=>({...current,commercialRegister:file}));}}/>
+                </Field>
+                <ValidationError message={validationErrors.commercialRegisterFile}/>
+              </div>
+            )}
             {data.partnerType==="business" && data.applicantRole==="owner" && <div data-validation="ownerProofFile" className="mb-4 rounded-2xl border border-[#D4AF37]/30 bg-[#FFF9E8] p-4">
               <Field label="عقد التأسيس أو مستخرج رسمي لإثبات الملكية *">
                 <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
