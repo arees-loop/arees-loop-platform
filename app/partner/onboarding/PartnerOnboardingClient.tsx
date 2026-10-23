@@ -620,7 +620,11 @@ export default function PartnerOnboardingPage() {
     };
   }, []);
 
-  const activeSteps = useMemo(() => (data.partnerType === "individual" || data.partnerType === "government") ? steps.filter(step => step.id !== "categories") : steps, [data.partnerType]);
+  const activeSteps = useMemo(() => data.partnerType === "government"
+    ? steps.filter(step => ["account", "business", "documents", "review"].includes(step.id))
+    : data.partnerType === "individual"
+      ? steps.filter(step => step.id !== "categories")
+      : steps, [data.partnerType]);
   const activeIndex = useMemo(
     () =>
       activeSteps.findIndex(
@@ -1257,6 +1261,9 @@ export default function PartnerOnboardingPage() {
     }
 
     if (currentStep === "documents") {
+      if (data.partnerType === "government") {
+        if (!data.authorizationFile) errors.authorizationFile = "خطاب تفويض رسمي من الجهة مطلوب.";
+      } else {
       const validLicenses = documents.filter(document =>
         document.type.trim() && document.issuer.trim() && document.number.trim() &&
         document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
@@ -1264,6 +1271,7 @@ export default function PartnerOnboardingPage() {
       );
       if (validLicenses.length === 0) {
         errors.documents = "الترخيص إلزامي: النوع والجهة والرقم وتاريخ السريان وملف الرخصة مطلوبة.";
+      }
       }
     }
 
@@ -1477,7 +1485,9 @@ export default function PartnerOnboardingPage() {
           : "اختر تصنيف خدمة واحداً على الأقل.",
     });
 
-    const documentsOk = documents.some(document =>
+    const documentsOk = data.partnerType === "government"
+      ? Boolean(data.authorizationFile)
+      : documents.some(document =>
       document.type.trim() && document.issuer.trim() && document.number.trim() &&
       document.expiryDate && new Date(document.expiryDate).getTime() >= Date.now() &&
       (uploadedFiles.documents[document.id] || document.fileName)
@@ -1495,7 +1505,7 @@ export default function PartnerOnboardingPage() {
 
     checks.push({
       label: "شعار الجهة الرسمي",
-      state: data.partnerType !== "government" || Boolean(data.logoFile) ? "ok" : "warn",
+      state: "ok",
       note: data.partnerType !== "government" ? "غير مطلوب لهذا النوع من الشركاء." :
         data.logoFile ? "سيظهر الشعار بعد تدقيق أريس واعتماد الجهة." : "يلزم إرفاق الشعار الرسمي للجهة.",
     });
@@ -1568,6 +1578,7 @@ export default function PartnerOnboardingPage() {
 
   try {
     if (data.partnerType === "business" && !data.ownerProofFile && data.applicantRole === "owner") { window.alert("يجب إرفاق إثبات ملكية المنشأة."); return; }
+    if (data.partnerType === "government" && !data.authorizationFile) { window.alert("يجب إرفاق خطاب تفويض رسمي من الجهة."); return; }
     const response = await fetch("/api/partner/application", {
       method:
         applicationStatus === "NEEDS_COMPLETION"
@@ -1607,9 +1618,9 @@ export default function PartnerOnboardingPage() {
         businessPhone: data.businessPhone,
         businessEmail: data.businessEmail,
 
-        mainContactName: data.contactName,
-        mainContactEmail: data.contactEmail,
-        mainContactPhone: data.contactPhone,
+        mainContactName: data.partnerType === "government" ? `${data.firstName} ${data.lastName}` : data.contactName,
+        mainContactEmail: data.partnerType === "government" ? data.email : data.contactEmail,
+        mainContactPhone: data.partnerType === "government" ? data.phone : data.contactPhone,
         mainContactJobTitle: data.jobTitle,
 
         operates24h: data.operates24h,
@@ -1623,7 +1634,7 @@ export default function PartnerOnboardingPage() {
 
         categories: data.categories,
 
-        licenses: documents.map((document) => ({
+        licenses: (data.partnerType === "government" ? [] : documents).map((document) => ({
           type: document.type,
           issuer: document.issuer,
           licenseNumber: document.number,
@@ -1665,7 +1676,7 @@ export default function PartnerOnboardingPage() {
       filesToUpload.push({
         file: uploadedFiles.authorization,
         type: "AUTHORIZATION",
-        label: "تفويض ممثل المنشأة",
+        label: data.partnerType === "government" ? "خطاب تفويض رسمي من الجهة" : "تفويض ممثل المنشأة",
       });
     }
 
@@ -2634,12 +2645,18 @@ export default function PartnerOnboardingPage() {
               />
             )}
 
-            {data.partnerType ===
-              "government" && (
-              <Requirement
-                title="إثبات الجهة"
-                text="المستند أو التعريف الرسمي المناسب للجهة الحكومية أو غير الربحية."
-              />
+            {data.partnerType === "government" && (
+              <div data-validation="authorizationFile" className="rounded-2xl border border-[#D4AF37]/20 bg-[#FFF9EA] p-4">
+                <Field label="خطاب تفويض رسمي من الجهة *">
+                  <input type="file" accept=".pdf,.png,.jpg,.jpeg" className={inputClass}
+                    onChange={e => { const file = e.target.files?.[0] ?? null;
+                      update("authorizationFile", file?.name || "");
+                      setUploadedFiles(current => ({ ...current, authorization: file }));
+                    }} />
+                </Field>
+                <ValidationError message={validationErrors.authorizationFile}/>
+                <p className="mt-2 text-xs text-[#0D3B34]/55">يكفي خطاب التفويض الرسمي لتسجيل مدير الحساب ونشر الفعاليات بعد الاعتماد.</p>
+              </div>
             )}
 
             {data.applicantRole ===
@@ -2651,7 +2668,7 @@ export default function PartnerOnboardingPage() {
               />
             )}
 
-            <div data-validation="documents">
+            {data.partnerType !== "government" && <div data-validation="documents">
               <ValidationError message={validationErrors.documents} />
             <div className={`space-y-4 rounded-[22px] ${
               validationErrors.documents ? "border border-[#C83B3B] bg-[#FFF8F8] p-2" : ""
@@ -2908,7 +2925,7 @@ export default function PartnerOnboardingPage() {
             </div>
             </div>
 
-            <button
+            {data.partnerType !== "government" && <button
               type="button"
               onClick={addDocument}
               className="w-full rounded-2xl border border-dashed border-[#B99124]/45 bg-[#FFF9EA]/70 py-4 text-sm font-bold text-[#8B6812]"
