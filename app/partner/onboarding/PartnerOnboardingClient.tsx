@@ -2081,20 +2081,41 @@ export default function PartnerOnboardingPage() {
               <div data-validation="phone"><Field label="رقم الجوال *">
                 <input
                   value={data.phone}
-                  onChange={(e) =>
-                    update(
-                      "phone",
-                      e.target.value.replace(
-                        /[^\d+]/g,
-                        ""
-                      )
-                    )
-                  }
+                  onChange={e => {
+                    const value = e.target.value.replace(/[^\d+]/g,"");
+                    update("phone",value);
+                    if (data.partnerType === "government") update("contactPhone",value);
+                  }}
                   placeholder="+966 5XXXXXXXX"
                   className={`${inputClass} ${validationErrors.phone ? errorInputClass : ""}`}
                   dir="ltr"
                 />
               </Field><ValidationError message={validationErrors.phone} /></div>
+              {data.partnerType === "government" && smsVerificationEnabled === true && (
+                <div className="md:col-span-2 rounded-xl border border-[#D4AF37]/25 bg-white/75 p-3">
+                  <p className="mb-2 text-xs font-semibold">توثيق جوال مدير حساب الجهة</p>
+                  {contactPhoneVerified ? <p className="text-xs text-emerald-700">✓ تم توثيق الرقم</p> :
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" disabled={contactPhoneOtpLoading}
+                        onClick={requestPartnerContactPhoneOtp}
+                        className="rounded-lg bg-[#0D3B34] px-4 py-2 text-xs font-bold text-white">
+                        {contactPhoneOtpLoading ? "جارٍ الإرسال..." : "إرسال رمز التحقق"}
+                      </button>
+                      {contactPhoneOtpSent && <>
+                        <input value={contactPhoneOtp}
+                          onChange={e=>setContactPhoneOtp(e.target.value.replace(/\D/g,"").slice(0,6))}
+                          className={inputClass} placeholder="رمز التحقق" inputMode="numeric" dir="ltr"/>
+                        <button type="button" disabled={contactPhoneOtpLoading}
+                          onClick={confirmPartnerContactPhoneOtp}
+                          className="rounded-lg border border-[#0D3B34]/20 px-4 py-2 text-xs font-semibold">
+                          تأكيد الرمز
+                        </button>
+                      </>}
+                    </div>}
+                  {contactPhoneOtpError && <p className="mt-2 text-xs text-red-600">{contactPhoneOtpError}</p>}
+                  <ValidationError message={validationErrors.contactPhoneVerification}/>
+                </div>
+              )}
             </div>
 
             <div data-validation="password"><Field label="كلمة المرور *">
