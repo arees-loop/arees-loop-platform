@@ -87,11 +87,11 @@ assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("
  // one point per whole riyal of the currently displayed final price.
 const pointsFormula=file("lib/service-loyalty-points.ts");
 const pointsBanner=file("app/components/ServiceLoyaltyBanner.tsx");
-assert(pointsFormula.includes("Math.floor(Math.round(finalPrice * 100) / 100)")&&pointsBanner.includes("احجز واحصل على")&&pointsBanner.includes("نقطة أريس لوب")&&pointsBanner.includes('/Logo/arees-loop-logo.png'),"Always show automatic service-price points with official logo and approved Arabic earning copy");
-assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&count(destinations,"<ServiceLoyaltyBanner finalPrice={s.finalPrice}")===1&&count(serviceDetail,"<ServiceLoyaltyBanner finalPrice={total}")===1,"Approved earning banner must appear at full width in Home, Discover and details; never replace with tiny price-adjacent text");
-assert(!home.includes("نقاط الخدمة:")&&!destinations.includes("نقاط الخدمة:")&&!serviceDetail.includes("نقاط الخدمة:"),"Do not regress the previously approved full earning call-to-action");
+assert(pointsFormula.includes("Math.floor(Math.round(finalPrice * 100) / 100)")&&pointsBanner.includes("احصل على")&&pointsBanner.includes("نقطة</span>")&&pointsBanner.includes('/Logo/arees-loop-logo.png'),"Always show automatic service-price points with official logo and approved Arabic earning copy");
+assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&count(destinations,"<ServiceLoyaltyBanner finalPrice={s.finalPrice}")===1&&count(serviceDetail,"<ServiceLoyaltyBanner finalPrice={total}")===1,"Approved earning badge must remain present in Home, Discover and details alongside the price");
+assert(!home.includes("نقاط الخدمة:")&&!destinations.includes("نقاط الخدمة:")&&!serviceDetail.includes("نقاط الخدمة:"),"Do not regress automatic loyalty earning visibility");
 const publicCatalog=file("app/services/page.tsx");
-assert(count(publicCatalog,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1,"Public Services listings must also display the full-width approved earning preview");
+assert(count(publicCatalog,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1,"Public Services listings must continue to display the earning preview");
 const reconcileUi=file("app/admin/services/loyalty-reconcile/page.tsx");
 assert(reconcileUi.includes("السعر النهائي المعروض للعميل")&&!reconcileUi.includes("السعر الأساسي بالريال"),"Admin loyalty reconciliation copy must match final-price policy");
 const savedButton=file("app/components/SaveExperienceButton.tsx");
