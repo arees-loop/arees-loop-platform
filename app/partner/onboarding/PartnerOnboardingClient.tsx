@@ -2923,7 +2923,7 @@ export default function PartnerOnboardingPage() {
                 )
               )}
             </div>
-            </div>
+            </div>}
 
             {data.partnerType !== "government" && <button
               type="button"
@@ -2931,7 +2931,7 @@ export default function PartnerOnboardingPage() {
               className="w-full rounded-2xl border border-dashed border-[#B99124]/45 bg-[#FFF9EA]/70 py-4 text-sm font-bold text-[#8B6812]"
             >
               + إضافة مستند أو ترخيص آخر
-            </button>
+            </button>}
 
             <Actions
               onBack={goBack}
