@@ -121,6 +121,32 @@ export async function PATCH(request:NextRequest) {
     if(!superAdmin && (current.assignedToId!==actorId || !canManageTransport(session.user, current.kind==="FERRY"?"FERRY":current.kind==="VISA"?"VISA":current.kind==="DRIVING_LICENSE"?"DRIVING_LICENSE":"FLIGHT")))return fail("الطلب غير مسند إلى حسابك أو لا تملك صلاحية القسم.",403);
     const action=cleanText(body.action,30);
 
+    if(action==="VERIFY_EXTERNAL_BANK_TRANSFER"){
+      // This workflow records a human-confirmed bank reconciliation, not a platform payment.
+      if(!superAdmin)return fail("اعتماد حوالة خارج المنصة متاح للسوبر أدمن فقط.",403);
+      if(!["FERRY","FLIGHT"].includes(current.kind))return fail("هذه المراجعة لطلبات الطيران والبواخر فقط.",400);
+      if(!["NEW","PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(current.status))return fail("الحالة الحالية لا تسمح بتسجيل حوالة جديدة.",409);
+      if(body.bankStatementConfirmed!==true)return fail("يجب تأكيد مطابقة الحوالة مع كشف البنك الرسمي.",400);
+      const bankReference=cleanText(body.bankReference,120);
+      const amountSar=parseAmount(body.amountSar);
+      const bankNote=cleanText(body.bankNote,500);
+      if(bankReference.length<5||amountSar===null||amountSar<=0)return fail("أدخل مرجع الحوالة البنكي (5 أحرف على الأقل) ومبلغاً صحيحاً بالريال.",400);
+      const updated=await prisma.$transaction(async tx=>{
+        await tx.$queryRaw`SELECT id FROM "TransportRequest" WHERE id = ${id} FOR UPDATE`;
+        const fresh=await tx.transportRequest.findUniqueOrThrow({where:{id},select:{status:true,kind:true}});
+        if(!["NEW","PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(fresh.status))return null;
+        const record=await tx.transportRequest.update({where:{id},data:{status:"PAID"}});
+        await tx.transportRequestEvent.create({data:{
+          requestId:id,actorId,actorName,action:"ADMIN_PAYMENT_VERIFIED",
+          fromStatus:fresh.status,toStatus:"PAID",
+          details:{source:"EXTERNAL_WHATSAPP_BANK_TRANSFER",bankReference,amountSar,bankNote,verifiedAgainstBankStatement:true,verifiedBy:actorId}
+        }});
+        return record;
+      });
+      if(!updated)return fail("تغيرت حالة الطلب أثناء المراجعة. حدّث الصفحة وأعد المحاولة.",409);
+      return NextResponse.json({success:true,data:{...updated,quoteAmountSar:updated.quoteAmountSar===null?null:Number(updated.quoteAmountSar)}});
+    }
+
     if(action==="REPLY_CUSTOMER"){
       if(["CANCELED","DONE"].includes(current.status))return fail("لا يمكن الرد على طلب مغلق؛ أعد فتحه بإجراء معتمد أولاً.",409);
       const customerReply=cleanText(body.customerReply,2500);
