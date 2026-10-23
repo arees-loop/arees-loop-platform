@@ -50,6 +50,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const [identity,setIdentity]=useState<{role:string;id:string}|null>(null);
   const [history,setHistory]=useState<HistoryEvent[]>([]);
   const [cancelReason,setCancelReason]=useState("");
+  const [externalTransfer,setExternalTransfer]=useState({bankReference:"",amountSar:"",bankNote:"",confirmed:false});
   const [replyDraft,setReplyDraft]=useState("");
   const [cancelBy,setCancelBy]=useState("STAFF");
   const [filterKind,setFilterKind]=useState<"ALL"|"FLIGHT"|"FERRY"|"VISA"|"DRIVING_LICENSE">(initialOfferKind);
@@ -110,7 +111,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   }
 
   function choose(q:RequestRow) {
-    setSelected(q);setItineraryReady(false);setError("");setStatus("");setReplyDraft(q.customerReply||"");setVisaAvailability("AVAILABLE");
+    setSelected(q);setItineraryReady(false);setError("");setStatus("");setExternalTransfer({bankReference:"",amountSar:"",bankNote:"",confirmed:false});setReplyDraft(q.customerReply||"");setVisaAvailability("AVAILABLE");
     void loadHistory(q.id);
     setForm({carrierName:q.carrierName||"",
       quoteAmountSar:q.quoteAmountSar===null?"":String(q.quoteAmountSar),
@@ -175,6 +176,24 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
       void loadHistory(selected.id);
       await load();
     }catch{setError("تعذر تحديث الطلب.");}
+    finally{setBusy(false);}
+  }
+
+  async function verifyExternalTransfer(){
+    if(!selected||busy||identity?.role!=="SUPER_ADMIN"||!externalTransfer.confirmed)return;
+    if(!window.confirm("هل طابقت مبلغ الحوالة ومرجعها مع كشف حساب البنك الرسمي؟ سيُسجل اسمك وبيانات المطابقة، ويتحول الطلب إلى تم السداد."))return;
+    setBusy(true);setError("");setStatus("");
+    try{
+      const r=await fetch("/api/admin/transport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        id:selected.id,action:"VERIFY_EXTERNAL_BANK_TRANSFER",bankStatementConfirmed:true,
+        bankReference:externalTransfer.bankReference,amountSar:externalTransfer.amountSar,bankNote:externalTransfer.bankNote
+      })});
+      const d=await r.json();
+      if(!r.ok||!d.success){setError(d.message||"تعذر تأكيد وصول التحويل.");return;}
+      setSelected(d.data);setExternalTransfer({bankReference:"",amountSar:"",bankNote:"",confirmed:false});
+      setStatus("تم توثيق الحوالة الخارجية ومطابقتها مع كشف البنك. الآن يمكنك إرفاق التذكرة النهائية ثم إكمال الطلب.");
+      void loadHistory(selected.id);await load();
+    }catch{setError("تعذر الاتصال لحفظ مطابقة الحوالة.");}
     finally{setBusy(false);}
   }
 
@@ -397,6 +416,28 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
                         {statusNames[next]}
                       </button>)}
                   </div>
+                  {identity?.role==="SUPER_ADMIN"&&["FERRY","FLIGHT"].includes(selected.kind)&&["NEW","PROCESSING","QUOTE_READY","QUOTE_SENT"].includes(selected.status)&&
+                    <details className="mt-4 rounded-xl border border-[#D4AF37]/40 bg-white/90 p-3">
+                      <summary className="cursor-pointer text-xs font-black text-[#0D3B34]">💳 اعتماد حوالة بنكية خارج المنصة (واتساب) — إدخال يدوي</summary>
+                      <p className="mt-2 text-[11px] leading-6 text-[#725A32]">لا تؤكد السداد اعتماداً على صورة إيصال واتساب فقط. طابق وصول المبلغ إلى الحساب البنكي الرسمي، ثم سجّل المرجع والمبلغ. سيُحفظ الإجراء في سجل الطلب.</p>
+                      <div className="mt-3 grid gap-2">
+                        <label className={label}>المرجع البنكي للحوالة
+                          <input className={field} maxLength={120} value={externalTransfer.bankReference} onChange={e=>setExternalTransfer(v=>({...v,bankReference:e.target.value}))} placeholder="رقم العملية / مرجع كشف البنك" />
+                        </label>
+                        <label className={label}>المبلغ المستلم بالريال
+                          <input className={field} type="number" min="0.01" max="1000000" step="0.01" value={externalTransfer.amountSar} onChange={e=>setExternalTransfer(v=>({...v,amountSar:e.target.value}))} />
+                        </label>
+                        <label className={label}>ملاحظات المطابقة (اختياري)
+                          <textarea className={field} maxLength={500} rows={2} value={externalTransfer.bankNote} onChange={e=>setExternalTransfer(v=>({...v,bankNote:e.target.value}))}/>
+                        </label>
+                        <label className="flex items-start gap-2 text-xs font-semibold leading-6">
+                          <input className="mt-1" type="checkbox" checked={externalTransfer.confirmed} onChange={e=>setExternalTransfer(v=>({...v,confirmed:e.target.checked}))}/>
+                          أؤكد أن الحوالة وصلت فعلياً وتطابقت مع كشف حساب البنك الرسمي للطلب المحدد.
+                        </label>
+                        <button type="button" disabled={busy||!externalTransfer.confirmed||externalTransfer.bankReference.trim().length<5||!(Number(externalTransfer.amountSar)>0)} onClick={()=>void verifyExternalTransfer()}
+                          className="rounded-xl bg-[#126B4C] px-4 py-3 text-xs font-black text-white disabled:opacity-40">تأكيد السداد البنكي اليدوي</button>
+                      </div>
+                    </details>}
                   {(transitions[selected.status]||[]).includes("CANCELED")&&<details className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3"><summary className="cursor-pointer font-bold text-red-800">إلغاء الطلب</summary><div className="mt-3 grid gap-3">
                     <label className={label}>جهة الإلغاء
                       <select className={field} value={cancelBy} onChange={e=>setCancelBy(e.target.value)}>
