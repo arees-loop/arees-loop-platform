@@ -1,5 +1,5 @@
 export const IMAGE_REQUIREMENTS = {
-  offer: { width: 1200, height: 600, label: "صورة عرض الطيران والبواخر والفنادق" },
+  offer: { width: 1200, height: 1200, label: "صورة عرض الطيران والبواخر والفنادق (مربعة)" },
   visa: { width: 1200, height: 1200, label: "صورة التأشيرة" },
   servicePhoto: { width: 1200, height: 1200, label: "صورة الخدمة أو البرنامج (مربعة)" },
   successPartner: { width: 1200, height: 800, label: "شعار شريك النجاح" },
