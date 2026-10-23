@@ -2292,7 +2292,7 @@ export default function PartnerOnboardingPage() {
               </div>
             ) : <>
             <div className="grid gap-4 md:grid-cols-2">
-              <div data-validation="tradeName"><Field label={data.partnerType === "government" ? "الاسم الرسمي للجهة *" : data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
+              <div data-validation="tradeName"><Field label={data.partnerType === "individual" ? "الاسم المهني للمرشد *" : "الاسم التجاري / اسم النشاط *"}>
                 <input
                   value={data.tradeName}
                   onChange={(e) => {
@@ -2320,7 +2320,7 @@ export default function PartnerOnboardingPage() {
                 </Field><ValidationError message={validationErrors.guideLanguages}/></div>
               </>}
 
-              <Field label={data.partnerType === "government" ? "اسم الجهة القانوني — إن اختلف" : data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
+              <Field label={data.partnerType === "individual" ? "الاسم الكامل بحسب رخصة الإرشاد" : "الاسم القانوني"}>
                 <input
                   value={data.legalName}
                   onChange={(e) =>
