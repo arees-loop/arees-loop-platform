@@ -2749,26 +2749,27 @@ export default function PartnerOnboardingPage() {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      <Field label="نوع المستند / الترخيص">
-                        <input
-                          value={
-                            document.type
-                          }
-                          onChange={(
-                            e
-                          ) =>
-                            updateDocument(
-                              document.id,
-                              "type",
-                              e.target
-                                .value
-                            )
-                          }
-                          placeholder="مثال: ترخيص مرشد سياحي"
-                          className={
-                            inputClass
-                          }
-                        />
+                      <Field label={data.partnerType === "business" ? "نوع ترخيص السياحة *" : "نوع المستند / الترخيص"}>
+                        {data.partnerType === "business" ? (
+                          <div className="space-y-2">
+                            <select value={document.type.startsWith("أخرى:") ? "أخرى" : document.type}
+                              className={inputClass}
+                              onChange={e => updateDocument(document.id, "type", e.target.value === "أخرى" ? "أخرى: " : e.target.value)}>
+                              <option value="">اختر نوع الترخيص</option>
+                              <option value="خدمات السفر والسياحة">خدمات السفر والسياحة</option>
+                              <option value="أخرى">أخرى — حسب الترخيص</option>
+                            </select>
+                            {document.type.startsWith("أخرى:") && (
+                              <input value={document.type.slice(5)} className={inputClass}
+                                onChange={e => updateDocument(document.id,"type",`أخرى: ${e.target.value}`)}
+                                placeholder="حدد نوع الترخيص كما هو في المستند" />
+                            )}
+                          </div>
+                        ) : (
+                          <input value={document.type} className={inputClass}
+                            onChange={e => updateDocument(document.id,"type",e.target.value)}
+                            placeholder="مثال: رخصة مرشد سياحي" />
+                        )}
                       </Field>
 
                       <Field label="جهة الإصدار">
