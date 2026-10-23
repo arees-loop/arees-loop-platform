@@ -1489,21 +1489,21 @@ export default function Home() {
                 </div>
 
                 {/* Payment marks are local vector images; actual payment availability is determined at checkout. */}
-                <section className="mt-4 rounded-2xl border border-[#D4AF37]/25 bg-white/75 p-3" aria-label="وسائل الدفع">
-                  <p className="mb-2 text-center text-[11px] font-bold text-[#0D3B34]">وسائل الدفع</p>
-                  <div className="grid grid-cols-4 gap-2" dir="rtl">
+                <section className="mx-auto mt-3 w-full max-w-[305px] rounded-2xl border border-[#D4AF37]/20 bg-white/25 px-3 py-2.5 backdrop-blur-sm" aria-label="وسائل الدفع">
+                  <p className="mb-1.5 text-center text-[10px] font-semibold text-[#0D3B34]">وسائل الدفع</p>
+                  <div className="flex items-center justify-center gap-1.5" dir="rtl">
                     {([
                       { src: "/payment-icons/mada.svg", alt: "مدى" },
                       { src: "/payment-icons/visa.svg", alt: "Visa" },
                       { src: "/payment-icons/mastercard.svg", alt: "Mastercard" },
                       { src: "/payment-icons/bank-transfer.svg", alt: "تحويل بنكي" },
                     ] as const).map(method => (
-                      <div key={method.src} className="flex min-h-12 items-center justify-center rounded-lg border border-[#0D3B34]/10 bg-white p-1.5">
-                        <Image src={method.src} alt={method.alt} width={96} height={50} className="h-9 w-full object-contain" />
+                      <div key={method.src} className="group flex h-9 w-[58px] shrink-0 items-center justify-center rounded-lg border border-white/45 bg-white/20 px-1.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:border-[#D4AF37]/35 hover:bg-white/50 hover:shadow-sm motion-reduce:transform-none">
+                        <Image src={method.src} alt={method.alt} width={54} height={27} className="h-6 w-full object-contain transition-transform duration-200 group-hover:scale-105 motion-reduce:transform-none" />
                       </div>
                     ))}
                   </div>
-                  <p className="mt-2 text-center text-[9px] text-[#0D3B34]/45">تظهر خيارات الدفع المتاحة فعلياً عند إتمام الطلب.</p>
+                  <p className="mt-1.5 text-center text-[8px] text-[#0D3B34]/40">تظهر خيارات الدفع المتاحة فعلياً عند إتمام الطلب.</p>
                 </section>
 
                 <div className="mt-2 flex items-center justify-center gap-2">
