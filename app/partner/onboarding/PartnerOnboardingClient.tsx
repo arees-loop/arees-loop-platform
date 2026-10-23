@@ -1251,9 +1251,7 @@ export default function PartnerOnboardingPage() {
       } else if (data.partnerType === "business" && !/^[A-Z]{4}\d{4}$/.test(data.shortNationalAddress.trim().toUpperCase())) {
         errors.shortNationalAddress = "أدخل عنواناً وطنياً مختصراً صحيحاً: 4 أحرف ثم 4 أرقام، مثال ABCD1234.";
       }
-      if (data.partnerType === "business" && !data.nationalAddressFile) {
-        errors.nationalAddressFile = "أرفق مستند العنوان الوطني للمنشأة.";
-      }
+
     }
 
     if (currentStep === "categories") {
@@ -1267,6 +1265,7 @@ export default function PartnerOnboardingPage() {
         if (!data.authorizationFile) errors.authorizationFile = "خطاب تفويض رسمي من الجهة مطلوب.";
       } else {
         if (data.partnerType === "business" && !uploadedFiles.commercialRegister) errors.commercialRegisterFile = "أرفق نسخة السجل التجاري.";
+        if (data.partnerType === "business" && !data.nationalAddressFile) errors.nationalAddressFile = "أرفق نسخة من إثبات العنوان الوطني للمنشأة.";
         if (data.partnerType === "business" && data.applicantRole === "owner" && !data.ownerProofFile) errors.ownerProofFile = "أرفق عقد التأسيس أو مستخرجاً رسمياً يثبت ملكية الشركة.";
         if (data.partnerType === "business" && data.applicantRole === "representative" && !data.authorizationFile) errors.authorizationFile = "خطاب تفويض الممثل مطلوب.";
       const validLicenses = documents.filter(document =>
@@ -2460,27 +2459,6 @@ export default function PartnerOnboardingPage() {
                 <ValidationError message={validationErrors.shortNationalAddress} />
               </div>
 
-              <div data-validation="nationalAddressFile" className="md:col-span-2">
-                <Field label="مرفق العنوان الوطني للمنشأة *">
-                  <input
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] ?? null;
-                      update("nationalAddressFile", file?.name || "");
-                      setUploadedFiles((current) => ({
-                        ...current,
-                        nationalAddress: file,
-                      }));
-                    }}
-                    className={`${inputClass} ${validationErrors.nationalAddressFile ? errorInputClass : ""}`}
-                  />
-                </Field>
-                <ValidationError message={validationErrors.nationalAddressFile} />
-                <p className="mt-2 text-xs leading-6 text-[#0D3B34]/50">
-                  أرفق نسخة من إثبات العنوان الوطني الخاص بمقر المنشأة بصيغة PDF أو صورة.
-                </p>
-              </div>
             </div>
 
             <Field label="نبذة عن النشاط">
@@ -2671,6 +2649,73 @@ export default function PartnerOnboardingPage() {
               />
             )}
 
+            {data.partnerType === "business" && (
+              <div className="mb-4 rounded-2xl bg-white/70 p-3">
+                <div data-validation="nationalAddressFile" className="md:col-span-2">
+                <Field label="مرفق العنوان الوطني للمنشأة *">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      update("nationalAddressFile", file?.name || "");
+                      setUploadedFiles((current) => ({
+                        ...current,
+                        nationalAddress: file,
+                      }));
+                    }}
+                    className={`${inputClass} ${validationErrors.nationalAddressFile ? errorInputClass : ""}`}
+                  />
+                </Field>
+                <ValidationError message={validationErrors.nationalAddressFile} />
+                <p className="mt-2 text-xs leading-6 text-[#0D3B34]/50">
+                  أرفق نسخة من إثبات العنوان الوطني الخاص بمقر المنشأة بصيغة PDF أو صورة.
+                </p>
+              </div>
+              </div>
+            )}
+            {data.partnerType !== "government" && (
+              <div className="mb-4 grid gap-3 md:grid-cols-2">
+                <Field label="شهادة IBAN / خطاب البنك">
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) =>
+                        {
+                          const file = e.target.files?.[0] ?? null;
+                          update("ibanCertificate", file?.name || "");
+                          setUploadedFiles((current) => ({
+                            ...current,
+                            ibanCertificate: file,
+                          }));
+                        }
+                      }
+                      className={
+                        inputClass
+                      }
+                    />
+                  </Field>
+                {data.vatRegistered && <Field label="شهادة التسجيل الضريبي">
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) =>
+                      {
+                        const file = e.target.files?.[0] ?? null;
+                        update("vatCertificate", file?.name || "");
+                        setUploadedFiles((current) => ({
+                          ...current,
+                          vatCertificate: file,
+                        }));
+                      }
+                    }
+                    className={
+                      inputClass
+                    }
+                  />
+                </Field>}
+              </div>
+            )}
             {data.partnerType === "business" && (
               <div data-validation="commercialRegisterFile" className="mb-4 rounded-2xl border border-[#D4AF37]/20 bg-white/75 p-4">
                 <Field label="السجل التجاري *">
@@ -3259,25 +3304,6 @@ export default function PartnerOnboardingPage() {
                     />
                   </Field><ValidationError message={validationErrors.beneficiaryName} /></div>
 
-                  <Field label="شهادة IBAN / خطاب البنك">
-                    <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) =>
-                        {
-                          const file = e.target.files?.[0] ?? null;
-                          update("ibanCertificate", file?.name || "");
-                          setUploadedFiles((current) => ({
-                            ...current,
-                            ibanCertificate: file,
-                          }));
-                        }
-                      }
-                      className={
-                        inputClass
-                      }
-                    />
-                  </Field>
                 </div>
               )}
             </div>
@@ -3319,25 +3345,6 @@ export default function PartnerOnboardingPage() {
                   />
                 </Field>
 
-                <Field label="شهادة التسجيل الضريبي">
-                  <input
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) =>
-                      {
-                        const file = e.target.files?.[0] ?? null;
-                        update("vatCertificate", file?.name || "");
-                        setUploadedFiles((current) => ({
-                          ...current,
-                          vatCertificate: file,
-                        }));
-                      }
-                    }
-                    className={
-                      inputClass
-                    }
-                  />
-                </Field>
               </div>
             )}
 
