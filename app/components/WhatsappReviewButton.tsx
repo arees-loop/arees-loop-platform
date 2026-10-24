@@ -7,6 +7,6 @@ export default function WhatsappReviewButton({phone,reference,className}:Props){
  return <a href={"https://wa.me/"+clean+"?text="+encodeURIComponent(REVIEW_TEXT)}
   target="_blank" rel="noopener noreferrer" aria-label={"فتح واتساب لطلب تقييم الخدمة"+(reference?" للطلب "+reference:"")}
   className={className||"inline-flex items-center justify-center rounded-xl bg-[#147D55] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#106448]"}>
-  ⭐ إرسال طلب تقييم الخدمة عبر واتساب ↗
+  ⭐ إرسال طلب تقييم للعميل عبر واتساب ↗
  </a>;
 }
