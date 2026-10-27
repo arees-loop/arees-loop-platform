@@ -909,3 +909,65 @@ body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding
     page-break-inside: avoid;
   }
 }
+
+
+/* Keep quotation header text on the right and its logo on the left in PDF output. */
+@media print {
+  .quote-print-sheet {
+    direction: rtl !important;
+    text-align: right !important;
+  }
+
+  .quote-print-sheet .quote-header-brand-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    direction: rtl !important;
+    gap: 18px !important;
+  }
+
+  .quote-print-sheet .quote-header-copy {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    text-align: right !important;
+    direction: rtl !important;
+  }
+
+  .quote-print-sheet .quote-header-license-en {
+    width: 100% !important;
+    text-align: right !important;
+    direction: ltr !important;
+  }
+
+  .quote-print-sheet .quote-header-logo {
+    display: flex !important;
+    flex: 0 0 125px !important;
+    width: 125px !important;
+    min-width: 125px !important;
+    min-height: 125px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 8px !important;
+  }
+
+  .quote-print-sheet .quote-header-logo img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 105px !important;
+    height: 105px !important;
+    object-fit: contain !important;
+  }
+
+  .quote-print-sheet .quote-company-location {
+    flex-wrap: nowrap !important;
+    direction: rtl !important;
+  }
+
+  .quote-print-sheet .quote-company-location p {
+    text-align: right !important;
+  }
+}
