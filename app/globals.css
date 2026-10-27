@@ -815,3 +815,97 @@ body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding
 @media (min-width:768px) {
   body:has(> header.sticky) > main:is(.pt-24,.pt-28,.pt-32,.pt-36,.pt-40) {padding-top:24px !important;}
 }
+
+
+/* Ferry quotation print sheet: exclude the admin shell and fit the quotation on one A4 page. */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 5mm;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .quote-print-root,
+  .quote-print-root * {
+    visibility: visible !important;
+  }
+
+  .quote-print-root {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .quote-print-sheet {
+    width: 122% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    zoom: 0.82;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .quote-print-sheet header {
+    padding: 14px 20px !important;
+  }
+
+  .quote-print-sheet header .mt-5 {
+    margin-top: 10px !important;
+  }
+
+  .quote-print-sheet .px-8 {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .quote-print-sheet .py-7 {
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+  }
+
+  .quote-print-sheet .mt-7 {
+    margin-top: 12px !important;
+  }
+
+  .quote-print-sheet .mt-10 {
+    margin-top: 16px !important;
+  }
+
+  .quote-print-sheet .p-6 {
+    padding: 12px !important;
+  }
+
+  .quote-print-sheet .leading-8 {
+    line-height: 1.45 !important;
+  }
+
+  .quote-print-sheet section,
+  .quote-print-sheet > div > div {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
