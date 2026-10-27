@@ -34,9 +34,12 @@ function loadPdfLibrary(): Promise<PdfFactory> {
   return pdfLoader;
 }
 
+function quoteReference(sheet: HTMLElement) {
+  return sheet.querySelector('span[dir="ltr"]')?.textContent?.trim() || "";
+}
+
 function quoteFilename(sheet: HTMLElement) {
-  const reference = sheet.querySelector('span[dir="ltr"]')?.textContent?.trim();
-  return `Arees-Quote-${reference || "quotation"}.pdf`;
+  return `Arees-Quote-${quoteReference(sheet) || "quotation"}.pdf`;
 }
 
 async function createQuotePdf() {
@@ -60,7 +63,9 @@ async function createQuotePdf() {
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     pagebreak: { mode: ["css", "legacy"], avoid: [".quote-header-brand-row", ".quote-header-logo"] },
   }).from(sheet).outputPdf("blob");
-  return { blob, filename: quoteFilename(sheet) };
+  const reference = quoteReference(sheet);
+  const shareText = `عميلنا العزيز، بناءً على طلبكم رقم ${reference || "—"}، مرفق لكم عرض السعر بصيغة PDF. هذا العرض ليس حجزاً نهائياً، والأسعار والتوفر خاضعان للتأكيد النهائي وشروط الناقل.`;
+  return { blob, filename: quoteFilename(sheet), shareText };
 }
 
 function download(blob: Blob, filename: string) {
@@ -96,14 +101,14 @@ export default function QuotePrintButton({ disabled }: { disabled: boolean }) {
     setBusy(true);
     setStatus("");
     try {
-      const { blob, filename } = await createQuotePdf();
+      const { blob, filename, shareText } = await createQuotePdf();
       const file = new File([blob], filename, { type: "application/pdf" });
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "عرض سعر من أريس" });
-        setStatus("تم فتح خيارات مشاركة ملف عرض السعر.");
+        await navigator.share({ files: [file], title: "عرض سعر من أريس", text: shareText });
+        setStatus("تم فتح خيارات مشاركة عرض السعر مع رسالته.");
       } else {
         download(blob, filename);
-        setStatus("جهازك لا يدعم مشاركة الملف مباشرة؛ تم تنزيل PDF لتتمكن من إرفاقه في واتساب.");
+        setStatus("جهازك لا يدعم مشاركة الملف مباشرة؛ تم تنزيل PDF لإرفاقه في واتساب.");
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
@@ -125,7 +130,7 @@ export default function QuotePrintButton({ disabled }: { disabled: boolean }) {
         مشاركة PDF
       </button>
       <span aria-live="polite" className="text-xs text-[#0D3B34]/65">
-        {status || "يمكنك تنزيل العرض أو مشاركته كملف PDF."}
+        {status || "يمكنك تنزيل العرض أو مشاركته مع رسالة جاهزة."}
       </span>
     </div>
   );
