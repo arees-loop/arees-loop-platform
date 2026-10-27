@@ -228,7 +228,7 @@ export default function TransportAdminPage({initialOfferKind="ALL"}:{initialOffe
   const customerWhatsApp = selected
     ? (selected.whatsappPhone ? (selected.whatsappCountryCode||"")+selected.whatsappPhone : selected.countryCode+selected.phone).replace(/\D/g,"")
     : "";
-  const message = selected ? `السلام عليكم، بناءً على طلبكم لدى شركة أريس لخدمة ${selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":selected.kind==="DRIVING_LICENSE"?"رخصة القيادة الدولية":"الطيران"} رقم ${selected.reference} (${selected.origin} - ${selected.destination})، أعددنا عرض السعر لدى ${selected.carrierName||"الناقل المختار"}. المبلغ ${selected.quoteAmountSar===null?"قيد التحديد":selected.quoteAmountSar+" ريال سعودي"}. أعددنا عرض السعر لطلبكم، ومرفق لكم ملف العرض PDF. نؤكد أن العرض ليس حجزاً نهائياً، وشروط الاسترداد والتعديل وفق الناقل. نؤكد أن العرض ليس حجزاً نهائياً، وشروط الاسترداد والتعديل وفق الناقل. ${selected.quoteNotes||""}` : "";
+  const message = selected ? `السلام عليكم، بناءً على طلبكم لدى شركة أريس لخدمة ${selected.kind==="FERRY"?"البواخر":selected.kind==="VISA"?"التأشيرات":selected.kind==="DRIVING_LICENSE"?"رخصة القيادة الدولية":"الطيران"} رقم ${selected.reference} (${selected.origin} - ${selected.destination})، أعددنا عرض السعر لدى ${selected.carrierName||"الناقل المختار"}. المبلغ ${selected.quoteAmountSar===null?"قيد التحديد":selected.quoteAmountSar+" ريال سعودي"}. أعددنا عرض السعر لطلبكم، ومرفق لكم ملف العرض PDF. نؤكد أن العرض ليس حجزاً نهائياً، وشروط الاسترداد والتعديل وفق الناقل. ${selected.quoteNotes||""}` : "";
 
   function startOffer(offer?:Offer) {
     setBannerFile(null);
