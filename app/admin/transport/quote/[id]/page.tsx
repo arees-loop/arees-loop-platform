@@ -28,12 +28,12 @@ export default async function QuotePage({params}:Props) {
   const kind=item.kind==="FERRY"?"باخرة":item.kind==="VISA"?"تأشيرة":item.kind==="DRIVING_LICENSE"?"رخصة قيادة دولية":"طيران";
   const hasQuote=item.quoteAmountSar!==null;
   return (
-    <main dir="rtl" className="mx-auto max-w-[920px] bg-[#F7F4EC] px-4 pb-20 pt-8 text-[#0D3B34] print:m-0 print:max-w-none print:bg-white print:p-0">
+    <main dir="rtl" className="quote-print-root mx-auto max-w-[920px] bg-[#F7F4EC] px-4 pb-20 pt-8 text-[#0D3B34] print:m-0 print:max-w-none print:bg-white print:p-0">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link href="/admin/transport" className="rounded-full border border-[#D4AF37]/45 bg-white px-5 py-3 text-sm font-bold">← العودة للطلبات</Link>
         <QuotePrintButton disabled={!hasQuote}/>
       </div>
-      <article className="overflow-hidden rounded-[26px] border border-[#D4AF37]/45 bg-white shadow-xl print:rounded-none print:border-0 print:shadow-none">
+      <article className="quote-print-sheet overflow-hidden rounded-[26px] border border-[#D4AF37]/45 bg-white shadow-xl print:rounded-none print:border-0 print:shadow-none">
         <header className="border-b-4 border-[#B38A25] bg-white px-8 py-7 text-[#0D3B34]">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="min-w-0 flex-1">
