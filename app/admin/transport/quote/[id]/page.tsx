@@ -35,16 +35,16 @@ export default async function QuotePage({params}:Props) {
       </div>
       <article className="quote-print-sheet overflow-hidden rounded-[26px] border border-[#D4AF37]/45 bg-white shadow-xl print:rounded-none print:border-0 print:shadow-none">
         <header className="border-b-4 border-[#B38A25] bg-white px-8 py-7 text-[#0D3B34]">
-          <div className="flex flex-wrap items-start justify-between gap-5">
-            <div className="min-w-0 flex-1">
+          <div className="quote-header-brand-row flex flex-wrap items-start justify-between gap-5">
+            <div className="quote-header-copy min-w-0 flex-1">
               <p className="text-[11px] font-bold text-[#997523]">الاسم التجاري / Trade Name</p>
               <h1 className="mt-1 text-xl font-black">شركة أريس الحلول المتكاملة المحدودة</h1>
               <p className="mt-3 text-sm font-black text-[#947022]">رقم ترخيص خدمات السفر والسياحة: 73104550 · فئة وكالة سفر وسياحة</p>
-              <p dir="ltr" className="mt-1 text-left text-xs font-bold">Travel & Tourism License No. 73104550 · Travel Agency</p>
+              <p dir="ltr" className="quote-header-license-en mt-1 text-left text-xs font-bold">Travel & Tourism License No. 73104550 · Travel Agency</p>
             </div>
-            <div className="flex min-w-[140px] items-center justify-center rounded-xl border border-[#D4AF37]/40 bg-white p-3"><Image src="/Logo/arees-integrated-solutions-logo.png" width={170} height={170} alt="شعار شركة أريس الحلول المتكاملة المحدودة" unoptimized className="h-[105px] w-[105px] object-contain"/></div>
+            <div className="quote-header-logo flex min-w-[140px] items-center justify-center rounded-xl border border-[#D4AF37]/40 bg-white p-3"><Image src="/Logo/arees-integrated-solutions-logo.png" width={170} height={170} alt="شعار شركة أريس الحلول المتكاملة المحدودة" loading="eager" unoptimized className="h-[105px] w-[105px] object-contain"/></div>
           </div>
-          <div className="mt-5 flex flex-wrap justify-between gap-2 border-t border-[#D4AF37]/30 pt-4 text-xs"><p>مقر الشركة: المدينة المنورة، المملكة العربية السعودية</p><p>Company location: Medina, Saudi Arabia</p></div>
+          <div className="quote-company-location mt-5 flex flex-wrap justify-between gap-2 border-t border-[#D4AF37]/30 pt-4 text-xs"><p>مقر الشركة: المدينة المنورة، المملكة العربية السعودية</p><p>Company location: Medina, Saudi Arabia</p></div>
           <div className="mt-5 rounded-xl bg-[#0D3B34] px-5 py-4 text-white"><h2 className="text-xl font-black">عرض سعر {kind} / Quotation</h2><p className="mt-1 text-xs text-white/80">هذا المستند عرض سعر وليس فاتورة ضريبية / This is a quotation, not a tax invoice</p></div>
         </header>
         <div className="px-8 py-7">
