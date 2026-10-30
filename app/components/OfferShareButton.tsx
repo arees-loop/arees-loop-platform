@@ -27,8 +27,9 @@ export default function OfferShareButton({ title, imageUrl, text, url, className
   function fallbackToWhatsApp(caption: string, image: string) {
     const body = [caption, url ? absoluteUrl(url) : window.location.href, image].filter(Boolean).join("\n");
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(body)}`;
-    const opened = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    if (!opened) window.location.assign(whatsappUrl);
+    const opened = window.open(whatsappUrl, "_blank");
+    if (opened) opened.opener = null;
+    else window.location.assign(whatsappUrl);
     setMessage("فتحنا واتساب برسالة العرض ورابط صورته. إذا لم تظهر معاينة الصورة، أرفقها من جهازك.");
   }
 
