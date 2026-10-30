@@ -24,20 +24,21 @@ export default function OfferShareButton({ title, imageUrl, text, url, className
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
-  function fallbackToWhatsApp(caption: string, image: string) {
-    const body = [caption, url ? absoluteUrl(url) : window.location.href, image].filter(Boolean).join("\n");
+  function fallbackToWhatsApp(caption: string) {
+    const body = caption;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(body)}`;
     const opened = window.open(whatsappUrl, "_blank");
     if (opened) opened.opener = null;
     else window.location.assign(whatsappUrl);
-    setMessage("فتحنا واتساب برسالة العرض ورابط صورته. إذا لم تظهر معاينة الصورة، أرفقها من جهازك.");
+    setMessage("فتحنا واتساب بنص العرض ورابطه. أرفق صورة العرض من جهازك إذا لم تكن المشاركة المباشرة متاحة.");
   }
 
   async function share() {
     if (busy) return;
     setBusy(true);
     setMessage("");
-    const caption = [title, text].filter(Boolean).join("\n");
+    const shareUrl = url ? absoluteUrl(url) : window.location.href;
+    const caption = [title, text, shareUrl].filter(Boolean).join("\n");
 
     try {
       const image = imageUrl ? absoluteUrl(imageUrl) : "";
@@ -54,18 +55,18 @@ export default function OfferShareButton({ title, imageUrl, text, url, className
         const file = new File([blob], fileNameFor(image, blob.type), { type: blob.type });
         if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({ title, text: caption, files: [file] });
-          setMessage("تم فتح مشاركة صورة العرض مع رسالتها.");
+          setMessage("تم فتح مشاركة صورة العرض مع تفاصيلها ورابطها.");
           return;
         }
       }
 
       if (!image && "share" in navigator) {
-        await navigator.share({ title, text: caption, url: url ? absoluteUrl(url) : window.location.href });
+        await navigator.share({ title, text: caption });
         setMessage("تم فتح خيارات مشاركة العرض.");
         return;
       }
 
-      fallbackToWhatsApp(caption, image);
+      fallbackToWhatsApp(caption);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         setMessage("تم إلغاء المشاركة.");
