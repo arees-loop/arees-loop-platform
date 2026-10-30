@@ -43,7 +43,7 @@ export default function OfferShareButton({ title, imageUrl, text, url, className
       const image = imageUrl ? absoluteUrl(imageUrl) : "";
       const probe = image ? new File([], "arees-offer.jpg", { type: "image/jpeg" }) : null;
       const canShareImage = Boolean(
-        image && navigator.share && navigator.canShare?.({ files: [probe!] }),
+        image && navigator.canShare?.({ files: [probe!] }),
       );
 
       if (canShareImage) {
@@ -59,7 +59,7 @@ export default function OfferShareButton({ title, imageUrl, text, url, className
         }
       }
 
-      if (navigator.share && !image) {
+      if (!image && "share" in navigator) {
         await navigator.share({ title, text: caption, url: url ? absoluteUrl(url) : window.location.href });
         setMessage("تم فتح خيارات مشاركة العرض.");
         return;
