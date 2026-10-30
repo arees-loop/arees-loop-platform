@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { storeCustomerClaim } from "@/lib/customer-request-claims";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
+import OfferShareButton from "@/app/components/OfferShareButton";
 
 type HotelOffer={id:string;title:string;destination:string|null;hotelName:string|null;description:string|null;amountSar:number|null;priceUnit:string|null;bannerUrl:string|null;imageUrls:string[];startsAt:string|null;endsAt:string|null};
 type Success={reference:string;trackingToken:string;customerName:string;destination:string;hotelName:string|null;checkInDate:string;checkOutDate:string;rooms:number;adults:number;children:number};
@@ -99,7 +100,7 @@ export default function HotelsPage(){
                       {offer.amountSar!==null&&<div className="shrink-0 rounded-2xl border border-white/20 bg-[#0D3B34]/85 px-3 py-2 text-left shadow-lg backdrop-blur-sm"><span className="block text-[10px] text-white/75">السعر</span><strong className="text-lg font-black text-[#F1D98E]">{offer.amountSar.toLocaleString("ar-SA")} <small className="text-[10px]">ر.س</small></strong><span className="block text-[10px] text-white/75">{offer.priceUnit||"لليلة"}</span></div>}
                     </div>
                   </div>
-                  <div className="bg-white px-4 py-3"><Link href={`/hotels/${encodeURIComponent(offer.id)}`} className="inline-flex rounded-xl border border-[#B99124]/40 px-4 py-2 text-sm font-bold text-[#0D3B34]">♡ المفضلة · ↗ مشاركة العرض</Link></div>
+                  <div className="flex flex-wrap items-center gap-2 bg-white px-4 py-3"><Link href={`/hotels/${encodeURIComponent(offer.id)}`} className="inline-flex rounded-xl border border-[#B99124]/40 px-4 py-2 text-sm font-bold text-[#0D3B34]">عرض التفاصيل</Link><OfferShareButton title={offer.title} imageUrl={offer.imageUrls?.[0]||offer.bannerUrl} url={`/hotels/${encodeURIComponent(offer.id)}`} text={[offer.hotelName,offer.destination,offer.amountSar!==null?`${offer.amountSar.toLocaleString("ar-SA")} ر.س ${offer.priceUnit||"لليلة"}`:null].filter(Boolean).join(" · ")} /></div>
                   {offer.description&&<p className="px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.description}</p>}
                 </article>)}
               </div>
