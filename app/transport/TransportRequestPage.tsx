@@ -2,6 +2,7 @@
 import AuthenticatedRequestGate from "@/app/components/AuthenticatedRequestGate";
 import { AirportLookup } from "@/app/components/AviationLookup";
 import OfferImageCarousel from "@/app/components/OfferImageCarousel";
+import OfferShareButton from "@/app/components/OfferShareButton";
 import Link from "next/link";
 import { storeCustomerClaim } from "@/lib/customer-request-claims";
 import { useEffect, useState, type FormEvent } from "react";
@@ -154,6 +155,9 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
                         <span className={`rounded-full px-3 py-1 font-black ${offer.operationStatus==="SUSPENDED"?"bg-red-50 text-red-800":offer.operationStatus==="UNKNOWN"?"bg-amber-50 text-amber-800":"bg-emerald-50 text-emerald-800"}`}>{offer.operationStatus==="SUSPENDED"?"متوقف مؤقتاً":offer.operationStatus==="UNKNOWN"?"قيد التأكيد":"متاح للاستفسار"}</span>
                       </div>
                       {(offer.description||offer.operationNote)&&<p className="border-t border-[#0D3B34]/10 px-4 py-3 text-xs leading-6 text-[#0D3B34]/75">{offer.operationNote||offer.description}</p>}
+                      <div className="border-t border-[#0D3B34]/10 px-4 py-3">
+                        <OfferShareButton title={offer.title} imageUrl={offer.imageUrls?.[0]||offer.bannerUrl} text={[offer.carrierName,offer.origin&&offer.destination?`${offer.origin} ← ${offer.destination}`:null,offer.travelDate?new Date(offer.travelDate).toLocaleDateString("ar-SA",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}):"الموعد يؤكد عند إرسال الطلب",offer.amountSar!==null?`${offer.amountSar.toLocaleString("ar-SA")} ر.س`:null].filter(Boolean).join(" · ")} />
+                      </div>
                     </article>
                   ))}
                 </div>
