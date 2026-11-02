@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#f8fafc">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="عمولات أريس">
-<link rel="apple-touch-icon" sizes="180x180" href="/arees-commissions-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="./manifest.webmanifest">
 <title>عمولات أريس | AREES Commissions</title>
 <style>
@@ -13,7 +13,7 @@
 </style>
 </head>
 <body><main class="app">
-<header class="top"><div class="brand"><img src="/arees-commissions-192.png" alt="شعار مجموعة أريس"><div><strong>عمولات أريس</strong><small>AREES Commissions</small></div></div><div><button class="lang" id="lang" type="button">AR / EN</button><button class="btn" id="install" type="button" hidden>تثبيت عمولات أريس</button></div></header>
+<header class="top"><div class="brand"><img src="/icon-192.png" alt="شعار مجموعة أريس"><div><strong>عمولات أريس</strong><small>AREES Commissions</small></div></div><div><button class="lang" id="lang" type="button">AR / EN</button><button class="btn" id="install" type="button" hidden>تثبيت تطبيق عمولات أريس</button></div></header>
 <div class="banner"><b>معاينة PWA فقط.</b> بيانات الموظف والأرصدة أدناه اصطناعية، ولا يوجد تسجيل دخول أو اتصال بقاعدة بيانات. لن يتم تخزين بيانات مالية أو حسابات على الجهاز.</div>
 <div id="offline" class="offline" role="status">غير متصل. بيانات الحساب غير متاحة؛ المعروض نموذج واجهة فقط. لا يمكن حفظ معاملات مالية.</div>
 <div class="profile"><div class="avatar" aria-hidden="true">س</div><div><h1>سارة محمد</h1><p>الكيانات المصرح بها في النموذج: أريس السودان · Arees Loop</p></div></div>
@@ -27,7 +27,7 @@
 <nav class="bottom" aria-label="تنقل الموظف"><button class="active" data-view="home"><span>⌂</span>الرئيسية</button><button data-view="sales"><span>▤</span>المبيعات</button><button data-view="commissions"><span>◉</span>العمولات</button><button data-view="settlements"><span>⇄</span>التسويات</button><button data-view="account"><span>☻</span>حسابي</button></nav>
 <script>
 let installPrompt=null;const installButton=document.getElementById("install");
-window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;installButton.hidden=false;installButton.textContent="تثبيت عمولات أريس"});
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;installButton.hidden=false;installButton.textContent="تثبيت تطبيق عمولات أريس"});
 const isApple=/iPhone|iPad|iPod/i.test(navigator.userAgent);if(isApple){installButton.hidden=false;installButton.textContent="إضافة إلى الشاشة الرئيسية"}else if(!installPrompt){installButton.hidden=false;installButton.textContent="طريقة التثبيت"}
 installButton.addEventListener("click",async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;installButton.hidden=true;return}if(/iPhone|iPad|iPod/i.test(navigator.userAgent))alert("على iPhone: اضغط زر المشاركة في Safari ثم اختر «إضافة إلى الشاشة الرئيسية».");else alert("افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية» إذا كانت متاحة.")});
 window.addEventListener("online",()=>document.getElementById("offline").classList.remove("show"));window.addEventListener("offline",()=>document.getElementById("offline").classList.add("show"));if(!navigator.onLine)document.getElementById("offline").classList.add("show");
@@ -51,8 +51,8 @@ Object.assign(en,{
 "أريس السودان":"Arees Sudan","إجمالي العمولات المصروفة":"Commissions paid","مبيعات الشهر":"Monthly sales","آخر تسوية 30 أكتوبر":"Last settlement: Oct 30","عمولات قيد الاعتماد":"Commissions pending approval","معاملة واحدة":"1 transaction","2 جديد":"2 new","اعتماد عمولة • ARE-S-2026-00124":"Commission approved • ARE-S-2026-00124","تسوية استرداد":"Refund adjustment","مراجعة مطلوبة":"Review required","تم الصرف":"Paid",
 "عمولات معتمدة غير مصروفة":"Approved commissions not yet paid","9 معاملات • أريس السودان":"9 transactions • Arees Sudan"
 });
-Object.assign(en,{"المبيعات":"Sales","تثبيت عمولات أريس":"Install AREES Commissions","س":"S"});
+Object.assign(en,{"المبيعات":"Sales","تثبيت تطبيق عمولات أريس":"Install AREES Commissions","س":"S"});
 let lang="ar";const baseText=new WeakMap();const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);while(walker.nextNode())baseText.set(walker.currentNode,walker.currentNode.textContent);
-document.getElementById("lang").onclick=()=>{lang=lang==="ar"?"en":"ar";document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";for(const [node,original] of textEntries()){node.textContent=lang==="ar"?original:(en[original.trim()]===undefined?original:original.replace(original.trim(),en[original.trim()]));}document.title=lang==="ar"?"عمولات أريس | AREES Commissions":"AREES Commissions";installButton.textContent=lang==="en"?(installPrompt?"Install AREES Commissions":"How to install"):(installPrompt?"تثبيت عمولات أريس":(isApple?"إضافة إلى الشاشة الرئيسية":"طريقة التثبيت"));};
+document.getElementById("lang").onclick=()=>{lang=lang==="ar"?"en":"ar";document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";for(const [node,original] of textEntries()){node.textContent=lang==="ar"?original:(en[original.trim()]===undefined?original:original.replace(original.trim(),en[original.trim()]));}document.title=lang==="ar"?"عمولات أريس | AREES Commissions":"AREES Commissions";installButton.textContent=lang==="en"?(installPrompt?"Install AREES Commissions":"How to install"):(installPrompt?"تثبيت تطبيق عمولات أريس":(isApple?"إضافة إلى الشاشة الرئيسية":"طريقة التثبيت"));};
 function* textEntries(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);while(w.nextNode())if(baseText.has(w.currentNode))yield [w.currentNode,baseText.get(w.currentNode)]}
 </script></body></html>

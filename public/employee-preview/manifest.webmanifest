@@ -1,26 +1,32 @@
 {
-  "name": "عمولات أريس",
+  "name": "عمولات أريس | AREES Commissions",
   "short_name": "عمولات أريس",
-  "description": "AREES Commissions employee wallet preview",
+  "description": "معاينة لوحة موظفي أريس",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "/employee-preview/?view=home",
   "scope": "/employee-preview/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#f8fafc",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "icons": [
     {
-      "src": "/arees-commissions-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/arees-commissions-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
