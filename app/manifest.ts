@@ -7,7 +7,6 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "منصة تجربة الزائر الذكية لاكتشاف التجارب والفعاليات والمرشدين والمكافآت.",
 
-    start_url: "/",
     scope: "/",
     display: "standalone",
 
