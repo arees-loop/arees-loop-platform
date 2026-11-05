@@ -13,9 +13,10 @@ export type GatewayReadiness = {
 };
 
 const REQUIRED = [
-  "NEOLEAP_MERCHANT_ID",
+  "NEOLEAP_TRANPORTAL_ID",
+  "NEOLEAP_TRANPORTAL_PASSWORD",
+  "NEOLEAP_RESOURCE_KEY",
   "NEOLEAP_API_BASE_URL",
-  "NEOLEAP_API_CREDENTIAL",
 ] as const;
 
 export function neoleapReadiness(): GatewayReadiness {
