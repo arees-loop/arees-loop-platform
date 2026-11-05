@@ -17,6 +17,8 @@ const REQUIRED = [
   "NEOLEAP_TRANPORTAL_PASSWORD",
   "NEOLEAP_RESOURCE_KEY",
   "NEOLEAP_API_BASE_URL",
+  "NEOLEAP_INQUIRY_URL",
+  "NEOLEAP_CALLBACK_ORIGIN",
 ] as const;
 
 export function neoleapReadiness(): GatewayReadiness {
