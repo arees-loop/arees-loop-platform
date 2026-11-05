@@ -33,7 +33,7 @@ export async function POST(req:NextRequest) {
   const bankAmount=Number(bank.amt);
   const amountMinor=Math.round(bankAmount*100);
   const transactionId=typeof bank.transId==="string" || typeof bank.transId==="number" ? String(bank.transId) : "";
-  if (!Number.isFinite(bankAmount) || !Number.isSafeInteger(amountMinor) || !/^\\d{1,40}$/.test(transactionId)) return reply({reference,status:"PENDING"},202);
+  if (!Number.isFinite(bankAmount) || !Number.isSafeInteger(amountMinor) || !/^\d{1,40}$/.test(transactionId)) return reply({reference,status:"PENDING"},202);
   const verified=isVerifiedPayment({
     reference:attempt.trackId,amountMinor:attempt.amountMinor,currency:"SAR",
     merchantId:process.env.NEOLEAP_TRANPORTAL_ID||"",
