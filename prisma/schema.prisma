@@ -1085,3 +1085,30 @@ model BankTransferAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+
+enum CardPaymentStatus {
+  INITIATING
+  REDIRECT_READY
+  PENDING
+  PAID
+  FAILED
+}
+
+model CardPaymentAttempt {
+  id               String @id @default(cuid())
+  orderReference   String @unique
+  userId           String
+  amountMinor      Int
+  currency         String @default("SAR")
+  trackId          String @unique
+  gatewayPaymentId String? @unique
+  checkoutUrl      String?
+  status           CardPaymentStatus @default(INITIATING)
+  bankTransactionId String? @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
