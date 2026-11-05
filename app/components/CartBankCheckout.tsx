@@ -14,6 +14,20 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
  const [voucherAvailable,setVoucherAvailable]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const [needsLogin,setNeedsLogin]=useState(false);
+ const [cardEnabled,setCardEnabled]=useState(false);
+ const [cardReference,setCardReference]=useState("");
+ const [cardStatus,setCardStatus]=useState("");
+ useEffect(()=>{fetch("/api/payments/neoleap/readiness",{cache:"no-store"}).then(r=>r.json()).then(x=>setCardEnabled(x.available===true)).catch(()=>{});},[]);
+ async function startCard(){
+  if(!order)return;
+  setBusy(true);setError("");
+  try{const r=await fetch("/api/payments/neoleap/session",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({reference:order.reference})});const x=await r.json();if(!r.ok||typeof x.checkoutUrl!=="string")throw Error(x.message||"تعذر بدء الدفع الإلكتروني.");setCardReference(order.reference);window.location.assign(x.checkoutUrl);}catch(e){setError(e instanceof Error?e.message:"تعذر بدء الدفع الإلكتروني.");}finally{setBusy(false);}
+ }
+ async function checkCard(){
+  const reference=cardReference||order?.reference;if(!reference)return;
+  setBusy(true);setError("");try{const r=await fetch("/api/payments/neoleap/reconcile",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({reference})});const x=await r.json();if(!r.ok&&r.status!==202)throw Error("تعذر التحقق من السداد.");setCardStatus(x.status||"PENDING");if(x.status==="PAID")setOrder(v=>v?{...v,status:"CART_BANK_VERIFIED"}:v);}catch(e){setError(e instanceof Error?e.message:"تعذر التحقق من السداد.");}finally{setBusy(false);}
+ }
+
  useEffect(()=>{
   let alive=true;
   fetch("/api/cart/bank-checkout",{credentials:"include",cache:"no-store"}).then(async r=>{
@@ -68,9 +82,10 @@ export default function CartBankCheckout({items,couponCode,total,pointsDiscount}
   {needsLogin&&<div className="mt-3 rounded-xl border border-[#D4AF37]/40 bg-white p-4 text-sm"><p>سجّل الدخول لإظهار الحساب البنكي المعتمد وإنشاء مرجع تحويل خاص بك.</p><Link href="/login?next=%2Fcart" className="mt-2 inline-block rounded-lg bg-[#0D3B34] px-4 py-2 font-bold text-white">تسجيل الدخول وإكمال السداد</Link></div>}
   <div className="mt-4 grid gap-2 sm:grid-cols-2">
    <button type="button" disabled={!!order} onClick={()=>setMethod("BANK")} aria-pressed={method==="BANK"} className={`rounded-xl border px-4 py-3 text-right text-sm font-bold transition ${method==="BANK"?"border-[#B9974A] bg-[#FFF2CA]":"border-[#DED5BE] bg-white"}`}>🏦 التحويل البنكي</button>
-   <button type="button" disabled={!!order} onClick={()=>setMethod("CARD")} aria-pressed={method==="CARD"} className={`rounded-xl border px-4 py-3 text-right text-sm font-bold transition ${method==="CARD"?"border-[#B9974A] bg-[#FFF2CA]":"border-[#DED5BE] bg-white"}`}>💳 الدفع الإلكتروني والتقسيط <span className="mr-2 rounded-full bg-[#F3E2B0] px-2 py-0.5 text-[10px] text-[#8A6521]">قريباً</span></button>
+   <button type="button" disabled={!!order} onClick={()=>setMethod("CARD")} aria-pressed={method==="CARD"} className={`rounded-xl border px-4 py-3 text-right text-sm font-bold transition ${method==="CARD"?"border-[#B9974A] bg-[#FFF2CA]":"border-[#DED5BE] bg-white"}`}>💳 الدفع الإلكتروني والتقسيط <span className="mr-2 rounded-full bg-[#F3E2B0] px-2 py-0.5 text-[10px] text-[#8A6521]">{cardEnabled?"اختبار":"قريباً"}</span></button>
   </div>
-  {!order&&<div className="mt-4 rounded-xl border bg-white p-4 text-xs leading-7"><p>الدفع الإلكتروني والتقسيط سيُفعّلان فقط بعد استكمال التعاقد والتكامل مع مزود الخدمة. الخيارات المعروضة أدناه معلوماتية وغير قابلة للسداد حالياً.</p><div className="mt-3 flex flex-wrap gap-2">{["مدى","Visa","Mastercard","Apple Pay","stc pay","تابي","تمارا","إمكان","ميس باي","مدفوع"].map(p=><span key={p} className="rounded-lg border border-[#D4AF37]/30 px-2 py-1 font-bold">{p} · قريباً</span>)}</div></div>}
+  {!order&&!cardEnabled&&<div className="mt-4 rounded-xl border bg-white p-4 text-xs leading-7"><p>الدفع الإلكتروني والتقسيط سيُفعّلان فقط بعد استكمال التعاقد والتكامل مع مزود الخدمة. الخيارات المعروضة أدناه معلوماتية وغير قابلة للسداد حالياً.</p><div className="mt-3 flex flex-wrap gap-2">{["مدى","Visa","Mastercard","Apple Pay","stc pay","تابي","تمارا","إمكان","ميس باي","مدفوع"].map(p=><span key={p} className="rounded-lg border border-[#D4AF37]/30 px-2 py-1 font-bold">{p} · قريباً</span>)}</div></div>}
+  {cardEnabled&&method==="CARD"&&<div className="mt-4 rounded-xl border p-4 text-sm"><p>الدفع الإلكتروني في وضع الاختبار فقط. أنشئ مرجع الطلب أولاً، ثم انتقل لصفحة البنك.</p>{order?<div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={()=>void startCard()} className="rounded-lg bg-[#0D3B34] px-4 py-2 text-white">الانتقال للدفع التجريبي</button><button type="button" disabled={busy} onClick={()=>void checkCard()} className="rounded-lg border px-4 py-2">التحقق من نتيجة الدفع</button>{cardStatus&&<span role="status">{cardStatus}</span>}</div>:<p className="mt-2">اختر التحويل البنكي مؤقتاً لإنشاء مرجع طلب محفوظ، ثم عد إلى الدفع الإلكتروني.</p>}</div>}
   {(method==="BANK"||order)&&<div className="mt-4 space-y-3">
    {!order&&banks.length>1&&<label className="block text-sm font-bold">الحساب المعتمد<select className="mt-2 w-full rounded-xl border p-3" value={bankId} onChange={e=>setBankId(e.target.value)}>{banks.map(b=><option key={b.id} value={b.id}>{b.bankName} — {b.iban.slice(-6)}</option>)}</select></label>}
    {bank?<div className="rounded-xl border border-[#D4AF37]/30 bg-white p-4 text-sm leading-8">
