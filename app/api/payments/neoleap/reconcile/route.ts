@@ -32,6 +32,8 @@ export async function POST(req:NextRequest) {
   }
   const bankAmount=Number(bank.amt);
   const amountMinor=Math.round(bankAmount*100);
+  const transactionId=typeof bank.transId==="string" || typeof bank.transId==="number" ? String(bank.transId) : "";
+  if (!Number.isFinite(bankAmount) || !Number.isSafeInteger(amountMinor) || !/^\\d{1,40}$/.test(transactionId)) return reply({reference,status:"PENDING"},202);
   const verified=isVerifiedPayment({
     reference:attempt.trackId,amountMinor:attempt.amountMinor,currency:"SAR",
     merchantId:process.env.NEOLEAP_TRANPORTAL_ID||"",
@@ -45,14 +47,18 @@ export async function POST(req:NextRequest) {
   const changed=await prisma.$transaction(async tx=>{
     const update=await tx.cardPaymentAttempt.updateMany({
       where:{id:attempt.id,status:{in:["REDIRECT_READY","PENDING"]}},
-      data:{status:"PAID",bankTransactionId:String(bank.transId)},
+      data:{status:"PAID",bankTransactionId:transactionId},
     });
     if(update.count===1) await tx.auditLog.create({data:{
       userId:attempt.userId,entityType:"CART_BANK_CHECKOUT",entityId:reference,
       action:"CART_BANK_VERIFIED",afterData:{source:"NEOLEAP_INQUIRY",paymentId:attempt.gatewayPaymentId,
-        transactionId:String(bank.transId),amountMinor:attempt.amountMinor,currency:"SAR"},
+        transactionId,amountMinor:attempt.amountMinor,currency:"SAR"},
     }});
     return update.count;
   });
-  return reply({reference,status:"PAID",newlyConfirmed:changed===1});
+  if (changed!==1) {
+    const current=await prisma.cardPaymentAttempt.findUnique({where:{id:attempt.id},select:{status:true}});
+    return reply({reference,status:current?.status==="PAID"?"PAID":"PENDING"},current?.status==="PAID"?200:202);
+  }
+  return reply({reference,status:"PAID",newlyConfirmed:true});
 }
