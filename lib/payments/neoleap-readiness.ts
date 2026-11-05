@@ -27,10 +27,12 @@ export function neoleapReadiness(): GatewayReadiness {
   const missing = REQUIRED.filter((name) => !process.env[name]?.trim());
   // A production environment must never be activated by mere presence of keys.
   const enabled = process.env.NEOLEAP_ENABLED === "true";
+  const isolatedPreview = process.env.VERCEL_ENV === "preview" &&
+    process.env.VERCEL_GIT_COMMIT_REF === "feature/neoleap-payment-release-base-20261105";
   return {
     provider: "NEOLEAP",
     mode,
-    configured: enabled && mode !== "disabled" && missing.length === 0,
+    configured: enabled && isolatedPreview && mode === "sandbox" && missing.length === 0,
     missing: [...missing, ...(!enabled ? ["NEOLEAP_ENABLED"] : [])],
   };
 }
