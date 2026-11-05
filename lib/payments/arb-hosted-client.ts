@@ -1,10 +1,11 @@
 import { encryptTrandata, decryptTrandata } from "./arb-crypto";
 export type BankCredentials = { portalId: string; password: string; resourceKey: string; endpoint: string };
 export type BankOrder = { amountMinor: number; trackId: string; responseURL: string; errorURL: string };
-const HOSTS = new Set(["securepayments.alrajhibank.com.sa", "securepayments.neoleap.com.sa"]);
+const HOSTS = new Set(["securepayments.neoleap.com.sa"]);
+const ENDPOINT_PATHS = new Set(["/pg/payment/hosted.html", "/pg/payment/tranportal.html"]);
 function safeEndpoint(value: string): URL {
   const url = new URL(value);
-  if (url.protocol !== "https:" || !HOSTS.has(url.hostname) || url.username || url.password || url.search || url.hash) throw Error("UNAPPROVED_BANK_ENDPOINT");
+  if (url.protocol !== "https:" || !HOSTS.has(url.hostname) || !ENDPOINT_PATHS.has(url.pathname) || url.port || url.username || url.password || url.search || url.hash) throw Error("UNAPPROVED_BANK_ENDPOINT");
   return url;
 }
 function validOrder(o: BankOrder) {
