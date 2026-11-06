@@ -7,3 +7,4 @@ test('verified matching payment',()=>assert.equal(isVerifiedPayment(expected,ver
 test('unverified payment',()=>assert.equal(isVerifiedPayment(expected,{...verified,authenticated:false}),false));
 test('amount mismatch',()=>assert.equal(isVerifiedPayment(expected,{...verified,amountMinor:99}),false));
 test('merchant mismatch',()=>assert.equal(isVerifiedPayment(expected,{...verified,merchantId:'M2'}),false));
+

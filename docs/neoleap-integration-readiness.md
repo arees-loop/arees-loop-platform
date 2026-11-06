@@ -2,28 +2,29 @@
 
 Status: **PREPARATION ONLY / NOT ENABLED** (2026-11-05).
 
-## Existing Arees Loop flow
-- The release branch has `/api/cart/bank-checkout`, which calculates cart totals server-side and persists manual bank-transfer orders as audit-log events.
-- `CartBankCheckout` displays electronic card payments as **coming soon**.
-- A manual bank-transfer receipt or admin verification must not be treated as Neoleap settlement.
-- Do not mutate existing transfer records or conflate them with card-payment attempts.
+## Verified merchant flow
 
-## Required before implementing the payment session
-1. Confirm that the supplied Al Rajhi REST API guide (v1.31) applies to this specific Neoleap merchant integration, including the precise API base URL and authentication/signature scheme.
-2. Confirm sandbox merchant credentials and approved callback/return URLs through the bank's secure onboarding channel. Do not commit credentials.
-3. Confirm hosted payment session creation request/response fields, status inquiry, webhook signature verification, and transaction-reference uniqueness.
-4. Verify Preview database isolation before any schema migration. The existing `vercel-build` script runs `prisma migrate deploy`; do not deploy this branch without confirming the target DB.
-5. Add a durable payment-attempt table with unique provider reference, immutable server-calculated amount/currency and idempotency key, then implement reconciliation.
-6. Only a bank-verified successful transaction with matching merchant, amount, currency, and order reference may transition an order to paid. Redirect parameters alone are not proof of payment.
-7. Test failures, duplicate callbacks, retries, stale orders, refund path, and simultaneous checkout requests before requesting production enablement.
+- Bank hosted session creation uses the supplied test endpoint ending in `/pg/payment/hosted.htm`.
+- Transaction inquiry uses the supplied test endpoint ending in `/pg/payment/tranportal.htm`.
+- Session creation uses action `1`; inquiry uses action `8` with `udf5=PaymentID` and the gateway payment ID in `transId`.
+- Requests and inquiry responses use AES-CBC `trandata` encryption with the merchant resource key.
+- The bank notification endpoint must acknowledge a valid notification with status `1` and a final result URL. This acknowledgment is not proof of settlement.
+- Only an authenticated server-side inquiry with matching payment ID, amount, currency, track ID, and successful authorization may mark an attempt paid.
 
-## Configuration contract (names are provisional until bank guide is validated)
-- `NEOLEAP_MODE=disabled` (default)
-- `NEOLEAP_ENABLED=false` (default)
-- `NEOLEAP_MERCHANT_ID`
-- `NEOLEAP_API_BASE_URL`
-- `NEOLEAP_API_CREDENTIAL`
+## Required Preview configuration
 
-The readiness endpoint `GET /api/payments/neoleap/readiness` returns only a boolean sandbox availability flag. It **does not** initiate a charge or assert that bank connectivity has been tested.
+- `NEOLEAP_MODE=sandbox` and `NEOLEAP_ENABLED=true` must be set for the exact feature Preview branch only. Production must remain disabled.
+- Use the sandbox portal ID, Tranportal password, and resource key from the bank's secure onboarding material. Never commit them.
+- Set `NEOLEAP_API_BASE_URL` to the hosted `.htm` endpoint and `NEOLEAP_INQUIRY_URL` to the tranportal `.htm` endpoint.
+- Set `FIXIE_URL` to an authenticated Fixie proxy URL. Payment requests fail closed without the approved static egress proxy.
+- Set `NEOLEAP_CALLBACK_ORIGIN` to the exact HTTPS origin of the accessible Preview deployment.
+- Use a database isolated from Production before applying the card-payment migration or running checkout tests.
+- Confirm Neoleap completed IP allowlisting before making a real sandbox request.
 
-Production payment initiation must remain disabled until the merchant API contract is verified and the end-to-end test suite passes.
+## Safety gates
+
+- `GET /api/payments/neoleap/readiness` exposes only a boolean availability flag.
+- The session route remains unavailable by default and only enables sandbox mode for the named Preview branch.
+- Browser redirects and notification callbacks never mark orders paid. Authenticated server-side inquiry is the settlement authority.
+- Manual bank-transfer audit records remain separate from card-payment attempts.
+- Production payment initiation must remain disabled until Preview database isolation, bank allowlisting, callback reachability, and end-to-end sandbox verification are complete.

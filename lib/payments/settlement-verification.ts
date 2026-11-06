@@ -14,3 +14,4 @@ export function isVerifiedPayment(order: ExpectedPayment, bank: BankPayment): bo
     && bank.merchantId === order.merchantId
     && bank.transactionId.length > 0;
 }
+

@@ -9,3 +9,4 @@ test("AES-CBC encrypted request round trip",()=>{
 test("reject invalid key",()=>assert.throws(()=>encryptTrandata([], "short")));
 test("reject invalid hex",()=>assert.throws(()=>decryptTrandata("xyz",key)));
 test("reject invalid block length",()=>assert.throws(()=>decryptTrandata("ab".repeat(17),key)));
+

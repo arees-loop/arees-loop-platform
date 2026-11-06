@@ -17,3 +17,4 @@ export function decryptTrandata(hex: string, resourceKey: string): unknown {
   const decoded = Buffer.concat([cipher.update(Buffer.from(hex, "hex")), cipher.final()]).toString("utf8");
   return JSON.parse(decodeURIComponent(decoded));
 }
+

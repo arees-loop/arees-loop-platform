@@ -19,6 +19,7 @@ const REQUIRED = [
   "NEOLEAP_API_BASE_URL",
   "NEOLEAP_INQUIRY_URL",
   "NEOLEAP_CALLBACK_ORIGIN",
+  "FIXIE_URL",
 ] as const;
 
 export function neoleapReadiness(): GatewayReadiness {
