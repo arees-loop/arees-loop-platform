@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { neoleapReadiness } from "../lib/payments/neoleap-readiness.ts";
 
-const keys=["NEOLEAP_TRANPORTAL_ID","NEOLEAP_TRANPORTAL_PASSWORD","NEOLEAP_RESOURCE_KEY","NEOLEAP_API_BASE_URL","NEOLEAP_INQUIRY_URL","NEOLEAP_CALLBACK_ORIGIN","FIXIE_URL"];
+const keys=["NEOLEAP_TRANPORTAL_ID","NEOLEAP_TRANPORTAL_PASSWORD","NEOLEAP_RESOURCE_KEY","NEOLEAP_API_BASE_URL","NEOLEAP_INQUIRY_URL","NEOLEAP_CALLBACK_ORIGIN","NEOLEAP_CALLBACK_URL","FIXIE_URL"];
 const saved=Object.fromEntries([...keys,"NEOLEAP_MODE","NEOLEAP_ENABLED","VERCEL_ENV","VERCEL_GIT_COMMIT_REF"].map(key=>[key,process.env[key]]));
 function restore(){for(const [key,value] of Object.entries(saved)){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
 test.afterEach(restore);

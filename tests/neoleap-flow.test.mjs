@@ -40,6 +40,22 @@ test("rejects a proxy outside the Fixie domain without exposing its credentials"
   } finally { process.env.FIXIE_URL=previous; }
 });
 
+test("fails closed without Fixie and never calls fetch directly",async()=>{
+  const previous=process.env.FIXIE_URL;
+  const original=globalThis.fetch;
+  delete process.env.FIXIE_URL;
+  globalThis.fetch=async()=>{throw new Error("DIRECT_BANK_REQUEST_SHOULD_NOT_RUN");};
+  try {
+    await assert.rejects(
+      ()=>createHostedPayment(credentials,{amountMinor:100,trackId:"123",responseURL:"https://preview.example/return",errorURL:"https://preview.example/return"}),
+      error=>error.message==="MISSING_STATIC_EGRESS_PROXY",
+    );
+  } finally {
+    globalThis.fetch=original;
+    if(previous===undefined)delete process.env.FIXIE_URL;else process.env.FIXIE_URL=previous;
+  }
+});
+
 test("builds a PaymentID inquiry on tranportal.htm and verifies its encrypted response",async()=>{
   const original=globalThis.fetch;
   const encrypted=encryptTrandata([{result:"CAPTURED",amt:"12.50",trackId:"123456",paymentId:"12345",transId:"67890",authRespCode:"00",actionCode:"8"}],credentials.resourceKey);

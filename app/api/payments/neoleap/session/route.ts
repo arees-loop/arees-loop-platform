@@ -52,7 +52,10 @@ export async function POST(req:NextRequest) {
   try {
     const origin=process.env.NEOLEAP_CALLBACK_ORIGIN;
     if (!origin || new URL(origin).origin!==origin || !origin.startsWith("https://")) throw Error("INVALID_CALLBACK_ORIGIN");
-    const callback=origin+"/api/payments/neoleap/return";
+    const callback=process.env.NEOLEAP_CALLBACK_URL;
+    if (!callback) throw Error("CALLBACK_ENDPOINT_NOT_CONFIGURED");
+    const callbackUrl=new URL(callback);
+    if (callbackUrl.protocol!=="https:" || callbackUrl.username || callbackUrl.password || callbackUrl.search || callbackUrl.hash || callbackUrl.pathname!=="/api/payments/neoleap/return" || callbackUrl.origin===origin || !/^arees-neoleap-callback-[a-z0-9-]+-arees-loop\.vercel\.app$/.test(callbackUrl.hostname)) throw Error("INVALID_CALLBACK_ENDPOINT");
     const token=await createHostedPayment(credentials(),{amountMinor,trackId,responseURL:callback,errorURL:callback});
     await prisma.cardPaymentAttempt.update({where:{orderReference:reference},data:{
       gatewayPaymentId:token.paymentId,checkoutUrl:token.checkoutUrl,status:"REDIRECT_READY",
@@ -64,3 +67,4 @@ export async function POST(req:NextRequest) {
     return json({error:"BANK_SESSION_UNCONFIRMED",message:"تعذر تأكيد جلسة الدفع؛ يرجى التواصل مع الدعم قبل إعادة المحاولة."},503);
   }
 }
+
