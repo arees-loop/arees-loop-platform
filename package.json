@@ -10,7 +10,7 @@
     "postinstall": "prisma generate",
     "vercel-build": "node scripts/verify-release-contract.mjs --production-only && next build",
     "db:migrate:deploy": "prisma migrate deploy",
-    "test:payments": "node --test tests/neoleap-crypto.test.mjs tests/neoleap-flow.test.mjs tests/neoleap-readiness.test.mjs tests/payment-guard.test.mjs"
+    "test:payments": "node --test tests/neoleap-crypto.test.mjs tests/neoleap-flow.test.mjs tests/neoleap-readiness.test.mjs tests/payment-guard.test.mjs neoleap-callback/tests/callback.test.cjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
