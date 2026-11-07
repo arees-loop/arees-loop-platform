@@ -17,8 +17,8 @@ Status: **PREPARATION ONLY / NOT ENABLED** (2026-11-05).
 - Use the sandbox portal ID, Tranportal password, and resource key from the bank's secure onboarding material. Never commit them.
 - Set `NEOLEAP_API_BASE_URL` to the hosted `.htm` endpoint and `NEOLEAP_INQUIRY_URL` to the tranportal `.htm` endpoint.
 - Set `FIXIE_URL` to an authenticated Fixie proxy URL. Payment requests fail closed without the approved static egress proxy.
-- Set `NEOLEAP_CALLBACK_ORIGIN` to the exact HTTPS origin of the accessible Preview deployment.
-- Set `NEOLEAP_CALLBACK_URL` to the public callback-only Preview function endpoint. It must not point to the SSO-protected application.
+- Set `NEOLEAP_CALLBACK_ORIGIN` to the main application's exact HTTPS Feature Preview origin. It is only the browser return destination.
+- Set `NEOLEAP_CALLBACK_URL` to the public callback-only Preview function endpoint. Neoleap must call this endpoint; it must not point to the SSO-protected application.
 - Use a database isolated from Production before applying the card-payment migration or running checkout tests.
 - Confirm Neoleap completed IP allowlisting before making a real sandbox request.
 
