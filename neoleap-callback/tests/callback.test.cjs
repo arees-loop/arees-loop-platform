@@ -4,6 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createCipheriv } = require("node:crypto");
 const { acknowledgeNotification, finalReturnUrl } = require("../lib/callback");
+const handler = require("../api/payments/neoleap/return");
 
 const key = "12345678901234567890123456789012";
 const finalUrl = "https://arees-loop-platform-oir88xxsr-arees-loop.vercel.app/api/payments/neoleap/return";
@@ -47,5 +48,24 @@ test("rejects malformed or undecryptable notifications", () => {
 test("restricts the final return to the exact HTTPS Preview route", () => {
   assert.equal(finalReturnUrl(finalUrl), finalUrl);
   assert.throws(() => finalReturnUrl("https://example.org/steal"));
+});
+
+test("public POST fails closed when the rotated resource key is not configured", () => {
+  const previousUrl = process.env.NEOLEAP_FINAL_RETURN_URL;
+  const previousKey = process.env.NEOLEAP_RESOURCE_KEY;
+  process.env.NEOLEAP_FINAL_RETURN_URL = finalUrl;
+  delete process.env.NEOLEAP_RESOURCE_KEY;
+  const res = {
+    headers: {},
+    setHeader(name, value) { this.headers[name] = value; },
+    end(value) { this.body = value; },
+  };
+  handler({ method: "POST", headers: { "content-type": "application/json" }, body: callback() }, res);
+  assert.equal(res.statusCode, 503);
+  assert.deepEqual(JSON.parse(res.body), { error: "CALLBACK_NOT_CONFIGURED" });
+  if (previousUrl === undefined) delete process.env.NEOLEAP_FINAL_RETURN_URL;
+  else process.env.NEOLEAP_FINAL_RETURN_URL = previousUrl;
+  if (previousKey === undefined) delete process.env.NEOLEAP_RESOURCE_KEY;
+  else process.env.NEOLEAP_RESOURCE_KEY = previousKey;
 });
 
