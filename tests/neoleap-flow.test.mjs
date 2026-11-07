@@ -29,6 +29,28 @@ test("rejects an undocumented .html alias and non-hosted endpoint",async()=>{
   await assert.rejects(()=>createHostedPayment(invalid,{amountMinor:100,trackId:"123",responseURL:"https://preview.example/return",errorURL:"https://preview.example/return"}));
 });
 
+test("bank rejection never yields a hosted payment link",async()=>{
+  const original=globalThis.fetch;
+  globalThis.fetch=async()=>new Response(JSON.stringify([{status:"2",error:"IPAY0100124"}]),{status:200});
+  try {
+    await assert.rejects(
+      ()=>createHostedPayment(credentials,{amountMinor:100,trackId:"123",responseURL:"https://preview.example/return",errorURL:"https://preview.example/return"}),
+      error=>error.message==="BANK_TOKEN_REJECTED",
+    );
+  } finally { globalThis.fetch=original; }
+});
+
+test("bank network failure is surfaced without logging or fabricating success",async()=>{
+  const original=globalThis.fetch;
+  globalThis.fetch=async()=>{throw new Error("simulated network timeout");};
+  try {
+    await assert.rejects(
+      ()=>createHostedPayment(credentials,{amountMinor:100,trackId:"123",responseURL:"https://preview.example/return",errorURL:"https://preview.example/return"}),
+      /simulated network timeout/,
+    );
+  } finally { globalThis.fetch=original; }
+});
+
 test("rejects a proxy outside the Fixie domain without exposing its credentials",async()=>{
   const previous=process.env.FIXIE_URL;
   process.env.FIXIE_URL="http://private-user:private-password@proxy.example:8080";
