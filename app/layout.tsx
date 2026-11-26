@@ -36,17 +36,17 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/icon.png",
+        url: "/Logo/arees-travel-solutions-logo.png",
         type: "image/png",
-        sizes: "512x512",
+        sizes: "any",
       },
     ],
 
     apple: [
       {
-        url: "/apple-icon.png",
+        url: "/Logo/arees-travel-solutions-logo.png",
         type: "image/png",
-        sizes: "180x180",
+        sizes: "any",
       },
     ],
   },
