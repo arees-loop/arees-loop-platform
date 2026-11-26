@@ -1703,49 +1703,29 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Bottom */}
-          <div className="grid items-center gap-3 pt-3 md:grid-cols-3">
-            <div className="text-center text-[9px] text-[#0D3B34]/35 md:text-right">
-              <p>© 2026 أريس للحلول المتكاملة للسفر والسياحة</p>
-              <p className="mt-0.5">جميع الحقوق محفوظة</p>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-[10px] font-bold text-[#0D3B34]/60">
-              <a href="#discover" className="transition hover:text-[#D4AF37]">اكتشف</a>
-              <a href="#how" className="transition hover:text-[#D4AF37]">كيف تعمل؟</a>
-              <a href="#rewards" className="transition hover:text-[#D4AF37]">المكافآت</a>
-              <Link href="/auth" className="transition hover:text-[#D4AF37]">تسجيل جديد</Link>
-              <Link href="/partner/select-type" className="transition hover:text-[#D4AF37]">انضم كشريك</Link>
-              <Link href="/guides/register" className="transition hover:text-[#D4AF37]">انضم كمرشد سياحي</Link>
-            <Link href="/privacy-policy" className="transition hover:text-[#D4AF37]">سياسة الخصوصية</Link>
-<Link href="/terms" className="transition hover:text-[#D4AF37]">الشروط والأحكام</Link>
-            </div>
-            <div className="flex items-center justify-center gap-2 text-center md:justify-end md:text-left">
-              <span className="text-[9px] text-[#0D3B34]/40">
-                إحدى منتجات شركة أريس الحلول المتكاملة المحدودة
-              </span>
-              <Image
-                src="/Logo/arees-company-logo.png"
-                alt="شركة أريس الحلول المتكاملة المحدودة"
-                width={90}
-                height={45}
-                className="h-auto w-[42px] object-contain"
-              />
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-center">
-            <div
-              className="sbc-verify-seal"
-              data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QTQ9"
-              data-position="bottom-left"
+          {/* Compact, single-row footer on desktop; responsive wrapping on mobile */}
+          <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 pt-3 lg:flex-nowrap">
+            <p className="shrink-0 text-[10px] text-[#0D3B34]/65">
+              © 2026 شركة أريس الحلول المتكاملة المحدودة — جميع الحقوق محفوظة
+            </p>
+            <nav aria-label="روابط أسفل الصفحة" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] font-bold text-[#0D3B34]/70 lg:flex-nowrap">
+              <a href="#discover" className="whitespace-nowrap transition hover:text-[#D4AF37]">اكتشف</a>
+              <a href="#how" className="whitespace-nowrap transition hover:text-[#D4AF37]">كيف تعمل؟</a>
+              <a href="#rewards" className="whitespace-nowrap transition hover:text-[#D4AF37]">المكافآت</a>
+              <Link href="/auth" className="whitespace-nowrap transition hover:text-[#D4AF37]">تسجيل جديد</Link>
+              <Link href="/partner/select-type" className="whitespace-nowrap transition hover:text-[#D4AF37]">انضم كشريك</Link>
+              <Link href="/guides/register" className="whitespace-nowrap transition hover:text-[#D4AF37]">انضم كمرشد سياحي</Link>
+              <Link href="/privacy-policy" className="whitespace-nowrap transition hover:text-[#D4AF37]">سياسة الخصوصية</Link>
+              <Link href="/terms" className="whitespace-nowrap transition hover:text-[#D4AF37]">الشروط والأحكام</Link>
+            </nav>
+            <Image
+              src="/Logo/arees-company-logo.png"
+              alt="شركة أريس الحلول المتكاملة المحدودة"
+              width={90}
+              height={45}
+              className="h-auto w-[38px] shrink-0 object-contain"
             />
           </div>
-
-          <Script
-            src="https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js"
-            strategy="afterInteractive"
-          />
         </div>
       </footer>
 
