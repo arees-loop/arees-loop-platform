@@ -69,3 +69,11 @@ test("public POST fails closed when the rotated resource key is not configured",
   else process.env.NEOLEAP_RESOURCE_KEY = previousKey;
 });
 
+
+test("allows exact Saudi production return host but rejects lookalikes",()=>{
+  const safe="https://areestravel-ksa.com/api/payments/neoleap/return";
+  assert.equal(finalReturnUrl(safe),safe);
+  assert.throws(()=>finalReturnUrl("https://areestravel-ksa.com.evil.test/api/payments/neoleap/return"));
+  assert.throws(()=>finalReturnUrl("http://areestravel-ksa.com/api/payments/neoleap/return"));
+  assert.throws(()=>finalReturnUrl(safe+"?next=evil"));
+});

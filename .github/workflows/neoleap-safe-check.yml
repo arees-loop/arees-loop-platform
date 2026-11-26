@@ -1,0 +1,28 @@
+name: Neoleap sandbox safe checks
+on:
+  push:
+    branches:
+      - fix/neoleap-sandbox-safe-readiness-20261126
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  payment-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://unused:unused@127.0.0.1:5432/unused
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Neoleap mock and guard tests (no bank network, no charges)
+        run: npm run test:payments
+      - name: TypeScript check
+        run: npx tsc --noEmit
+      - name: Safe build
+        run: npm run build

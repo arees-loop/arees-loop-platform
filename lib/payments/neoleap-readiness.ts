@@ -29,8 +29,11 @@ export function neoleapReadiness(): GatewayReadiness {
   const missing = REQUIRED.filter((name) => !process.env[name]?.trim());
   // A production environment must never be activated by mere presence of keys.
   const enabled = process.env.NEOLEAP_ENABLED === "true";
+  // Require one exact, explicitly configured Preview branch (never a wildcard).
+  const sandboxBranch = process.env.NEOLEAP_SANDBOX_BRANCH || "feature/neoleap-payment-release-base-20261105";
   const isolatedPreview = process.env.VERCEL_ENV === "preview" &&
-    process.env.VERCEL_GIT_COMMIT_REF === "feature/neoleap-payment-release-base-20261105";
+    process.env.VERCEL_GIT_COMMIT_REF === sandboxBranch &&
+    /^(feature|fix)\/[a-z0-9][a-z0-9-]{5,110}$/.test(sandboxBranch);
   return {
     provider: "NEOLEAP",
     mode,

@@ -29,3 +29,12 @@ Status: **PREPARATION ONLY / NOT ENABLED** (2026-11-05).
 - Browser redirects and notification callbacks never mark orders paid. Authenticated server-side inquiry is the settlement authority.
 - Manual bank-transfer audit records remain separate from card-payment attempts.
 - Production payment initiation must remain disabled until Preview database isolation, bank allowlisting, callback reachability, and end-to-end sandbox verification are complete.
+
+## 2026-11-26 sandbox remediation and activation gates
+
+- `NEOLEAP_SANDBOX_BRANCH` optionally selects **one exact feature/fix Preview branch**; the original payment branch remains the default. Neither branch selection nor credentials can enable Production.
+- The callback return validates HTTPS, exact path and an allowlisted Preview host or `areestravel-ksa.com`; the main session callback also accepts the stable isolated callback deployment alias.
+- Bank receipt upload refuses an order once a card-payment attempt exists, preventing dual payment claims.
+- The payment tabs remain switchable while an order is awaiting payment; confirmed or submitted orders remain locked.
+- Real Sandbox connection still requires verified merchant test credentials, static outgoing proxy with bank allowlisting, branch-scoped isolated DB and matching callback secret. Do not copy Production customer data.
+- Run `npm run test:payments` and a completed Sandbox transaction/reconcile before any production activation. The production gateway remains disabled by code, independently of environment variables, until a separate bank-approved release.
