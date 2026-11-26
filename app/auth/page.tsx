@@ -24,7 +24,7 @@ export default function AuthPage() {
       <div className="absolute inset-0 overflow-hidden">
         <Image
           src="/Image/auth/arees-auth-bg-desktop.png"
-          alt="أريس للحلول المتكاملة للسفر والسياحة"
+          alt="أريس الحلول المتكاملة المحدودة للسفر والسياحة"
           fill
           priority
           className="object-cover object-center transition-transform duration-700 ease-out"
@@ -46,7 +46,7 @@ export default function AuthPage() {
               {/* Logo */}
               <Image
                 src="/Logo/arees-company-logo.png"
-                alt="أريس للحلول المتكاملة للسفر والسياحة"
+                alt="أريس الحلول المتكاملة المحدودة للسفر والسياحة"
                 width={700}
                 height={700}
                 priority
@@ -61,7 +61,7 @@ export default function AuthPage() {
                     fontFamily: "var(--font-el-messiri), sans-serif",
                   }}
                 >
-                  مرحبًا بك في أريس للحلول المتكاملة للسفر والسياحة
+                  مرحبًا بك في أريس الحلول المتكاملة المحدودة للسفر والسياحة
                 </h1>
 
                 <div className="mt-3 flex items-center justify-center gap-3">
@@ -159,7 +159,7 @@ export default function AuthPage() {
                     "var(--font-ibm-plex-arabic), sans-serif",
                 }}
               >
-                <span>© أريس للحلول المتكاملة للسفر والسياحة</span>
+                <span>© أريس الحلول المتكاملة المحدودة للسفر والسياحة</span>
 
                 <div className="flex items-center gap-2">
                   <button
@@ -185,7 +185,7 @@ export default function AuthPage() {
           <div className="flex justify-center">
             <Image
               src="/Logo/arees-company-logo.png"
-              alt="أريس للحلول المتكاملة للسفر والسياحة"
+              alt="أريس الحلول المتكاملة المحدودة للسفر والسياحة"
               width={600}
               height={600}
               priority
@@ -200,7 +200,7 @@ export default function AuthPage() {
                 fontFamily: "var(--font-el-messiri), sans-serif",
               }}
             >
-              مرحبًا بك في أريس للحلول المتكاملة للسفر والسياحة
+              مرحبًا بك في أريس الحلول المتكاملة المحدودة للسفر والسياحة
             </h1>
 
             <p
