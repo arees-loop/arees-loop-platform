@@ -139,6 +139,8 @@ export async function POST(req:NextRequest){
    if(!/^CART-[0-9a-f-]{36}$/.test(reference))return fail("مرجع الطلب غير صحيح.");
    const order=await orderFor(reference,session.user.id);
    if(!order)return fail("طلب السداد غير موجود.",404);
+   const cardAttempt=await prisma.cardPaymentAttempt.findUnique({where:{orderReference:reference},select:{id:true}});
+   if(cardAttempt)return fail("بدأ الدفع الإلكتروني لهذا الطلب. تحقق من نتيجته قبل التحويل البنكي.",409);
    const state=await lastEvent(reference);
    if(state&&state.action!==REJECTED)return fail("الإيصال مسجل بالفعل أو تمت مراجعته.",409);
    const orderDetails=jsonData(order.afterData);

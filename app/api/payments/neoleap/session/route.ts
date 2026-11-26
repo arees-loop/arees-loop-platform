@@ -55,7 +55,7 @@ export async function POST(req:NextRequest) {
     const callback=process.env.NEOLEAP_CALLBACK_URL;
     if (!callback) throw Error("CALLBACK_ENDPOINT_NOT_CONFIGURED");
     const callbackUrl=new URL(callback);
-    if (callbackUrl.protocol!=="https:" || callbackUrl.username || callbackUrl.password || callbackUrl.search || callbackUrl.hash || callbackUrl.pathname!=="/api/payments/neoleap/return" || callbackUrl.origin===origin || !/^arees-neoleap-callback-[a-z0-9-]+-arees-loop\.vercel\.app$/.test(callbackUrl.hostname)) throw Error("INVALID_CALLBACK_ENDPOINT");
+    if (callbackUrl.protocol!=="https:" || callbackUrl.username || callbackUrl.password || callbackUrl.search || callbackUrl.hash || callbackUrl.pathname!=="/api/payments/neoleap/return" || callbackUrl.origin===origin || !/^arees-neoleap-callback-(?:[a-z0-9-]+-arees-loop|arees-loop)\\.vercel\\.app$/.test(callbackUrl.hostname)) throw Error("INVALID_CALLBACK_ENDPOINT");
     const token=await createHostedPayment(credentials(),{amountMinor,trackId,responseURL:callback,errorURL:callback});
     await prisma.cardPaymentAttempt.update({where:{orderReference:reference},data:{
       gatewayPaymentId:token.paymentId,checkoutUrl:token.checkoutUrl,status:"REDIRECT_READY",

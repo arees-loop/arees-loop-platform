@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { neoleapReadiness } from "../lib/payments/neoleap-readiness.ts";
 
 const keys=["NEOLEAP_TRANPORTAL_ID","NEOLEAP_TRANPORTAL_PASSWORD","NEOLEAP_RESOURCE_KEY","NEOLEAP_API_BASE_URL","NEOLEAP_INQUIRY_URL","NEOLEAP_CALLBACK_ORIGIN","NEOLEAP_CALLBACK_URL","FIXIE_URL"];
-const saved=Object.fromEntries([...keys,"NEOLEAP_MODE","NEOLEAP_ENABLED","VERCEL_ENV","VERCEL_GIT_COMMIT_REF"].map(key=>[key,process.env[key]]));
+const saved=Object.fromEntries([...keys,"NEOLEAP_MODE","NEOLEAP_ENABLED","VERCEL_ENV","VERCEL_GIT_COMMIT_REF","NEOLEAP_SANDBOX_BRANCH"].map(key=>[key,process.env[key]]));
 function restore(){for(const [key,value] of Object.entries(saved)){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
 test.afterEach(restore);
 
@@ -24,5 +24,23 @@ test("only enables the sandbox on its exact Preview branch with all required set
   process.env.VERCEL_GIT_COMMIT_REF="feature/neoleap-payment-release-base-20261105";
   assert.equal(neoleapReadiness().configured,true);
   process.env.VERCEL_ENV="production";
+  assert.equal(neoleapReadiness().configured,false);
+});
+
+
+test("requires exactly named Preview branch even with all sandbox settings",()=>{
+  for(const key of keys)process.env[key]="test-value";
+  process.env.NEOLEAP_MODE="sandbox";
+  process.env.NEOLEAP_ENABLED="true";
+  process.env.VERCEL_ENV="preview";
+  process.env.NEOLEAP_SANDBOX_BRANCH="fix/neoleap-sandbox-safe-readiness-20261126";
+  process.env.VERCEL_GIT_COMMIT_REF="feature/neoleap-payment-release-base-20261105";
+  assert.equal(neoleapReadiness().configured,false);
+  process.env.VERCEL_GIT_COMMIT_REF=process.env.NEOLEAP_SANDBOX_BRANCH;
+  assert.equal(neoleapReadiness().configured,true);
+  process.env.VERCEL_ENV="production";
+  assert.equal(neoleapReadiness().configured,false);
+  process.env.VERCEL_ENV="preview";
+  process.env.NEOLEAP_MODE="production";
   assert.equal(neoleapReadiness().configured,false);
 });
