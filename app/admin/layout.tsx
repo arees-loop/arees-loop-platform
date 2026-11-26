@@ -162,8 +162,8 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <div className="flex h-[108px] items-center justify-center">
             <Image
-              src="/Logo/arees-loop-logo.png"
-              alt="Arees Loop"
+              src="/Logo/arees-company-logo.png"
+              alt="رمز شركة أريس"
               width={120}
               height={65}
               className="h-[62px] w-auto object-contain"
