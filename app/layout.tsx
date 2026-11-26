@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { elMessiri, ibmPlexArabic } from "./fonts";
 import InitialSplash from "./components/InitialSplash";
+import InstallAreesApp from "./components/InstallAreesApp";
 import SaudiBusinessVerification from "./components/SaudiBusinessVerification";
 import PublicGlobalHeader from "./components/PublicGlobalHeader";
 import "./globals.css";
@@ -32,6 +33,8 @@ export const metadata: Metadata = {
   creator: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
   publisher: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
+
+  appleWebApp: { capable: true, title: "أريس للسفر", statusBarStyle: "default" },
 
   icons: {
     icon: [
@@ -124,6 +127,7 @@ export default function RootLayout({
       
         {/* Verification stays accessible without overlaying customer controls on mobile. */}
         <SaudiBusinessVerification />
+        <InstallAreesApp />
 
         {/* Always-visible floating status badge, positioned below the sticky header on every route. */}
         <div className="pointer-events-none fixed left-5 top-[112px] z-[120] md:left-10 md:top-[128px]">
