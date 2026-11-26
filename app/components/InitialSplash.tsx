@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const SPLASH_VISIBLE_MS = 2600;
 const SPLASH_REMOVE_MS = 3200;
-const SPLASH_SEEN_KEY = "arees-loop-intro-seen-v1";
+const SPLASH_SEEN_KEY = "arees-travel-ksa-intro-seen-v1";
 
 export default function InitialSplash() {
   const pathname = usePathname();
@@ -63,33 +63,20 @@ export default function InitialSplash() {
             : "opacity-100"
         }`}
       >
-        {/* LOADING BACKGROUND */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage:
-              "url('/Image/loading/arees-loop-loading-bg.webp')",
-          }}
-        />
-
-        {/* SOFT CINEMATIC OVERLAY */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-[#0D3B34]/8" />
-
-        {/* GOLD SHINE OVER THE REAL LOGO */}
-        <div className="pointer-events-none absolute left-1/2 top-[25.5%] z-20 h-[24%] w-[43%] -translate-x-1/2 overflow-hidden rounded-[45%]">
-          <div className="arees-logo-shine absolute -inset-y-[40%] left-[-30%] w-[16%] rotate-[18deg] bg-gradient-to-r from-transparent via-[#FFF4B5]/85 to-transparent blur-[5px]" />
-
-          <div className="arees-logo-glow absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,224,117,0.12),transparent_58%)]" />
-        </div>
-
-        {/* SMALL CENTER SPARK */}
-        <div className="pointer-events-none absolute left-1/2 top-[37%] z-20 -translate-x-1/2">
-          <div className="arees-center-spark h-3 w-3 rounded-full bg-[#FFF0A4] shadow-[0_0_12px_4px_rgba(212,175,55,0.55)]" />
+        {/* AREES TRAVEL KSA BRANDED INTRO */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#FFFDF7_0%,#F8F0DF_55%,#E8D8B9_100%)]" />
+        <div className="absolute inset-0 opacity-40 bg-[linear-gradient(130deg,transparent_20%,rgba(212,175,55,0.12)_50%,transparent_80%)]" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pb-[8%]">
+          <img
+            src="/Logo/arees-travel-solutions-logo.png"
+            alt="شركة أريس للحلول المتكاملة المحدودة للسفر والسياحة"
+            className="arees-intro-logo max-h-[66vh] w-auto max-w-[min(85vw,540px)] object-contain drop-shadow-[0_14px_25px_rgba(93,65,17,0.16)]"
+          />
         </div>
 
         {/* PROGRESS BAR */}
         <div className="absolute bottom-[9%] left-1/2 z-30 w-[68%] max-w-[520px] -translate-x-1/2">
-          <div className="relative h-[8px] overflow-hidden rounded-full border border-[#D4AF37]/55 bg-[#0D3B34]/28 backdrop-blur-sm">
+          <div className="relative h-[8px] overflow-hidden rounded-full border border-[#D4AF37]/55 bg-[#A88B50]/20 backdrop-blur-sm">
             <div className="arees-progress absolute inset-y-0 left-0 overflow-hidden rounded-full bg-gradient-to-r from-[#80600F] via-[#D4AF37] to-[#F7DE83]">
               <div className="arees-progress-shine absolute inset-y-[-8px] w-[76px] bg-gradient-to-r from-transparent via-white/95 to-transparent blur-[3px]" />
             </div>
@@ -129,7 +116,7 @@ export default function InitialSplash() {
           }
         }
 
-        @keyframes logoShine {
+        @keyframes introReveal {\n          from { opacity: 0; transform: translateY(10px) scale(0.96); }\n          to { opacity: 1; transform: translateY(0) scale(1); }\n        }\n\n        .arees-intro-logo { animation: introReveal 0.8s ease-out both; }\n\n        @keyframes logoShine {
           0% {
             transform: translateX(0) rotate(18deg);
             opacity: 0;
