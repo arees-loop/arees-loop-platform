@@ -8,7 +8,7 @@ import "./globals.css";
 const SITE_URL = "https://www.areesloop.com";
 
 const SOCIAL_IMAGE =
-  `${SITE_URL}/Image/social/arees-loop-whatsapp-preview.png`;
+  `${SITE_URL}/Logo/arees-company-logo.png`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -79,10 +79,6 @@ export const metadata: Metadata = {
     images: [
       {
         url: SOCIAL_IMAGE,
-
-        width: 1734,
-
-        height: 907,
 
         type: "image/png",
 
