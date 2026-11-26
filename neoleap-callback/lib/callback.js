@@ -6,7 +6,7 @@ const IV = Buffer.from("PGKEYENCDECIVSPC", "utf8");
 function finalReturnUrl(value) {
   if (typeof value !== "string" || !value.trim()) throw new Error("CALLBACK_RETURN_URL_MISSING");
   const url = new URL(value);
-  if (url.protocol !== "https:" || !(/^arees-loop-platform-[a-z0-9-]+-arees-loop\\.vercel\\.app$/.test(url.hostname) || url.hostname === "areestravel-ksa.com") ||
+  if (url.protocol !== "https:" || !(/^arees-loop-platform-[a-z0-9-]+-arees-loop\.vercel\.app$/.test(url.hostname) || url.hostname === "areestravel-ksa.com") ||
       url.username || url.password || url.search || url.hash ||
       url.pathname !== "/api/payments/neoleap/return") {
     throw new Error("CALLBACK_RETURN_URL_INVALID");
