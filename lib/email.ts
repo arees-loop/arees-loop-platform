@@ -13,7 +13,7 @@ function getResendClient() {
 function getEmailFrom() {
   return (
     process.env.EMAIL_FROM ||
-    "Arees Loop <no-reply@areesloop.com>"
+    "أريس للحلول المتكاملة للسفر والسياحة <no-reply@areesloop.com>"
   );
 }
 
@@ -33,7 +33,7 @@ export async function sendVerificationEmail({
   const { data, error } = await resend.emails.send({
     from: getEmailFrom(),
     to: [to],
-    subject: "رمز التحقق | Arees Loop Verification Code",
+    subject: "رمز التحقق | أريس للحلول المتكاملة للسفر والسياحة Verification Code",
     html: `
       <!DOCTYPE html>
       <html lang="ar" dir="rtl">
@@ -70,7 +70,7 @@ export async function sendVerificationEmail({
                   letter-spacing:2px;
                 "
               >
-                Arees Loop
+                أريس للحلول المتكاملة للسفر والسياحة
               </div>
 
               <h1
@@ -164,7 +164,7 @@ export async function sendVerificationEmail({
                   color:#9a9a94;
                 "
               >
-                © ${new Date().getFullYear()} Arees Loop
+                © ${new Date().getFullYear()} أريس للحلول المتكاملة للسفر والسياحة
               </p>
             </div>
           </div>
@@ -211,38 +211,38 @@ export async function sendPartnerApplicationNotification({
 
   const content = {
     REQUEST_COMPLETION: {
-      subject: "تحديث على طلب الانضمام كشريك | Arees Loop",
+      subject: "تحديث على طلب الانضمام كشريك | أريس للحلول المتكاملة للسفر والسياحة",
       title: "طلب استكمال بيانات",
       message:
         "تمت مراجعة طلب الانضمام الخاص بكم، ونحتاج إلى استكمال بعض البيانات أو المتطلبات قبل مواصلة إجراءات المراجعة.",
     },
 
     SEND_AGREEMENT: {
-      subject: "تمت مراجعة طلب الشراكة | Arees Loop",
+      subject: "تمت مراجعة طلب الشراكة | أريس للحلول المتكاملة للسفر والسياحة",
       title: "انتقل طلبكم إلى مرحلة الاتفاقية",
       message:
         "تمت مراجعة طلب الانضمام بنجاح، وانتقل الطلب إلى مرحلة مراجعة وقبول شروط واتفاقية الشراكة.",
     },
 
     REJECT: {
-      subject: "تحديث على طلب الانضمام كشريك | Arees Loop",
+      subject: "تحديث على طلب الانضمام كشريك | أريس للحلول المتكاملة للسفر والسياحة",
       title: "تحديث حالة طلب الشراكة",
       message:
-        "تم الانتهاء من مراجعة طلب الانضمام، ويمكنكم الاطلاع على تفاصيل القرار من خلال حسابكم في Arees Loop.",
+        "تم الانتهاء من مراجعة طلب الانضمام، ويمكنكم الاطلاع على تفاصيل القرار من خلال حسابكم في أريس للحلول المتكاملة للسفر والسياحة.",
     },
 
     APPROVED: {
-      subject: "اعتماد طلب الشراكة | Arees Loop",
+      subject: "اعتماد طلب الشراكة | أريس للحلول المتكاملة للسفر والسياحة",
       title: "تم اعتماد طلب الشراكة",
       message:
         "تم اعتماد طلب الشراكة بعد استكمال المتطلبات والإجراءات اللازمة.",
     },
 
     ACTIVE: {
-      subject: "تم تفعيل حساب الشريك | Arees Loop",
+      subject: "تم تفعيل حساب الشريك | أريس للحلول المتكاملة للسفر والسياحة",
       title: "حساب الشريك أصبح فعالاً",
       message:
-        "تم تفعيل حساب الشريك في Arees Loop، ويمكنكم الآن الدخول إلى بوابة الشركاء والاستفادة من الخدمات المتاحة.",
+        "تم تفعيل حساب الشريك في أريس للحلول المتكاملة للسفر والسياحة، ويمكنكم الآن الدخول إلى بوابة الشركاء والاستفادة من الخدمات المتاحة.",
     },
   }[type];
 
@@ -295,7 +295,7 @@ export async function sendPartnerApplicationNotification({
                   letter-spacing:2px;
                 "
               >
-                AREES LOOP
+                أريس للحلول المتكاملة للسفر والسياحة
               </div>
 
               <h1
@@ -425,7 +425,7 @@ export async function sendPartnerApplicationNotification({
                   color:#8b9692;
                 "
               >
-                هذه رسالة آلية متعلقة بطلب الشراكة في Arees Loop.
+                هذه رسالة آلية متعلقة بطلب الشراكة في أريس للحلول المتكاملة للسفر والسياحة.
                 <br />
                 يرجى الدخول إلى حسابكم للاطلاع على أحدث حالة للطلب.
               </p>
@@ -438,7 +438,7 @@ export async function sendPartnerApplicationNotification({
                   color:#aaa69e;
                 "
               >
-                © ${new Date().getFullYear()} Arees Loop
+                © ${new Date().getFullYear()} أريس للحلول المتكاملة للسفر والسياحة
               </p>
             </div>
           </div>
