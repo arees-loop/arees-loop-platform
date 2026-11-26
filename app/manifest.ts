@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AREES Loop",
-    short_name: "AREES Loop",
+    name: "أريس للحلول المتكاملة للسفر والسياحة",
+    short_name: "أريس",
     description:
-      "منصة تجربة الزائر الذكية لاكتشاف التجارب والفعاليات والمرشدين والمكافآت.",
+      "خدمات السفر والسياحة والبرامج والتجارب السياحية.",
 
     scope: "/",
     display: "standalone",
