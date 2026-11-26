@@ -10,7 +10,7 @@ export const metadata: Metadata = buildPageMetadata({
   imageWidth: 1734,
   imageHeight: 907,
   imageType: "image/png",
-  imageAlt: "Arees Loop — اكتشف تجارب ووجهات السعودية",
+  imageAlt: "Arees Travel KSA — اكتشف تجارب ووجهات السعودية",
 });
 
 export default function HomePage() {
