@@ -7,8 +7,18 @@ import "./globals.css";
 
 const SITE_URL = "https://www.areesloop.com";
 
-const SOCIAL_IMAGE =
-  `${SITE_URL}/Logo/arees-company-logo.png`;
+const SOCIAL_IMAGE = `${SITE_URL}/Logo/arees-company-logo.png`;
+
+// Website metadata is intentionally separate from the legally contracted merchant.
+const websiteStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
+  url: SITE_URL,
+  name: "أريس للحلول المتكاملة للسفر والسياحة",
+  inLanguage: ["ar", "en"],
+  description: "خدمات السفر والسياحة والبرامج والتجارب السياحية.",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -25,13 +35,13 @@ export const metadata: Metadata = {
 
   authors: [
     {
-      name: "شركة أريس للحلول المتكاملة المحدودة",
+      name: "أريس للحلول المتكاملة للسفر والسياحة",
     },
   ],
 
   creator: "أريس للحلول المتكاملة للسفر والسياحة",
 
-  publisher: "شركة أريس للحلول المتكاملة المحدودة",
+  publisher: "أريس للحلول المتكاملة للسفر والسياحة",
 
   icons: {
     icon: [
@@ -116,6 +126,10 @@ export default function RootLayout({
       className={`${elMessiri.variable} ${ibmPlexArabic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData).replace(/</g, "\\u003c") }}
+        />
         <InitialSplash />
         <PublicGlobalHeader />
 
