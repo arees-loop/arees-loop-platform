@@ -11,7 +11,7 @@ export default function SaudiBusinessVerification(){
   return <>
     <div
       className="sbc-verify-seal"
-      data-token="bHNZMFR6VHFRQ095M3RmMzcwbU02QT09"
+      data-token="MFBPNExFbnJCRUFEQkJNdjVTd2s5dz09"
       data-position="bottom-left"
       aria-label="ختم المتجر الموثق من المركز السعودي للأعمال"
     />
