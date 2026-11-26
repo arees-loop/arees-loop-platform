@@ -91,7 +91,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 overflow-hidden">
         <Image
           src="/Image/auth/arees-auth-bg-desktop.png"
-          alt="أريس للحلول المتكاملة للسفر والسياحة"
+          alt="أريس الحلول المتكاملة المحدودة للسفر والسياحة"
           fill
           priority
           className="object-cover object-center transition-transform duration-700 ease-out"
@@ -114,7 +114,7 @@ export default function LoginPage() {
               <div className="flex w-full max-w-[500px] flex-col items-center text-center">
                 <Image
                   src="/Logo/arees-company-logo.png"
-                  alt="أريس للحلول المتكاملة للسفر والسياحة"
+                  alt="أريس الحلول المتكاملة المحدودة للسفر والسياحة"
                   width={700}
                   height={700}
                   priority
@@ -355,7 +355,7 @@ export default function LoginPage() {
                       العودة
                     </Link>
 
-                    <span>© أريس للحلول المتكاملة للسفر والسياحة</span>
+                    <span>© أريس الحلول المتكاملة المحدودة للسفر والسياحة</span>
                   </div>
                 </div>
               </div>
@@ -370,7 +370,7 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <Image
               src="/Logo/arees-company-logo.png"
-              alt="أريس للحلول المتكاملة للسفر والسياحة"
+              alt="أريس الحلول المتكاملة المحدودة للسفر والسياحة"
               width={600}
               height={600}
               priority
