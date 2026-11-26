@@ -18,7 +18,7 @@ const rewards = [
   {
     id: 1,
     title: "خصم 10 ر.س",
-    description: "استخدمه في تجربة مؤهلة داخل Arees Loop",
+    description: "استخدمه في تجربة مؤهلة داخل أريس الحلول المتكاملة المحدودة للسفر والسياحة",
     points: 1000,
     category: "خصم",
   },
@@ -360,7 +360,7 @@ export default function RewardsPage() {
         <section className="mt-10 rounded-[28px] border border-[#D4AF37]/20 bg-white/70 p-6 backdrop-blur-xl">
           <p className="text-[9px] font-bold tracking-[0.18em] text-[#B99124]">GIFT LOOP POINTS</p>
           <h2 className="mt-2 text-[24px] font-semibold text-[#0D3B34]" style={{ fontFamily: "var(--font-el-messiri), sans-serif" }}>أهدِ نقاطك لمن تحب</h2>
-          <p className="mt-2 text-[11px] leading-6 text-[#0D3B34]/60">حوّل جزءاً من رصيدك إلى عميل آخر مسجل في Arees Loop. كل 100 نقطة = 1 ريال.</p>
+          <p className="mt-2 text-[11px] leading-6 text-[#0D3B34]/60">حوّل جزءاً من رصيدك إلى عميل آخر مسجل في أريس الحلول المتكاملة المحدودة للسفر والسياحة. كل 100 نقطة = 1 ريال.</p>
           <div className="mt-5 grid gap-3 md:grid-cols-[1fr_180px_auto]">
             <input type="email" value={giftEmail} onChange={(e)=>setGiftEmail(e.target.value)} placeholder="البريد الإلكتروني للمستلم" className="rounded-[15px] border border-[#0D3B34]/15 bg-white px-4 py-3 text-[11px] outline-none focus:border-[#D4AF37]" />
             <input type="number" min="1" step="1" value={giftPoints} onChange={(e)=>setGiftPoints(e.target.value)} placeholder="عدد النقاط" className="rounded-[15px] border border-[#0D3B34]/15 bg-white px-4 py-3 text-[11px] outline-none focus:border-[#D4AF37]" />

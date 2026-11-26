@@ -101,7 +101,7 @@ export default function ReviewBookingPage() {
         <div className="mx-auto flex max-w-[1450px] items-center justify-between px-5 py-3.5 md:px-8">
           <Link href="/">
             <Image
-              src="/Logo/arees-loop-logo.png"
+              src="/Logo/arees-shiny-monogram.png"
               alt="Arees Loop"
               width={165}
               height={82}

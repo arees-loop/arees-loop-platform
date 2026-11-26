@@ -7,31 +7,41 @@ import "./globals.css";
 
 const SITE_URL = "https://www.areesloop.com";
 
-const SOCIAL_IMAGE =
-  `${SITE_URL}/Image/social/arees-loop-whatsapp-preview.png`;
+const SOCIAL_IMAGE = `${SITE_URL}/Logo/arees-shiny-monogram.png`;
+
+// Website metadata is intentionally separate from the legally contracted merchant.
+const websiteStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
+  url: SITE_URL,
+  name: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
+  inLanguage: ["ar", "en"],
+  description: "خدمات السفر والسياحة والبرامج والتجارب السياحية.",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "Arees Loop | منصة تجربة الزائر الذكية",
-    template: "%s | Arees Loop",
+    default: "أريس الحلول المتكاملة المحدودة للسفر والسياحة | خدمات السفر والسياحة",
+    template: "%s | أريس الحلول المتكاملة المحدودة للسفر والسياحة",
   },
 
   description:
-    "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
+    "اكتشف خدمات السفر والسياحة والبرامج والوجهات والتجارب السياحية عبر أريس الحلول المتكاملة المحدودة للسفر والسياحة.",
 
-  applicationName: "Arees Loop",
+  applicationName: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
   authors: [
     {
-      name: "Arees Loop",
+      name: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
     },
   ],
 
-  creator: "Arees Loop",
+  creator: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
-  publisher: "Arees Loop",
+  publisher: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
   icons: {
     icon: [
@@ -69,24 +79,20 @@ export const metadata: Metadata = {
 
     url: SITE_URL,
 
-    siteName: "Arees Loop",
+    siteName: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
-    title: "Arees Loop | منصة تجربة الزائر الذكية",
+    title: "أريس الحلول المتكاملة المحدودة للسفر والسياحة | خدمات السفر والسياحة",
 
     description:
-      "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
+      "اكتشف خدمات السفر والسياحة والبرامج والوجهات والتجارب السياحية عبر أريس الحلول المتكاملة المحدودة للسفر والسياحة.",
 
     images: [
       {
         url: SOCIAL_IMAGE,
 
-        width: 1734,
-
-        height: 907,
-
         type: "image/png",
 
-        alt: "Arees Loop | منصة تجربة الزائر الذكية",
+        alt: "أريس الحلول المتكاملة المحدودة للسفر والسياحة | خدمات السفر والسياحة",
       },
     ],
   },
@@ -94,10 +100,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
 
-    title: "Arees Loop | منصة تجربة الزائر الذكية",
+    title: "أريس الحلول المتكاملة المحدودة للسفر والسياحة | خدمات السفر والسياحة",
 
     description:
-      "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
+      "اكتشف خدمات السفر والسياحة والبرامج والوجهات والتجارب السياحية عبر أريس الحلول المتكاملة المحدودة للسفر والسياحة.",
 
     images: [SOCIAL_IMAGE],
   },
@@ -120,6 +126,10 @@ export default function RootLayout({
       className={`${elMessiri.variable} ${ibmPlexArabic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData).replace(/</g, "\\u003c") }}
+        />
         <InitialSplash />
         <PublicGlobalHeader />
 

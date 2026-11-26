@@ -43,7 +43,7 @@ export default function PartnerLoginPage() {
 
       if (!response.ok || !data?.success) {
         if (data?.error === "PARTNER_ACCOUNT_REQUIRED") {
-          setError("هذا الحساب غير مسجل كشريك في Arees Loop.");
+          setError("هذا الحساب غير مسجل كشريك في أريس الحلول المتكاملة المحدودة للسفر والسياحة.");
         } else if (data?.error === "INVALID_CREDENTIALS") {
           setError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
         } else if (data?.error === "ACCOUNT_SUSPENDED") {
@@ -102,7 +102,7 @@ export default function PartnerLoginPage() {
           <div className="w-full max-w-[500px] rounded-[30px] border border-white/80 bg-white/78 p-6 shadow-[0_28px_80px_rgba(0,0,0,.18)] backdrop-blur-xl sm:p-8">
             <div className="mb-6">
               <span className="inline-flex rounded-full border border-[#D4AF37]/35 bg-[#FFF8E4]/80 px-4 py-2 text-[11px] font-bold text-[#9A7415]">
-                بوابة شركاء Arees Loop
+                بوابة شركاء أريس الحلول المتكاملة المحدودة للسفر والسياحة
               </span>
               <h2 className="mt-4 text-3xl font-bold">تسجيل الدخول كشريك</h2>
               <p className="mt-2 text-sm text-[#0D3B34]/60">
@@ -181,7 +181,7 @@ export default function PartnerLoginPage() {
 
             <div className="mt-6 flex items-center justify-between text-[11px] text-[#0D3B34]/55">
               <Link href="/login" className="font-bold">دخول العملاء</Link>
-              <span>© Arees Loop</span>
+              <span>© أريس الحلول المتكاملة المحدودة للسفر والسياحة</span>
             </div>
           </div>
         </section>
@@ -189,8 +189,8 @@ export default function PartnerLoginPage() {
         <section className="order-1 flex justify-center md:order-2 md:justify-start">
           <div className="w-full max-w-[590px] text-center md:text-right">
             <Image
-              src="/Logo/arees-loop-brand.png"
-              alt="Arees Loop"
+              src="/Logo/arees-shiny-monogram.png"
+              alt="أريس الحلول المتكاملة المحدودة للسفر والسياحة"
               width={420}
               height={420}
               priority
@@ -211,7 +211,7 @@ export default function PartnerLoginPage() {
             <div className="mt-6 grid grid-cols-3 gap-3">
               <Value title="وصول أذكى" text="للعملاء المهتمين" />
               <Value title="إدارة أسهل" text="للتجارب والحجوزات" />
-              <Value title="نمو مستمر" text="مع منظومة Arees Loop" />
+              <Value title="نمو مستمر" text="مع منظومة أريس الحلول المتكاملة المحدودة للسفر والسياحة" />
             </div>
 
             <p className="mt-6 text-sm font-extrabold text-[#0D4B3E] drop-shadow-[0_1px_2px_rgba(255,255,255,.9)]">

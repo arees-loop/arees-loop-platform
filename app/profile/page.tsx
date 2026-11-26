@@ -114,7 +114,7 @@ export default function ProfilePage() {
   >(null);
 
   const fullName =
-    [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "مستخدم Arees Loop";
+    [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "مستخدم أريس الحلول المتكاملة المحدودة للسفر والسياحة";
   const firstName = profile.firstName || "زائر";
   const avatarInitial = firstName.trim().charAt(0) || "ز";
 
@@ -318,7 +318,7 @@ export default function ProfilePage() {
             </h1>
 
             <p className="mt-2 max-w-xl text-xs leading-6 text-[#0D3B34]/65">
-              إدارة بياناتك الشخصية وتفضيلاتك وخصوصيتك وإعدادات تجربة Arees Loop.
+              إدارة بياناتك الشخصية وتفضيلاتك وخصوصيتك وإعدادات تجربة أريس الحلول المتكاملة المحدودة للسفر والسياحة.
             </p>
           </div>
 
@@ -353,7 +353,7 @@ export default function ProfilePage() {
 
               <div>
                 <p className="text-[9px] font-semibold tracking-[0.18em] text-[#D4AF37]">
-                  AREES LOOP MEMBER
+                  AREES MEMBER
                 </p>
 
                 <h2
@@ -529,7 +529,7 @@ export default function ProfilePage() {
             <Card>
               <CardHeader
                 eyebrow="EXPERIENCE SETTINGS"
-                title="تجربة Arees Loop"
+                title="تجربة أريس الحلول المتكاملة المحدودة للسفر والسياحة"
                 icon={<SettingsIcon />}
               />
 
