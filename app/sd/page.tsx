@@ -496,7 +496,7 @@ export default function Home() {
           <nav className="mx-auto flex h-[92px] max-w-[1450px] items-center justify-between gap-3 rounded-[24px] border border-white/35 bg-white/[0.055] px-4 py-0 shadow-[0_12px_34px_rgba(0,0,0,0.13),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-[10px] backdrop-saturate-150 md:h-[96px] md:px-6">
             <div className="flex items-center gap-2.5">
               <Image
-                src="/Logo/arees-loop-logo.png"
+                src="/Logo/arees-company-logo.png"
                 alt="Arees Loop"
                 width={240}
                 height={120}
@@ -1447,7 +1447,7 @@ export default function Home() {
           className="relative z-10 mx-auto max-w-5xl text-center"
         >
           <Image
-            src="/Logo/arees-loop-logo.png"
+            src="/Logo/arees-company-logo.png"
             alt="Arees Loop"
             width={190}
             height={95}
@@ -1563,7 +1563,7 @@ export default function Home() {
             {/* Center: brand */}
             <div className="order-1 mx-auto w-full max-w-[360px] text-center lg:order-2">
               <Image
-                src="/Logo/arees-loop-logo.png"
+                src="/Logo/arees-company-logo.png"
                 alt="Arees Loop"
                 width={320}
                 height={160}
