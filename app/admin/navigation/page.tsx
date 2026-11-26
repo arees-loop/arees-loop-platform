@@ -1,6 +1,6 @@
 "use client";
 import { useEffect,useState } from "react";
-const items=[["discover","اكتشف"],["how","كيف تعمل؟"],["programs","برامج سياحية"],["guides","المرشدون السياحيون"],["hotels","الفنادق"],["flights","الطيران"],["cruise","الكروز"],["partners","للشركاء"]] as const;
+const items=[["discover","اكتشف"],["how","كيف تعمل؟"],["programs","برامج سياحية"],["guides","المرشدون السياحيون"],["hotels","الفنادق"],["flights","الطيران"],["cruise","الكروز"],["events","تذاكر الفعاليات"],["travelServices","خدمات السفر"],["visas","التأشيرات"],["drivingLicense","رخصة القيادة الدولية"],["partners","للشركاء"]] as const;
 type Key=typeof items[number][0];
 export default function AdminNavigationSettings(){
  const [data,setData]=useState<Record<string,boolean>>({}),[loading,setLoading]=useState(true),[busy,setBusy]=useState(""),[message,setMessage]=useState("");
