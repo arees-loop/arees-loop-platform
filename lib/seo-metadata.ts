@@ -23,7 +23,7 @@ export function buildPageMetadata({
   imageType,
   imageAlt,
 }: PageMetadataInput): Metadata {
-  const pageTitle = title.replace(/\s*\|\s*(?:Arees Loop|أريس للحلول المتكاملة للسفر والسياحة)$/, "");
+  const pageTitle = title.replace(/\s*\|\s*(?:Arees Loop|أريس الحلول المتكاملة المحدودة للسفر والسياحة)$/, "");
   const imageUrl = new URL(image, SITE_URL).toString();
   const pageUrl = new URL(path, SITE_URL).toString();
 
@@ -40,7 +40,7 @@ export function buildPageMetadata({
       type: "website",
       locale: "ar_SA",
       url: pageUrl,
-      siteName: "أريس للحلول المتكاملة للسفر والسياحة",
+      siteName: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
       title: pageTitle,
       description,
       images: [{ url: imageUrl, width: imageWidth, height: imageHeight, type: imageType, alt: imageAlt }],
