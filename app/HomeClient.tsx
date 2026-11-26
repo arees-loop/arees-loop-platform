@@ -28,7 +28,7 @@ const steps = [
     icon: "⌖",
     title: "نكتشف موقعك",
     description:
-      "بإذنك، تحدد أريس لوب موقعك والوقت المتاح لك والتجارب الموجودة بالقرب منك.",
+      "بإذنك، تحدد أريس للحلول المتكاملة للسفر والسياحة موقعك والوقت المتاح لك والتجارب الموجودة بالقرب منك.",
   },
   {
     number: "02",
@@ -42,7 +42,7 @@ const steps = [
     icon: "◆",
     title: "اكتشف واحجز واكسب",
     description:
-      "احجز التجربة، تحقق من زيارتك، واكسب نقاط أريس لوب لاستخدامها في تجارب ومكافآت لاحقة.",
+      "احجز التجربة، تحقق من زيارتك، واكسب نقاط أريس للحلول المتكاملة للسفر والسياحة لاستخدامها في تجارب ومكافآت لاحقة.",
   },
 ];
 
@@ -53,14 +53,14 @@ const heroScenes = [
     id: "saudi",
     nameAr: "السعودية",
     nameEn: "Saudi Arabia",
-    eyebrowAr: "بوابة أريس لوب",
-    eyebrowEn: "AREES LOOP GATEWAY",
+    eyebrowAr: "بوابة أريس للحلول المتكاملة للسفر والسياحة",
+    eyebrowEn: "AREES TRAVEL & TOURISM GATEWAY",
     titleAr: "كل اتجاه يحكي قصة",
     titleEn: "Every direction tells a story",
     descriptionAr:
-      "ابدأ من الصورة الأكبر، ثم مرّر داخل أريس لوب لتكتشف المدن والتجارب التي تناسب موقعك ووقتك واهتماماتك.",
+      "ابدأ من الصورة الأكبر، ثم مرّر داخل أريس للحلول المتكاملة للسفر والسياحة لتكتشف المدن والتجارب التي تناسب موقعك ووقتك واهتماماتك.",
     descriptionEn:
-      "Start with the bigger picture, then move through AREES Loop to discover destinations and experiences that match your location, time and interests.",
+      "Start with the bigger picture, then move through AREES Travel & Tourism to discover destinations and experiences that match your location, time and interests.",
     image: "/Image/hero/saudi-panorama-hero.jpg",
     coords: null,
     metaAr: "السعودية حولك",
@@ -96,9 +96,9 @@ const heroScenes = [
     titleAr: "المدينة أقرب مما تتخيل",
     titleEn: "Madinah is closer than you think",
     descriptionAr:
-      "من السيرة والتاريخ إلى المتاحف والتجارب القريبة؛ أريس لوب تربط المكان بما يمكنك فعله الآن.",
+      "من السيرة والتاريخ إلى المتاحف والتجارب القريبة؛ أريس للحلول المتكاملة للسفر والسياحة تربط المكان بما يمكنك فعله الآن.",
     descriptionEn:
-      "From Seerah and history to museums and nearby experiences, AREES Loop connects the place with what you can do now.",
+      "From Seerah and history to museums and nearby experiences, AREES Travel & Tourism connects the place with what you can do now.",
     image: "/Image/destinations/medina-hero.webp",
     coords: { lat: 24.4672, lng: 39.6111 },
     metaAr: "تجارب قريبة",
@@ -129,14 +129,14 @@ const heroScenes = [
     id: "makkah",
     nameAr: "مكة المكرمة",
     nameEn: "Makkah",
-    eyebrowAr: "داخل أريس لوب",
-    eyebrowEn: "INSIDE AREES LOOP",
+    eyebrowAr: "داخل أريس للحلول المتكاملة للسفر والسياحة",
+    eyebrowEn: "INSIDE AREES TRAVEL & TOURISM",
     titleAr: "رحلة تبدأ من المعنى",
     titleEn: "A journey that starts with meaning",
     descriptionAr:
-      "أريس لوب تساعدك على اكتشاف التجارب والخدمات المناسبة حول رحلتك في مكة بطريقة أذكى وأقرب.",
+      "أريس للحلول المتكاملة للسفر والسياحة تساعدك على اكتشاف التجارب والخدمات المناسبة حول رحلتك في مكة بطريقة أذكى وأقرب.",
     descriptionEn:
-      "AREES Loop helps you discover relevant experiences and services around your journey in Makkah, intelligently and nearby.",
+      "AREES Travel & Tourism helps you discover relevant experiences and services around your journey in Makkah, intelligently and nearby.",
     image: "/Image/destinations/makkah-hero.webp",
     coords: { lat: 21.4225, lng: 39.8262 },
     metaAr: "حول رحلتك",
@@ -154,9 +154,9 @@ const heroScenes = [
     titleAr: "حكايات محفورة في الصخر",
     titleEn: "Stories carved in stone",
     descriptionAr:
-      "اكتشف العلا من موقعك، ثم دع أريس لوب يقودك إلى التجارب والمهام القريبة.",
+      "اكتشف العلا من موقعك، ثم دع أريس للحلول المتكاملة للسفر والسياحة يقودك إلى التجارب والمهام القريبة.",
     descriptionEn:
-      "Discover AlUla from where you are, then let AREES Loop lead you to nearby experiences and missions.",
+      "Discover AlUla from where you are, then let AREES Travel & Tourism lead you to nearby experiences and missions.",
     image: "/Image/destinations/alula-hero.webp",
     coords: { lat: 26.6084, lng: 37.9232 },
     metaAr: "بين الصخر والتاريخ",
@@ -527,8 +527,8 @@ export default function Home() {
                 src={scene.image}
                 alt={
                   isArabic
-                    ? `أريس لوب - ${scene.nameAr}`
-                    : `AREES Loop - ${scene.nameEn}`
+                    ? `أريس للحلول المتكاملة للسفر والسياحة - ${scene.nameAr}`
+                    : `AREES Travel & Tourism - ${scene.nameEn}`
                 }
                 fill
                 sizes="100vw"
@@ -882,8 +882,8 @@ export default function Home() {
 
                     <p className="mt-3 text-sm leading-7 text-white/82">
                       {isArabic
-                        ? "أماكن وتجارب أقرب إلى لحظتك الحالية، مع حجز ومكافآت داخل أريس لوب."
-                        : "Places and experiences closer to your current moment, with booking and rewards inside AREES Loop."}
+                        ? "أماكن وتجارب أقرب إلى لحظتك الحالية، مع حجز ومكافآت داخل أريس للحلول المتكاملة للسفر والسياحة."
+                        : "Places and experiences closer to your current moment, with booking and rewards inside AREES Travel & Tourism."}
                     </p>
 
                     <div className="mt-7 grid grid-cols-3 gap-2.5 text-center">
@@ -980,7 +980,7 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/5 to-[#0D3B34]/10" aria-hidden="true" />
         <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-6 text-center">
-          <img src="/Logo/arees-loop-logo.png" alt="شعار أريس لوب" className="mb-2 h-16 w-auto scale-[3] object-contain sm:h-[76px]" />
+          <img src="/Logo/arees-loop-logo.png" alt="شعار أريس للحلول المتكاملة للسفر والسياحة" className="mb-2 h-16 w-auto scale-[3] object-contain sm:h-[76px]" />
           <h2 className="mt-2 flex flex-wrap justify-center gap-x-3 text-4xl font-black leading-tight sm:text-5xl md:text-6xl lg:text-[72px]">
             <span className="text-[#0D3B34] drop-shadow-[0_2px_12px_rgba(255,255,255,0.7)]">{isArabic ? "حجوزات الطيران" : "Flight Bookings"}</span>
             <span className="text-[#A87516] drop-shadow-[0_2px_12px_rgba(255,255,255,0.7)]">{isArabic ? "والبواخر" : "and Ferries"}</span>
@@ -1048,7 +1048,7 @@ export default function Home() {
               </article>
             ))}
           </div>}
-          {servicesLoadError && <p role="alert" className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">تعذر تحميل البرامج مؤقتاً. جرّب إعادة فتح الصفحة، ويمكنك تصفح بقية خدمات أريس لوب.</p>}
+          {servicesLoadError && <p role="alert" className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">تعذر تحميل البرامج مؤقتاً. جرّب إعادة فتح الصفحة، ويمكنك تصفح بقية خدمات أريس للحلول المتكاملة للسفر والسياحة.</p>}
           {!servicesLoadError && locationReady && !userCoords && <p className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">فعّل إذن الموقع لعرض التجارب القريبة منك والمسافة الفعلية لكل تجربة.</p>}
           {!servicesLoadError && locationReady && userCoords && nearbyServices.length===0 && <p className="rounded-2xl bg-white p-6 text-center text-sm text-[#0D3B34]">لا توجد برامج مطابقة للموقع المحدد حالياً. يمكنك استكشاف برامج مدن أخرى من القائمة.</p>}
           {/* Discover more */}
@@ -1079,7 +1079,7 @@ export default function Home() {
         <div className="relative mx-auto max-w-7xl">
           <div dir="rtl" className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-bold tracking-[0.18em] text-[#D4AF37]">
-              كيف تعمل أريس لوب؟
+              كيف تعمل أريس للحلول المتكاملة للسفر والسياحة؟
             </p>
 
             <h2 className="mt-3 text-4xl font-black text-[#0D3B34] md:text-5xl">
@@ -1087,7 +1087,7 @@ export default function Home() {
             </h2>
 
             <p className="mt-5 text-lg leading-8 text-[#0D3B34]/65">
-              أريس لوب لا تنتظر منك البحث فقط، بل تفهم سياقك وتساعدك على
+              أريس للحلول المتكاملة للسفر والسياحة لا تنتظر منك البحث فقط، بل تفهم سياقك وتساعدك على
               اكتشاف ما يستحق التجربة حولك.
             </p>
           </div>
@@ -1215,7 +1215,7 @@ export default function Home() {
       </section>
 
       {/* =====================================================
-          مكافآت أريس لوب
+          مكافآت أريس للحلول المتكاملة للسفر والسياحة
       ====================================================== */}
 
       <section
@@ -1233,7 +1233,7 @@ export default function Home() {
           {/* Rewards Text */}
           <div>
             <p className="text-sm font-bold tracking-[0.18em] text-[#e5b83f]">
-              مكافآت أريس لوب
+              مكافآت أريس للحلول المتكاملة للسفر والسياحة
             </p>
 
             <h2 className="mt-4 text-4xl font-black leading-tight md:text-5xl">
@@ -1242,7 +1242,7 @@ export default function Home() {
             </h2>
 
             <p className="mt-6 max-w-xl text-lg leading-9 text-white/70">
-              اجمع نقاط أريس لوب من زياراتك وتجاربك المؤهلة، واستخدمها للحصول على
+              اجمع نقاط أريس للحلول المتكاملة للسفر والسياحة من زياراتك وتجاربك المؤهلة، واستخدمها للحصول على
               مكافآت وخصومات وتجارب جديدة داخل المنصة.
             </p>
 
@@ -1270,7 +1270,7 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-bold tracking-[0.18em] text-white/60">
-                      محفظة أريس لوب
+                      محفظة أريس للحلول المتكاملة للسفر والسياحة
                     </p>
 
                     <p className="mt-2 text-lg font-bold">
@@ -1279,7 +1279,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 p-2">
-                    <Image src="/Logo/arees-loop-logo.png" alt="شعار أريس لوب" width={40} height={40} className="h-full w-full object-contain" />
+                    <Image src="/Logo/arees-loop-logo.png" alt="شعار أريس للحلول المتكاملة للسفر والسياحة" width={40} height={40} className="h-full w-full object-contain" />
                   </div>
                 </div>
 
@@ -1334,7 +1334,7 @@ export default function Home() {
           />
           <div className="guides-hero-shade" aria-hidden="true" />
           <div className="guides-hero-title">
-            <p className="text-xs font-bold tracking-widest text-[#E8C66E]">AREES LOOP GUIDES</p>
+            <p className="text-xs font-bold tracking-widest text-[#E8C66E]">AREES TRAVEL & TOURISM GUIDES</p>
             <h2 className="mt-2 text-3xl font-black md:text-5xl">المرشدون السياحيون</h2>
             <p className="mt-2 text-sm text-white/90 md:text-base">خبرة محلية تقودك لتجارب أصيلة في المملكة</p>
           </div>
@@ -1394,7 +1394,7 @@ export default function Home() {
 
         <div className="relative z-20 mx-auto mt-5 flex max-w-5xl flex-col items-center justify-between gap-4 px-6 text-center md:flex-row md:px-10 md:text-right" dir="rtl">
           <div>
-            <p className="text-lg font-black text-[#201B12]">انضم إلى منظومة شركاء أريس لوب</p>
+            <p className="text-lg font-black text-[#201B12]">انضم إلى منظومة شركاء أريس للحلول المتكاملة للسفر والسياحة</p>
             <p className="mt-1 text-sm font-medium leading-7 text-[#3D3528]/65">سواء كنت شركة، أو مقدّم تجربة، أو جهة حكومية أو غير ربحية، شاركنا إبراز برامجك وفعالياتك ووجهاتك، والوصول إلى جمهور أوسع.</p>
           </div>
           <Link href="/partner/select-type" className="shrink-0 rounded-full border border-[#B88A25]/45 bg-white/55 px-8 py-3.5 font-black text-[#8B6718] shadow-[0_12px_35px_rgba(155,112,24,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/75">انضم كشريك</Link>
@@ -1706,7 +1706,7 @@ export default function Home() {
           {/* Bottom */}
           <div className="grid items-center gap-3 pt-3 md:grid-cols-3">
             <div className="text-center text-[9px] text-[#0D3B34]/35 md:text-right">
-              <p>© 2026 أريس لوب</p>
+              <p>© 2026 أريس للحلول المتكاملة للسفر والسياحة</p>
               <p className="mt-0.5">جميع الحقوق محفوظة</p>
             </div>
 
