@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
                   AREES LOOP · ADMIN
                 </span>
                 <Image
-                  src="/Logo/arees-loop-brand.png"
+                  src="/Logo/arees-shiny-monogram.png"
                   alt="Arees Loop"
                   width={180}
                   height={180}

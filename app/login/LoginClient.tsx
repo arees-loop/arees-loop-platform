@@ -113,7 +113,7 @@ export default function LoginPage() {
             <div className="flex justify-center">
               <div className="flex w-full max-w-[500px] flex-col items-center text-center">
                 <Image
-                  src="/Logo/arees-loop-brand.png"
+                  src="/Logo/arees-shiny-monogram.png"
                   alt="Arees Loop"
                   width={700}
                   height={700}
@@ -369,7 +369,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[420px]">
           <div className="flex justify-center">
             <Image
-              src="/Logo/arees-loop-brand.png"
+              src="/Logo/arees-shiny-monogram.png"
               alt="Arees Loop"
               width={600}
               height={600}

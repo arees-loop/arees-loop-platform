@@ -54,7 +54,7 @@ export default function AdminNotificationCenter({
      if("serviceWorker" in navigator){
        const reg=await navigator.serviceWorker.getRegistration("/admin-alerts-sw.js");
        if(reg){await reg.showNotification("Arees Loop · إشعار إداري",{
-         body:message,icon:"/icons/arees-loop-app-icon.png",
+         body:message,icon:"/icons/arees-company-app-icon.png",
          tag:"arees-admin-request",data:{url:"/admin/dashboard"},
        });return;}
      }

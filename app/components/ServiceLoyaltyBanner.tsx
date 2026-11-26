@@ -14,7 +14,7 @@ export default function ServiceLoyaltyBanner({
 
   return (
     <span dir="rtl" aria-label={`احصل على ${points.toLocaleString("ar-SA")} نقطة أريس لوب عند الحجز المؤهل`} className={`inline-flex max-w-full items-center justify-center gap-1.5 rounded-xl border border-[#D4AF37]/35 bg-[#FFF6DD] px-2 py-1 align-middle text-center shadow-[inset_0_1px_0_rgba(255,255,255,.8)] ${className}`}>
-      <Image src="/Logo/arees-loop-logo.png" alt="" width={40} height={30} className="h-7 w-10 shrink-0 object-contain" aria-hidden="true"/>
+      <Image src="/Logo/arees-shiny-monogram.png" alt="" width={40} height={30} className="h-7 w-10 shrink-0 object-contain" aria-hidden="true"/>
       <span className="text-[10px] font-semibold leading-4 text-[#0D3B34]">احصل على <strong className="font-bold tabular-nums text-[#926712]">{points.toLocaleString("ar-SA")}</strong> نقطة</span>
     </span>
   );

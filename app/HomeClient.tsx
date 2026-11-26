@@ -16,7 +16,7 @@ import { getTotalLoopPoints, getLoopProgress } from "../lib/loop-progress";
 type LiveService = { id:string; nameAr:string; descriptionAr?:string|null; city?:string|null; locationName?:string|null; finalPrice:number; loyaltyPoints:number; images:string[]; category:string; latitude?:number|null; longitude?:number|null };
 type SuccessPartnerEntry = { id: string; name: string; logoUrl: string; websiteUrl?: string | null };
 const fallbackSuccessPartners: SuccessPartnerEntry[] = [
-  { id: "arees", name: "أريس للسفر والسياحة", logoUrl: "/Logo/arees-travel-solutions-logo.png" },
+  { id: "arees", name: "أريس للسفر والسياحة", logoUrl: "/Logo/arees-shiny-monogram.png" },
   { id: "tarco", name: "تاركو للطيران", logoUrl: "/Logo/tarco-aviation-logo.png" },
   { id: "badr", name: "بدر للطيران", logoUrl: "/Logo/badr-airlines-transparent-v2.png" },
   { id: "sudan", name: "الخطوط الجوية السودانية", logoUrl: "/Logo/sudan-airways-transparent-v2.png" },
@@ -980,7 +980,7 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/5 to-[#0D3B34]/10" aria-hidden="true" />
         <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center px-5 py-6 text-center">
-          <img src="/Logo/arees-travel-solutions-logo.png" alt="شعار أريس للحلول المتكاملة للسفر والسياحة" className="mb-2 h-16 w-auto scale-[3] object-contain sm:h-[76px]" />
+          <img src="/Logo/arees-shiny-monogram.png" alt="رمز أريس" className="mb-3 h-[68px] w-[68px] object-contain sm:h-[80px] sm:w-[80px]" />
           <h2 className="mt-2 flex flex-wrap justify-center gap-x-3 text-4xl font-black leading-tight sm:text-5xl md:text-6xl lg:text-[72px]">
             <span className="text-[#0D3B34] drop-shadow-[0_2px_12px_rgba(255,255,255,0.7)]">{isArabic ? "حجوزات الطيران" : "Flight Bookings"}</span>
             <span className="text-[#A87516] drop-shadow-[0_2px_12px_rgba(255,255,255,0.7)]">{isArabic ? "والبواخر" : "and Ferries"}</span>
@@ -1279,7 +1279,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 p-2">
-                    <Image src="/Logo/arees-travel-solutions-logo.png" alt="شعار أريس للحلول المتكاملة للسفر والسياحة" width={40} height={40} className="h-full w-full object-contain" />
+                    <Image src="/Logo/arees-shiny-monogram.png" alt="شعار أريس للحلول المتكاملة للسفر والسياحة" width={40} height={40} className="h-full w-full object-contain" />
                   </div>
                 </div>
 
@@ -1523,11 +1523,11 @@ export default function Home() {
             {/* Center: brand */}
             <div className="order-1 mx-auto w-full max-w-[360px] text-center lg:order-2">
               <Image
-                src="/Logo/arees-travel-solutions-logo.png"
-                alt="Arees Travel KSA"
-                width={320}
+                src="/Logo/arees-shiny-monogram.png"
+                alt="شعار شركة أريس"
+                width={160}
                 height={160}
-                className="mx-auto h-auto w-[190px] md:w-[220px]"
+                className="mx-auto h-auto w-[106px] md:w-[124px]"
               />
 
               <p className="mt-1.5 text-[11px] font-semibold text-[#0D3B34]/55">
@@ -1719,7 +1719,7 @@ export default function Home() {
               <Link href="/terms" className="whitespace-nowrap transition hover:text-[#D4AF37]">الشروط والأحكام</Link>
             </nav>
             <Image
-              src="/Logo/arees-company-logo.png"
+              src="/Logo/arees-shiny-monogram.png"
               alt="شركة أريس الحلول المتكاملة المحدودة"
               width={90}
               height={45}

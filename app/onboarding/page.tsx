@@ -485,7 +485,7 @@ export default function OnboardingPage() {
       <header className="relative z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
         <Link href="/">
           <Image
-            src="/Logo/arees-loop-logo.png"
+            src="/Logo/arees-shiny-monogram.png"
             alt="Arees Loop"
             width={180}
             height={90}

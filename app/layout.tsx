@@ -5,38 +5,38 @@ import SaudiBusinessVerification from "./components/SaudiBusinessVerification";
 import PublicGlobalHeader from "./components/PublicGlobalHeader";
 import "./globals.css";
 
-const SITE_URL = "https://www.areesloop.com"; // Preserve canonical domain until verified migration
+const SITE_URL = "https://areestravel-ksa.com"; // Dedicated domain for this branch only
 
 const SOCIAL_IMAGE =
-  `${SITE_URL}/Image/social/arees-loop-whatsapp-preview.png`;
+  `${SITE_URL}/Logo/arees-header-horizontal.png`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "Arees Travel KSA | منصة تجربة الزائر الذكية",
-    template: "%s | Arees Travel KSA",
+    default: "أريس الحلول المتكاملة المحدودة للسفر والسياحة | منصة تجربة الزائر الذكية",
+    template: "%s | أريس الحلول المتكاملة المحدودة للسفر والسياحة",
   },
 
   description:
     "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
 
-  applicationName: "Arees Travel KSA",
+  applicationName: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
   authors: [
     {
-      name: "Arees Travel KSA",
+      name: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
     },
   ],
 
-  creator: "Arees Travel KSA",
+  creator: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
-  publisher: "Arees Travel KSA",
+  publisher: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
   icons: {
     icon: [
       {
-        url: "/Logo/arees-travel-solutions-logo.png",
+        url: "/Logo/arees-shiny-monogram.png",
         type: "image/png",
         sizes: "any",
       },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
 
     apple: [
       {
-        url: "/Logo/arees-travel-solutions-logo.png",
+        url: "/Logo/arees-shiny-monogram.png",
         type: "image/png",
         sizes: "any",
       },
@@ -69,9 +69,9 @@ export const metadata: Metadata = {
 
     url: SITE_URL,
 
-    siteName: "Arees Travel KSA",
+    siteName: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
-    title: "Arees Travel KSA | منصة تجربة الزائر الذكية",
+    title: "أريس الحلول المتكاملة المحدودة للسفر والسياحة | منصة تجربة الزائر الذكية",
 
     description:
       "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
@@ -80,13 +80,9 @@ export const metadata: Metadata = {
       {
         url: SOCIAL_IMAGE,
 
-        width: 1734,
-
-        height: 907,
-
         type: "image/png",
 
-        alt: "Arees Travel KSA | منصة تجربة الزائر الذكية",
+        alt: "أريس الحلول المتكاملة المحدودة للسفر والسياحة | منصة تجربة الزائر الذكية",
       },
     ],
   },
@@ -94,7 +90,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
 
-    title: "Arees Travel KSA | منصة تجربة الزائر الذكية",
+    title: "أريس الحلول المتكاملة المحدودة للسفر والسياحة | منصة تجربة الزائر الذكية",
 
     description:
       "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",

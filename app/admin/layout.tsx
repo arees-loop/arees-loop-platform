@@ -162,7 +162,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <div className="flex h-[108px] items-center justify-center">
             <Image
-              src="/Logo/arees-loop-logo.png"
+              src="/Logo/arees-shiny-monogram.png"
               alt="Arees Loop"
               width={120}
               height={65}

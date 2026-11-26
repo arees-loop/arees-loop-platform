@@ -68,7 +68,7 @@ export default function InitialSplash() {
         <div className="absolute inset-0 opacity-40 bg-[linear-gradient(130deg,transparent_20%,rgba(212,175,55,0.12)_50%,transparent_80%)]" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pb-[8%]">
           <img
-            src="/Logo/arees-travel-solutions-logo.png"
+            src="/Logo/arees-integrated-solutions-logo.png"
             alt="شركة أريس للحلول المتكاملة المحدودة للسفر والسياحة"
             className="arees-intro-logo max-h-[66vh] w-auto max-w-[min(85vw,540px)] object-contain drop-shadow-[0_14px_25px_rgba(93,65,17,0.16)]"
           />

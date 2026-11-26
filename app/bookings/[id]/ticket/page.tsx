@@ -90,7 +90,7 @@ export default function BookingTicketPage() {
         <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-5 px-5 py-3.5 md:px-8">
           <Link href="/">
             <Image
-              src="/Logo/arees-loop-logo.png"
+              src="/Logo/arees-shiny-monogram.png"
               alt="Arees Loop"
               width={170}
               height={85}
