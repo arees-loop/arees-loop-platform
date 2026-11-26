@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 const SPLASH_VISIBLE_MS = 2600;
 const SPLASH_REMOVE_MS = 3200;
@@ -63,28 +64,19 @@ export default function InitialSplash() {
             : "opacity-100"
         }`}
       >
-        {/* LOADING BACKGROUND */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage:
-              "url('/Image/loading/arees-loop-loading-bg.webp')",
-          }}
-        />
-
-        {/* SOFT CINEMATIC OVERLAY */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-[#0D3B34]/8" />
-
-        {/* GOLD SHINE OVER THE REAL LOGO */}
-        <div className="pointer-events-none absolute left-1/2 top-[25.5%] z-20 h-[24%] w-[43%] -translate-x-1/2 overflow-hidden rounded-[45%]">
-          <div className="arees-logo-shine absolute -inset-y-[40%] left-[-30%] w-[16%] rotate-[18deg] bg-gradient-to-r from-transparent via-[#FFF4B5]/85 to-transparent blur-[5px]" />
-
-          <div className="arees-logo-glow absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,224,117,0.12),transparent_58%)]" />
-        </div>
-
-        {/* SMALL CENTER SPARK */}
-        <div className="pointer-events-none absolute left-1/2 top-[37%] z-20 -translate-x-1/2">
-          <div className="arees-center-spark h-3 w-3 rounded-full bg-[#FFF0A4] shadow-[0_0_12px_4px_rgba(212,175,55,0.55)]" />
+        {/* Company-primary logo, separate from the older Loop loading artwork. */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_34%,#FFFDF5_0%,#F5E8CA_54%,#DCC18C_100%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,transparent_15%,rgba(255,255,255,0.55)_47%,transparent_78%)]" />
+        <div className="absolute inset-x-5 top-[22%] z-20 flex flex-col items-center justify-center gap-5 sm:top-[20%]">
+          <Image
+            src="/Logo/arees-integrated-solutions-logo.png"
+            alt="الشعار الأساسي لشركة أريس الحلول المتكاملة المحدودة للسفر والسياحة"
+            width={640}
+            height={640}
+            priority
+            sizes="(max-width: 640px) 68vw, 340px"
+            className="h-auto max-h-[43vh] w-[68vw] max-w-[340px] object-contain drop-shadow-[0_12px_20px_rgba(64,47,15,0.13)]"
+          />
         </div>
 
         {/* PROGRESS BAR */}
