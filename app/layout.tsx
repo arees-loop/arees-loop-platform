@@ -5,7 +5,7 @@ import SaudiBusinessVerification from "./components/SaudiBusinessVerification";
 import PublicGlobalHeader from "./components/PublicGlobalHeader";
 import "./globals.css";
 
-const SITE_URL = "https://www.areesloop.com";
+const SITE_URL = "https://www.areesloop.com"; // Preserve canonical domain until verified migration
 
 const SOCIAL_IMAGE =
   `${SITE_URL}/Image/social/arees-loop-whatsapp-preview.png`;
@@ -14,24 +14,24 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "Arees Loop | منصة تجربة الزائر الذكية",
-    template: "%s | Arees Loop",
+    default: "Arees Travel KSA | منصة تجربة الزائر الذكية",
+    template: "%s | Arees Travel KSA",
   },
 
   description:
     "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
 
-  applicationName: "Arees Loop",
+  applicationName: "Arees Travel KSA",
 
   authors: [
     {
-      name: "Arees Loop",
+      name: "Arees Travel KSA",
     },
   ],
 
-  creator: "Arees Loop",
+  creator: "Arees Travel KSA",
 
-  publisher: "Arees Loop",
+  publisher: "Arees Travel KSA",
 
   icons: {
     icon: [
@@ -69,9 +69,9 @@ export const metadata: Metadata = {
 
     url: SITE_URL,
 
-    siteName: "Arees Loop",
+    siteName: "Arees Travel KSA",
 
-    title: "Arees Loop | منصة تجربة الزائر الذكية",
+    title: "Arees Travel KSA | منصة تجربة الزائر الذكية",
 
     description:
       "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
@@ -86,7 +86,7 @@ export const metadata: Metadata = {
 
         type: "image/png",
 
-        alt: "Arees Loop | منصة تجربة الزائر الذكية",
+        alt: "Arees Travel KSA | منصة تجربة الزائر الذكية",
       },
     ],
   },
@@ -94,7 +94,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
 
-    title: "Arees Loop | منصة تجربة الزائر الذكية",
+    title: "Arees Travel KSA | منصة تجربة الزائر الذكية",
 
     description:
       "اكتشف واحجز التجارب والوجهات السياحية، واكسب المكافآت في تجربة واحدة ذكية.",
