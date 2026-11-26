@@ -5,7 +5,7 @@ export const runtime = "edge";
 const cards: Record<string, { title: string; subtitle: string; symbol: string }> = {
   government: {
     title: "سجّل كجهة حكومية",
-    subtitle: "أبرزوا وجهاتكم وفعالياتكم الرسمية، ووسّعوا وصولها للزوار عبر أريس للحلول المتكاملة للسفر والسياحة.",
+    subtitle: "أبرزوا وجهاتكم وفعالياتكم الرسمية، ووسّعوا وصولها للزوار عبر أريس الحلول المتكاملة المحدودة للسفر والسياحة.",
     symbol: "⌖",
   },
 };
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       <div style={{ display: "flex", width: "100%", height: "100%", padding: "70px 90px", alignItems: "center", justifyContent: "space-between", gap: 45 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 820 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18, color: "#E8CC85", fontSize: 32, fontWeight: 700 }}>
-            أريس للحلول المتكاملة للسفر والسياحة <span style={{ color: "#FFFDF7", fontSize: 22 }}>منصة تجربة الزائر الذكية</span>
+            أريس الحلول المتكاملة المحدودة للسفر والسياحة <span style={{ color: "#FFFDF7", fontSize: 22 }}>منصة تجربة الزائر الذكية</span>
           </div>
           <div style={{ height: 3, width: 180, background: "#D4AF37" }} />
           <div style={{ fontSize: 62, fontWeight: 900, lineHeight: 1.35, color: "#FFFDF7" }}>{card.title}</div>
