@@ -53,7 +53,7 @@ const shell = (title: string, body: string) => `
     <h2 style="margin-bottom:8px">${escapeHtml(title)}</h2>
     ${body}
     <hr style="border:0;border-top:1px solid #e7e7e7;margin:24px 0" />
-    <p style="font-size:12px;color:#6b7280">أريس للحلول المتكاملة للسفر والسياحة — إشعار آلي من منصة الشركاء.</p>
+    <p style="font-size:12px;color:#6b7280">أريس الحلول المتكاملة المحدودة للسفر والسياحة — إشعار آلي من منصة الشركاء.</p>
   </div>`;
 
 function statusBlock(input: PartnerApplicationNotice) {
@@ -167,8 +167,8 @@ export async function notifyPartnerApplicationSubmitted(
     input.aiReview?.outcome === "NEEDS_COMPLETION";
 
   const partnerSubject = partnerNeedsCompletion
-    ? "يوجد تحديث على طلب انضمامكم إلى أريس للحلول المتكاملة للسفر والسياحة"
-    : "تم استلام طلب الشراكة بنجاح — أريس للحلول المتكاملة للسفر والسياحة";
+    ? "يوجد تحديث على طلب انضمامكم إلى أريس الحلول المتكاملة المحدودة للسفر والسياحة"
+    : "تم استلام طلب الشراكة بنجاح — أريس الحلول المتكاملة المحدودة للسفر والسياحة";
 
   const appOrigin = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
@@ -185,10 +185,10 @@ export async function notifyPartnerApplicationSubmitted(
       `<p>مرحباً <strong>${escapeHtml(displayName)}</strong>،</p>
        <p>${
          partnerNeedsCompletion
-           ? "يوجد تحديث جديد على طلب انضمام منشأتكم إلى منصة أريس للحلول المتكاملة للسفر والسياحة. يرجى مراجعة التحديث واستكمال المطلوب من خلال لوحة الشريك."
+           ? "يوجد تحديث جديد على طلب انضمام منشأتكم إلى منصة أريس الحلول المتكاملة المحدودة للسفر والسياحة. يرجى مراجعة التحديث واستكمال المطلوب من خلال لوحة الشريك."
            : input.previousStatus === "NEEDS_COMPLETION"
              ? "تم استلام تحديثات طلب الشراكة والمستندات المرفوعة بنجاح. سيقوم فريق أريس بمراجعة الطلب والرد عليكم عند اكتمال المراجعة."
-             : "تم استلام طلب انضمام منشأتكم إلى منصة أريس للحلول المتكاملة للسفر والسياحة بنجاح. سيقوم فريق أريس بمراجعة الطلب والرد عليكم عند اكتمال المراجعة."
+             : "تم استلام طلب انضمام منشأتكم إلى منصة أريس الحلول المتكاملة المحدودة للسفر والسياحة بنجاح. سيقوم فريق أريس بمراجعة الطلب والرد عليكم عند اكتمال المراجعة."
        }</p>
        <p><strong>رقم الطلب:</strong> ${escapeHtml(input.partnerId)}</p>
        ${
@@ -224,7 +224,7 @@ export async function notifyPartnerApplicationSubmitted(
              )}</p>
              ${statusBlock(input)}
              ${adminReviewBlock(input.aiReview)}
-             <p><strong>تنبيه داخلي:</strong> نتائج المراجعة أداة مساعدة للإدارة، والقرار النهائي يبقى لدى فريق أريس للحلول المتكاملة للسفر والسياحة.</p>`,
+             <p><strong>تنبيه داخلي:</strong> نتائج المراجعة أداة مساعدة للإدارة، والقرار النهائي يبقى لدى فريق أريس الحلول المتكاملة المحدودة للسفر والسياحة.</p>`,
           ),
         });
 
