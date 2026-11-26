@@ -19,13 +19,13 @@ export default function manifest(): MetadataRoute.Manifest {
 
     icons: [
       {
-        src: "/icons/arees-loop-app-icon.png",
+        src: "/icons/arees-company-app-icon.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/arees-loop-app-icon.png",
+        src: "/icons/arees-company-app-icon.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
