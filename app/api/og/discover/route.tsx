@@ -14,7 +14,7 @@ export async function GET(request:Request){
    <div style={{position:"absolute",left:80,bottom:-300,width:700,height:700,borderRadius:999,border:"1px solid rgba(232,204,133,.18)"}}/>
    <div style={{display:"flex",width:"100%",height:"100%",padding:"70px 90px",alignItems:"center",justifyContent:"space-between",gap:45}}>
     <div style={{display:"flex",flexDirection:"column",gap:24,maxWidth:820}}>
-     <div style={{display:"flex",alignItems:"center",gap:18,color:"#E8CC85",fontSize:32,fontWeight:700}}>AREES LOOP <span style={{color:"#FFFDF7",fontSize:22}}>منصة تجربة الزائر الذكية</span></div>
+     <div style={{display:"flex",alignItems:"center",gap:18,color:"#E8CC85",fontSize:32,fontWeight:700}}>أريس للحلول المتكاملة للسفر والسياحة <span style={{color:"#FFFDF7",fontSize:22}}>منصة تجربة الزائر الذكية</span></div>
      <div style={{height:3,width:180,background:"#D4AF37"}}/>
      <div style={{fontSize:62,fontWeight:900,lineHeight:1.35,color:"#FFFDF7"}}>{item.title}</div>
      <div style={{fontSize:30,color:"#E8CC85",lineHeight:1.6}}>{item.subtitle}</div>
