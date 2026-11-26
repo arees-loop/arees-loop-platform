@@ -88,7 +88,7 @@ export default function GlobalHeader() {
           {/* Approved navigation: air/sea has its own landing-section anchor. */}
           {navVisible.flights !== false && <Link href="/#travel-bookings" onClick={goToAirSea} className="transition hover:text-[#D4AF37]">الطيران والبواخر</Link>}
           {navVisible.events !== false && <Link href="/event-tickets" className="transition hover:text-[#D4AF37]">تذاكر الفعاليات</Link>}
-          <div className="group relative">
+          {navVisible.travelServices !== false && <div className="group relative">
             <button type="button" className="flex items-center gap-1 py-6 font-bold transition hover:text-[#D4AF37]">
               خدمات السفر <span className="inline-block text-[10px] transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">⌄</span>
             </button>
@@ -97,7 +97,7 @@ export default function GlobalHeader() {
               {navVisible.visas !== false && <Link href="/visas" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]"><span aria-hidden="true" className="text-[#0B4537]">▣</span> التأشيرات</Link>}
               {navVisible.drivingLicense !== false && <Link href="/international-driving-license" className="block rounded-xl px-4 py-2.5 font-bold text-[#0D3B34] transition hover:bg-[#FFF7DF]">🚘 رخصة القيادة الدولية</Link>}
             </div>
-          </div>
+          </div>}
           {navVisible.partners !== false && (
             <div className="group relative">
               <Link href="/partner/select-type" className="inline-flex items-center gap-1.5 py-6 transition hover:text-[#B58C31] focus-visible:text-[#B58C31]" aria-label="للشركاء: خيارات الانضمام وتسجيل الدخول">
@@ -175,7 +175,7 @@ export default function GlobalHeader() {
             {/* Mobile navigation mirrors the approved desktop IA. */}
             {navVisible.flights !== false && <Link href="/#travel-bookings" onClick={goToAirSea} className="col-span-2 rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">الطيران والبواخر</Link>}
             {navVisible.events !== false && <Link href="/event-tickets" onClick={() => setMobileNavOpen(false)} className="col-span-2 rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">🎟️ تذاكر الفعاليات</Link>}
-            <section className="col-span-2">
+            {navVisible.travelServices !== false && <section className="col-span-2">
               <button type="button" aria-expanded={mobileTravelServicesOpen} aria-controls="arees-mobile-travel-links" onClick={() => setMobileTravelServicesOpen(value => !value)} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-right hover:bg-[#D4AF37]/15">
                 <span>خدمات السفر</span><span aria-hidden="true">{mobileTravelServicesOpen ? "−" : "+"}</span>
               </button>
@@ -184,7 +184,7 @@ export default function GlobalHeader() {
                 {navVisible.visas !== false && <Link href="/visas" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3"><span aria-hidden="true" className="text-[#0B4537]">▣</span> التأشيرات</Link>}
                 {navVisible.drivingLicense !== false && <Link href="/international-driving-license" onClick={() => setMobileNavOpen(false)} className="rounded-xl bg-white/60 px-3 py-3">🚘 رخصة القيادة الدولية</Link>}
               </div>}
-            </section>
+            </section>}
             {navVisible.guides !== false && <Link href="/#tour-guides" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">المرشدون السياحيون</Link>}
             {navVisible.partners !== false && <Link href="/partner/select-type" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">انضم كشريك</Link>}
             {navVisible.partners !== false && <Link href="/partner/login" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-3 py-3 hover:bg-[#D4AF37]/15">دخول الشركاء</Link>}
