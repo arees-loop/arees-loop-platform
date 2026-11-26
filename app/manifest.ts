@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AREES Loop",
-    short_name: "AREES Loop",
+    name: "شركة أريس الحلول المتكاملة المحدودة للسفر والسياحة",
+    short_name: "أريس للسفر",
     description:
-      "منصة تجربة الزائر الذكية لاكتشاف التجارب والفعاليات والمرشدين والمكافآت.",
+      "خدمات السفر والسياحة والتجارب والحجوزات من شركة أريس الحلول المتكاملة المحدودة للسفر والسياحة.",
 
     scope: "/",
     display: "standalone",
@@ -20,13 +20,13 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       {
         src: "/icons/arees-company-app-icon.png",
-        sizes: "512x512",
+        sizes: "160x160",
         type: "image/png",
         purpose: "any",
       },
       {
         src: "/icons/arees-company-app-icon.png",
-        sizes: "512x512",
+        sizes: "160x160",
         type: "image/png",
         purpose: "maskable",
       },
