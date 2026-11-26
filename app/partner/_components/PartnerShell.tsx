@@ -162,7 +162,7 @@ export default function PartnerShell({
             application.tradeNameAr ||
             application.legalNameAr ||
             application.publicName ||
-            "شريك Arees Loop",
+            "شريك أريس للحلول المتكاملة للسفر والسياحة",
 
           email:
             application.businessEmail ||
@@ -233,7 +233,7 @@ export default function PartnerShell({
                 <div className="flex items-start justify-between gap-3 px-2">
                   <div>
                     <p className="text-[10px] font-bold tracking-[0.18em] text-[#B99124]">
-                      AREES LOOP PARTNER
+                      AREES PARTNER
                     </p>
 
                     <h2 className="mt-2 text-lg font-bold">
@@ -564,7 +564,7 @@ export default function PartnerShell({
       </div>
       {showPartnerChooser && partnerOptions.length > 1 && <div className="fixed inset-0 z-[300] flex items-center justify-center bg-[#062D28]/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="partner-choice-title">
         <section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[28px] border border-[#D4AF37]/35 bg-[#F8F6EF] p-5 shadow-2xl sm:p-8">
-          <p className="text-xs font-black tracking-wide text-[#A78225]">AREES LOOP PARTNER</p>
+          <p className="text-xs font-black tracking-wide text-[#A78225]">AREES PARTNER</p>
           <h2 id="partner-choice-title" className="mt-2 text-2xl font-black text-[#0D3B34]">اختر جهة الشراكة</h2>
           <p className="mt-2 text-sm leading-7 text-[#0D3B34]/65">هذا البريد مرتبط بأكثر من شريك. اختر الجهة التي تريد فتح لوحتها الآن.</p>
           {partnerSwitchError && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{partnerSwitchError}</p>}
