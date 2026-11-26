@@ -162,7 +162,7 @@ export default function PartnerShell({
             application.tradeNameAr ||
             application.legalNameAr ||
             application.publicName ||
-            "شريك أريس للحلول المتكاملة للسفر والسياحة",
+            "شريك أريس الحلول المتكاملة المحدودة للسفر والسياحة",
 
           email:
             application.businessEmail ||
