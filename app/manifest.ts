@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "أريس للحلول المتكاملة للسفر والسياحة",
+    name: "أريس الحلول المتكاملة المحدودة للسفر والسياحة",
     short_name: "أريس",
     description:
       "خدمات السفر والسياحة والبرامج والتجارب السياحية.",
