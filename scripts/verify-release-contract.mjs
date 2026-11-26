@@ -87,7 +87,7 @@ assert(!destinations.includes("s.loyaltyPoints||150")&&!serviceDetail.includes("
  // one point per whole riyal of the currently displayed final price.
 const pointsFormula=file("lib/service-loyalty-points.ts");
 const pointsBanner=file("app/components/ServiceLoyaltyBanner.tsx");
-assert(pointsFormula.includes("Math.floor(Math.round(finalPrice * 100) / 100)")&&pointsBanner.includes("احصل على")&&pointsBanner.includes("نقطة</span>")&&pointsBanner.includes('/Logo/arees-company-logo.png'),"Always show automatic service-price points with official logo and approved Arabic earning copy");
+assert(pointsFormula.includes("Math.floor(Math.round(finalPrice * 100) / 100)")&&pointsBanner.includes("احصل على")&&pointsBanner.includes("نقطة</span>")&&pointsBanner.includes('/Logo/arees-shiny-monogram.png'),"Always show automatic service-price points with official logo and approved Arabic earning copy");
 assert(count(home,"<ServiceLoyaltyBanner finalPrice={service.finalPrice}")===1&&count(destinations,"<ServiceLoyaltyBanner finalPrice={s.finalPrice}")===1&&count(serviceDetail,"<ServiceLoyaltyBanner finalPrice={total}")===1,"Approved earning badge must remain present in Home, Discover and details alongside the price");
 assert(!home.includes("نقاط الخدمة:")&&!destinations.includes("نقاط الخدمة:")&&!serviceDetail.includes("نقاط الخدمة:"),"Do not regress automatic loyalty earning visibility");
 const publicCatalog=file("app/services/page.tsx");

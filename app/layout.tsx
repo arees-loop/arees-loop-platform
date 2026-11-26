@@ -7,7 +7,7 @@ import "./globals.css";
 
 const SITE_URL = "https://www.areesloop.com";
 
-const SOCIAL_IMAGE = `${SITE_URL}/Logo/arees-company-logo.png`;
+const SOCIAL_IMAGE = `${SITE_URL}/Logo/arees-shiny-monogram.png`;
 
 // Website metadata is intentionally separate from the legally contracted merchant.
 const websiteStructuredData = {

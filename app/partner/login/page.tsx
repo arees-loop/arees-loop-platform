@@ -189,7 +189,7 @@ export default function PartnerLoginPage() {
         <section className="order-1 flex justify-center md:order-2 md:justify-start">
           <div className="w-full max-w-[590px] text-center md:text-right">
             <Image
-              src="/Logo/arees-company-logo.png"
+              src="/Logo/arees-shiny-monogram.png"
               alt="أريس الحلول المتكاملة المحدودة للسفر والسياحة"
               width={420}
               height={420}
