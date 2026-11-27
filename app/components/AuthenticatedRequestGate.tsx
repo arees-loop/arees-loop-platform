@@ -26,9 +26,9 @@ export default function AuthenticatedRequestGate({children}:{children:ReactNode}
  },[]);
 
  function onSubmitCapture(event:FormEvent<HTMLDivElement>){
-  if(authorized.current)return;
   const target=event.target;
   if(!(target instanceof HTMLFormElement))return;
+  if(authorized.current){pending.current=target;return;}
   event.preventDefault();
   event.stopPropagation();
   pending.current=target;
