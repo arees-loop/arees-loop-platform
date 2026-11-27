@@ -4,11 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/verify-release-contract.mjs --production-only && next build",
+    "build": "npm run test:payments && node scripts/verify-release-contract.mjs --production-only && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
-    "vercel-build": "npm run test:payments && node scripts/verify-release-contract.mjs --production-only && next build",
     "db:migrate:deploy": "prisma migrate deploy",
     "test:payments": "node --test tests/neoleap-crypto.test.mjs tests/neoleap-flow.test.mjs tests/neoleap-readiness.test.mjs tests/payment-guard.test.mjs neoleap-callback/tests/callback.test.cjs"
   },
