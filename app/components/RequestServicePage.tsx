@@ -6,6 +6,7 @@ import OfferImageCarousel from "@/app/components/OfferImageCarousel";
 import OfferShareButton from "@/app/components/OfferShareButton";
 import {storeCustomerClaim} from "@/lib/customer-request-claims";
 type Kind="VISA"|"DRIVING_LICENSE";
+type CartLine={serviceId:string;quantity:number;[key:string]:unknown};
 type Offer={id:string;title:string;description:string|null;destination:string|null;imageUrls:string[];bannerUrl:string|null;amountSar:number|null;priceUnit:string|null;operationStatus:string;operationNote:string|null;scheduleData?:{visaType?:string;requirements?:string;processingTime?:string;needsAppointment?:boolean;appointmentCities?:string[]}|null};
 const codes=[["966","السعودية +966"],["249","السودان +249"],["20","مصر +20"],["971","الإمارات +971"],["974","قطر +974"],["965","الكويت +965"],["973","البحرين +973"],["968","عُمان +968"],["1","أمريكا/كندا +1"],["44","بريطانيا +44"],["other","دولة أخرى"]];
 const field="w-full min-w-0 rounded-2xl border border-[#C5AE73]/40 bg-[#FCFBF6] px-4 py-3.5 text-sm text-[#0D3B34] outline-[#B69034]";
@@ -23,15 +24,20 @@ export default function RequestServicePage({kind}:{kind:Kind}){
   const details=["نوع الخدمة: "+title,"الجنسية: "+nationality.trim(),"بلد الإقامة: "+residence.trim(),"الوجهة: "+destination.trim(),(visa?"نوع التأشيرة: ":"فئة الرخصة: ")+serviceType.trim(),!visa?"مدة الرخصة الدولية المطلوبة: "+duration+" سنة":"",!visa?"الطول التقريبي: "+height.trim():"",!visa?"لون العين: "+eyeColor.trim():"",!visa?"صلاحية الرخصة المحلية حتى: "+licenseValidUntil:"",!visa?"عنوان المدينة والحي: "+deliveryAddress.trim():"",!visa?"رابط موقع التوصيل: "+deliveryLink.trim():"",!visa?"الرسوم: 199 ريال شامل التوصيل؛ مدة الرخصة سنة واحدة":"","موعد السفر المتوقع: "+travelDate,"عدد المتقدمين: "+applicants,notes.trim()?"ملاحظات إضافية: "+notes.trim():""].filter(Boolean).join("\n");
   try{const r=await fetch("/api/transport/requests",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind,customerName:name,customerEmail:email,countryCode:countryCode==="other"?customCode:countryCode,phone,origin:residence,destination,travelDate,tripType:"ONE_WAY",adults:applicants,children:0,infants:0,notes:details})});const d=await r.json().catch(()=>null);if(r.status===401||d?.code==="AUTH_REQUIRED"){window.dispatchEvent(new Event("arees-request-login"));return;}if(!r.ok||!d?.success){setError(d?.message||"تعذر تسجيل الطلب. أعد المحاولة.");return;}setClaimSaved(storeCustomerClaim({reference:d.data.reference,token:d.data.trackingToken}));setReference(d.data.reference);setNotice("تم استلام طلبك. سيراجع فريق أريس البيانات ويتواصل معك لاستكمال المتطلبات. إرسال الطلب لا يعني صدور التأشيرة أو الرخصة.");}catch{setError("تعذر الاتصال بالخدمة حالياً. أعد المحاولة.");}finally{setBusy(false);}
  }
- async function addLicenseToCart(){try{const key="arees-loop-cart-v1",serviceId="international-driving-license-"+duration;const current=JSON.parse(localStorage.getItem(key)||"[]");const saved=Array.isArray(current)?current.filter((x:any)=>x&&typeof x.serviceId==="string"&&Number.isInteger(x.quantity)&&x.quantity>0):[];const exists=saved.find((x:any)=>x.serviceId===serviceId);const next=exists?saved.map((x:any)=>x.serviceId===serviceId?{...x,quantity:x.quantity+1}:x):[...saved,{serviceId,quantity:1,itemType:"DRIVING_LICENSE",title:"رخصة القيادة الدولية",durationYears:Number(duration),unitPriceSar:199,imageUrl:"/Image/social/arees-international-driving-license.webp"}];localStorage.setItem(key,JSON.stringify(next));window.dispatchEvent(new Event("arees-cart-updated"));setCartNotice("أُضيفت الرخصة إلى السلة ب199 ريال شامل التوصيل.");}catch{setCartNotice("تعذر الإضافة إلى السلة. أعد المحاولة.");}}
+ async function addLicenseToCart(){try{const key="arees-loop-cart-v1",serviceId="international-driving-license-"+duration;const current:unknown=JSON.parse(localStorage.getItem(key)||"[]");const saved:CartLine[]=Array.isArray(current)?current.filter((x:unknown):x is CartLine=>Boolean(x&&typeof x==="object"&&"serviceId" in x&&typeof x.serviceId==="string"&&"quantity" in x&&typeof x.quantity==="number"&&Number.isInteger(x.quantity)&&x.quantity>0)):[];const exists=saved.find(x=>x.serviceId===serviceId);const next=exists?saved.map(x=>x.serviceId===serviceId?{...x,quantity:x.quantity+1}:x):[...saved,{serviceId,quantity:1,itemType:"DRIVING_LICENSE",title:"رخصة القيادة الدولية",durationYears:Number(duration),unitPriceSar:199,imageUrl:"/Image/social/arees-international-driving-license.webp"}];localStorage.setItem(key,JSON.stringify(next));window.dispatchEvent(new Event("arees-cart-updated"));setCartNotice("أُضيفت الرخصة إلى السلة ب199 ريال شامل التوصيل.");}catch{setCartNotice("تعذر الإضافة إلى السلة. أعد المحاولة.");}}
  const [visaSearch,setVisaSearch]=useState("");
  const [visaRequestOpen,setVisaRequestOpen]=useState(false);
  
 
- useEffect(()=>{if(!visa||!offers.length)return;const id=new URLSearchParams(window.location.search).get("request");if(!id)return;
-  if(id==="other"){setDestination("");setServiceType("");setVisaRequestOpen(true);return;}
-  const selected=offers.find(o=>o.id===id);if(!selected)return;
-  setDestination(selected.destination||selected.title);setServiceType(selected.scheduleData?.visaType||selected.title);setVisaRequestOpen(true);
+ useEffect(()=>{if(!visa)return;const id=new URLSearchParams(window.location.search).get("request");if(!id)return;
+  const selected=id==="other"?null:offers.find(o=>o.id===id);
+  if(id!=="other"&&!selected)return;
+  const task=window.setTimeout(()=>{
+   setDestination(selected?.destination||selected?.title||"");
+   setServiceType(selected?.scheduleData?.visaType||selected?.title||"");
+   setVisaRequestOpen(true);
+  },0);
+  return()=>window.clearTimeout(task);
  },[visa,offers]);
  const matchingVisas=offers.filter(o=>(o.destination||o.title).toLocaleLowerCase().includes(visaSearch.trim().toLocaleLowerCase())||o.title.toLocaleLowerCase().includes(visaSearch.trim().toLocaleLowerCase()));
  const offer=offers[index];
