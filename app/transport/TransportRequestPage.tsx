@@ -91,6 +91,7 @@ export default function TransportRequestPage({kind}:{kind:Kind}) {
         }),
       });
       const body=await result.json().catch(()=>null);
+      if(result.status===401||body?.code==="AUTH_REQUIRED"){window.dispatchEvent(new Event("arees-request-login"));return;}
       if(!result.ok||!body?.success){setError(body?.message||"تعذر إرسال الطلب، حاول مجدداً.");return;}
       const saved=storeCustomerClaim({reference:body.data.reference,token:body.data.trackingToken});
       setClaimSaved(saved);

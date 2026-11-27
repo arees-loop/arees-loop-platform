@@ -63,7 +63,7 @@ export default function InternationalLicenseForm(){
      })
     });
     const result=await response.json().catch(()=>null);
-    if(response.status===401||result?.code==="AUTH_REQUIRED"){window.location.assign("/login?next="+encodeURIComponent("/international-driving-license"));return;}
+    if(response.status===401||result?.code==="AUTH_REQUIRED"){window.dispatchEvent(new Event("arees-request-login"));return;}
     if(!response.ok||!result?.success||!result?.data?.reference)throw Error(result?.message||"لم يتم إنشاء الطلب. أعد المحاولة.");
     ref=result.data.reference;
     setReference(ref);
